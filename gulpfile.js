@@ -1,10 +1,15 @@
 var gulp       = require('gulp');
 var eslint     = require('gulp-eslint');
+var uglify     = require('gulp-uglify');
+var rename     = require('gulp-rename');
+var del        = require('del');
 var browserify = require('browserify');
 var babelify   = require('babelify');
 var source     = require('vinyl-source-stream');
-var uglify     = require('gulp-uglify');
-var rename     = require('gulp-rename');
+
+gulp.task('clean', function() {
+  return del(['dist/**/*.js']);
+});
 
 gulp.task('lint', function() {
   return gulp.src(['**/*.js', '!node_modules/**', '!dist/**'])
