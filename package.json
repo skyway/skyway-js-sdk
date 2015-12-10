@@ -1,0 +1,24 @@
+{
+  "name": "skywayjs",
+  "version": "1.0.0",
+  "description": "The client library for skyway",
+  "main": "gulpfile.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://ghe.nttcloud.net/SkyWay/SkyWay-Client.git"
+  },
+  "author": "NTT Communications Corp.",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^1.10.3",
+    "eslint-config-google": "^0.3.0",
+    "gulp": "^3.9.0",
+    "gulp-eslint": "^1.1.1"
+  }
+}
