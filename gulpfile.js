@@ -1,9 +1,13 @@
-var gulp = require('gulp');
-var eslint = require('gulp-eslint');
-var babel = require('gulp-babel');
+var gulp       = require('gulp');
+var eslint     = require('gulp-eslint');
+var browserify = require('browserify');
+var babelify   = require('babelify');
+var source     = require('vinyl-source-stream');
+var uglify     = require('gulp-uglify');
+var rename     = require('gulp-rename');
 
 gulp.task('lint', function() {
-  return gulp.src(['**/*.js', '!node_modules/**', '!build/**'])
+  return gulp.src(['**/*.js', '!node_modules/**', '!dist/**'])
     .pipe(eslint({
       extends: 'google',
       rules: {
@@ -18,15 +22,22 @@ gulp.task('lint', function() {
     .pipe(eslint.failAfterError());
 });
 
-gulp.task('babel', function() {
-  return gulp.src('src/**/*.js')
-    .pipe(babel({
-      presets: ['es2015']
-    }))
-    .pipe(gulp.dest('build'));
+gulp.task('build', ['lint'], function() {
+  return browserify('./src/skyway.js')
+    .transform(babelify, {presets: ['es2015']})
+    .bundle()
+    .pipe(source('skyway.js'))
+    .pipe(gulp.dest('dist'));
 });
 
-gulp.task('default', ['lint'], function() {
-  gulp.start('babel');
+gulp.task('uglify', ['build'], function() {
+  return gulp.src('./dist/skyway.js')
+    .pipe(uglify())
+    .pipe(rename('skyway.min.js'))
+    .pipe(gulp.dest('dist'));
+});
+
+gulp.task('default', ['lint', 'build', 'uglify'], function() {
+
 });
 
