@@ -1,11 +1,12 @@
-var gulp       = require('gulp');
-var eslint     = require('gulp-eslint');
-var uglify     = require('gulp-uglify');
-var rename     = require('gulp-rename');
-var del        = require('del');
-var browserify = require('browserify');
-var babelify   = require('babelify');
-var source     = require('vinyl-source-stream');
+var gulp        = require('gulp');
+var eslint      = require('gulp-eslint');
+var uglify      = require('gulp-uglify');
+var rename      = require('gulp-rename');
+var mocha       = require('gulp-mocha');
+var del         = require('del');
+var browserify  = require('browserify');
+var babelify    = require('babelify');
+var source      = require('vinyl-source-stream');
 
 gulp.task('clean', function() {
   return del(['dist/**/*.js']);
@@ -21,6 +22,15 @@ gulp.task('lint', function() {
             VariableDeclarator: true
           }
         }]
+      },
+      globals: {
+        /* MOCHA */
+        describe: false,
+        it: false,
+        before: false,
+        beforeEach: false,
+        after: false,
+        afterEach: false
       }
     }))
     .pipe(eslint.format())
@@ -40,6 +50,11 @@ gulp.task('uglify', ['build'], function() {
     .pipe(uglify())
     .pipe(rename('skyway.min.js'))
     .pipe(gulp.dest('dist'));
+});
+
+gulp.task('test', function() {
+  return gulp.src('tests/**/test-*.js', {read: false})
+    .pipe(mocha({reporter: 'nyan'}));
 });
 
 gulp.task('default', ['lint', 'build', 'uglify'], function() {
