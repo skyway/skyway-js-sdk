@@ -16,25 +16,7 @@ gulp.task('clean', function() {
 
 gulp.task('lint', function() {
   return gulp.src(['**/*.js', '!node_modules/**', '!dist/**'])
-    .pipe(eslint({
-      extends: 'google',
-      rules: {
-        'no-multi-spaces': [1, {
-          exceptions: {
-            VariableDeclarator: true
-          }
-        }]
-      },
-      globals: {
-        /* MOCHA */
-        describe: false,
-        it: false,
-        before: false,
-        beforeEach: false,
-        after: false,
-        afterEach: false
-      }
-    }))
+    .pipe(eslint('.eslintrc'))
     .pipe(eslint.format())
     .pipe(eslint.failAfterError());
 });
