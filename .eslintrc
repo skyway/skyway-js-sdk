@@ -3,11 +3,16 @@
   "rules": {
     "no-multi-spaces": [1, {
       "exceptions": {
-        "VariableDeclarator": true
+        "VariableDeclarator": true,
+        "ImportDeclaration": true,
+        "AssignmentExpression": true
       }
+    }],
+    "key-spacing": [2, {
+      "align": "value"
     }]
   },
-  globals: {
+  "globals": {
     /* MOCHA */
     "describe": false,
     "it": false,
