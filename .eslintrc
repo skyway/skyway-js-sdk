@@ -1,0 +1,24 @@
+{
+  "extends": "google",
+  "rules": {
+    "no-multi-spaces": [1, {
+      "exceptions": {
+        "VariableDeclarator": true,
+        "ImportDeclaration": true,
+        "AssignmentExpression": true
+      }
+    }],
+    "key-spacing": [2, {
+      "align": "value"
+    }]
+  },
+  "globals": {
+    /* MOCHA */
+    "describe": false,
+    "it": false,
+    "before": false,
+    "beforeEach": false,
+    "after": false,
+    "afterEach": false
+  }
+}
