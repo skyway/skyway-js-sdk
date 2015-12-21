@@ -46,3 +46,6 @@ gulp.task('default', function() {
   runSequence('lint', 'build');
 });
 
+gulp.doneCallback = function(err) {
+  process.exit(err ? 1 : 0);
+};
