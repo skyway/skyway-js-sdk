@@ -10,7 +10,7 @@ module.exports = function(config) {
         included: true
       },
       {
-        pattern:  'tests/**/*.js',
+        pattern:  'tests/**/test-*.js',
         watched:  false,
         served:   true,
         included: true
@@ -21,8 +21,8 @@ module.exports = function(config) {
     ],
 
     preprocessors: {
-      'src/**/*.js':  'browserify',
-      'tests/**/*.js': 'browserify'
+      'tests/**/test-*.js': 'browserify',
+      'src/**/*.js':        'browserify'
     },
     browserify: {
       configure: function(bundle) {

@@ -11,7 +11,7 @@ describe('Socket', function() {
   var serverPort = 5080;
 
   beforeEach(function() {
-    this.server = new Server('http://localhost:'+serverPort);
+    this.server = new Server('http://localhost:' + serverPort);
     this.server.on('connection', function() {
 
     });

@@ -1,7 +1,5 @@
-require('rootpath')();
-
 var assert    = require('assert');
-var Skyway    = require('src/skyway');
+var Skyway    = require('../src/skyway');
 
 describe('SkyWay', function() {
   it('should have parameter test=lalala', function() {
