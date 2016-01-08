@@ -1,29 +1,34 @@
 'use strict';
 
-require('rootpath')();
+var proxyquire  = require('proxyquire');
+var mockSocket  = require('mock-socket');
+var SocketIO    = mockSocket.SocketIO;
+var Server      = mockSocket.Server;
 
-var Socket = require('src/socket');
+var Socket = proxyquire('../src/socket', {'socket.io-client': SocketIO});
 
-var io;
-var serverPort = 5080;
+describe('Socket', function() {
+  var serverPort = 5080;
 
-beforeEach(function() {
-  io = require('socket.io').listen(serverPort);
+  beforeEach(function() {
+    this.server = new Server('http://localhost:'+serverPort);
+    this.server.on('connection', function() {
 
-  io.sockets.on('connection', function() {});
-});
+    });
+  });
 
-afterEach(function() {
-  io.close();
-});
+  afterEach(function() {
+    this.server.close();
+  });
 
-describe('Connecting to the server', function() {
-  it('should be able to connect to a server', function(done) {
-    var socket = new Socket(false, 'localhost', serverPort, 'foobar');
+  describe('Connecting to the server', function() {
+    it('should be able to connect to a server', function(done) {
+      var socket = new Socket(false, 'localhost', serverPort, 'foobar');
 
-    socket.connect();
-    socket.socket.on('connect', function() {
-      done();
+      socket.connect();
+      socket.socket.on('connect', function() {
+        done();
+      });
     });
   });
 });
