@@ -2,13 +2,14 @@ var gulp        = require('gulp');
 var eslint      = require('gulp-eslint');
 var uglify      = require('gulp-uglify');
 var rename      = require('gulp-rename');
-var mocha       = require('gulp-mocha');
 var del         = require('del');
+var path        = require('path');
 var browserify  = require('browserify');
 var babelify    = require('babelify');
 var source      = require('vinyl-source-stream');
 var buffer      = require('vinyl-buffer');
 var runSequence = require('run-sequence');
+var KarmaServer = require('karma').Server;
 
 gulp.task('clean', function() {
   return del(['dist/**/*.js']);
@@ -37,9 +38,11 @@ gulp.task('build', function() {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('test', function() {
-  return gulp.src('tests/**/test-*.js', {read: false})
-    .pipe(mocha({reporter: 'nyan'}));
+gulp.task('test', function(done) {
+  new KarmaServer({
+    configFile: path.join(__dirname, '/karma.conf.js'),
+    singleRun:  true
+  }, done).start();
 });
 
 gulp.task('default', function() {
