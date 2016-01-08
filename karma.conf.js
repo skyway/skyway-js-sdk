@@ -1,0 +1,45 @@
+module.exports = function(config) {
+  config.set({
+    frameworks: ['browserify', 'mocha'],
+
+    files: [
+      {
+        pattern:  'src/**/*.js',
+        watched:  false,
+        served:   true,
+        included: true
+      },
+      {
+        pattern:  'tests/**/*.js',
+        watched:  false,
+        served:   true,
+        included: true
+      }
+    ],
+
+    exclude: [
+    ],
+
+    preprocessors: {
+      'src/**/*.js':  'browserify',
+      'tests/**/*.js': 'browserify'
+    },
+    browserify: {
+      configure: function(bundle) {
+        bundle.once('prebundle', function() {
+          bundle.transform(
+            'babelify',
+            {presets: ['es2015']}
+          ).plugin('proxyquire-universal');
+        });
+      }
+    },
+
+    reporters: [
+      'nyan'
+    ],
+
+    // define reporters, port, logLevel, browsers etc.
+    browsers: ['PhantomJS2']
+  });
+};
