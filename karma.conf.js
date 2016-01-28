@@ -35,6 +35,10 @@ module.exports = function(config) {
       }
     },
 
+    reporters: [
+      'mocha'
+    ],
+
     // define reporters, port, logLevel, browsers etc.
     browsers: ['PhantomJS2']
   });
