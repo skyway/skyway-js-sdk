@@ -35,10 +35,6 @@ module.exports = function(config) {
       }
     },
 
-    reporters: [
-      'nyan'
-    ],
-
     // define reporters, port, logLevel, browsers etc.
     browsers: ['PhantomJS2']
   });

@@ -11,18 +11,18 @@ var buffer      = require('vinyl-buffer');
 var runSequence = require('run-sequence');
 var KarmaServer = require('karma').Server;
 
-gulp.task('clean', function() {
+gulp.task('clean', () => {
   return del(['dist/**/*.js']);
 });
 
-gulp.task('lint', function() {
+gulp.task('lint', () => {
   return gulp.src(['**/*.js', '!node_modules/**', '!dist/**'])
     .pipe(eslint('.eslintrc'))
     .pipe(eslint.format())
     .pipe(eslint.failAfterError());
 });
 
-gulp.task('build', function() {
+gulp.task('build', () => {
   return browserify('./src/skyway.js')
     .transform(babelify, {presets: ['es2015']})
     .bundle()
@@ -38,14 +38,14 @@ gulp.task('build', function() {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('test', function(done) {
+gulp.task('test', done => {
   new KarmaServer({
     configFile: path.join(__dirname, '/karma.conf.js'),
     singleRun:  true
   }, done).start();
 });
 
-gulp.task('default', function() {
+gulp.task('default', () => {
   runSequence('lint', 'build');
 });
 
