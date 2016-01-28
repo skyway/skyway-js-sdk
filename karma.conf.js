@@ -40,6 +40,6 @@ module.exports = function(config) {
     ],
 
     // define reporters, port, logLevel, browsers etc.
-    browsers: ['Chrome']
+    browsers: ['PhantomJS2']
   });
 };
