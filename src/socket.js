@@ -1,6 +1,7 @@
 'use strict';
 
-var io = require('socket.io-client');
+const io    = require('socket.io-client');
+// const util  = require('./util');
 
 class Socket {
   constructor(secure, host, port, key) {

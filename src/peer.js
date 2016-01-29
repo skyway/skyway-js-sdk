@@ -1,5 +1,10 @@
 'use strict';
 
+// const DataConnection  = require('./dataConnection');
+// const MediaConnection = require('./mediaConnection');
+// const Socket          = require('./socket');
+// const util            = require('./util');
+
 class Peer {
   constructor(id, options) {
     this.destroyed = false;

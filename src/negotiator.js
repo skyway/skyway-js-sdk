@@ -1,5 +1,7 @@
 'use strict';
 
+// const util = require('./util');
+
 class Negotiator {
   constructor(socket, connection) {
     this._socket = socket;
