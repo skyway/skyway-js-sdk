@@ -22,10 +22,10 @@ gulp.task('lint', function() {
 });
 
 gulp.task('build', function() {
-  return browserify('./src/skyway.js')
+  return browserify('./src/peer.js')
     .transform(babelify, {presets: ['es2015']})
     .bundle()
-    .pipe(source('skyway.js'))
+    .pipe(source('peer.js'))
     .pipe(buffer())
     .pipe(gulp.dest('dist'))
     .pipe(rename(function(path) {
