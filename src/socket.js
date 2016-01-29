@@ -4,16 +4,29 @@ var io = require('socket.io-client');
 
 class Socket {
   constructor(secure, host, port, key) {
-    this.secure = secure;
-    this.host   = host;
-    this.port   = port;
-    this.key    = key;
+    this.disconnected = false;
 
-    this.scheme = secure ? 'https' : 'http';
+    this._key    = key;
+
+    let httpProtocol = secure ? 'https://' : 'http://';
+    this._httpUrl = `${httpProtocol}${host}:${port}`;
   }
 
-  connect() {
-    this.socket = io(this.scheme + '://' + this.host + ':' + this.port);
+  start(id, token) {
+    this.id = id;
+
+    this.socket = io(this._httpUrl);
+
+    // TODO: Remove lint bypass
+    console.log(token);
+  }
+
+  send(data) {
+    // TODO: Remove lint bypass
+    console.log(data);
+  }
+
+  close() {
   }
 }
 

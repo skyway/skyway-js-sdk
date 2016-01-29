@@ -21,7 +21,7 @@ describe('Connecting to the server', function() {
   it('should be able to connect to a server', function(done) {
     var socket = new Socket(false, 'localhost', serverPort, 'foobar');
 
-    socket.connect();
+    socket.start();
     socket.socket.on('connect', function() {
       done();
     });
