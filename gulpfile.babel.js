@@ -1,15 +1,15 @@
-var gulp        = require('gulp');
-var eslint      = require('gulp-eslint');
-var uglify      = require('gulp-uglify');
-var rename      = require('gulp-rename');
-var del         = require('del');
-var path        = require('path');
-var browserify  = require('browserify');
-var babelify    = require('babelify');
-var source      = require('vinyl-source-stream');
-var buffer      = require('vinyl-buffer');
-var runSequence = require('run-sequence');
-var KarmaServer = require('karma').Server;
+const gulp        = require('gulp');
+const eslint      = require('gulp-eslint');
+const uglify      = require('gulp-uglify');
+const rename      = require('gulp-rename');
+const del         = require('del');
+const path        = require('path');
+const browserify  = require('browserify');
+const babelify    = require('babelify');
+const source      = require('vinyl-source-stream');
+const buffer      = require('vinyl-buffer');
+const runSequence = require('run-sequence');
+const KarmaServer = require('karma').Server;
 
 gulp.task('clean', () => {
   return del(['dist/**/*.js']);
