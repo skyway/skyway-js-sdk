@@ -25,8 +25,7 @@ class Connection {
   }
 
   get id() {
-    //TODO use util.randomToken();
-    return this.options.connectionId || this._idPrefix + 'util.randomToken()';
+    return this.options.connectionId || this._idPrefix + util.randomToken();
   }
 
   handleMessage(message) {
@@ -41,8 +40,7 @@ class Connection {
         this._negotiator.handleCandidate(this, payload.candidate);
         break;
       default:
-        //TODO use util.warn
-        console.warn('Unrecognized message type:',
+        util.warn('Unrecognized message type:',
           message.type, 'from peer:', this.peer);
         break;
     }
