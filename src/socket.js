@@ -14,6 +14,7 @@ class Socket {
   }
 
   start(id, token) {
+    // Presumably need a check for whether a peerId is actually specified or not?
     this.id = id;
 
     this.socket = io(this._httpUrli, {
@@ -21,6 +22,9 @@ class Socket {
       'query': `apiKey=${this._key}&token=${token}&peerId=${this.id}`,
       'extraHeaders': {Origin: `http://${dbHelper.activeDomain}`}
     });
+    this.socket.on('OPEN', peerId => {
+      this.id = peerId;
+    }
   }
 
   send(data) {
