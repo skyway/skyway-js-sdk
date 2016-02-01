@@ -6,6 +6,7 @@ const io    = require('socket.io-client');
 class Socket {
   constructor(secure, host, port, key) {
     this.disconnected = false;
+    this._queue = [];
 
     this._key    = key;
 
@@ -28,6 +29,15 @@ class Socket {
   }
 
   send(data) {
+    if (this.disconnected) {
+      return();
+    }
+
+    // If we have no ID yet, queue the message
+    if (!this.id) {
+      this._queue.push(data);
+    }
+
     // TODO: Remove lint bypass
     console.log(data);
   }
