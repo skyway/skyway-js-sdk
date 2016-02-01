@@ -18,12 +18,9 @@ class Socket {
 
     this.socket = io(this._httpUrli, {
       'force new connection': true,
-      'query': `apiKey=${this._key}&token=${token}`,
+      'query': `apiKey=${this._key}&token=${token}&peerId=${this.id}`,
       'extraHeaders': {Origin: `http://${dbHelper.activeDomain}`}
     });
-
-    // TODO: Remove lint bypass
-    console.log(token);
   }
 
   send(data) {
