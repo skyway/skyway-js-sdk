@@ -38,6 +38,11 @@ class Socket {
       this._queue.push(data);
     }
 
+    var message = JSON.stringify(data);
+    if (this.socket.connected) {
+      this.socket.send(message);
+    } 
+
     // TODO: Remove lint bypass
     console.log(data);
   }
