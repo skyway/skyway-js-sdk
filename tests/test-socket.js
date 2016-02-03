@@ -1,32 +1,32 @@
 'use strict';
 
-var proxyquire  = require('proxyquire');
-var mockSocket  = require('mock-socket');
-var SocketIO    = mockSocket.SocketIO;
-var Server      = mockSocket.Server;
+const proxyquire  = require('proxyquire');
+const mockSocket  = require('mock-socket');
+const SocketIO    = mockSocket.SocketIO;
+const Server      = mockSocket.Server;
 
-var Socket = proxyquire('../src/socket', {'socket.io-client': SocketIO});
+const Socket = proxyquire('../src/socket', {'socket.io-client': SocketIO});
 
-describe('Socket', function() {
-  var serverPort = 5080;
+describe('Socket', () => {
+  const serverPort = 5080;
+  let server = new Server('http://localhost:' + serverPort);
 
-  beforeEach(function() {
-    this.server = new Server('http://localhost:' + serverPort);
-    this.server.on('connection', function() {
+  beforeEach(() => {
+    server.on('connection', function() {
 
     });
   });
 
-  afterEach(function() {
-    this.server.close();
+  afterEach(() => {
+    server.close();
   });
 
-  describe('Connecting to the server', function() {
-    it('should be able to connect to a server', function(done) {
-      var socket = new Socket(false, 'localhost', serverPort, 'foobar');
+  describe('Connecting to the server', () => {
+    it('should be able to connect to a server', done => {
+      const socket = new Socket(false, 'localhost', serverPort, 'foobar');
 
       socket.connect();
-      socket.socket.on('connect', function() {
+      socket.socket.on('connect', () => {
         done();
       });
     });
