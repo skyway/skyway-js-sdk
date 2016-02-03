@@ -1,5 +1,6 @@
 'use strict';
 
+const assert      = require('assert');
 const proxyquire  = require('proxyquire');
 const mockSocket  = require('mock-socket');
 const SocketIO    = mockSocket.SocketIO;
@@ -9,7 +10,7 @@ const Socket = proxyquire('../src/socket', {'socket.io-client': SocketIO});
 
 describe('Socket', () => {
   const serverPort = 5080;
-  let server;// = new Server('http://localhost:' + serverPort);
+  let server;
 
   beforeEach(() => {
     server = new Server('http://localhost:' + serverPort);
@@ -47,8 +48,33 @@ describe('Socket', () => {
       });
     });
 
+    it('should close socket and properly set disconnect status', done => {
+      let apiKey = 'apiKey';
+      let peerId = 'peerId';
+      let token = 'token';
+      const socket = new Socket(false, 'localhost', serverPort, apiKey);
+
+      socket.start(peerId, token);
+      socket.socket.on('connect', function() {
+        socket.close();
+        // assert.equal(socket.socket.connected, false);
+        assert.equal(socket.disconnected, true);
+        done();
+      });
+    });
+
     it('should be able to send some data', done => {
-    
+      let apiKey = 'apiKey';
+      let peerId = 'peerId';
+      let token = 'token';
+      const socket = new Socket(false, 'localhost', serverPort, apiKey);
+
+      socket.start(peerId, token);
+      socket.socket.on('connect', function() {
+        socket.send('foobar');
+        socket.close();
+        done();
+      });
     });
   });
 });

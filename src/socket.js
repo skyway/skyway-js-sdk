@@ -47,7 +47,9 @@ class Socket {
   }
 
   close() {
-    if (!this.disconnected && this.socket.connected) {
+    // TODO: Investigate why this.socket.connected doesn't exist
+    if (!this.disconnected) {
+    // if (!this.disconnected && this.socket.connected) {
       this.socket.disconnect();
       this.disconnected = true;
     }
