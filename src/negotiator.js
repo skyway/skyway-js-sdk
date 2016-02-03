@@ -1,6 +1,11 @@
 'use strict';
 
- const util = require('./util');
+const adapter = require('webrtc-adapter-test');
+const RTCPeerConnection     = adapter.RTCPeerConnection;
+const RTCSessionDescription = adapter.RTCSessionDescription;
+const RTCIceCandidate       = adapter.RTCIceCandidate;
+
+const util = require('./util');
 
 class Negotiator {
   constructor(socket, connection) {
@@ -114,7 +119,7 @@ class Negotiator {
       }
     };
 
-    this._pc.oniceconnectionstatechange = () => {
+    this._pc.oniceconnectionstatechange = function() {
       switch (this._pc.iceConnectionState) {
         case 'disconnected':
         case 'failed':
@@ -127,7 +132,7 @@ class Negotiator {
       }
     };
 
-    this._pc.onnegotiationneeded = () => {
+    this._pc.onnegotiationneeded = function() {
       util.log('"negotiationneeded" triggered');
       if (this._pc.signalingState === 'stable') {
         this._makeOffer();
@@ -136,13 +141,13 @@ class Negotiator {
       }
     };
 
-    this._pc.ondatachannel = evt => {
+    this._pc.ondatachannel = function(evt) {
       util.log('Received data channel');
       const dc = evt.channel || evt;
       this._connection.initialize(dc);
     };
 
-    this._pc.onaddstream = evt => {
+    this._pc.onaddstream = function(evt) {
       util.log('Received remote stream');
       const stream = evt.stream || evt;
       if (this._connection.type === 'media') {
