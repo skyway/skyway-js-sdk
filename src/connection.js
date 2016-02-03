@@ -4,7 +4,7 @@ const util = require('./util');
 const Negotiator = require('./negotiator');
 
 class Connection {
-  constructor(peer, provider, options) {
+  constructor(peer, socket, pcConfig, options) {
     // Abstract class
     if (this.constructor === Connection) {
       throw new TypeError('Cannot construct Connection instances directly');
@@ -19,7 +19,7 @@ class Connection {
     this.provider = provider;
     this.metadata = this.options.metadata;
 
-    this._negotiator = new Negotiator();
+    this._negotiator = new Negotiator(socket, this, pcConfig);
 
     this._idPrefix = 'c_';
   }
