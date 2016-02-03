@@ -18,19 +18,19 @@ class Socket {
     // Presumably need a check for whether a peerId is actually specified or not?
     this.id = id;
 
-    this.socket = io(this._httpUrli, {
+    this.socket = io(this._httpUrl, {
       'force new connection': true,
       'query': `apiKey=${this._key}&token=${token}&peerId=${this.id}`,
       'extraHeaders': {Origin: `http://${dbHelper.activeDomain}`}
     });
     this.socket.on('OPEN', peerId => {
       this.id = peerId;
-    }
+    });
   }
 
   send(data) {
     if (this.disconnected) {
-      return();
+      return;
     }
 
     // If we have no ID yet, queue the message
@@ -42,12 +42,20 @@ class Socket {
     if (this.socket.connected) {
       this.socket.send(message);
     } 
-
-    // TODO: Remove lint bypass
-    console.log(data);
   }
 
   close() {
+    if( !this.disconnected && this.socket.connected) {
+      this.socket.disconnect();
+      this.disconnected = true;
+    }
+  }
+
+  _sendQueuedMessages = function() {
+    for (var i = 0; i < this._queue.length; i++) {
+      // Remove each item from queue in turn and send
+      this.send(this._queue.shift();
+    }
   }
 }
 
