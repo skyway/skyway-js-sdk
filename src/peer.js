@@ -12,6 +12,8 @@ class Peer {
     this.open = false;
     this.connections = {};
 
+    this.test = 'lalala';
+
     if (id && id.constructor === Object) {
       options = id;
       id = undefined;
