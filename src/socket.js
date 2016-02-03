@@ -22,8 +22,11 @@ class Socket {
       'force new connection': true,
       'query':                `apiKey=${this._key}&token=${token}&peerId=${this.id}`
     });
+
+    console.log('Socket started: ' + this.id);
     this.socket.on('OPEN', peerId => {
       this.id = peerId;
+      console.log('OPEN: ' + this.id);
     });
   }
 
