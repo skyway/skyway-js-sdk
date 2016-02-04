@@ -27,14 +27,6 @@ class Util {
     console.log(fn);
   }
 
-  extend(dst, src) {
-    // TODO: see if it can be replaced by ES6 Object.assign
-
-    // TODO: Remove lint bypass
-    console.log(dst, src);
-    return src;
-  }
-
   randomToken() {
     return Math.random().toString(36).substr(2);
   }
@@ -50,11 +42,6 @@ class Util {
   validateKey(key) {
     // Allow empty keys
     return !key || /^[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}$/.exec(key);
-  }
-
-  inherits(ctor, superCtor) {
-    // TODO: Remove lint bypass
-    console.log(ctor, superCtor);
   }
 
   log() {
