@@ -25,7 +25,10 @@ class Socket {
 
     this.socket.on('OPEN', peerId => {
       this.disconnected = false;
-      this.id = peerId;
+      // This should be removed...
+      if (typeof peerId === 'string') {
+        this.id = peerId;
+      }
       console.log('OPEN: ' + this.id);
     });
   }

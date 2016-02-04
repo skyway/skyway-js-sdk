@@ -57,7 +57,7 @@ describe('Socket', () => {
       });
     });
 
-    it('should close socket and properly set disconnect status', done => {
+    it('should close socket and have disconnect status set', done => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
@@ -86,7 +86,7 @@ describe('Socket', () => {
       server.on('connection', conn => {
         conn.emit('OPEN', 'foobar');
       });
-      server.on('msg', msg => {
+      server.on('MSG', msg => {
         console.log('MSG: ' + msg);
         assert.equal(msg, JSON.stringify(data));
       });
@@ -130,28 +130,37 @@ describe('Socket', () => {
       let token = 'token';
       let data1 = {value: 'hello world', type: 'string'};
       let data2 = {value: 'goodbye world', type: 'string'};
+      let receivedData;
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       server.on('connection', conn => {
         conn.emit('OPEN', undefined);
       });
 
-      server.on('msg', msg => {
+      server.on('MSG', msg => {
         console.log('MSG: ' + msg);
-        this.tmp = JSON.parse(msg);
+        receivedData = JSON.parse(msg);
       });
 
       socket.start(peerId, token);
       socket.socket.on('connect', function() {
+        // First pass - No peerID
         socket.send(data1);
-        assert.equal(socket._queue, [data1]);
-        assert.equal(server.receivedData, undefined);
+        assert.deepEqual(socket._queue, [data1]);
+        assert.deepEqual(receivedData, undefined);
+        // Second pass - peerID set, queued messages sent
         socket.id = 'peerId';
-        //assert.equal(server.receivedData, JSON.stringify(msg));
+        socket._sendQueuedMessages();
+        assert.deepEqual(socket._queue, []);
+        assert.deepEqual(receivedData, data1);
+        // Third pass - additional send() invocation
+        socket.send(data2);
+        assert.deepEqual(socket._queue, []);
+        assert.deepEqual(receivedData, data2);
+
         socket.close();
         done();
       });
-
     });
   });
 });
