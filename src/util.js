@@ -58,6 +58,19 @@ class Util {
   }
 
   log() {
+    if (!this.debug) {
+      return;
+    }
+    let err = false;
+    let copy = Array.prototype.slice.call(arguments);
+    copy.unshift('PeerJS: ');
+    for (let i = 0, l = copy.length; i < l; i++) {
+      if (copy[i] instanceof Error) {
+        copy[i] = '(' + copy[i].name + ') ' + copy[i].message;
+        err = true;
+      }
+    }
+    err ? console.error.apply(console, copy) : console.log.apply(console, copy);
   }
 
   chunk(bl) {
@@ -84,4 +97,4 @@ class Util {
   }
 }
 
-module.exports = new Util();
+module.exports = Util;
