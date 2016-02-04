@@ -29,7 +29,7 @@ class Socket {
       if (typeof peerId === 'string') {
         this.id = peerId;
       }
-      console.log('OPEN: ' + this.id);
+      // console.log('OPEN: ' + this.id);
     });
   }
 
@@ -48,8 +48,6 @@ class Socket {
       this.socket.emit('ERR', 'Invalid message');
       return;
     }
-
-    console.log(data.type);
 
     var message = JSON.stringify(data);
     if (this.socket.readyState === 1) {

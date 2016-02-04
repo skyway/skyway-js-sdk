@@ -23,6 +23,7 @@ describe('Socket', () => {
   describe('Connecting to the server', () => {
     it('should be able to connect to a server', done => {
       let apiKey = 'apiKey';
+
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       server.on('connection', conn => {
@@ -40,13 +41,14 @@ describe('Socket', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
+
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       server.on('connection', conn => {
         // How to get peerId?
         conn.emit('OPEN', 'foobar');
         console.log(conn);
-        //console.log(conn.handshake.query.peerId);
+        // console.log(conn.handshake.query.peerId);
       });
 
       socket.start(peerId, token);
@@ -61,6 +63,7 @@ describe('Socket', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
+
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       server.on('connection', conn => {
@@ -75,19 +78,21 @@ describe('Socket', () => {
         done();
       });
     });
+  });
 
+  describe('Sending data', () => {
     it('should be able to send some data', done => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
       let data = {value: 'hello world', type: 'string'};
+
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       server.on('connection', conn => {
         conn.emit('OPEN', 'foobar');
       });
       server.on('MSG', msg => {
-        console.log('MSG: ' + msg);
         assert.equal(msg, JSON.stringify(data));
       });
 
@@ -104,13 +109,14 @@ describe('Socket', () => {
       let peerId = 'peerId';
       let token = 'token';
       let data = {value: 'hello world'};
+
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       server.on('connection', conn => {
         conn.emit('OPEN', 'foobar');
       });
       server.on('MSG', msg => {
-        assert(false, 'should not have received data');
+        assert(msg, false, 'should not have received data');
       });
       server.on('ERR', msg => {
         assert.equal(msg, 'Invalid message');
@@ -131,14 +137,15 @@ describe('Socket', () => {
       let data1 = {value: 'hello world', type: 'string'};
       let data2 = {value: 'goodbye world', type: 'string'};
       let receivedData;
+
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       server.on('connection', conn => {
+        // Force peerID to be undefined
         conn.emit('OPEN', undefined);
       });
 
       server.on('MSG', msg => {
-        console.log('MSG: ' + msg);
         receivedData = JSON.parse(msg);
       });
 
