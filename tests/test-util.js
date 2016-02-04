@@ -1,7 +1,7 @@
 'use strict';
 
 const Util      = require('../src/util');
-const assert    = require('assert');
+const assert    = require('power-assert');
 const sinon     = require('sinon');
 
 describe('Util', () => {
