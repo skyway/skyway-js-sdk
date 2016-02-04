@@ -18,8 +18,6 @@ class Util {
     this._logLevel = 0;
   }
 
-  noop() {}
-
   setLogLevel(level) {
     // TODO: Remove lint bypass
     console.log(level);

@@ -3,10 +3,9 @@
 const Connection = require('./connection');
 
 class MediaConnection extends Connection {
-  constructor(peer, socket, pcConfig, options) {
-    super(peer, socket, pcConfig, options);
+  constructor(peer, provider, options) {
+    super(peer, provider, options);
 
-    this.type = 'media';
     this._idPrefix = 'mc_';
     this.type = 'media';
     this.localStream = this.options._stream;

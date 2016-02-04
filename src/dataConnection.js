@@ -3,10 +3,9 @@
 const Connection = require('./connection');
 
 class DataConnection extends Connection {
-  constructor(peer, socket, pcConfig, options) {
-    super(peer, socket, pcConfig, options);
+  constructor(peer, provider, options) {
+    super(peer, provider, options);
 
-    this.type = 'data';
     this._idPrefix = 'dc_';
     this.type = 'data';
     this.label = this.options.label || this.id;
