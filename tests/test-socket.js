@@ -14,9 +14,11 @@ describe('Socket', () => {
 
   beforeEach(() => {
     server = new Server('http://localhost:' + serverPort);
-    // server.on('connection', function() {
-    //   console.log('Peer connected');
-    // });
+    server.on('connection', conn => {
+      // How to get peerId?
+      conn.emit('OPEN', 'foobar');
+      conn.connected = true;
+    });
   });
 
   afterEach(() => {
@@ -43,6 +45,7 @@ describe('Socket', () => {
 
       socket.start(peerId, token);
       socket.socket.on('connect', function() {
+        assert.equal(socket.id, peerId);
         socket.close();
         done();
       });
@@ -57,7 +60,7 @@ describe('Socket', () => {
       socket.start(peerId, token);
       socket.socket.on('connect', function() {
         socket.close();
-        // assert.equal(socket.socket.connected, false);
+        assert.equal(socket.socket.readyState, 3);
         assert.equal(socket.disconnected, true);
         done();
       });
