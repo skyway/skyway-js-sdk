@@ -42,7 +42,7 @@ class Socket {
     }
 
     if (!data.type) {
-      this.socket.emit('ERROR', 'Invalid message');
+      this.socket.emit('ERR', 'Invalid message');
       return;
     }
 
@@ -50,7 +50,7 @@ class Socket {
 
     var message = JSON.stringify(data);
     if (this.socket.readyState === 1) {
-      this.socket.emit('msg', message);
+      this.socket.emit('MSG', message);
     }
   }
 

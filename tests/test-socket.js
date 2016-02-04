@@ -99,6 +99,31 @@ describe('Socket', () => {
       });
     });
 
+    it('should not send data without a type set', done => {
+      let apiKey = 'apiKey';
+      let peerId = 'peerId';
+      let token = 'token';
+      let data = {value: 'hello world'};
+      const socket = new Socket(false, 'localhost', serverPort, apiKey);
+
+      server.on('connection', conn => {
+        conn.emit('OPEN', 'foobar');
+      });
+      server.on('MSG', msg => {
+        assert(false, 'should not have received data');
+      });
+      server.on('ERR', msg => {
+        assert.equal(msg, 'Invalid message');
+      });
+
+      socket.start(peerId, token);
+      socket.socket.on('connect', function() {
+        socket.send(data);
+        socket.close();
+        done();
+      });
+    });
+
     it('should send queued messages upon connecting', done => {
       let apiKey = 'apiKey';
       let peerId;
