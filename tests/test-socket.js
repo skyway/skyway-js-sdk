@@ -30,7 +30,7 @@ describe('Socket', () => {
       });
 
       socket.start();
-      socket.socket.on('connect', function() {
+      socket.socket.on('connect', () => {
         socket.close();
         done();
       });
@@ -50,7 +50,7 @@ describe('Socket', () => {
       });
 
       socket.start(peerId, token);
-      socket.socket.on('connect', function() {
+      socket.socket.on('connect', () => {
         assert.equal(socket.id, peerId);
         socket.close();
         done();
@@ -68,7 +68,7 @@ describe('Socket', () => {
       });
 
       socket.start(peerId, token);
-      socket.socket.on('connect', function() {
+      socket.socket.on('connect', () => {
         socket.close();
         assert.equal(socket.socket.readyState, 3);
         assert.equal(socket.disconnected, true);
@@ -92,7 +92,7 @@ describe('Socket', () => {
       });
 
       socket.start(peerId, token);
-      socket.socket.on('connect', function() {
+      socket.socket.on('connect', () => {
         socket.send(data);
         socket.close();
         done();
@@ -117,7 +117,7 @@ describe('Socket', () => {
       });
 
       socket.start(peerId, token);
-      socket.socket.on('connect', function() {
+      socket.socket.on('connect', () => {
         socket.send(data);
         socket.close();
         done();
@@ -143,7 +143,7 @@ describe('Socket', () => {
       });
 
       socket.start(peerId, token);
-      socket.socket.on('connect', function() {
+      socket.socket.on('connect', () => {
         // First pass - No peerID
         socket.send(data1);
         assert.deepEqual(socket._queue, [data1]);
