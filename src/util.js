@@ -18,9 +18,53 @@ class Util {
     this._logLevel = 0;
   }
 
+  noop() {
+  }
+
   setLogLevel(level) {
-    // TODO: Remove lint bypass
-    console.log(level);
+    const decimalRadix = 10;
+    let debugLevel = parseInt(level, decimalRadix);
+    if (isNaN(parseInt(level, decimalRadix))) {
+      // If they are using truthy/falsy values for debug
+      this._logLevel = level ? 3 : 0;
+    } else {
+      this._logLevel = debugLevel;
+    }
+    this.log = this.warn = this.error = this.noop;
+    if (this._logLevel > 0) {
+      this.error = this._printWith('ERROR');
+    }
+    if (this._logLevel > 1) {
+      this.warn = this._printWith('WARNING');
+    }
+    if (this._logLevel > 2) {
+      this.log = this._print;
+    }
+  }
+
+  _printWith(prefix) {
+    return () => {
+      let copy = Array.prototype.slice.call(arguments);
+      copy.unshift(prefix);
+      this._print.apply(this, copy);
+    };
+  }
+
+  _print() {
+    let err = false;
+    let copy = Array.prototype.slice.call(arguments);
+    copy.unshift('PeerJS: ');
+    for (var i = 0, l = copy.length; i < l; i++) {
+      if (copy[i] instanceof Error) {
+        copy[i] = '(' + copy[i].name + ') ' + copy[i].message;
+        err = true;
+      }
+    }
+    if (err) {
+      console.error.apply(console, copy);
+    } else {
+      console.log.apply(console, copy);
+    }
   }
 
   setLogFunction(fn) {
