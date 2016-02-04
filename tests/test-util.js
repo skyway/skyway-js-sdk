@@ -1,6 +1,6 @@
 'use strict';
 
-const Util      = require('../src/util')
+const Util      = require('../src/util');
 const assert    = require('assert');
 const sinon     = require('sinon');
 
@@ -19,33 +19,33 @@ describe('Util', () => {
 
     beforeEach(done => {
       stubLog = sinon.stub(console, 'log');
-      stubErr = sinon.stub(console, 'error')
+      stubErr = sinon.stub(console, 'error');
       done();
-    })
+    });
 
     afterEach(done => {
       stubLog.restore();
       stubErr.restore();
       done();
-    })
+    });
 
-    it('should console.error() once with a normal and an error message', done => {
+    it('should call error() once with both std and error message', done => {
       let err = new Error();
-      err.message = "Error message here";
-      err.name = "Error name here";
+      err.message = 'Error message here';
+      err.name = 'Error name here';
 
       util.log('normal message', err);
       assert(stubErr.callCount, 1);
       done();
     });
 
-    it('should console.log() once with a normal message', done => {
+    it('should log() once with a normal message', done => {
       util.log('normal message');
       assert(stubLog.callCount, 1);
       done();
     });
 
-    it('should console.log() once with empty argument', done => {
+    it('should log() once with empty argument', done => {
       util.log();
       assert(stubLog.callCount, 1);
       done();
@@ -58,5 +58,4 @@ describe('Util', () => {
     // WIP
     done();
   });
-
 });

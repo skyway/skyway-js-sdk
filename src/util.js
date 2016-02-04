@@ -61,6 +61,7 @@ class Util {
     if (!this.debug) {
       return;
     }
+
     let err = false;
     let copy = Array.prototype.slice.call(arguments);
     copy.unshift('PeerJS: ');
@@ -70,7 +71,12 @@ class Util {
         err = true;
       }
     }
-    err ? console.error.apply(console, copy) : console.log.apply(console, copy);
+
+    if (err) {
+      console.error.apply(console, copy);
+    } else {
+      console.log.apply(console, copy);
+    }
   }
 
   chunk(bl) {
