@@ -14,16 +14,6 @@ describe('Socket', () => {
 
   beforeEach(() => {
     server = new Server('http://localhost:' + serverPort);
-    server.on('connection', conn => {
-      // How to get peerId?
-      conn.emit('OPEN', 'foobar');
-      // Hmm.
-      conn.connected = true;
-    });
-    server.on('msg', data => {
-      console.log('MSG: ' + data);
-      server.receivedData = data;
-    });
   });
 
   afterEach(() => {
@@ -34,6 +24,10 @@ describe('Socket', () => {
     it('should be able to connect to a server', done => {
       let apiKey = 'apiKey';
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
+
+      server.on('connection', conn => {
+        conn.emit('OPEN', 'foobar');
+      });
 
       socket.start();
       socket.socket.on('connect', function() {
@@ -47,6 +41,13 @@ describe('Socket', () => {
       let peerId = 'peerId';
       let token = 'token';
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
+
+      server.on('connection', conn => {
+        // How to get peerId?
+        conn.emit('OPEN', 'foobar');
+        console.log(conn);
+        //console.log(conn.handshake.query.peerId);
+      });
 
       socket.start(peerId, token);
       socket.socket.on('connect', function() {
@@ -62,6 +63,10 @@ describe('Socket', () => {
       let token = 'token';
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
+      server.on('connection', conn => {
+        conn.emit('OPEN', 'foobar');
+      });
+
       socket.start(peerId, token);
       socket.socket.on('connect', function() {
         socket.close();
@@ -75,16 +80,53 @@ describe('Socket', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
-      let msg = 'hello world';
+      let data = {value: 'hello world', type: 'string'};
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
+
+      server.on('connection', conn => {
+        conn.emit('OPEN', 'foobar');
+      });
+      server.on('msg', msg => {
+        console.log('MSG: ' + msg);
+        assert.equal(msg, JSON.stringify(data));
+      });
 
       socket.start(peerId, token);
       socket.socket.on('connect', function() {
-        socket.send(msg);
-        assert.equal(server.receivedData, JSON.stringify(msg));
+        socket.send(data);
         socket.close();
         done();
       });
+    });
+
+    it('should send queued messages upon connecting', done => {
+      let apiKey = 'apiKey';
+      let peerId;
+      let token = 'token';
+      let data1 = {value: 'hello world', type: 'string'};
+      let data2 = {value: 'goodbye world', type: 'string'};
+      const socket = new Socket(false, 'localhost', serverPort, apiKey);
+
+      server.on('connection', conn => {
+        conn.emit('OPEN', undefined);
+      });
+
+      server.on('msg', msg => {
+        console.log('MSG: ' + msg);
+        this.tmp = JSON.parse(msg);
+      });
+
+      socket.start(peerId, token);
+      socket.socket.on('connect', function() {
+        socket.send(data1);
+        assert.equal(socket._queue, [data1]);
+        assert.equal(server.receivedData, undefined);
+        socket.id = 'peerId';
+        //assert.equal(server.receivedData, JSON.stringify(msg));
+        socket.close();
+        done();
+      });
+
     });
   });
 });

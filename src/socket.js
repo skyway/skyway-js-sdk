@@ -5,7 +5,7 @@ const io    = require('socket.io-client');
 
 class Socket {
   constructor(secure, host, port, key) {
-    this.disconnected = false;
+    this.disconnected = true;
     this._queue = [];
 
     this._key    = key;
@@ -24,6 +24,7 @@ class Socket {
     });
 
     this.socket.on('OPEN', peerId => {
+      this.disconnected = false;
       this.id = peerId;
       console.log('OPEN: ' + this.id);
     });
@@ -37,7 +38,15 @@ class Socket {
     // If we have no ID yet, queue the message
     if (!this.id) {
       this._queue.push(data);
+      return;
     }
+
+    if (!data.type) {
+      this.socket.emit('ERROR', 'Invalid message');
+      return;
+    }
+
+    console.log(data.type);
 
     var message = JSON.stringify(data);
     if (this.socket.readyState === 1) {
