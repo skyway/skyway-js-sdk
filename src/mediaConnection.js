@@ -7,6 +7,7 @@ class MediaConnection extends Connection {
     super(peer, provider, options);
 
     this._idPrefix = 'mc_';
+    this.type = 'media';
     this.localStream = this.options._stream;
   }
 

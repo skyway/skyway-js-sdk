@@ -7,6 +7,7 @@ class DataConnection extends Connection {
     super(peer, provider, options);
 
     this._idPrefix = 'dc_';
+    this.type = 'data';
     this.label = this.options.label || this.id;
     this.serialization = this.options.serialization;
   }

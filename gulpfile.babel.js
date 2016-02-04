@@ -23,7 +23,7 @@ gulp.task('lint', () => {
 });
 
 gulp.task('build', () => {
-  return browserify('./src/skyway.js')
+  return browserify('./src/peer.js')
     .transform(babelify, {presets: ['es2015']})
     .bundle()
     .pipe(source('skyway.js'))
