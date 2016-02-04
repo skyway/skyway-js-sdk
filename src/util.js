@@ -36,15 +36,15 @@ class Util {
   }
 
   randomToken() {
-    return '';
+    return Math.random().toString(36).substr(2);
   }
 
   warn() {
   }
 
   validateId(id) {
-    // TODO: Remove lint bypass
-    console.log(id);
+    // Allow empty ids
+    return !id || /^[A-Za-z0-9_-]+(?:[ _-][A-Za-z0-9]+)*$/.exec(id);
   }
 
   validateKey(key) {

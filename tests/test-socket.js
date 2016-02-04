@@ -25,7 +25,7 @@ describe('Socket', () => {
     it('should be able to connect to a server', done => {
       const socket = new Socket(false, 'localhost', serverPort, 'foobar');
 
-      socket.connect();
+      socket.start();
       socket.socket.on('connect', () => {
         done();
       });

@@ -13,6 +13,32 @@ describe('Util', () => {
     done();
   });
 
+  describe('validateId', () => {
+    it('should be valid when valid id is given', () => {
+      const validIds = [
+        'ABCD 0123',
+        'ABCD_0123',
+        'ABCD-0123-abcd-7890',
+        'ABCD-0123------------abcd-7890'
+      ];
+      validIds.forEach(id => {
+        assert(util.validateId(id));
+      });
+    });
+
+    it('should be invalid when invalid id is given', () => {
+      const validIds = [
+        'あいうえお',
+        '!@#$%^&&*()',
+        'ABCD  0000 ',
+        '><script>alert(1);</script>'
+      ];
+      validIds.forEach(id => {
+        assert(util.validateId(id) === null);
+      });
+    });
+  });
+
   describe('Log', () => {
     let stubLog;
     let stubErr;
