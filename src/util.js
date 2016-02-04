@@ -48,8 +48,8 @@ class Util {
   }
 
   validateKey(key) {
-    // TODO: Remove lint bypass
-    console.log(key);
+    // Allow empty keys
+    return !key || /^[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}$/.exec(key);
   }
 
   inherits(ctor, superCtor) {

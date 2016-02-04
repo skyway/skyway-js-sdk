@@ -27,15 +27,50 @@ describe('Util', () => {
     });
 
     it('should be invalid when invalid id is given', () => {
-      const validIds = [
+      const invalidIds = [
         'あいうえお',
         '!@#$%^&&*()',
         'ABCD  0000 ',
         '><script>alert(1);</script>'
       ];
-      validIds.forEach(id => {
+      invalidIds.forEach(id => {
         assert(util.validateId(id) === null);
       });
+    });
+  });
+
+  describe('validateKey', () => {
+    it('should be valid when valid key is given', () => {
+      const validKeys = [
+        '00000000-0000-0000-0000-000000000000',
+        'abcdefgh-1234-5678-jklm-zxcvasdfqwrt'
+      ];
+      validKeys.forEach(key => {
+        assert(util.validateKey(key));
+      });
+    });
+
+    it('should be invalid when invalid key is given', () => {
+      const validKeys = [
+        '0-0-0-0',
+        'あいうえお',
+        '><script>alert(1);</script>',
+        '00000000-0000-0000-0000-0000000000001'
+      ];
+      validKeys.forEach(key => {
+        assert(util.validateKey(key) === null);
+      });
+    });
+  });
+
+  describe('randomToken', () => {
+    it('should only contain alphanumeric characters', () => {
+      assert(/^[a-zA-Z0-9]+$/.exec(util.randomToken()));
+    });
+
+    it('should produce distinct outputs when run multiple times', () => {
+      // There's a very small possibility that this test will fail because randomID could produce the same number twice
+      assert.notEqual(util.randomToken(), util.randomToken());
     });
   });
 
