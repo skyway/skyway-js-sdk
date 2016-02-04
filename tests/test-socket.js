@@ -17,7 +17,12 @@ describe('Socket', () => {
     server.on('connection', conn => {
       // How to get peerId?
       conn.emit('OPEN', 'foobar');
+      // Hmm.
       conn.connected = true;
+    });
+    server.on('msg', data => {
+      console.log('MSG: ' + data);
+      server.receivedData = data;
     });
   });
 
@@ -70,11 +75,13 @@ describe('Socket', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
+      let msg = 'hello world';
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
       socket.socket.on('connect', function() {
-        socket.send('foobar');
+        socket.send(msg);
+        assert.equal(server.receivedData, JSON.stringify(msg));
         socket.close();
         done();
       });

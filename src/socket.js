@@ -23,7 +23,6 @@ class Socket {
       'query':                `apiKey=${this._key}&token=${token}&peerId=${this.id}`
     });
 
-    console.log('Socket started: ' + this.id);
     this.socket.on('OPEN', peerId => {
       this.id = peerId;
       console.log('OPEN: ' + this.id);
@@ -41,13 +40,13 @@ class Socket {
     }
 
     var message = JSON.stringify(data);
-    if (this.socket.connected) {
-      this.socket.send(message);
+    if (this.socket.readyState === 1) {
+      this.socket.emit('msg', message);
     }
   }
 
   close() {
-    if (!this.disconnected && (this.socket.readyState == 1)) {
+    if (!this.disconnected && (this.socket.readyState === 1)) {
       this.socket.disconnect();
       this.disconnected = true;
     }
