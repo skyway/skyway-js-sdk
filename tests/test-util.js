@@ -74,49 +74,110 @@ describe('Util', () => {
     });
   });
 
-  describe('Log', () => {
+  describe('Log Related methods', () => {
+    let stubError;
+    let stubWarn;
     let stubLog;
-    let stubErr;
+    let currentLogLevel;
 
     beforeEach(done => {
+      currentLogLevel = util._logLevel;
+
+      const LOG_LEVEL_FULL = 3
+      util.setLogLevel(LOG_LEVEL_FULL);
+
+      stubError = sinon.stub(console, 'error');
+      stubWarn = sinon.stub(console, 'warn');
       stubLog = sinon.stub(console, 'log');
-      stubErr = sinon.stub(console, 'error');
       done();
     });
 
     afterEach(done => {
+      currentLogLevel = util._logLevel;
+      util.setLogLevel(currentLogLevel);
+      stubError.restore();
+      stubWarn.restore();
       stubLog.restore();
-      stubErr.restore();
       done();
     });
 
-    it('should call error() once with both std and error message', done => {
-      let err = new Error();
-      err.message = 'Error message here';
-      err.name = 'Error name here';
+    describe('log', () => {
 
-      util.log('normal message', err);
-      assert(stubErr.callCount, 1);
-      done();
+      beforeEach(done => {
+        const LOG_LEVEL_FULL = 3
+        util.setLogLevel(LOG_LEVEL_FULL);
+        done();
+      });
+
+      it('should log() once with a normal message', () => {
+        util.log('normal message');
+        assert(stubLog.callCount === 1);
+        assert(stubWarn.callCount === 0);
+        assert(stubError.callCount === 0);
+      });
+
+      it('should log() once with empty argument', () => {
+        util.log();
+        assert(stubLog.callCount === 1);
+        assert(stubWarn.callCount === 0);
+        assert(stubError.callCount === 0);
+      });
     });
 
-    it('should log() once with a normal message', done => {
-      util.log('normal message');
-      assert(stubLog.callCount, 1);
-      done();
+    describe('warn', () => {
+
+      beforeEach(done => {
+        const LOG_LEVEL_WARN = 2;
+        util.setLogLevel(LOG_LEVEL_WARN);
+        done();
+      });
+
+      it('should warn() once with a normal message', () => {
+        util.warn('normal message');
+        assert(stubLog.callCount === 0);
+        assert(stubWarn.callCount === 1);
+        assert(stubError.callCount === 0);
+      });
+
+      it('should warn() once with empty argument', () => {
+        util.warn();
+        assert(stubLog.callCount === 0);
+        assert(stubWarn.callCount === 1);
+        assert(stubError.callCount === 0);
+      });
     });
 
-    it('should log() once with empty argument', done => {
-      util.log();
-      assert(stubLog.callCount, 1);
-      done();
+    describe('error', () => {
+
+      beforeEach(done => {
+        const LOG_LEVEL_ERROR = 1;
+        util.setLogLevel(LOG_LEVEL_ERROR);
+        done();
+      });
+
+      it('should error() once with a normal message', () => {
+        util.error('normal message');
+        assert(stubError.callCount === 1);
+        assert(stubWarn.callCount === 0);
+        assert(stubLog.callCount === 0);
+      });
+
+      it('should error() once with empty argument', () => {
+        util.error();
+        assert(stubError.callCount === 1);
+        assert(stubWarn.callCount === 0);
+        assert(stubLog.callCount === 0);
+      });
     });
+
   });
 
-  it('should return random token', done => {
-    let token = util.randomToken();
-    assert(token);
-    // WIP
-    done();
-  });
+  // FIXME: Lint error since location is not defined explicitly
+  // describe('isSecure', () => {
+  //   // Test only 'HTTP' becauuse Karma only runs on 'HTTP'
+  //   it('should return false if HTTP', () => {
+  //     // FIXME: Lint error since location is not defined explicitly
+  //     assert(util.isSecure(location.href) === false);
+  //   });
+  // });
 });

@@ -2,6 +2,12 @@
 
 const BinaryPack = require('js-binarypack');
 
+const LOG_LEVEL_NONE  = 0;
+const LOG_LEVEL_ERROR = 1;
+const LOG_LEVEL_WARN  = 2;
+const LOG_LEVEL_FULL  = 3;
+const LOG_PREFIX      = 'SkyWayJS: '
+
 class Util {
   constructor() {
     this.CLOUD_HOST = 'skyway.io';
@@ -15,67 +21,51 @@ class Util {
     this.unpack = BinaryPack.unpack;
     this.setZeroTimeout = undefined;
 
-    this._logLevel = 0;
-  }
-
-  noop() {
+    this._logLevel = LOG_LEVEL_NONE;
   }
 
   setLogLevel(level) {
     const decimalRadix = 10;
     let debugLevel = parseInt(level, decimalRadix);
-    if (isNaN(parseInt(level, decimalRadix))) {
-      // If they are using truthy/falsy values for debug
-      this._logLevel = level ? 3 : 0;
-    } else {
-      this._logLevel = debugLevel;
-    }
-    this.log = this.warn = this.error = this.noop;
-    if (this._logLevel > 0) {
-      this.error = this._printWith('ERROR');
-    }
-    if (this._logLevel > 1) {
-      this.warn = this._printWith('WARNING');
-    }
-    if (this._logLevel > 2) {
-      this.log = this._print;
-    }
-  }
 
-  _printWith(prefix) {
-    return () => {
-      let copy = Array.prototype.slice.call(arguments);
-      copy.unshift(prefix);
-      this._print.apply(this, copy);
-    };
-  }
-
-  _print() {
-    let err = false;
-    let copy = Array.prototype.slice.call(arguments);
-    copy.unshift('PeerJS: ');
-    for (var i = 0, l = copy.length; i < l; i++) {
-      if (copy[i] instanceof Error) {
-        copy[i] = '(' + copy[i].name + ') ' + copy[i].message;
-        err = true;
-      }
+    switch (debugLevel) {
+      case 0:
+        this._logLevel = LOG_LEVEL_NONE;
+        break;
+      case 1:
+        this._logLevel = LOG_LEVEL_ERROR;
+        break;
+      case 2:
+        this._logLevel = LOG_LEVEL_WARN;
+        break;
+      case 3:
+        this._logLevel = LOG_LEVEL_FULL;
+        break;
     }
-    if (err) {
-      console.error.apply(console, copy);
-    } else {
-      console.log.apply(console, copy);
-    }
-  }
-
-  setLogFunction(fn) {
-    console.log(fn);
-  }
-
-  randomToken() {
-    return Math.random().toString(36).substr(2);
   }
 
   warn() {
+    if(this._logLevel >= LOG_LEVEL_WARN) {
+      let copy = Array.prototype.slice.call(arguments);
+      copy.unshift(LOG_PREFIX);
+      console.warn.apply(console, copy);
+    }
+  }
+
+  error() {
+    if(this._logLevel >= LOG_LEVEL_ERROR) {
+      let copy = Array.prototype.slice.call(arguments);
+      copy.unshift(LOG_PREFIX);
+      console.error.apply(console, copy);
+    }
+  }
+
+  log() {
+    if(this._logLevel >= LOG_LEVEL_FULL) {
+      let copy = Array.prototype.slice.call(arguments);
+      copy.unshift(LOG_PREFIX);
+      console.log.apply(console, copy);
+    }
   }
 
   validateId(id) {
@@ -88,26 +78,8 @@ class Util {
     return !key || /^[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}$/.exec(key);
   }
 
-  log() {
-    if (!this.debug) {
-      return;
-    }
-
-    let err = false;
-    let copy = Array.prototype.slice.call(arguments);
-    copy.unshift('PeerJS: ');
-    for (let i = 0, l = copy.length; i < l; i++) {
-      if (copy[i] instanceof Error) {
-        copy[i] = '(' + copy[i].name + ') ' + copy[i].message;
-        err = true;
-      }
-    }
-
-    if (err) {
-      console.error.apply(console, copy);
-    } else {
-      console.log.apply(console, copy);
-    }
+  randomToken() {
+    return Math.random().toString(36).substr(2);
   }
 
   chunk(bl) {
@@ -130,8 +102,10 @@ class Util {
     console.log(binary);
   }
 
-  isSecure() {
-  }
+  // isSecure() {
+  //   // FIXME: Lint error since location is not defined explicitly
+  //   return location.protocol === 'https:';
+  // }
 }
 
 module.exports = Util;
