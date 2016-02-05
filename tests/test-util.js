@@ -83,7 +83,7 @@ describe('Util', () => {
     beforeEach(done => {
       currentLogLevel = util._logLevel;
 
-      const LOG_LEVEL_FULL = 3
+      const LOG_LEVEL_FULL = 3;
       util.setLogLevel(LOG_LEVEL_FULL);
 
       stubError = sinon.stub(console, 'error');
@@ -102,9 +102,8 @@ describe('Util', () => {
     });
 
     describe('log', () => {
-
       beforeEach(done => {
-        const LOG_LEVEL_FULL = 3
+        const LOG_LEVEL_FULL = 3;
         util.setLogLevel(LOG_LEVEL_FULL);
         done();
       });
@@ -125,7 +124,6 @@ describe('Util', () => {
     });
 
     describe('warn', () => {
-
       beforeEach(done => {
         const LOG_LEVEL_WARN = 2;
         util.setLogLevel(LOG_LEVEL_WARN);
@@ -148,7 +146,6 @@ describe('Util', () => {
     });
 
     describe('error', () => {
-
       beforeEach(done => {
         const LOG_LEVEL_ERROR = 1;
         util.setLogLevel(LOG_LEVEL_ERROR);
@@ -169,9 +166,7 @@ describe('Util', () => {
         assert(stubLog.callCount === 0);
       });
     });
-
   });
-
   // FIXME: Lint error since location is not defined explicitly
   // describe('isSecure', () => {
   //   // Test only 'HTTP' becauuse Karma only runs on 'HTTP'

@@ -6,7 +6,7 @@ const LOG_LEVEL_NONE  = 0;
 const LOG_LEVEL_ERROR = 1;
 const LOG_LEVEL_WARN  = 2;
 const LOG_LEVEL_FULL  = 3;
-const LOG_PREFIX      = 'SkyWayJS: '
+const LOG_PREFIX      = 'SkyWayJS: ';
 
 class Util {
   constructor() {
@@ -41,11 +41,14 @@ class Util {
       case 3:
         this._logLevel = LOG_LEVEL_FULL;
         break;
+      default:
+        this._logLevel = LOG_LEVEL_NONE;
+        break;
     }
   }
 
   warn() {
-    if(this._logLevel >= LOG_LEVEL_WARN) {
+    if (this._logLevel >= LOG_LEVEL_WARN) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
       console.warn.apply(console, copy);
@@ -53,7 +56,7 @@ class Util {
   }
 
   error() {
-    if(this._logLevel >= LOG_LEVEL_ERROR) {
+    if (this._logLevel >= LOG_LEVEL_ERROR) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
       console.error.apply(console, copy);
@@ -61,7 +64,7 @@ class Util {
   }
 
   log() {
-    if(this._logLevel >= LOG_LEVEL_FULL) {
+    if (this._logLevel >= LOG_LEVEL_FULL) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
       console.log.apply(console, copy);
