@@ -6,9 +6,8 @@ const sinon     = require('sinon');
 
 describe('Util', () => {
 
-  before(done => {
+  before(() => {
     util.debug = true;
-    done();
   });
 
   describe('validateId', () => {
@@ -78,7 +77,7 @@ describe('Util', () => {
     let stubLog;
     let currentLogLevel;
 
-    beforeEach(done => {
+    beforeEach(() => {
       currentLogLevel = util._logLevel;
 
       const LOG_LEVEL_FULL = 3;
@@ -87,23 +86,20 @@ describe('Util', () => {
       stubError = sinon.stub(console, 'error');
       stubWarn = sinon.stub(console, 'warn');
       stubLog = sinon.stub(console, 'log');
-      done();
     });
 
-    afterEach(done => {
+    afterEach(() => {
       currentLogLevel = util._logLevel;
       util.setLogLevel(currentLogLevel);
       stubError.restore();
       stubWarn.restore();
       stubLog.restore();
-      done();
     });
 
     describe('log', () => {
-      beforeEach(done => {
+      beforeEach(() => {
         const LOG_LEVEL_FULL = 3;
         util.setLogLevel(LOG_LEVEL_FULL);
-        done();
       });
 
       it('should log() once with a normal message', () => {
@@ -122,10 +118,9 @@ describe('Util', () => {
     });
 
     describe('warn', () => {
-      beforeEach(done => {
+      beforeEach(() => {
         const LOG_LEVEL_WARN = 2;
         util.setLogLevel(LOG_LEVEL_WARN);
-        done();
       });
 
       it('should warn() once with a normal message', () => {
@@ -144,10 +139,9 @@ describe('Util', () => {
     });
 
     describe('error', () => {
-      beforeEach(done => {
+      beforeEach(() => {
         const LOG_LEVEL_ERROR = 1;
         util.setLogLevel(LOG_LEVEL_ERROR);
-        done();
       });
 
       it('should error() once with a normal message', () => {
