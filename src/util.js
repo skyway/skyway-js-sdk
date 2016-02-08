@@ -111,4 +111,4 @@ class Util {
   // }
 }
 
-module.exports = Util;
+module.exports = new Util;
