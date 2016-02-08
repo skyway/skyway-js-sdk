@@ -105,10 +105,9 @@ class Util {
     console.log(binary);
   }
 
-  // isSecure() {
-  //   // FIXME: Lint error since location is not defined explicitly
-  //   return location.protocol === 'https:';
-  // }
+  isSecure() {
+    return location.protocol === 'https:';
+  }
 }
 
-module.exports = new Util;
+module.exports = new Util();

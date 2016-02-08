@@ -5,7 +5,6 @@ const assert    = require('power-assert');
 const sinon     = require('sinon');
 
 describe('Util', () => {
-
   before(() => {
     util.debug = true;
   });
@@ -160,11 +159,10 @@ describe('Util', () => {
     });
   });
   // FIXME: Lint error since location is not defined explicitly
-  // describe('isSecure', () => {
-  //   // Test only 'HTTP' becauuse Karma only runs on 'HTTP'
-  //   it('should return false if HTTP', () => {
-  //     // FIXME: Lint error since location is not defined explicitly
-  //     assert(util.isSecure(location.href) === false);
-  //   });
-  // });
+  describe('isSecure', () => {
+    // Test only 'HTTP' becauuse Karma only runs on 'HTTP'
+    it('should return false if HTTP', () => {
+      assert(util.isSecure(location.protocol) === false);
+    });
+  });
 });
