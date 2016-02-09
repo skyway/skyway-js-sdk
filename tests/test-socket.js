@@ -97,25 +97,13 @@ describe('Socket', () => {
       let token = 'token';
       let data = {value: 'hello world', type: 'string'};
 
-      //let stub = sinon.stub(server, 'on');
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
-
-      // server.on('MSG', msg => {
-      //   assert.equal(msg, JSON.stringify(data));
-      //   socket.close();
-      //   //stub.restore();
-      //   done();
-      // });
 
       socket.start(peerId, token);
       socket.socket.OPEN(peerId);
       socket.send(data);
       assert(spy.calledWith('MSG', JSON.stringify(data)));
       done();
-      //  socket.socket.on('OPEN', () => {
-      //    socket.send(data);
-      //    //expect(server.on).to.have.been.called;
-      //  });
     });
 
     it('should not send data without a type set', done => {
@@ -126,19 +114,11 @@ describe('Socket', () => {
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
-      server.on('MSG', msg => {
-        assert(msg, false, 'should not have received data');
-      });
-      server.on('ERR', msg => {
-        assert.equal(msg, 'Invalid message');
-      });
-
       socket.start(peerId, token);
-      socket.socket.on('OPEN', () => {
-        socket.send(data);
-        socket.close();
-        done();
-      });
+      socket.socket.OPEN(peerId);
+      socket.send(data);
+      assert.deepEqual(spy.args[0], ['ERR', 'Invalid message']);
+      done();
     });
 
     it('should send queued messages upon connecting', done => {
