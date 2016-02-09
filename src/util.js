@@ -2,10 +2,10 @@
 
 const BinaryPack = require('js-binarypack');
 
-const LOG_LEVEL_NONE  = 0;
-const LOG_LEVEL_ERROR = 1;
-const LOG_LEVEL_WARN  = 2;
-const LOG_LEVEL_FULL  = 3;
+// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
+import {Enum} from 'enumify';
+class LogLevel extends Enum {}
+LogLevel.initEnum(['NONE', 'ERROR', 'WARN', 'FULL']);
 const LOG_PREFIX      = 'SkyWayJS: ';
 
 class Util {
@@ -21,7 +21,7 @@ class Util {
     this.unpack = BinaryPack.unpack;
     this.setZeroTimeout = undefined;
 
-    this._logLevel = LOG_LEVEL_NONE;
+    this._logLevel = LogLevel.NONE.ordinal;
   }
 
   setLogLevel(level) {
@@ -30,25 +30,25 @@ class Util {
 
     switch (debugLevel) {
       case 0:
-        this._logLevel = LOG_LEVEL_NONE;
+        this._logLevel = LogLevel.NONE.ordinal;
         break;
       case 1:
-        this._logLevel = LOG_LEVEL_ERROR;
+        this._logLevel = LogLevel.ERROR.ordinal;
         break;
       case 2:
-        this._logLevel = LOG_LEVEL_WARN;
+        this._logLevel = LogLevel.WARN.ordinal;
         break;
       case 3:
-        this._logLevel = LOG_LEVEL_FULL;
+        this._logLevel = LogLevel.FULL.ordinal;
         break;
       default:
-        this._logLevel = LOG_LEVEL_NONE;
+        this._logLevel = LogLevel.NONE.ordinal;
         break;
     }
   }
 
   warn() {
-    if (this._logLevel >= LOG_LEVEL_WARN) {
+    if (this._logLevel >= LogLevel.WARN.ordinal) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
       console.warn.apply(console, copy);
@@ -56,7 +56,7 @@ class Util {
   }
 
   error() {
-    if (this._logLevel >= LOG_LEVEL_ERROR) {
+    if (this._logLevel >= LogLevel.ERROR.ordinal) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
       console.error.apply(console, copy);
@@ -64,7 +64,7 @@ class Util {
   }
 
   log() {
-    if (this._logLevel >= LOG_LEVEL_FULL) {
+    if (this._logLevel >= LogLevel.FULL.ordinal) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
       console.log.apply(console, copy);
