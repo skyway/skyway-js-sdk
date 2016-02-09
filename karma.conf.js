@@ -1,5 +1,7 @@
 module.exports = function(config) {
   config.set({
+    singleRun: true,
+
     frameworks: ['browserify', 'mocha'],
 
     files: [
@@ -42,6 +44,6 @@ module.exports = function(config) {
     ],
 
     // define reporters, port, logLevel, browsers etc.
-    browsers: ['PhantomJS2']
+    browsers: ['Chrome']
   });
 };
