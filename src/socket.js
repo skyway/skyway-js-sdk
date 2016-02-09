@@ -8,7 +8,9 @@ class Socket {
     this.disconnected = true;
     this._queue = [];
 
-    this._key    = key;
+    this.socket = null;
+
+    this._key   = key;
 
     let httpProtocol = secure ? 'https://' : 'http://';
     this._httpUrl = `${httpProtocol}${host}:${port}`;
@@ -17,29 +19,31 @@ class Socket {
   start(id, token) {
     // Presumably need a check for whether a peerId is actually specified or not?
     this.id = id;
-
     this.socket = io(this._httpUrl, {
       'force new connection': true,
       'query':                `apiKey=${this._key}&token=${token}&peerId=${this.id}`
     });
 
+    // console.log('socket created');
     this.socket.on('OPEN', peerId => {
       this.disconnected = false;
-      // This should be removed...
-      if (typeof peerId === 'string') {
+
+      if (peerId !== 'undefined') {
         this.id = peerId;
-      }
-      // console.log('OPEN: ' + this.id);
+      } 
+      console.log('OPEN: ' + this.id);
     });
   }
 
   send(data) {
+    console.log('Preparing to send data');
     if (this.disconnected) {
       return;
     }
 
     // If we have no ID yet, queue the message
     if (!this.id) {
+      console.log('No peer id');
       this._queue.push(data);
       return;
     }
@@ -50,13 +54,15 @@ class Socket {
     }
 
     var message = JSON.stringify(data);
-    if (this.socket.readyState === 1) {
+    if (this.socket.connected === true) {
+      console.log('Emitting');
       this.socket.emit('MSG', message);
     }
   }
 
   close() {
-    if (!this.disconnected && (this.socket.readyState === 1)) {
+    // if (!this.disconnected && (this.socket.readyState === 1)) {
+    if (!this.disconnected) {
       this.socket.disconnect();
       this.disconnected = true;
     }

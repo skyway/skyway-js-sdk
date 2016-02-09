@@ -2,22 +2,38 @@
 
 const assert      = require('assert');
 const proxyquire  = require('proxyquire');
-const mockSocket  = require('mock-socket');
-const SocketIO    = mockSocket.SocketIO;
-const Server      = mockSocket.Server;
+// const mockSocket  = require('mock-socket');
+const SocketIO    = require('socket.io-client');
+// const Server      = require('socket.io');
 
-const Socket = proxyquire('../src/socket', {'socket.io-client': SocketIO});
+const sinon  = require('sinon');
+const chai   = require('chai');
+const expect = chai.expect;
 
 describe('Socket', () => {
   const serverPort = 5080;
-  let server;
+  let Socket;
+  let stub;
+  let spy;
 
   beforeEach(() => {
-    server = new Server('http://localhost:' + serverPort);
+    stub = sinon.stub(SocketIO, 'Socket');
+    spy = sinon.spy();
+
+    stub.returns(
+      {
+        on:  function(event, callback) {
+               this[event]=callback
+             },
+        emit: spy,
+        connected: true
+      }
+    );
+    Socket = proxyquire('../src/socket', {'socket.io-client':stub});
   });
 
   afterEach(() => {
-    server.close();
+    stub.restore();
   });
 
   describe('Connecting to the server', () => {
@@ -26,15 +42,18 @@ describe('Socket', () => {
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
-      server.on('connection', conn => {
-        conn.emit('OPEN', 'foobar');
-      });
-
       socket.start();
-      socket.socket.on('connect', () => {
-        socket.close();
-        done();
-      });
+
+      //console.log(stub);
+      assert(stub.called);
+      socket.socket.OPEN('peerId');
+      // socket.socket.on('connect', () => {
+      //   socket.close();
+      // });
+      // :expect(server.on).to.have.been.calledOnce;
+      
+      stub.restore();
+      done();
     });
 
     it('should be able to connect with a specific peerID', done => {
@@ -42,17 +61,12 @@ describe('Socket', () => {
       let peerId = 'peerId';
       let token = 'token';
 
+      // let spy = sinon.spy();
+
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
-      server.on('connection', conn => {
-        // How to get peerId?
-        conn.emit('OPEN', 'foobar');
-        console.log(conn);
-        // console.log(conn.handshake.query.peerId);
-      });
-
       socket.start(peerId, token);
-      socket.socket.on('connect', () => {
+      socket.socket.on('OPEN', () => {
         assert.equal(socket.id, peerId);
         socket.close();
         done();
@@ -66,14 +80,10 @@ describe('Socket', () => {
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
-      server.on('connection', conn => {
-        conn.emit('OPEN', 'foobar');
-      });
-
       socket.start(peerId, token);
-      socket.socket.on('connect', () => {
+      socket.socket.on('OPEN', () => {
         socket.close();
-        assert.equal(socket.socket.readyState, 3);
+        assert.equal(socket.socket.disconnected, true);
         assert.equal(socket.disconnected, true);
         done();
       });
@@ -87,21 +97,25 @@ describe('Socket', () => {
       let token = 'token';
       let data = {value: 'hello world', type: 'string'};
 
+      //let stub = sinon.stub(server, 'on');
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
-      server.on('connection', conn => {
-        conn.emit('OPEN', 'foobar');
-      });
-      server.on('MSG', msg => {
-        assert.equal(msg, JSON.stringify(data));
-      });
+      // server.on('MSG', msg => {
+      //   assert.equal(msg, JSON.stringify(data));
+      //   socket.close();
+      //   //stub.restore();
+      //   done();
+      // });
 
       socket.start(peerId, token);
-      socket.socket.on('connect', () => {
-        socket.send(data);
-        socket.close();
-        done();
-      });
+      socket.socket.OPEN(peerId);
+      socket.send(data);
+      assert(spy.calledWith('MSG', JSON.stringify(data)));
+      done();
+      //  socket.socket.on('OPEN', () => {
+      //    socket.send(data);
+      //    //expect(server.on).to.have.been.called;
+      //  });
     });
 
     it('should not send data without a type set', done => {
@@ -112,9 +126,6 @@ describe('Socket', () => {
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
-      server.on('connection', conn => {
-        conn.emit('OPEN', 'foobar');
-      });
       server.on('MSG', msg => {
         assert(msg, false, 'should not have received data');
       });
@@ -123,7 +134,7 @@ describe('Socket', () => {
       });
 
       socket.start(peerId, token);
-      socket.socket.on('connect', () => {
+      socket.socket.on('OPEN', () => {
         socket.send(data);
         socket.close();
         done();
@@ -137,20 +148,12 @@ describe('Socket', () => {
       let data1 = {value: 'hello world', type: 'string'};
       let data2 = {value: 'goodbye world', type: 'string'};
       let receivedData;
-
+      console.log('starting');
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
-      server.on('connection', conn => {
-        // Force peerID to be undefined
-        conn.emit('OPEN', undefined);
-      });
-
-      server.on('MSG', msg => {
-        receivedData = JSON.parse(msg);
-      });
-
       socket.start(peerId, token);
-      socket.socket.on('connect', () => {
+      socket.socket.on('OPEN', () => {
+        assert.equal(socket.id, undefined);
         // First pass - No peerID
         socket.send(data1);
         assert.deepEqual(socket._queue, [data1]);
@@ -158,13 +161,18 @@ describe('Socket', () => {
         // Second pass - peerID set, queued messages sent
         socket.id = 'peerId';
         socket._sendQueuedMessages();
+      });
+
+      server.on('MSG', msg => {
+        console.log('Message received!');
+        receivedData = JSON.parse(msg);
         assert.deepEqual(socket._queue, []);
-        assert.deepEqual(receivedData, data1);
+        assert.equal(receivedData, data1);
         // Third pass - additional send() invocation
         socket.send(data2);
         assert.deepEqual(socket._queue, []);
         assert.deepEqual(receivedData, data2);
-
+        console.log('ending');
         socket.close();
         done();
       });
