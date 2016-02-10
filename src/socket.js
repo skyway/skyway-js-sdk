@@ -30,7 +30,7 @@ class Socket {
 
       if (peerId !== 'undefined') {
         this.id = peerId;
-      } 
+      }
       console.log('OPEN: ' + this.id);
     });
   }

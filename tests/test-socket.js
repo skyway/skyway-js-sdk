@@ -2,13 +2,11 @@
 
 const assert      = require('assert');
 const proxyquire  = require('proxyquire');
-// const mockSocket  = require('mock-socket');
 const SocketIO    = require('socket.io-client');
-// const Server      = require('socket.io');
 
 const sinon  = require('sinon');
-const chai   = require('chai');
-const expect = chai.expect;
+// const chai   = require('chai');
+// const expect = chai.expect;
 
 describe('Socket', () => {
   const serverPort = 5080;
@@ -22,15 +20,15 @@ describe('Socket', () => {
 
     stub.returns(
       {
-        on:  function(event, callback) {
-               this[event]=callback
-             },
-        emit: spy,
+        on: function(event, callback) {
+          this[event] = callback;
+        },
+        emit:       spy,
         disconnect: spy,
-        connected: true
+        connected:  true
       }
     );
-    Socket = proxyquire('../src/socket', {'socket.io-client':stub});
+    Socket = proxyquire('../src/socket', {'socket.io-client': stub});
   });
 
   afterEach(() => {
@@ -45,15 +43,9 @@ describe('Socket', () => {
 
       socket.start();
 
-      //console.log(stub);
       assert(stub.called);
       socket.socket.OPEN('peerId');
-      // socket.socket.on('connect', () => {
-      //   socket.close();
-      // });
-      // :expect(server.on).to.have.been.calledOnce;
-      
-      stub.restore();
+
       done();
     });
 
