@@ -26,6 +26,7 @@ describe('Socket', () => {
                this[event]=callback
              },
         emit: spy,
+        disconnect: spy,
         connected: true
       }
     );
@@ -61,8 +62,6 @@ describe('Socket', () => {
       let peerId = 'peerId';
       let token = 'token';
 
-      // let spy = sinon.spy();
-
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
@@ -73,7 +72,7 @@ describe('Socket', () => {
       });
     });
 
-    it('should close socket and have disconnect status set', done => {
+    it.only('should close socket and have disconnect status set', done => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
@@ -81,12 +80,22 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket.socket.on('OPEN', () => {
-        socket.close();
-        assert.equal(socket.socket.disconnected, true);
-        assert.equal(socket.disconnected, true);
-        done();
-      });
+      assert.equal(socket.disconnected, true);
+
+      socket.socket.OPEN(peerId);
+      assert.equal(socket.disconnected, false);
+
+      socket.close();
+      assert.equal(socket.disconnected, true);
+
+      done();
+
+      // socket.socket.on('OPEN', () => {
+      //   socket.close();
+      //   assert.equal(socket.socket.disconnected, true);
+      //   assert.equal(socket.disconnected, true);
+      //   done();
+      // });
     });
   });
 
