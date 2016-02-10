@@ -24,26 +24,25 @@ class Socket {
       'query':                `apiKey=${this._key}&token=${token}&peerId=${this.id}`
     });
 
-    // console.log('socket created');
     this.socket.on('OPEN', peerId => {
       this.disconnected = false;
 
       if (peerId !== 'undefined') {
         this.id = peerId;
       }
-      console.log('OPEN: ' + this.id);
+
+      // This may be redundant, but is here to match peerjs:
+      this._sendQueuedMessages();
     });
   }
 
   send(data) {
-    console.log('Preparing to send data');
     if (this.disconnected) {
       return;
     }
 
     // If we have no ID yet, queue the message
     if (!this.id) {
-      console.log('No peer id');
       this._queue.push(data);
       return;
     }
@@ -55,7 +54,6 @@ class Socket {
 
     var message = JSON.stringify(data);
     if (this.socket.connected === true) {
-      console.log('Emitting');
       this.socket.emit('MSG', message);
     }
   }

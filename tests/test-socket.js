@@ -104,6 +104,7 @@ describe('Socket', () => {
       socket.socket.OPEN(peerId);
       socket.send(data);
       assert(spy.calledWith('MSG', JSON.stringify(data)));
+      socket.close();
       done();
     });
 
@@ -119,6 +120,8 @@ describe('Socket', () => {
       socket.socket.OPEN(peerId);
       socket.send(data);
       assert.deepEqual(spy.args[0], ['ERR', 'Invalid message']);
+
+      socket.close();
       done();
     });
 
