@@ -57,11 +57,11 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket.socket.on('OPEN', () => {
-        assert.equal(socket.id, peerId);
-        socket.close();
-        done();
-      });
+      assert(stub.called);
+      assert.equal(socket.id, peerId);
+
+      socket.close();
+      done();
     });
 
     it('should close socket and have disconnect status set', done => {
