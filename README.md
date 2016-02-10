@@ -1,5 +1,7 @@
 # SkyWayJS
 
+[![Build Status](http://drone.webcore.ft.nttcloud.net/api/badges/SkyWay/SkyWay-Client/status.svg)](http://drone.webcore.ft.nttcloud.net/SkyWay/SkyWay-Client)
+
 ## Setting up
 
 Use `npm install` to set up dependencies.
