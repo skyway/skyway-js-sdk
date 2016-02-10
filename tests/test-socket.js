@@ -21,7 +21,7 @@ describe('Socket', () => {
     stub.returns(
       {
         on: function(event, callback) {
-          this[event] = callback;
+          this[event.toLowerCase()] = callback;
         },
         emit:       spy,
         disconnect: spy,
@@ -44,7 +44,7 @@ describe('Socket', () => {
       socket.start();
 
       assert(stub.called);
-      socket.socket.OPEN('peerId');
+      socket.socket.open('peerId');
 
       done();
     });
@@ -74,7 +74,7 @@ describe('Socket', () => {
       socket.start(peerId, token);
       assert.equal(socket.disconnected, true);
 
-      socket.socket.OPEN(peerId);
+      socket.socket.open(peerId);
       assert.equal(socket.disconnected, false);
 
       socket.close();
@@ -82,7 +82,7 @@ describe('Socket', () => {
 
       done();
 
-      // socket.socket.on('OPEN', () => {
+      // socket.socket.on('open', () => {
       //   socket.close();
       //   assert.equal(socket.socket.disconnected, true);
       //   assert.equal(socket.disconnected, true);
@@ -101,7 +101,7 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket.socket.OPEN(peerId);
+      socket.socket.open(peerId);
       socket.send(data);
       assert(spy.calledWith('MSG', JSON.stringify(data)));
       socket.close();
@@ -117,7 +117,7 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket.socket.OPEN(peerId);
+      socket.socket.open(peerId);
       socket.send(data);
       assert.deepEqual(spy.args[0], ['ERR', 'Invalid message']);
 
@@ -136,7 +136,7 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket.socket.OPEN(peerId);
+      socket.socket.open(peerId);
       assert.equal(socket.id, undefined);
 
       // First pass - No peerID
@@ -158,7 +158,7 @@ describe('Socket', () => {
       socket.close();
       done();
 
-      // socket.socket.on('OPEN', () => {
+      // socket.socket.on('open', () => {
       //   assert.equal(socket.id, undefined);
       //   // First pass - No peerID
       //   socket.send(data1);
