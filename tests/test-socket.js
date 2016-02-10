@@ -72,7 +72,7 @@ describe('Socket', () => {
       });
     });
 
-    it.only('should close socket and have disconnect status set', done => {
+    it('should close socket and have disconnect status set', done => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
@@ -137,34 +137,56 @@ describe('Socket', () => {
       let data1 = {value: 'hello world', type: 'string'};
       let data2 = {value: 'goodbye world', type: 'string'};
       let receivedData;
-      console.log('starting');
+
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket.socket.on('OPEN', () => {
-        assert.equal(socket.id, undefined);
-        // First pass - No peerID
-        socket.send(data1);
-        assert.deepEqual(socket._queue, [data1]);
-        assert.deepEqual(receivedData, undefined);
-        // Second pass - peerID set, queued messages sent
-        socket.id = 'peerId';
-        socket._sendQueuedMessages();
-      });
+      socket.socket.OPEN(peerId);
+      assert.equal(socket.id, undefined);
 
-      server.on('MSG', msg => {
-        console.log('Message received!');
-        receivedData = JSON.parse(msg);
-        assert.deepEqual(socket._queue, []);
-        assert.equal(receivedData, data1);
-        // Third pass - additional send() invocation
-        socket.send(data2);
-        assert.deepEqual(socket._queue, []);
-        assert.deepEqual(receivedData, data2);
-        console.log('ending');
-        socket.close();
-        done();
-      });
+      // First pass - No peerID
+      socket.send(data1);
+      assert.deepEqual(socket._queue, [data1]);
+      assert.deepEqual(receivedData, undefined);
+
+      // Second pass - peerID set, queued messages sent
+      socket.id = 'peerId';
+      socket._sendQueuedMessages();
+      assert.deepEqual(socket._queue, []);
+      assert.deepEqual(spy.args[0], ['MSG', JSON.stringify(data1)]);
+
+      // Third pass - additional send() invocation
+      socket.send(data2);
+      assert.deepEqual(socket._queue, []);
+      assert.deepEqual(spy.args[1], ['MSG', JSON.stringify(data2)]);
+
+      socket.close();
+      done();
+
+      // socket.socket.on('OPEN', () => {
+      //   assert.equal(socket.id, undefined);
+      //   // First pass - No peerID
+      //   socket.send(data1);
+      //   assert.deepEqual(socket._queue, [data1]);
+      //   assert.deepEqual(receivedData, undefined);
+      //   // Second pass - peerID set, queued messages sent
+      //   socket.id = 'peerId';
+      //   socket._sendQueuedMessages();
+      // });
+
+      // server.on('MSG', msg => {
+      //   console.log('Message received!');
+      //   receivedData = JSON.parse(msg);
+      //   assert.deepEqual(socket._queue, []);
+      //   assert.equal(receivedData, data1);
+      //   // Third pass - additional send() invocation
+      //   socket.send(data2);
+      //   assert.deepEqual(socket._queue, []);
+      //   assert.deepEqual(receivedData, data2);
+      //   console.log('ending');
+      //   socket.close();
+      //   done();
+      // });
     });
   });
 });
