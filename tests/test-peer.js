@@ -6,17 +6,17 @@ const util      = require('../src/util');
 
 describe.only('Peer', () => {
   describe('Constructor', () => {
-  	const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt'
+    const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
     it('should create a Peer object', () => {
       const peer = new Peer({
-        key: apiKey 
+        key: apiKey
       });
       assert(peer);
       assert(peer instanceof Peer);
     });
     it('should create a Peer object with default options', () => {
       const peer = new Peer({
-        key: apiKey 
+        key: apiKey
       });
       assert(peer.options.debug === util.LOG_LEVELS.NONE);
       assert(peer.options.host === util.CLOUD_HOST);
@@ -27,14 +27,14 @@ describe.only('Peer', () => {
       assert(peer.options.turn === true);
     });
     it('should create a Peer object with options overwritten', () => {
-    	const config = {iceServers: []};
+      const config = {iceServers: []};
       const peer = new Peer({
-        key: apiKey,
-        debug: util.LOG_LEVELS.FULL,
+        key:    apiKey,
+        debug:  util.LOG_LEVELS.FULL,
         config: config
       });
       // Overwritten
-      assert(peer.options.key=== apiKey);
+      assert(peer.options.key === apiKey);
       assert(peer.options.debug === util.LOG_LEVELS.FULL);
       assert(peer.options.config === config);
 
@@ -48,32 +48,32 @@ describe.only('Peer', () => {
     // TODO: Implement after initializeServerConnection
     // it('should create a Peer object with ID', () => {
     //   const peer = new Peer('myID', {
-    //     key: apiKey 
+    //     key: apiKey
     //   });
     //   assert(peer);
     //   assert(peer instanceof Peer);
-    // });   
+    // });
     it('should not create a Peer object with invalid ID', done => {
-	    let peer;
-    	try {
-	      peer = new Peer('間違ったIDです', {
-	        key: apiKey 
-	      });
-    	} catch(e) {
-    		assert(peer === undefined);
-    		done();
-    	}
+      let peer;
+      try {
+        peer = new Peer('間違ったIDです', {
+          key: apiKey
+        });
+      } catch (e) {
+        assert(peer === undefined);
+        done();
+      }
     });
     it('should not create a Peer object with invalid API key', done => {
-	    let peer;
-    	try {
-	      peer = new Peer({
-	        key: 'wrong'
-	      });
-    	} catch(e) {
-    		assert(peer === undefined);
-    		done();
-    	}
+      let peer;
+      try {
+        peer = new Peer({
+          key: 'wrong'
+        });
+      } catch (e) {
+        assert(peer === undefined);
+        done();
+      }
     });
   });
 });

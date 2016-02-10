@@ -22,9 +22,9 @@ class Util {
     this.setZeroTimeout = undefined;
     this.LOG_LEVELS = LogLevel;
     this.defaultConfig = {
-      'iceServers': [{ 
-        'urls': 'stun:stun.skyway.io:3478',
-        'url': 'stun:stun.skyway.io:3478'
+      iceServers: [{
+        urls: 'stun:stun.skyway.io:3478',
+        url:  'stun:stun.skyway.io:3478'
       }]
     };
 
