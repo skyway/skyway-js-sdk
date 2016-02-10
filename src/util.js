@@ -21,6 +21,12 @@ class Util {
     this.unpack = BinaryPack.unpack;
     this.setZeroTimeout = undefined;
     this.LOG_LEVELS = LogLevel;
+    this.defaultConfig = {
+      'iceServers': [{ 
+        'urls': 'stun:stun.skyway.io:3478',
+        'url': 'stun:stun.skyway.io:3478'
+      }]
+    };
 
     this._logLevel = LogLevel.NONE.ordinal;
   }

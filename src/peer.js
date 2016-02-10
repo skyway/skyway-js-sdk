@@ -34,7 +34,7 @@ class Peer extends EventEmitter {
       config: util.defaultConfig,
       turn:   true
     };
-    this.options = Object.assign(options, defaultOptions);
+    this.options = Object.assign({}, defaultOptions, options);
 
     if (this.options.host === '/') {
       this.options.host = window.location.hostname;
