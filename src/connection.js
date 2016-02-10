@@ -28,6 +28,7 @@ class Connection {
     return this.options.connectionId || this._idPrefix + util.randomToken();
   }
 
+  // TODO: move into the negotiator class to handle signalling directly?
   handleMessage(message) {
     var payload = message.payload;
 
