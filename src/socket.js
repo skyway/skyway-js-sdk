@@ -27,7 +27,7 @@ class Socket {
     this.socket.on('OPEN', peerId => {
       this.disconnected = false;
 
-      if (peerId !== 'undefined') {
+      if (peerId !== undefined) {
         this.id = peerId;
       }
 
