@@ -7,9 +7,10 @@ const util      = require('../src/util');
 const sinon     = require('sinon');
 
 describe('Peer', () => {
-  describe('Constructor', () => {
-    const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
+  const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
+  const timeForAsync = 10;
 
+  describe('Constructor', () => {
     it('should create a Peer object', () => {
       const peer = new Peer({
         key: apiKey
@@ -147,6 +148,63 @@ describe('Peer', () => {
 
       window.onbeforeunload();
       assert(peer._destroyCalled === true);
+    });
+  });
+
+  describe('Disconnect', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+    it('should emit "disconnected" event on peer', done => {
+      peer.disconnect();
+      peer.on('disconnected', id => {
+        assert(peer.id === id);
+        done();
+      });
+    });
+
+    it('should set _disconnectCalled to true', done => {
+      peer.disconnect();
+      peer.on('disconnected', () => {
+        assert(peer._disconnectCalled === true);
+        done();
+      });
+    });
+
+    it('should set _disconnectCalled to true and open to false', done => {
+      peer.disconnect();
+      peer.on('disconnected', () => {
+        assert(peer._disconnectCalled === true);
+        assert(peer.open === false);
+        done();
+      });
+    });
+
+    it('should call socket.close', done => {
+      const spy = sinon.spy(peer.socket, 'close');
+
+      peer.disconnect();
+
+      peer.on('disconnected', () => {
+        assert(spy.calledOnce === true);
+        spy.restore();
+        done();
+      });
+    });
+
+    it('should set _lastPeerId to current id and id to null', done => {
+      peer.disconnect();
+
+      peer.on('disconnected', id => {
+        setTimeout(() => {
+          assert(peer._lastPeerId === id);
+          assert(peer.id === null);
+          done()
+        }, timeForAsync);
+      });
     });
   });
 });
