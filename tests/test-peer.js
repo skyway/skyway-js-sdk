@@ -6,7 +6,7 @@ const assert    = require('power-assert');
 const util      = require('../src/util');
 const sinon     = require('sinon');
 
-describe.only('Peer', () => {
+describe('Peer', () => {
   describe('Constructor', () => {
     const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
 
@@ -99,11 +99,13 @@ describe.only('Peer', () => {
       });
 
       const testMsg = 'test message';
-      const spy = sinon.spy(peer._handleMessage);
+      const spy = sinon.spy(peer, '_handleMessage');
 
       peer.socket.emit('message', testMsg);
+
       assert(spy.calledOnce === true);
       assert(spy.calledWith(testMsg) === true);
+      spy.restore();
     });
 
     it('should abort on a socket "error"', done => {
@@ -127,17 +129,15 @@ describe.only('Peer', () => {
         key: apiKey
       });
 
-      const errMsg = 'test error';
-
       peer.on('error', err => {
         assert(err.type === 'socket-error');
-        assert(err.message === errMsg);
+        assert(err.message === 'Lost connection to server.');
 
         assert(peer._disconnectCalled === true);
         done();
       });
 
-      peer.socket.emit('disconnect', 'test error');
+      peer.socket.emit('disconnect');
     });
 
     it('should call destroy onbeforeunload', () => {

@@ -2,7 +2,7 @@
 
 // const DataConnection  = require('./dataConnection');
 // const MediaConnection = require('./mediaConnection');
-// const Socket          = require('./socket');
+const Socket          = require('./socket');
 const util            = require('./util');
 
 const EventEmitter = require('events');
@@ -52,7 +52,7 @@ class Peer extends EventEmitter {
       return;
     }
 
-    // this._initializeServerConnection();
+    this._initializeServerConnection();
   }
 
   connect(peer, options) {
@@ -81,9 +81,11 @@ class Peer extends EventEmitter {
   }
 
   destroy() {
+    this._destroyCalled = true;
   }
 
   disconnect() {
+    this._disconnectCalled = true;
   }
 
   reconnect() {
@@ -107,7 +109,34 @@ class Peer extends EventEmitter {
   }
 
   _initializeServerConnection() {
-    // TODO implement
+    this.socket = new Socket(
+      this.options.secure,
+      this.options.host,
+      this.options.port,
+      this.options.key);
+
+    this.socket.on('message', data => {
+      this._handleMessage(data);
+    });
+
+    this.socket.on('error', error => {
+      this._abort('socket-error', error);
+    });
+
+    this.socket.on('disconnect', () => {
+      // If we haven't explicitly disconnected, emit error and disconnect.
+      if (!this._disconnectCalled) {
+        this.disconnect();
+        this.emitError('socket-error', 'Lost connection to server.');
+      }
+    });
+
+    window.onbeforeunload = () => {
+      this.destroy();
+    };
+  }
+
+  _handleMessage() {
   }
 
   _retrieveId(id) {
