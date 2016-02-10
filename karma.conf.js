@@ -30,8 +30,10 @@ module.exports = function(config) {
       configure: function(bundle) {
         bundle.once('prebundle', function() {
           bundle.transform(
-            'babelify',
-            {presets: ['es2015']}
+            'babelify', {
+              presets: ['es2015'],
+              plugins: ['babel-plugin-espower']
+            }
           ).plugin('proxyquire-universal');
         });
       }
