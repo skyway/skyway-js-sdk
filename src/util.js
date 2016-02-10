@@ -20,11 +20,16 @@ class Util {
     this.pack = BinaryPack.pack;
     this.unpack = BinaryPack.unpack;
     this.setZeroTimeout = undefined;
+    this.LOG_LEVELS = LogLevel;
 
     this._logLevel = LogLevel.NONE.ordinal;
   }
 
   setLogLevel(level) {
+    if (level instanceof LogLevel) {
+      level = level.ordinal;
+    }
+
     const decimalRadix = 10;
     let debugLevel = parseInt(level, decimalRadix);
 

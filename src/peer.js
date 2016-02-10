@@ -11,11 +11,13 @@ class Peer extends EventEmitter {
   constructor(id, options) {
     super();
 
-    this.destroyed = false;
-    this.disconnected = false;
+    // true when connected to SkyWay server
     this.open = false;
     this.connections = {};
-    this._lostMessages = {};
+
+    // to prevent duplicate calls to destroy/disconnect
+    this._disconnectCalled = false;
+    this._destroyCalled = false;
 
     if (id && id.constructor === Object) {
       options = id;
@@ -25,46 +27,32 @@ class Peer extends EventEmitter {
     }
 
     const defaultOptions = {
-      debug:  0,
+      debug:  util.LOG_LEVELS.NONE,
       host:   util.CLOUD_HOST,
       port:   util.CLOUD_PORT,
-      key:    'skyway-apikey',
-      path:   '/',
       token:  util.randomToken(),
       config: util.defaultConfig,
       turn:   true
     };
-    this.options = options = Object.assign(options, defaultOptions);
+    this.options = Object.assign(options, defaultOptions);
 
-    if (options.host === '/') {
-      options.host = window.location.hostname;
+    if (this.options.host === '/') {
+      this.options.host = window.location.hostname;
     }
 
-    if (options.path[0] !== '/') {
-      options.path = `/${options.path}`;
-    }
-    if (options.path[options.path.length - 1] !== '/') {
-      options.path += '/';
-    }
-
-    util.setLogLevel(options.debug);
+    util.setLogLevel(this.options.debug);
 
     if (!util.validateId(id)) {
-      this._delayedAbort('invalid-id', 'ID "' + id + '" is invalid');
+      this._abort('invalid-id', `ID "${id}" is invalid`);
       return;
     }
 
-    if (!util.validateKey(options.key)) {
-      this._delayedAbort('invalid-key', 'API KEY "' + options.key + '" is invalid');
+    if (!util.validateKey(this.options.key)) {
+      this._abort('invalid-key', `API KEY "${this.options.key}" is invalid`);
       return;
     }
 
-    this._initializeServerConnection();
-    if (id) {
-      this._retrieveId(id);
-    } else {
-      this._retrieveId();
-    }
+    // this._initializeServerConnection();
   }
 
   connect(peer, options) {
@@ -83,8 +71,13 @@ class Peer extends EventEmitter {
   }
 
   emitError(type, err) {
-    // TODO: Remove lint bypass
-    console.log(type, err);
+    util.error('Error:', err);
+    if (typeof err === 'string') {
+      err = new Error(err);
+    }
+
+    err.type = type;
+    this.emit('error', err);
   }
 
   destroy() {
@@ -103,16 +96,12 @@ class Peer extends EventEmitter {
 
   _abort(type, message) {
     util.error('Aborting!');
-    if (this._lastServerId === undefined) {
-      this.destroy();
-    } else {
-      this.disconnect();
-    }
+    this.disconnect();
     this.emitError(type, message);
   }
 
   _delayedAbort(type, message) {
-    util.setTimeout(() => {
+    setTimeout(() => {
       this._abort(type, message);
     }, 0);
   }
