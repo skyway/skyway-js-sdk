@@ -3,8 +3,8 @@
 const Connection = require('./connection');
 
 class MediaConnection extends Connection {
-  constructor(peer, provider, options) {
-    super(peer, provider, options);
+  constructor(peerId, peerObj, options) {
+    super(peerId, peerObj, options);
 
     this._idPrefix = 'mc_';
     this.type = 'media';

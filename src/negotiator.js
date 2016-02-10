@@ -10,7 +10,6 @@ class Negotiator {
   }
 
   startConnection(options) {
-    console.log("startConnection called")
     // TODO: Remove lint bypass
     //console.log(options);
   }
