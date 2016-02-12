@@ -11,7 +11,7 @@ class Negotiator {
 
   startConnection(options) {
     // TODO: Remove lint bypass
-    //console.log(options);
+    console.log(options);
   }
 
   cleanup() {
@@ -19,12 +19,12 @@ class Negotiator {
 
   handleSDP(type, sdp) {
     // TODO: Remove lint bypass
-    //console.log(type, sdp);
+    console.log(type, sdp);
   }
 
   handleCandidate(ice) {
     // TODO: Remove lint bypass
-    //console.log(ice);
+    console.log(ice);
   }
 }
 

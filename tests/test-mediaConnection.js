@@ -8,7 +8,6 @@ const sinon      = require('sinon');
 describe('MediaConnection', () => {
   describe('Constructor', () => {
     it('should call negotiator\'s startConnection method when created', () => {
-
       const stub = sinon.stub();
       const spy = sinon.spy();
 
@@ -30,6 +29,7 @@ describe('MediaConnection', () => {
 
       const mc = new MediaConnection(peerId, peer, {_stream: {}});
 
+      assert(mc);
       assert(spy.calledOnce);
     });
   });
