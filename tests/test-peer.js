@@ -330,4 +330,64 @@ describe('Peer', () => {
       }
     });
   });
+
+  describe.only('_setupMessageHandlers', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should set peer.id on OPEN events', () => {
+      assert(peer.id === undefined);
+
+      const peerId = 'testId';
+      peer.socket.emit(util.MESSAGE_TYPES.OPEN.name, peerId);
+
+      assert(peer.id === peerId);
+    });
+
+    it('should abort with server-error on ERROR events', () => {
+      const errMsg = 'Error message';
+      try {
+        peer.socket.emit(util.MESSAGE_TYPES.ERROR.name, errMsg);
+      } catch (e) {
+        assert(e.type === 'server-error');
+        assert(e.message === errMsg);
+
+        return;
+      }
+
+      assert.fail();
+    });
+
+    it('should log a message on LEAVE events', () => {
+      const peerId = 'testId';
+
+      const spy = sinon.spy(util, 'log');
+
+      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.name, peerId);
+
+      assert(spy.calledOnce === true);
+      assert(spy.calledWith(`Received leave message from ${peerId}`) === true);
+
+      spy.restore();
+    });
+
+    it('should emit a peer-unavailable error on EXPIRE events', done => {
+      const peerId = 'testId';
+      peer.on(util.PEER_EVENTS.error.name, e => {
+        assert(e.type === 'peer-unavailable');
+        assert(e.message === `Could not connect to peer ${peerId}`);
+        done();
+      });
+
+      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, peerId);
+    });
+  });
 });
