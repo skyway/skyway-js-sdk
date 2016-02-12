@@ -295,7 +295,7 @@ describe('Peer', () => {
     });
   });
 
-  describe.only('_CleanupPeer', () => {
+  describe('_CleanupPeer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
