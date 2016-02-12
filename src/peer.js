@@ -84,7 +84,11 @@ class Peer extends EventEmitter {
   }
 
   destroy() {
-    this._destroyCalled = true;
+    if (!this._destroyCalled) {
+      this._destroyCalled = true;
+      this._cleanup();
+      this.disconnect();
+    }
   }
 
   disconnect() {
@@ -158,6 +162,21 @@ class Peer extends EventEmitter {
   _retrieveId(id) {
     // TODO: Remove lint bypass
     console.log(id);
+  }
+
+  _cleanup() {
+    if (this.connections) {
+      for (let peer of Object.keys(this.connections)) {
+        this._cleanupPeer(peer);
+      }
+    }
+    this.emit('close');
+  }
+
+  _cleanupPeer(peer) {
+    for (let id of Object.keys(this.connections[peer])) {
+      this.connections[peer][id].close();
+    }
   }
 }
 

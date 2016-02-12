@@ -245,7 +245,7 @@ describe('Peer', () => {
     });
 
     it('should call disconnect()', () => {
-      const spy = sinon.spy(peer.disconnect);
+      const spy = sinon.spy(peer, 'disconnect');
 
       peer.destroy();
 
@@ -264,12 +264,12 @@ describe('Peer', () => {
     });
 
     it('should not call disconnect() the second time you call it', () => {
-      const spy = sinon.spy(peer.disconnect);
+      const spy = sinon.spy(peer, 'disconnect');
 
       peer.destroy();
       peer.destroy();
 
-      assert(spy.calledOnce);
+      assert(spy.calledOnce === true);
 
       spy.restore();
     });
@@ -283,19 +283,19 @@ describe('Peer', () => {
         peer.connections[peerId] = {};
       }
 
-      const spy = sinon.stub(peer, '_cleanupPeers');
+      const stub = sinon.stub(peer, '_cleanupPeer');
       peer.destroy();
 
-      assert(spy.callCount === peerIds.length);
+      assert(stub.callCount === peerIds.length);
       for (let peerId of peerIds) {
-        assert(spy.calledWith(peerId));
+        assert(stub.calledWith(peerId) === true);
       }
 
-      spy.restore();
+      stub.restore();
     });
   });
 
-  describe('_CleanupPeer', () => {
+  describe.only('_CleanupPeer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
@@ -320,12 +320,11 @@ describe('Peer', () => {
       }
 
       assert(spies.length === numConns);
-      assert(peer.connections[peerId].length === numConns);
+      assert(Object.keys(peer.connections[peerId]).length === numConns);
 
       peer._cleanupPeer(peerId);
       for (let spy of spies) {
-        assert(spy.calledOnce);
-        spy.restore();
+        assert(spy.calledOnce === true);
       }
     });
   });
