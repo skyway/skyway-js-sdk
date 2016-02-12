@@ -181,14 +181,6 @@ describe('Peer', () => {
       });
     });
 
-    it('should set _disconnectCalled to true', done => {
-      peer.disconnect();
-      peer.on('disconnected', () => {
-        assert(peer._disconnectCalled === true);
-        done();
-      });
-    });
-
     it('should set _disconnectCalled to true and open to false', done => {
       peer.disconnect();
       peer.on('disconnected', () => {
@@ -237,6 +229,104 @@ describe('Peer', () => {
           done();
         }, timeForAsync);
       });
+    });
+  });
+
+  describe('Destroy', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should call disconnect()', () => {
+      const spy = sinon.spy(peer.disconnect);
+
+      peer.destroy();
+
+      assert(spy.calledOnce === true);
+
+      spy.restore();
+    });
+
+    it('should set _destroyCalled to false', done => {
+      peer.destroy();
+
+      peer.on('disconnected', () => {
+        assert(peer._destroyCalled === true);
+        done();
+      });
+    });
+
+    it('should not call disconnect() the second time you call it', () => {
+      const spy = sinon.spy(peer.disconnect);
+
+      peer.destroy();
+      peer.destroy();
+
+      assert(spy.calledOnce);
+
+      spy.restore();
+    });
+
+    it('should call _cleanupPeer for each peer in peer.connections', () => {
+      const peerIds = [];
+      const numPeers = 10;
+      for (let peerIndex = 0; peerIndex < numPeers; peerIndex++) {
+        const peerId = util.randomToken();
+        peerIds.push(peerId);
+        peer.connections[peerId] = {};
+      }
+
+      const spy = sinon.stub(peer, '_cleanupPeers');
+      peer.destroy();
+
+      assert(spy.callCount === peerIds.length);
+      for (let peerId of peerIds) {
+        assert(spy.calledWith(peerId));
+      }
+
+      spy.restore();
+    });
+  });
+
+  describe('_CleanupPeer', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should call close for each connection in the peer', () => {
+      const peerId = util.randomToken();
+      peer.connections[peerId] = {};
+
+      const spies = [];
+      const numConns = 5;
+      for (let connIndex = 0; connIndex < numConns; connIndex++) {
+        const spy = sinon.spy();
+        spies.push(spy);
+        peer.connections[peerId][util.randomToken()] = {close: spy};
+      }
+
+      assert(spies.length === numConns);
+      assert(peer.connections[peerId].length === numConns);
+
+      peer._cleanupPeer(peerId);
+      for (let spy of spies) {
+        assert(spy.calledOnce);
+        spy.restore();
+      }
     });
   });
 });
