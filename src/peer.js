@@ -207,9 +207,9 @@ class Peer extends EventEmitter {
 
   _addConnection(peerId, connection) {
     if (!this.connections[peerId]) {
-      this.connections[peerId] = [];
+      this.connections[peerId] = {};
     }
-    this.connections[peerId].push(connection);
+    this.connections[peerId][connection.id] = connection;
   }
 
   _cleanup() {
