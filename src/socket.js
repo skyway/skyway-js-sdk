@@ -7,7 +7,7 @@ class Socket {
     this.disconnected = true;
     this._queue = [];
 
-    this.socket = null;
+    this._socket = null;
 
     this._key   = key;
 
@@ -18,12 +18,12 @@ class Socket {
   start(id, token) {
     // Presumably need a check for whether a peerId is actually specified or not?
     this.id = id;
-    this.socket = io(this._httpUrl, {
+    this._socket = io(this._httpUrl, {
       'force new connection': true,
       'query':                `apiKey=${this._key}&token=${token}&peerId=${this.id}`
     });
 
-    this.socket.on('OPEN', peerId => {
+    this._socket.on('OPEN', peerId => {
       this.disconnected = false;
 
       if (peerId !== undefined) {
@@ -47,20 +47,20 @@ class Socket {
     }
 
     if (!data.type) {
-      this.socket.emit('ERR', 'Invalid message');
+      this._socket.emit('ERR', 'Invalid message');
       return;
     }
 
     var message = JSON.stringify(data);
-    if (this.socket.connected === true) {
-      this.socket.emit('MSG', message);
+    if (this._socket.connected === true) {
+      this._socket.emit('MSG', message);
     }
   }
 
   close() {
-    // if (!this.disconnected && (this.socket.readyState === 1)) {
+    // if (!this.disconnected && (this._socket.readyState === 1)) {
     if (!this.disconnected) {
-      this.socket.disconnect();
+      this._socket.disconnect();
       this.disconnected = true;
     }
   }

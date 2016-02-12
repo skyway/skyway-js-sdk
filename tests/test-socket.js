@@ -44,7 +44,7 @@ describe('Socket', () => {
       socket.start();
 
       assert(stub.called);
-      socket.socket.open('peerId');
+      socket._socket.open('peerId');
 
       done();
     });
@@ -74,7 +74,7 @@ describe('Socket', () => {
       socket.start(peerId, token);
       assert.equal(socket.disconnected, true);
 
-      socket.socket.open(peerId);
+      socket._socket.open(peerId);
       assert.equal(socket.disconnected, false);
 
       socket.close();
@@ -101,7 +101,7 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket.socket.open(peerId);
+      socket._socket.open(peerId);
       socket.send(data);
       assert(spy.calledWith('MSG', JSON.stringify(data)));
       socket.close();
@@ -117,7 +117,7 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket.socket.open(peerId);
+      socket._socket.open(peerId);
       socket.send(data);
       assert.deepEqual(spy.args[0], ['ERR', 'Invalid message']);
 
@@ -136,7 +136,7 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket.socket.open(peerId);
+      socket._socket.open(peerId);
       assert.equal(socket.id, undefined);
 
       // First pass - No peerID
