@@ -20,7 +20,14 @@ MessageTypes.initEnum([
 ]);
 
 class PeerEvents extends Enum {}
-PeerEvents.initEnum(['open', 'error', 'call', 'close', 'disconnected']);
+PeerEvents.initEnum([
+  'open',
+  'error',
+  'call',
+  'connection',
+  'close',
+  'disconnected'
+]);
 
 class Util {
   constructor() {

@@ -1,6 +1,6 @@
 'use strict';
 
-// const DataConnection  = require('./dataConnection');
+const DataConnection  = require('./dataConnection');
 const MediaConnection = require('./mediaConnection');
 const Socket          = require('./socket');
 const util            = require('./util');
@@ -170,7 +170,10 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(util.MESSAGE_TYPES.EXPIRE.name, message => {
-      this.emitError('peer-unavailable', `Could not connect to peer ${message.src}`);
+      this.emitError(
+        'peer-unavailable',
+        `Could not connect to peer ${message.src}`
+      );
     });
 
     this.socket.on(util.MESSAGE_TYPES.OFFER.name, message => {
@@ -194,16 +197,16 @@ class Peer extends EventEmitter {
         this.emit(util.PEER_EVENTS.call.name, connection);
       } else if (message.type === 'data') {
         connection = new DataConnection(message.src, this, {
-          connectionId:   connectionId,
-          _payload:       message,
-          metadata:       message.metadata,
-          label:          message.label,
-          serialization:  message.serialization
+          connectionId:  connectionId,
+          _payload:      message,
+          metadata:      message.metadata,
+          label:         message.label,
+          serialization: message.serialization
         });
 
         util.log('DataConnection created in OFFER');
         this._addConnection(message.src, connection);
-        this.emit('connection', connection);
+        this.emit(util.PEER_EVENTS.connection.name, connection);
       } else {
         util.warn('Received malformed connection type: ', message.type);
       }
