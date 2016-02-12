@@ -1,6 +1,6 @@
 'use strict';
 
-const assert      = require('assert');
+const assert      = require('power-assert');
 const proxyquire  = require('proxyquire');
 const SocketIO    = require('socket.io-client');
 

@@ -2,6 +2,12 @@
 
 const BinaryPack = require('js-binarypack');
 
+// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
+import {Enum} from 'enumify';
+class LogLevel extends Enum {}
+LogLevel.initEnum(['NONE', 'ERROR', 'WARN', 'FULL']);
+const LOG_PREFIX      = 'SkyWayJS: ';
+
 class Util {
   constructor() {
     this.CLOUD_HOST = 'skyway.io';
@@ -15,49 +21,68 @@ class Util {
     this.unpack = BinaryPack.unpack;
     this.setZeroTimeout = undefined;
 
-    this._logLevel = 0;
+    this._logLevel = LogLevel.NONE.ordinal;
   }
 
   setLogLevel(level) {
-    // TODO: Remove lint bypass
-    console.log(level);
-  }
+    const decimalRadix = 10;
+    let debugLevel = parseInt(level, decimalRadix);
 
-  setLogFunction(fn) {
-    console.log(fn);
-  }
-
-  extend(dst, src) {
-    // TODO: see if it can be replaced by ES6 Object.assign
-
-    // TODO: Remove lint bypass
-    console.log(dst, src);
-    return src;
-  }
-
-  randomToken() {
-    return '';
+    switch (debugLevel) {
+      case 0:
+        this._logLevel = LogLevel.NONE.ordinal;
+        break;
+      case 1:
+        this._logLevel = LogLevel.ERROR.ordinal;
+        break;
+      case 2:
+        this._logLevel = LogLevel.WARN.ordinal;
+        break;
+      case 3:
+        this._logLevel = LogLevel.FULL.ordinal;
+        break;
+      default:
+        this._logLevel = LogLevel.NONE.ordinal;
+        break;
+    }
   }
 
   warn() {
+    if (this._logLevel >= LogLevel.WARN.ordinal) {
+      let copy = Array.prototype.slice.call(arguments);
+      copy.unshift(LOG_PREFIX);
+      console.warn.apply(console, copy);
+    }
   }
 
-  validateId(id) {
-    // TODO: Remove lint bypass
-    console.log(id);
-  }
-
-  validateKey(key) {
-    // TODO: Remove lint bypass
-    console.log(key);
-  }
-
-  inherits(ctor, superCtor) {
-    // TODO: Remove lint bypass
-    console.log(ctor, superCtor);
+  error() {
+    if (this._logLevel >= LogLevel.ERROR.ordinal) {
+      let copy = Array.prototype.slice.call(arguments);
+      copy.unshift(LOG_PREFIX);
+      console.error.apply(console, copy);
+    }
   }
 
   log() {
+    if (this._logLevel >= LogLevel.FULL.ordinal) {
+      let copy = Array.prototype.slice.call(arguments);
+      copy.unshift(LOG_PREFIX);
+      console.log.apply(console, copy);
+    }
+  }
+
+  validateId(id) {
+    // Allow empty ids
+    return !id || /^[A-Za-z0-9_-]+(?:[ _-][A-Za-z0-9]+)*$/.exec(id);
+  }
+
+  validateKey(key) {
+    // Allow empty keys
+    return !key || /^[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}$/.exec(key);
+  }
+
+  randomToken() {
+    return Math.random().toString(36).substr(2);
   }
 
   chunk(bl) {
@@ -81,6 +106,7 @@ class Util {
   }
 
   isSecure() {
+    return location.protocol === 'https:';
   }
 }
 

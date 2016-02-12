@@ -20,5 +20,9 @@
     "beforeEach": false,
     "after": false,
     "afterEach": false
+  },
+  "env": {
+    "browser": true,
+    "mocha": true
   }
 }
