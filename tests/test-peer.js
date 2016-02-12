@@ -52,14 +52,21 @@ describe('Peer', () => {
       assert(peer.options.turn === true);
     });
 
-    // TODO: Implement after initializeServerConnection
-    // it('should create a Peer object with ID', () => {
-    //   const peer = new Peer('myID', {
-    //     key: apiKey
-    //   });
-    //   assert(peer);
-    //   assert(peer instanceof Peer);
-    // });
+    // TODO: run after socket is implemented.
+    // Can't stub as socket.start is run in constructor
+    it.skip('should create a Peer object with ID', done => {
+      const peerId = 'myID';
+      const peer = new Peer(peerId, {
+        key: apiKey
+      });
+
+      peer.on('open', id => {
+        assert(id === peerId);
+        assert(peer.id === peerId);
+
+        done();
+      });
+    });
 
     it('should not create a Peer object with invalid ID', done => {
       let peer;
@@ -130,11 +137,14 @@ describe('Peer', () => {
         key: apiKey
       });
 
+      const spy = sinon.spy(peer, 'disconnect');
+
       peer.on('error', err => {
         assert(err.type === 'socket-error');
         assert(err.message === 'Lost connection to server.');
 
-        assert(peer._disconnectCalled === true);
+        assert(spy.calledOnce);
+        spy.restore();
         done();
       });
 
@@ -158,6 +168,11 @@ describe('Peer', () => {
         key: apiKey
       });
     });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
     it('should emit "disconnected" event on peer', done => {
       peer.disconnect();
       peer.on('disconnected', id => {
@@ -195,6 +210,23 @@ describe('Peer', () => {
       });
     });
 
+    it('should not do anything the second time you call it', function(done) {
+      peer.disconnect();
+
+      let disconnectEventCount = 0;
+      let beforeTestTimeout = this.timeout - 100;
+
+      setTimeout(() => {
+        assert(disconnectEventCount === 1);
+        done();
+      }, beforeTestTimeout);
+
+      peer.on('disconnected', () => {
+        assert(++disconnectEventCount === 1);
+        peer.disconnect();
+      });
+    });
+
     it('should set _lastPeerId to current id and id to null', done => {
       peer.disconnect();
 
@@ -202,7 +234,7 @@ describe('Peer', () => {
         setTimeout(() => {
           assert(peer._lastPeerId === id);
           assert(peer.id === null);
-          done()
+          done();
         }, timeForAsync);
       });
     });

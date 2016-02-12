@@ -19,6 +19,9 @@ class Peer extends EventEmitter {
     this._disconnectCalled = false;
     this._destroyCalled = false;
 
+    // store peerId after disconnect to use when reconnecting
+    this._lastPeerId = null;
+
     if (id && id.constructor === Object) {
       options = id;
       id = undefined;
@@ -85,7 +88,20 @@ class Peer extends EventEmitter {
   }
 
   disconnect() {
-    this._disconnectCalled = true;
+    setTimeout(() => {
+      if (!this._disconnectCalled) {
+        this._disconnectCalled = true;
+        this.open = false;
+
+        if (this.socket) {
+          this.socket.close();
+        }
+
+        this.emit('disconnected', this.id);
+        this._lastPeerId = this.id;
+        this.id = null;
+      }
+    }, 0);
   }
 
   reconnect() {
