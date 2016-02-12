@@ -101,18 +101,20 @@ describe('Peer', () => {
       assert(peer.socket instanceof Socket);
     });
 
-    it('should call _handleMessage on a socket "message" event', () => {
+    it.only('should set up socket message listeners', () => {
+      const spy = sinon.spy(Socket.prototype, 'on');
+
       const peer = new Peer({
         key: apiKey
       });
 
-      const testMsg = 'test message';
-      const spy = sinon.spy(peer, '_handleMessage');
-
-      peer.socket.emit('message', testMsg);
-
-      assert(spy.calledOnce === true);
-      assert(spy.calledWith(testMsg) === true);
+      assert(peer);
+      assert(spy.called === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.ERROR.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.LEAVE.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.EXPIRE.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.OFFER.name) === true);
       spy.restore();
     });
 
@@ -295,7 +297,7 @@ describe('Peer', () => {
     });
   });
 
-  describe.only('_CleanupPeer', () => {
+  describe('_CleanupPeer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({

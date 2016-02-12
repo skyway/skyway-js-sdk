@@ -1,7 +1,7 @@
 'use strict';
 
 // const DataConnection  = require('./dataConnection');
-// const MediaConnection = require('./mediaConnection');
+const MediaConnection = require('./mediaConnection');
 const Socket          = require('./socket');
 const util            = require('./util');
 
@@ -68,9 +68,11 @@ class Peer extends EventEmitter {
     console.log(peer, stream, options);
   }
 
-  getConnection(peer, id) {
-    // TODO: Remove lint bypass
-    console.log(peer, id);
+  getConnection(peerId, connectionId) {
+    if (this.connections[peerId] && this.connections[peerId][connectionId]) {
+      return this.connections[peerId][connectionId];
+    }
+    return null;
   }
 
   emitError(type, err) {
@@ -80,7 +82,7 @@ class Peer extends EventEmitter {
     }
 
     err.type = type;
-    this.emit('error', err);
+    this.emit(util.PEER_EVENTS.error.name, err);
   }
 
   destroy() {
@@ -101,7 +103,7 @@ class Peer extends EventEmitter {
           this.socket.close();
         }
 
-        this.emit('disconnected', this.id);
+        this.emit(util.PEER_EVENTS.disconnected.name, this.id);
         this._lastPeerId = this.id;
         this.id = null;
       }
@@ -135,9 +137,7 @@ class Peer extends EventEmitter {
       this.options.port,
       this.options.key);
 
-    this.socket.on('message', data => {
-      this._handleMessage(data);
-    });
+    this._setupMessageHandlers();
 
     this.socket.on('error', error => {
       this._abort('socket-error', error);
@@ -156,12 +156,60 @@ class Peer extends EventEmitter {
     };
   }
 
-  _handleMessage() {
+  _setupMessageHandlers() {
+    this.socket.on(util.MESSAGE_TYPES.OPEN.name, id => {
+      this.id = id;
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.ERROR.name, msg => {
+      this._abort('server-error', msg);
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.LEAVE.name, peerId => {
+      util.log(`Received leave message from ${peerId}`);
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.EXPIRE.name, peerId => {
+      this.emitError('peer-unavailable', `Could not connect to peer ${peerId}`);
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.OFFER.name, message => {
+      const connectionId = message.connectionId;
+      let connection = this.getConnection(message.peerId, connectionId);
+
+      if (connection) {
+        util.warn('Offer received for existing Connection ID:', connectionId);
+        return;
+      }
+
+      if (message.type === 'media') {
+        connection = new MediaConnection(message.peerId, this, {
+          connectionId: connectionId,
+          payload:      message,
+          metadata:     message.metadata
+        });
+
+        util.log('MediaConnection created in OFFER');
+        this._addConnection(message.peerId, connection);
+        this.emit(util.PEER_EVENTS.call.name, connection);
+      } else if (message.type === 'data') {
+        // TODO datachannel stuff
+      } else {
+        util.warn('Received malformed connection type: ', message.type);
+      }
+    });
   }
 
   _retrieveId(id) {
     // TODO: Remove lint bypass
     console.log(id);
+  }
+
+  _addConnection(peerId, connection) {
+    if (!this.connections[peerId]) {
+      this.connections[peerId] = [];
+    }
+    this.connections[peerId].push(connection);
   }
 
   _cleanup() {
@@ -170,7 +218,7 @@ class Peer extends EventEmitter {
         this._cleanupPeer(peer);
       }
     }
-    this.emit('close');
+    this.emit(util.PEER_EVENTS.close.name);
   }
 
   _cleanupPeer(peer) {
