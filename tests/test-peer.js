@@ -391,7 +391,7 @@ describe('Peer', () => {
       peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, {src: peerId});
     });
 
-    it('should create a connection and emit a call event on media OFFER events', done => {
+    it('should create MediaConnection on media OFFER events', done => {
       const peerId = 'testId';
       peer.on(util.PEER_EVENTS.call.name, connection => {
         assert(connection);
@@ -403,10 +403,30 @@ describe('Peer', () => {
       });
 
       const offerMsg = {
-        type: 'media',
+        type:         'media',
         connectionId: util.randomToken(),
-        src: peerId,
-        metadata: {}
+        src:          peerId,
+        metadata:     {}
+      };
+      peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
+    });
+
+    it('should create DataConnection on data OFFER events', done => {
+      const peerId = 'testId';
+      peer.on(util.PEER_EVENTS.connection.name, connection => {
+        assert(connection);
+        assert(connection.constructor.name === 'DataConnection');
+        assert(Object.keys(peer.connections[peerId]).length === 1);
+        assert(peer.connections[peerId][connection.id] === connection);
+
+        done();
+      });
+
+      const offerMsg = {
+        type:         'data',
+        connectionId: util.randomToken(),
+        src:          peerId,
+        metadata:     {}
       };
       peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
     });
