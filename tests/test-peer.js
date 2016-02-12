@@ -1,10 +1,11 @@
 'use strict';
 
-const Peer      = require('../src/peer');
-const Socket    = require('../src/socket');
-const assert    = require('power-assert');
-const util      = require('../src/util');
-const sinon     = require('sinon');
+const Peer    = require('../src/peer');
+const Socket  = require('../src/socket');
+const util    = require('../src/util');
+
+const assert = require('power-assert');
+const sinon  = require('sinon');
 
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
@@ -331,7 +332,7 @@ describe('Peer', () => {
     });
   });
 
-  describe.only('_setupMessageHandlers', () => {
+  describe('_setupMessageHandlers', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
@@ -388,6 +389,26 @@ describe('Peer', () => {
       });
 
       peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, peerId);
+    });
+
+    it('should create a connection and emit a call event on media OFFER events', done => {
+      const peerId = 'testId';
+      peer.on(util.PEER_EVENTS.call.name, connection => {
+        assert(connection);
+        assert(connection.constructor.name === 'MediaConnection');
+        assert(Object.keys(peer.connections[peerId]).length === 1);
+        assert(peer.connections[peerId][connection.id] === connection);
+
+        done();
+      });
+
+      const offerMsg = {
+        type: 'media',
+        connectionId: util.randomToken(),
+        peerId: peerId,
+        metadata: {}
+      };
+      peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
     });
   });
 });
