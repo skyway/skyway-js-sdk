@@ -161,21 +161,21 @@ class Peer extends EventEmitter {
       this.id = id;
     });
 
-    this.socket.on(util.MESSAGE_TYPES.ERROR.name, msg => {
-      this._abort('server-error', msg);
+    this.socket.on(util.MESSAGE_TYPES.ERROR.name, error => {
+      this._abort('server-error', error);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.LEAVE.name, peerId => {
-      util.log(`Received leave message from ${peerId}`);
+    this.socket.on(util.MESSAGE_TYPES.LEAVE.name, message => {
+      util.log(`Received leave message from ${message.src}`);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.EXPIRE.name, peerId => {
-      this.emitError('peer-unavailable', `Could not connect to peer ${peerId}`);
+    this.socket.on(util.MESSAGE_TYPES.EXPIRE.name, message => {
+      this.emitError('peer-unavailable', `Could not connect to peer ${message.src}`);
     });
 
     this.socket.on(util.MESSAGE_TYPES.OFFER.name, message => {
       const connectionId = message.connectionId;
-      let connection = this.getConnection(message.peerId, connectionId);
+      let connection = this.getConnection(message.src, connectionId);
 
       if (connection) {
         util.warn('Offer received for existing Connection ID:', connectionId);
@@ -183,17 +183,27 @@ class Peer extends EventEmitter {
       }
 
       if (message.type === 'media') {
-        connection = new MediaConnection(message.peerId, this, {
+        connection = new MediaConnection(message.src, this, {
           connectionId: connectionId,
           payload:      message,
           metadata:     message.metadata
         });
 
         util.log('MediaConnection created in OFFER');
-        this._addConnection(message.peerId, connection);
+        this._addConnection(message.src, connection);
         this.emit(util.PEER_EVENTS.call.name, connection);
       } else if (message.type === 'data') {
-        // TODO datachannel stuff
+        connection = new DataConnection(message.src, this, {
+          connectionId:   connectionId,
+          _payload:       message,
+          metadata:       message.metadata,
+          label:          message.label,
+          serialization:  message.serialization
+        });
+
+        util.log('DataConnection created in OFFER');
+        this._addConnection(message.src, connection);
+        this.emit('connection', connection);
       } else {
         util.warn('Received malformed connection type: ', message.type);
       }

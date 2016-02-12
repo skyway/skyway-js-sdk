@@ -102,7 +102,7 @@ describe('Peer', () => {
       assert(peer.socket instanceof Socket);
     });
 
-    it.only('should set up socket message listeners', () => {
+    it('should set up socket message listeners', () => {
       const spy = sinon.spy(Socket.prototype, 'on');
 
       const peer = new Peer({
@@ -372,7 +372,7 @@ describe('Peer', () => {
 
       const spy = sinon.spy(util, 'log');
 
-      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.name, peerId);
+      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.name, {src: peerId});
 
       assert(spy.calledOnce === true);
       assert(spy.calledWith(`Received leave message from ${peerId}`) === true);
@@ -388,7 +388,7 @@ describe('Peer', () => {
         done();
       });
 
-      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, peerId);
+      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, {src: peerId});
     });
 
     it('should create a connection and emit a call event on media OFFER events', done => {
@@ -405,7 +405,7 @@ describe('Peer', () => {
       const offerMsg = {
         type: 'media',
         connectionId: util.randomToken(),
-        peerId: peerId,
+        src: peerId,
         metadata: {}
       };
       peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
