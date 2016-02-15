@@ -58,9 +58,23 @@ class Peer extends EventEmitter {
     this._initializeServerConnection();
   }
 
-  connect(peer, options) {
-    // TODO: Remove lint bypass
-    console.log(peer, options);
+  connect(peerId, options) {
+    if (this._disconnectCalled) {
+      util.warn('You cannot connect to a new Peer because you called ' +
+        '.disconnect() on this Peer and ended your connection with the ' +
+        'server. You can create a new Peer to reconnect, or call reconnect ' +
+        'on this peer if you believe its ID to still be available.');
+      this.emitError(
+        'disconnected',
+        'Cannot connect to new Peer after disconnecting from server.'
+      );
+      return null;
+    }
+
+    var connection = new DataConnection(peerId, this, options);
+    util.log('DataConnection created in connect method');
+    this._addConnection(peerId, connection);
+    return connection;
   }
 
   call(peerId, stream, options) {
@@ -68,17 +82,23 @@ class Peer extends EventEmitter {
       util.warn('You cannot connect to a new Peer because you called ' +
         '.disconnect() on this Peer and ended your connection with the ' +
         'server. You can create a new Peer to reconnect.');
-      this.emitError('disconnected', 'Cannot connect to new Peer after disconnecting from server.');
-      return;
+      this.emitError(
+        'disconnected',
+        'Cannot connect to new Peer after disconnecting from server.');
+      return null;
     }
     if (!stream) {
-      util.error('To call a peer, you must provide a stream from your browser\'s `getUserMedia`.');
-      return;
+      util.error(
+        'To call a peer, you must provide ' +
+        'a stream from your browser\'s `getUserMedia`.'
+      );
+      return null;
     }
+
     options = options || {};
     options._stream = stream;
     var mc = new MediaConnection(peerId, this, options);
-    util.log("MediaConnection created in call method");
+    util.log('MediaConnection created in call method');
     this._addConnection(peerId, mc);
     return mc;
   }
