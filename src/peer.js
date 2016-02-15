@@ -63,9 +63,24 @@ class Peer extends EventEmitter {
     console.log(peer, options);
   }
 
-  call(peer, stream, options) {
-    // TODO: Remove lint bypass
-    console.log(peer, stream, options);
+  call(peerId, stream, options) {
+    if (this._disconnectCalled) {
+      util.warn('You cannot connect to a new Peer because you called ' +
+        '.disconnect() on this Peer and ended your connection with the ' +
+        'server. You can create a new Peer to reconnect.');
+      this.emitError('disconnected', 'Cannot connect to new Peer after disconnecting from server.');
+      return;
+    }
+    if (!stream) {
+      util.error('To call a peer, you must provide a stream from your browser\'s `getUserMedia`.');
+      return;
+    }
+    options = options || {};
+    options._stream = stream;
+    var mc = new MediaConnection(peerId, this, options);
+    util.log("MediaConnection created in call method");
+    this._addConnection(peerId, mc);
+    return mc;
   }
 
   getConnection(peerId, connectionId) {
