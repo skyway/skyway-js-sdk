@@ -27,7 +27,7 @@ describe('MediaConnection', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
 
-      const mc = new MediaConnection(peerId, peer, {_stream: {}});
+      const mc = new MediaConnection(peer, {_stream: {}});
 
       assert(mc);
       assert(spy.calledOnce);
