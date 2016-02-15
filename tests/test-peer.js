@@ -431,4 +431,52 @@ describe('Peer', () => {
       peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
     });
   });
+
+  describe('call', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should create a new MediaConnection and add it', () => {
+      const spy = sinon.spy(peer, '_addConnection');
+
+      const peerId = 'testId';
+      const options = {};
+
+      peer.call(peerId, {}, options);
+
+      assert(spy.calledOnce === true);
+      assert(Object.keys(peer.connections).length === 1);
+      spy.restore();
+    });
+
+    it('should emit an error if disconnected', done => {
+      peer.on('error', e => {
+        assert(e.type === 'disconnected');
+        done();
+      });
+
+      peer.disconnect();
+
+      setTimeout(() => {
+        peer.call('testId', {}, {});
+      }, timeForAsync);
+    });
+
+    it('should log an error if stream is undefined', () => {
+      const spy = sinon.spy(util, 'error');
+
+      peer.call('testId', undefined, {});
+
+      assert(spy.calledOnce === true);
+      spy.restore();
+    });
+  });
 });
