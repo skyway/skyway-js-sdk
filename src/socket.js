@@ -1,9 +1,11 @@
 'use strict';
 
 const io = require('socket.io-client');
+const EventEmitter = require('events').EventEmitter;
 
-class Socket {
+class Socket extends EventEmitter {
   constructor(secure, host, port, key) {
+    super();
     this.disconnected = false;
 
     this._key    = key;
