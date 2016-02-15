@@ -1,9 +1,13 @@
 'use strict';
 
-const io = require('socket.io-client');
+const io           = require('socket.io-client');
 
-class Socket {
+const EventEmitter = require('events');
+
+class Socket extends EventEmitter {
   constructor(secure, host, port, key) {
+    super();
+
     this.disconnected = true;
     this._queue = [];
 
@@ -32,6 +36,9 @@ class Socket {
 
       // This may be redundant, but is here to match peerjs:
       this._sendQueuedMessages();
+
+      // To inform the peer that the socket successfully connected 
+      this.emit('OPEN');
     });
   }
 
