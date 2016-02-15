@@ -12,7 +12,6 @@ class Socket extends EventEmitter {
     this._queue = [];
 
     this._socket = null;
-
     this._key   = key;
 
     let httpProtocol = secure ? 'https://' : 'http://';
@@ -37,7 +36,7 @@ class Socket extends EventEmitter {
       // This may be redundant, but is here to match peerjs:
       this._sendQueuedMessages();
 
-      // To inform the peer that the socket successfully connected 
+      // To inform the peer that the socket successfully connected
       this.emit('OPEN');
     });
   }
