@@ -1,7 +1,7 @@
 'use strict';
 
 const Peer       = require('../src/peer');
-const assert     = require('assert');
+const assert     = require('power-assert');
 const proxyquire = require('proxyquire');
 const sinon      = require('sinon');
 
@@ -9,7 +9,6 @@ let Connection;
 let MediaConnection;
 
 describe('MediaConnection', () => {
-
   let stub;
   let spy;
 
@@ -19,7 +18,8 @@ describe('MediaConnection', () => {
 
     stub.returns({
       startConnection: spy,
-      addStream: spy
+      addStream: spy,
+      testProp:  'Hi!'
     });
 
     Connection = proxyquire(
@@ -33,7 +33,8 @@ describe('MediaConnection', () => {
   });
 
   afterEach(() => {
-    //stub.restore();
+    console.log(stub);
+    spy = undefined;
   });
 
   describe('Constructor', () => {
@@ -44,18 +45,27 @@ describe('MediaConnection', () => {
       const mc = new MediaConnection(peer, {_stream: {}});
 
       assert(mc);
+      // spy = undefined;
       assert(spy.calledOnce);
     });
   });
 
-  it('should set and emit the remote stream upon receiving it', () => {
-    const peerId = 'peerId';
-    const peer = new Peer(peerId, {});
+  describe('Add Stream', () => {
+    it.only('should set and emit the remote stream upon receiving it', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
 
-    const mc = new MediaConnection(peer, {_stream: {}});
-    mc.addStream("foobar");
+      const mc = new MediaConnection(peer, {_stream: {}});
 
-    assert(mc);
-    assert(spy.calledOnce);
+      mc.addStream = sinon.spy();
+
+      mc.addStream('foobar');
+
+      assert(mc);
+      assert(mc.addStream.calledOnce);
+
+      // Need to reset addStream function?
+      //mc.addStream.restore();
+    });
   });
 });
