@@ -18,7 +18,8 @@ describe('MediaConnection', () => {
     spy = sinon.spy();
 
     stub.returns({
-      startConnection: spy
+      startConnection: spy,
+      addStream: spy
     });
 
     Connection = proxyquire(
@@ -48,6 +49,13 @@ describe('MediaConnection', () => {
   });
 
   it('should set and emit the remote stream upon receiving it', () => {
-    
+    const peerId = 'peerId';
+    const peer = new Peer(peerId, {});
+
+    const mc = new MediaConnection(peer, {_stream: {}});
+    mc.addStream("foobar");
+
+    assert(mc);
+    assert(spy.calledOnce);
   });
 });
