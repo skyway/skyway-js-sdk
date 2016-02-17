@@ -1,6 +1,7 @@
 'use strict';
 
 const Connection = require('./connection');
+const util = require('./util');
 
 class MediaConnection extends Connection {
   constructor(peer, options) {
@@ -21,6 +22,11 @@ class MediaConnection extends Connection {
   addStream(remoteStream) {
     // TODO: Remove lint bypass
     console.log(remoteStream);
+    util.setLogLevel(3);
+    util.log('Receiving stream', remoteStream);
+
+    this.remoteStream = remoteStream;
+//    this.emit('stream', remoteStream);
   }
 
   answer(stream) {

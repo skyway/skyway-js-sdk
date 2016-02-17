@@ -57,15 +57,16 @@ describe('MediaConnection', () => {
 
       const mc = new MediaConnection(peer, {_stream: {}});
 
-      mc.addStream = sinon.spy();
+      let spy2 = sinon.spy(mc, 'addStream');
 
       mc.addStream('foobar');
 
-      assert(mc);
-      assert(mc.addStream.calledOnce);
+      console.log(spy2);
 
-      // Need to reset addStream function?
-      //mc.addStream.restore();
+      assert(mc);
+      assert(spy2.calledOnce);
+
+      spy2.restore();
     });
   });
 });
