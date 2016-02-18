@@ -174,8 +174,8 @@ class Peer extends EventEmitter {
   }
 
   _cleanupPeer(peer) {
-    for (let id of Object.keys(this.connections[peer])) {
-      this.connections[peer][id].close();
+    for (let connection of this.connections[peer]) {
+      connection.close();
     }
   }
 }
