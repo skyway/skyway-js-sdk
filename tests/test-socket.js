@@ -33,6 +33,7 @@ describe('Socket', () => {
 
   afterEach(() => {
     stub.restore();
+    spy.reset();
   });
 
   describe('Connecting to the server', () => {
