@@ -254,7 +254,7 @@ describe('Peer', () => {
       spy.restore();
     });
 
-    it('should set _destroyCalled to false', done => {
+    it('should set _destroyCalled to true', done => {
       peer.destroy();
 
       peer.on('disconnected', () => {
