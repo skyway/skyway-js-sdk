@@ -23,7 +23,7 @@ class MediaConnection extends Connection {
   }
 
   addStream(remoteStream) {
-    console.log(remoteStream);
+    util.setLogLevel(3);
     util.log('Receiving stream', remoteStream);
 
     this.remoteStream = remoteStream;
@@ -41,14 +41,17 @@ class MediaConnection extends Connection {
       util.warn('localStream already exists on this MediaConnection. Are you answering a call twice?');
       return;
     }
-    
+
     this.options._payload._stream = stream;
 
     this.localStream = stream;
     this._negotiator.startConnection(
       this,
       this.options._payload
-    )
+    );
+
+    // PeerJS has the following code for lost messages on the 'provider'
+    // But I'm not currently sure what this is (seems to come from the negotiator)
 
     // Retrieve lost messages stored because PeerConnection not set up.
     // var messages = this.provider._getMessages(this.id);
@@ -56,8 +59,6 @@ class MediaConnection extends Connection {
     //   this.handleMessage(messages[i]);
     // }
     this.open = true;
-
-    console.log(stream);
   }
 }
 

@@ -72,7 +72,7 @@ describe('MediaConnection', () => {
       // Callee, so no _stream option provided at first
       const mc = new MediaConnection(peer, {_payload: {}});
       assert.equal(mc.localStream, undefined);
-      mc.answer('foobar');  
+      mc.answer('foobar');
       assert.equal(mc.localStream, 'foobar');
       assert.equal(mc.open, true);
     });
@@ -82,9 +82,9 @@ describe('MediaConnection', () => {
       const peer = new Peer(peerId, {});
 
       // Caller, so _stream option is initially provided
-      const mc = new MediaConnection(peer, {_stream:'exists', _payload: {}});
+      const mc = new MediaConnection(peer, {_stream: 'exists', _payload: {}});
       assert.equal(mc.localStream, 'exists');
-      mc.answer('foobar');  
+      mc.answer('foobar');
       assert.equal(mc.localStream, 'exists');
       assert.equal(mc.open, false);
     });
@@ -93,7 +93,8 @@ describe('MediaConnection', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
 
-      const mc = new MediaConnection(peer, {_stream:'foobar', _payload: {}});
+      const mc = new MediaConnection(peer, {_stream: 'foobar', _payload: {}});
+      assert(mc);
       assert(startSpy.calledOnce);
       // assert.equal(startSpy.args[0], mc.options._payload);
     });
