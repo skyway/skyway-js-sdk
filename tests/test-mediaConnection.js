@@ -47,7 +47,7 @@ describe('MediaConnection', () => {
   });
 
   describe('Add Stream', () => {
-    it('should set and emit the remote stream upon receiving it', () => {
+    it('should set remoteStream upon being invoked', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
 
