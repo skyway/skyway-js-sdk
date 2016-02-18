@@ -397,7 +397,7 @@ describe('Peer', () => {
         assert(connection);
         assert(connection.constructor.name === 'MediaConnection');
         assert(Object.keys(peer.connections[peerId]).length === 1);
-        assert(peer.connections[peerId][connection.id] === connection);
+        assert(peer.getConnection(peerId, connection.id) === connection);
 
         done();
       });
@@ -417,7 +417,7 @@ describe('Peer', () => {
         assert(connection);
         assert(connection.constructor.name === 'DataConnection');
         assert(Object.keys(peer.connections[peerId]).length === 1);
-        assert(peer.connections[peerId][connection.id] === connection);
+        assert(peer.getConnection(peerId, connection.id) === connection);
 
         done();
       });
