@@ -14,10 +14,10 @@ describe('MediaConnection', () => {
 
   beforeEach(() => {
     stub = sinon.stub();
-    spy = sinon.spy();
+    startSpy = sinon.spy();
 
     stub.returns({
-      startConnection: spy
+      startConnection: startSpy
     });
 
     Connection = proxyquire(
@@ -32,7 +32,7 @@ describe('MediaConnection', () => {
 
   afterEach(() => {
     console.log(stub);
-    spy = undefined;
+    startSpy = undefined;
   });
 
   describe('Constructor', () => {
@@ -43,13 +43,12 @@ describe('MediaConnection', () => {
       const mc = new MediaConnection(peer, {_stream: {}});
 
       assert(mc);
-      // spy = undefined;
-      assert(spy.calledOnce);
+      assert(startSpy.calledOnce);
     });
   });
 
   describe('Add Stream', () => {
-    it.only('should set and emit the remote stream upon receiving it', () => {
+    it('should set and emit the remote stream upon receiving it', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
 
