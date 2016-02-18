@@ -32,6 +32,15 @@ class MediaConnection extends Connection {
     // TODO: Remove lint bypass
     console.log(stream);
   }
+
+  close() {
+    if (!this.open) {
+      return;
+    }
+    this.open = false;
+    this._negotiator.cleanup(this);
+    this.emit('close')
+  }
 }
 
 module.exports = MediaConnection;
