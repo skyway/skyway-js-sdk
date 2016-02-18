@@ -4,7 +4,7 @@ const util = require('./util');
 const Negotiator = require('./negotiator');
 
 class Connection {
-  constructor(peer, provider, options) {
+  constructor(peer, options) {
     // Abstract class
     if (this.constructor === Connection) {
       throw new TypeError('Cannot construct Connection instances directly');
@@ -16,7 +16,7 @@ class Connection {
     this.open = false;
     this.type = undefined;
     this.peer = peer;
-    this.provider = provider;
+    this.peerId = peer.peerId;
     this.metadata = this.options.metadata;
 
     this._negotiator = new Negotiator();
@@ -42,7 +42,7 @@ class Connection {
         break;
       default:
         util.warn('Unrecognized message type:',
-          message.type, 'from peer:', this.peer);
+          message.type, 'from peer:', this.peerId);
         break;
     }
   }
