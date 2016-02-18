@@ -3,6 +3,8 @@
 const Connection = require('./connection');
 const util = require('./util');
 
+const EventEmitter = require('events');
+
 class MediaConnection extends Connection {
   constructor(peer, options) {
     super(peer, options);
@@ -20,13 +22,16 @@ class MediaConnection extends Connection {
   }
 
   addStream(remoteStream) {
-    // TODO: Remove lint bypass
     console.log(remoteStream);
-    util.setLogLevel(3);
     util.log('Receiving stream', remoteStream);
 
     this.remoteStream = remoteStream;
-//    this.emit('stream', remoteStream);
+
+    // I couldn't get this emitter to work (possibly due to scoping issues)
+    // But also I'm uncertain where this should be emitted to:
+
+    // this.emit('stream', remoteStream);
+    // this._negotiator.emit('stream', remoteStream);
   }
 
   answer(stream) {

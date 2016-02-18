@@ -3,6 +3,8 @@
 const util = require('./util');
 const Negotiator = require('./negotiator');
 
+const EventEmitter = require('events');
+
 class Connection {
   constructor(peer, options) {
     // Abstract class

@@ -17,9 +17,7 @@ describe('MediaConnection', () => {
     spy = sinon.spy();
 
     stub.returns({
-      startConnection: spy,
-      addStream: spy,
-      testProp:  'Hi!'
+      startConnection: spy
     });
 
     Connection = proxyquire(
