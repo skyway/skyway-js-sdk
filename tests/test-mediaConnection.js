@@ -80,4 +80,23 @@ describe('MediaConnection', () => {
       spy.restore();
     });
   });
+
+  describe('Cleanup', () => {
+    it('should close the socket and call the negotiator to cleanup on close()', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+
+      const mc = new MediaConnection(peer, {_stream: {}});
+
+      let spy = sinon.spy(mc, 'close');
+      // TODO: fix this spy
+      //let spy2 = sinon.spy(mc, '_negotiator.cleanup');
+      mc.close();
+      assert(mc);
+      assert(spy.calledOnce);
+      assert.equal(mc.open, false);
+      // assert(spy2.calledOnce);
+      // assert(spy2.calledWith(mc));
+    });
+  });
 });
