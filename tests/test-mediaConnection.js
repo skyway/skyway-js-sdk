@@ -55,10 +55,11 @@ describe('MediaConnection', () => {
 
       let spy = sinon.spy(mc, 'addStream');
 
-      mc.addStream('foobar');
+      mc.addStream('fakeStream');
 
       assert(mc);
       assert(spy.calledOnce);
+      assert.equal(mc.remoteStream, 'fakeStream');
 
       spy.restore();
     });
@@ -71,11 +72,11 @@ describe('MediaConnection', () => {
 
       let spy = sinon.spy(mc, 'emit');
 
-      mc.addStream('foobar');
+      mc.addStream('fakeStream');
 
       assert(mc);
       assert(spy.calledOnce);
-      assert(spy.calledWith('stream', 'foobar') === true);
+      assert(spy.calledWith('stream', 'fakeStream') === true);
 
       spy.restore();
     });
