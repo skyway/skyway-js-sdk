@@ -70,10 +70,10 @@ describe('MediaConnection', () => {
       const peer = new Peer(peerId, {});
 
       // Callee, so no _stream option provided at first
-      const mc = new MediaConnection(peer, 'foobar');
+      const mc = new MediaConnection(peer, {_payload: {}});
       assert.equal(mc.localStream, undefined);
-      mc.answer({});  
-      //assert.equal(mc.localStream, 'foobar');
+      mc.answer('foobar');  
+      assert.equal(mc.localStream, 'foobar');
     });
 
     it('should call negotiator\'s startConnection method upon answering', () => {

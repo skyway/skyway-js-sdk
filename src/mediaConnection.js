@@ -45,16 +45,16 @@ class MediaConnection extends Connection {
     this.options._payload._stream = stream;
 
     this.localStream = stream;
-    Negotiator.startConnection(
+    this._negotiator.startConnection(
       this,
       this.options._payload
     )
 
     // Retrieve lost messages stored because PeerConnection not set up.
-    var messages = this.provider._getMessages(this.id);
-    for (var i = 0, ii = messages.length; i < ii; i += 1) {
-      this.handleMessage(messages[i]);
-    }
+    // var messages = this.provider._getMessages(this.id);
+    // for (var i = 0, ii = messages.length; i < ii; i += 1) {
+    //   this.handleMessage(messages[i]);
+    // }
     this.open = true;
 
     console.log(stream);
