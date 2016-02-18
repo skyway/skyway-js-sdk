@@ -90,7 +90,12 @@ describe('MediaConnection', () => {
     });
 
     it('should call negotiator\'s startConnection method upon answering', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
 
+      const mc = new MediaConnection(peer, {_stream:'foobar', _payload: {}});
+      assert(startSpy.calledOnce);
+      // assert.equal(startSpy.args[0], mc.options._payload);
     });
   });
 });
