@@ -74,6 +74,19 @@ describe('MediaConnection', () => {
       assert.equal(mc.localStream, undefined);
       mc.answer('foobar');  
       assert.equal(mc.localStream, 'foobar');
+      assert.equal(mc.open, true);
+    });
+
+    it('should not set the localStream if already set', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+
+      // Caller, so _stream option is initially provided
+      const mc = new MediaConnection(peer, {_stream:'exists', _payload: {}});
+      assert.equal(mc.localStream, 'exists');
+      mc.answer('foobar');  
+      assert.equal(mc.localStream, 'exists');
+      assert.equal(mc.open, false);
     });
 
     it('should call negotiator\'s startConnection method upon answering', () => {
