@@ -47,21 +47,8 @@ describe('Socket', () => {
       assert(stub.called);
       socket._socket.open('peerId');
 
-      done();
-    });
+      assert.equal(socket.disconnected, false);
 
-    it('should be able to connect with a specific peerID', done => {
-      let apiKey = 'apiKey';
-      let peerId = 'peerId';
-      let token = 'token';
-
-      const socket = new Socket(false, 'localhost', serverPort, apiKey);
-
-      socket.start(peerId, token);
-      assert(stub.called);
-      assert.equal(socket.id, peerId);
-
-      socket.close();
       done();
     });
 
@@ -128,7 +115,7 @@ describe('Socket', () => {
 
     it('should send queued messages upon connecting', done => {
       let apiKey = 'apiKey';
-      let peerId;
+      let peerId = 'peerId';
       let token = 'token';
       let data1 = {value: 'hello world', type: 'string'};
       let data2 = {value: 'goodbye world', type: 'string'};
@@ -136,9 +123,8 @@ describe('Socket', () => {
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
-      socket.start(peerId, token);
-      socket._socket.open(peerId);
-      assert.equal(socket.id, undefined);
+      socket.start(undefined, token);
+      assert.equal(socket.disconnected, true);
 
       // First pass - No peerID
       socket.send(data1);
@@ -146,8 +132,7 @@ describe('Socket', () => {
       assert.deepEqual(receivedData, undefined);
 
       // Second pass - peerID set, queued messages sent
-      socket.id = 'peerId';
-      socket._sendQueuedMessages();
+      socket._socket.open(peerId);
       assert.deepEqual(socket._queue, []);
       assert.deepEqual(spy.args[0], ['MSG', JSON.stringify(data1)]);
 

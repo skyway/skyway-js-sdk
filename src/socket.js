@@ -19,18 +19,14 @@ class Socket extends EventEmitter {
   }
 
   start(id, token) {
-    // Presumably need a check for whether a peerId is actually specified or not?
-    this.id = id;
     this._socket = io(this._httpUrl, {
       'force new connection': true,
       'query':                `apiKey=${this._key}&token=${token}&peerId=${this.id}`
     });
 
     this._socket.on('OPEN', peerId => {
-      this.disconnected = false;
-
-      if (peerId !== undefined) {
-        this.id = peerId;
+      if (peerId) {
+        this.disconnected = false;
       }
 
       // This may be redundant, but is here to match peerjs:
@@ -42,12 +38,8 @@ class Socket extends EventEmitter {
   }
 
   send(data) {
+    // If we are not connected yet, queue the message
     if (this.disconnected) {
-      return;
-    }
-
-    // If we have no ID yet, queue the message
-    if (!this.id) {
       this._queue.push(data);
       return;
     }
