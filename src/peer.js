@@ -104,8 +104,12 @@ class Peer extends EventEmitter {
   }
 
   getConnection(peerId, connectionId) {
-    if (this.connections[peerId] && this.connections[peerId][connectionId]) {
-      return this.connections[peerId][connectionId];
+    if (this.connections[peerId]) {
+      for (let connection of this.connections[peerId]) {
+        if (connection.id === connectionId) {
+          return connection;
+        }
+      }
     }
     return null;
   }
@@ -255,9 +259,9 @@ class Peer extends EventEmitter {
 
   _addConnection(peerId, connection) {
     if (!this.connections[peerId]) {
-      this.connections[peerId] = {};
+      this.connections[peerId] = [];
     }
-    this.connections[peerId][connection.id] = connection;
+    this.connections[peerId].push(connection);
   }
 
   _cleanup() {
@@ -270,8 +274,8 @@ class Peer extends EventEmitter {
   }
 
   _cleanupPeer(peer) {
-    for (let id of Object.keys(this.connections[peer])) {
-      this.connections[peer][id].close();
+    for (let connection of this.connections[peer]) {
+      connection.close();
     }
   }
 }
