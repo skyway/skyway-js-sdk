@@ -257,7 +257,7 @@ describe('Peer', () => {
       spy.restore();
     });
 
-    it('should set _destroyCalled to false', done => {
+    it('should set _destroyCalled to true', done => {
       peer.destroy();
 
       peer.on('disconnected', () => {
@@ -283,7 +283,7 @@ describe('Peer', () => {
       for (let peerIndex = 0; peerIndex < numPeers; peerIndex++) {
         const peerId = util.randomToken();
         peerIds.push(peerId);
-        peer.connections[peerId] = {};
+        peer.connections[peerId] = [];
       }
 
       const stub = sinon.stub(peer, '_cleanupPeer');
@@ -312,18 +312,18 @@ describe('Peer', () => {
 
     it('should call close for each connection in the peer', () => {
       const peerId = util.randomToken();
-      peer.connections[peerId] = {};
+      peer.connections[peerId] = [];
 
       const spies = [];
       const numConns = 5;
       for (let connIndex = 0; connIndex < numConns; connIndex++) {
         const spy = sinon.spy();
         spies.push(spy);
-        peer.connections[peerId][util.randomToken()] = {close: spy};
+        peer.connections[peerId].push({close: spy});
       }
 
       assert(spies.length === numConns);
-      assert(Object.keys(peer.connections[peerId]).length === numConns);
+      assert(peer.connections[peerId].length === numConns);
 
       peer._cleanupPeer(peerId);
       for (let spy of spies) {
