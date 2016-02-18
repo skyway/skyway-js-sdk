@@ -5,8 +5,10 @@ const Negotiator = require('./negotiator');
 
 const EventEmitter = require('events');
 
-class Connection {
+class Connection extends EventEmitter {
   constructor(peer, options) {
+    super();
+
     // Abstract class
     if (this.constructor === Connection) {
       throw new TypeError('Cannot construct Connection instances directly');

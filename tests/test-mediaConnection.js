@@ -47,7 +47,7 @@ describe('MediaConnection', () => {
   });
 
   describe('Add Stream', () => {
-    it('should set and emit the remote stream upon receiving it', () => {
+    it('should set remoteStream upon addStream being invoked', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
 
@@ -59,6 +59,23 @@ describe('MediaConnection', () => {
 
       assert(mc);
       assert(spy.calledOnce);
+
+      spy.restore();
+    });
+
+    it('should emit a \'stream\' event upon addStream being invoked', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+
+      const mc = new MediaConnection(peer, {_stream: {}});
+
+      let spy = sinon.spy(mc, 'emit');
+
+      mc.addStream('foobar');
+
+      assert(mc);
+      assert(spy.calledOnce);
+      assert(spy.calledWith('stream', 'foobar') === true);
 
       spy.restore();
     });
