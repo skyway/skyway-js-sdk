@@ -75,7 +75,7 @@ describe('MediaConnection', () => {
 
       assert(mc);
       assert(spy.calledOnce);
-      assert(spy.calledWith('stream', 'foobar') === true); 
+      assert(spy.calledWith('stream', 'foobar') === true);
 
       spy.restore();
     });
