@@ -10,7 +10,7 @@ let MediaConnection;
 
 describe('MediaConnection', () => {
   let stub;
-  let spy;
+  let startSpy;
 
   beforeEach(() => {
     stub = sinon.stub();
@@ -31,7 +31,6 @@ describe('MediaConnection', () => {
   });
 
   afterEach(() => {
-    console.log(stub);
     startSpy = undefined;
   });
 
@@ -54,16 +53,14 @@ describe('MediaConnection', () => {
 
       const mc = new MediaConnection(peer, {_stream: {}});
 
-      let spy2 = sinon.spy(mc, 'addStream');
+      let spy = sinon.spy(mc, 'addStream');
 
       mc.addStream('foobar');
 
-      console.log(spy2);
-
       assert(mc);
-      assert(spy2.calledOnce);
+      assert(spy.calledOnce);
 
-      spy2.restore();
+      spy.restore();
     });
   });
 });
