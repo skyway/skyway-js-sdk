@@ -7,9 +7,9 @@ const util      = require('../src/util');
 const sinon     = require('sinon');
 
 describe('Peer', () => {
-  describe('Constructor', () => {
-    const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
+  const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
 
+  describe('Constructor', () => {
     it('should create a Peer object', () => {
       const peer = new Peer({
         key: apiKey
@@ -147,6 +147,77 @@ describe('Peer', () => {
 
       window.onbeforeunload();
       assert(peer._destroyCalled === true);
+    });
+  });
+
+  describe('ListAllPeers', () => {
+    let peer;
+    let requests = [];
+    let xhr;
+    beforeEach(() => {
+      xhr = sinon.useFakeXMLHttpRequest();
+      xhr.onCreate = function(request) {
+        requests.push(request);
+      };
+
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      xhr.restore();
+      requests = [];
+
+      peer.destroy();
+    });
+
+    it('should send a "GET" request to the right URL', () => {
+      peer.listAllPeers();
+      assert(requests.length === 1);
+
+      var protocol = peer.options.secure ? 'https://' : 'http://';
+      const url = `${protocol}${peer.options.host}:` +
+        `${peer.options.port}/active/list/${apiKey}`;
+      assert(requests[0].url === url);
+      assert(requests[0].method === 'get');
+    });
+
+    it('should call the callback with the response as the argument', () => {
+      const spy = sinon.spy();
+      peer.listAllPeers(spy);
+      assert(requests.length === 1);
+
+      const peerList = ['peerId1', 'peerId2', 'peerId3'];
+      requests[0].respond(200, {}, JSON.stringify(peerList));
+
+      assert(spy.calledOnce === true);
+      assert(spy.calledWith(peerList) === true);
+    });
+
+    it('should throw an error when the status is 401', () => {
+      try {
+        peer.listAllPeers();
+        requests.respond(401);
+      } catch (e) {
+        assert(e instanceof Error);
+        return;
+      }
+
+      assert.fail('Didn\'t throw an error');
+    });
+
+    it('should call the callback with an empty array any other status', () => {
+      const spy = sinon.spy();
+      const peerList = JSON.stringify(['peerId1', 'peerId2', 'peerId3']);
+      const responseCodes = [202, 400, 403, 404, 408, 500, 503];
+
+      for (let codeIndex = 0; codeIndex <= responseCodes.length; codeIndex++) {
+        peer.listAllPeers(spy);
+        requests[codeIndex].respond(responseCodes[codeIndex], {}, peerList);
+      }
+
+      assert(spy.withArgs([]).callCount === responseCodes.length);
     });
   });
 });
