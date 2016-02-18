@@ -63,4 +63,21 @@ describe('MediaConnection', () => {
       spy.restore();
     });
   });
+
+  describe('Answering', () => {
+    it('should set the localStream upon answering', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+
+      // Callee, so no _stream option provided at first
+      const mc = new MediaConnection(peer, 'foobar');
+      assert.equal(mc.localStream, undefined);
+      mc.answer({});  
+      assert.equal(mc.localStream, 'foobar');
+    });
+
+    it('should call negotiator\'s startConnection method upon answering', () => {
+
+    });
+  });
 });
