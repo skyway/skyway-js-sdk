@@ -11,6 +11,7 @@ class MediaConnection extends Connection {
 
     this._idPrefix = 'mc_';
     this.type = 'media';
+    // This should only be set on the caller-side
     this.localStream = this.options._stream;
 
     if (this.localStream) {
@@ -34,8 +35,28 @@ class MediaConnection extends Connection {
     // this._negotiator.emit('stream', remoteStream);
   }
 
+  // This is only called by the callee
   answer(stream) {
-    // TODO: Remove lint bypass
+    if (this.localStream) {
+      util.warn('localStream already exists on this MediaConnection. Are you answering a call twice?');
+      return;
+    }
+    
+    this.options._payload._stream = stream;
+
+    this.localStream = stream;
+    Negotiator.startConnection(
+      this,
+      this.options._payload
+    )
+
+    // Retrieve lost messages stored because PeerConnection not set up.
+    var messages = this.provider._getMessages(this.id);
+    for (var i = 0, ii = messages.length; i < ii; i += 1) {
+      this.handleMessage(messages[i]);
+    }
+    this.open = true;
+
     console.log(stream);
   }
 }
