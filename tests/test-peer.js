@@ -179,8 +179,8 @@ describe('Peer', () => {
       var protocol = peer.options.secure ? 'https://' : 'http://';
       const url = `${protocol}${peer.options.host}:` +
         `${peer.options.port}/active/list/${apiKey}`;
-      assert(requests[0].url = url);
-      assert(requests[0].method = 'GET');
+      assert(requests[0].url === url);
+      assert(requests[0].method === 'get');
     });
 
     it('should call the callback with the response as the argument', () => {
