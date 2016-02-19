@@ -12,7 +12,7 @@ class MediaConnection extends Connection {
     // This should only be set on the caller-side
     this.localStream = this.options._stream;
 
-    // Messages stored by peer because MC was not ready yet:
+    // Messages stored by peer because MC was not ready yet
     this._queuedMessages = this.options._queuedMessages || [];
     this._pcAvailable = false;
 
