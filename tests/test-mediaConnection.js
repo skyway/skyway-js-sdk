@@ -34,7 +34,6 @@ describe('MediaConnection', () => {
 
     it('should store any messages passed in when created', () => {
       const stub = sinon.stub();
-
       const Connection = proxyquire(
         '../src/connection',
         {'./negotiator': stub}
@@ -46,10 +45,9 @@ describe('MediaConnection', () => {
 
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-      const mc = new MediaConnection(peer, {_stream: {}});
+      const mc = new MediaConnection(peer, {_stream: {}}, ['message']);
 
-      assert(mc);
-      assert(stub.messages);
+      assert(mc.messages === ['message']);
     });
   });
 });
