@@ -10,16 +10,8 @@
     }],
     "key-spacing": [2, {
       "align": "value"
-    }]
-  },
-  "globals": {
-    /* MOCHA */
-    "describe": false,
-    "it": false,
-    "before": false,
-    "beforeEach": false,
-    "after": false,
-    "afterEach": false
+    }],
+    "max-nested-callbacks": [2,8]
   },
   "env": {
     "browser": true,
