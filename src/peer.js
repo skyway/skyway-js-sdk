@@ -118,8 +118,37 @@ class Peer extends EventEmitter {
   }
 
   listAllPeers(cb) {
-    // TODO: Remove lint bypass
-    console.log(cb);
+    cb = cb || function() {};
+    const self = this;
+    const http = new XMLHttpRequest();
+    const protocol = this.options.secure ? 'https://' : 'http://';
+
+    const url = `${protocol}${this.options.host}:` +
+              `${this.options.port}/active/list/${this.options.key}`;
+
+    // If there's no ID we need to wait for one before trying to init socket.
+    http.open('get', url, true);
+    http.onerror = function() {
+      self._abort('server-error', 'Could not get peers from the server.');
+      cb([]);
+    };
+    http.onreadystatechange = function() {
+      if (http.readyState !== 4) {
+        return;
+      }
+      if (http.status === 401) {
+        cb([]);
+        throw new Error(
+          'It doesn\'t look like you have permission to list peers IDs. ' +
+          'Please enable the SkyWay REST API on https://skyway.io/ds/'
+        );
+      } else if (http.status === 200) {
+        cb(JSON.parse(http.responseText));
+      } else {
+        cb([]);
+      }
+    };
+    http.send(null);
   }
 
   _abort(type, message) {

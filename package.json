@@ -25,6 +25,8 @@
     "eslint-config-google": "^0.3.0",
     "gulp": "^3.9.0",
     "gulp-eslint": "^1.1.1",
+    "gulp-header": "^1.7.1",
+    "gulp-insert": "^0.5.0",
     "gulp-rename": "^1.2.2",
     "gulp-uglify": "^1.5.1",
     "karma": "^0.13.19",
