@@ -22,10 +22,11 @@ class Connection {
     this._negotiator = new Negotiator();
 
     this._idPrefix = 'c_';
+    this._randomIdSuffix = util.randomToken();
   }
 
   get id() {
-    return this.options.connectionId || this._idPrefix + util.randomToken();
+    return this.options.connectionId || this._idPrefix + this._randomIdSuffix;
   }
 
   // TODO: move into the negotiator class to handle signalling directly?

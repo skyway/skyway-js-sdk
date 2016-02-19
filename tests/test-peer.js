@@ -298,6 +298,35 @@ describe('Peer', () => {
     });
   });
 
+  describe('GetConnection', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.disconnect();
+    });
+
+    it('should get a connection if peerId and connId match', () => {
+      const peerId = 'testId';
+      const connection = {id: 'connId'};
+
+      peer._addConnection(peerId, connection);
+
+      assert(peer.getConnection(peerId, connection.id) === connection);
+    });
+
+    it('should return null if connection doesn\'t exist', () => {
+      const peerId = 'testId';
+      const connection = {id: 'connId'};
+
+      assert(peer.getConnection(peerId, connection.id) === null);
+    });
+  });
+
   describe('_CleanupPeer', () => {
     let peer;
     beforeEach(() => {
@@ -398,7 +427,6 @@ describe('Peer', () => {
         assert(connection.constructor.name === 'MediaConnection');
         assert(Object.keys(peer.connections[peerId]).length === 1);
         assert(peer.getConnection(peerId, connection.id) === connection);
-
         done();
       });
 
