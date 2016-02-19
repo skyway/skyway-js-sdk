@@ -9,6 +9,8 @@ class MediaConnection extends Connection {
     this._idPrefix = 'mc_';
     this.type = 'media';
     this.localStream = this.options._stream;
+    // Messages stored by peer because MC was not ready yet:
+    this._queuedMessages = options._queuedMessages;
 
     if (this.localStream) {
       this._negotiator.startConnection(
