@@ -11,6 +11,8 @@ class MediaConnection extends Connection {
     this.type = 'media';
     // This should only be set on the caller-side
     this.localStream = this.options._stream;
+
+    // Messages stored by peer because MC was not ready yet:
     this._queuedMessages = this.options._queuedMessages || [];
     this._pcAvailable = false;
 
@@ -33,11 +35,9 @@ class MediaConnection extends Connection {
   }
 
   handleMessage(message) {
-    if (!this._pcAvailable) {
-      this._queuedMessages.push(message);
-    } else {
+    if (this._pcAvailable) {
       var payload = message.payload;
-  
+
       switch (message.type) {
         case 'ANSWER':
           // Forward to negotiator
@@ -51,6 +51,8 @@ class MediaConnection extends Connection {
           util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
           break;
       }
+    } else {
+      this._queuedMessages.push(message);
     }
   }
 
