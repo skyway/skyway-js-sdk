@@ -111,10 +111,26 @@ describe('MediaConnection', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
 
-      const mc = new MediaConnection(peer, {_stream: 'foobar', _payload: {}});
-      assert(mc);
-      assert(startSpy.calledOnce);
+      const mc = new MediaConnection(peer, {_payload: {}});
+      assert(startSpy.calledOnce === false);
+      mc.answer('foobar');
+      assert(startSpy.calledOnce === true);
       // assert.equal(startSpy.args[0], mc.options._payload);
+    });
+
+    it('should process any queued messages after PeerConnection object is created', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+
+      const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: ['message']});
+
+      let spy = sinon.spy(mc, 'handleMessage');
+
+      assert.deepEqual(mc._queuedMessages, ['message']);
+      assert.equal(spy.calledOnce, false);
+      mc.answer('foobar');
+      assert.deepEqual(mc._queuedMessages, []);
+      assert.equal(spy.calledOnce, true);
     });
   });
 });

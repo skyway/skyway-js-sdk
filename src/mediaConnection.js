@@ -12,12 +12,14 @@ class MediaConnection extends Connection {
     // This should only be set on the caller-side
     this.localStream = this.options._stream;
     this._queuedMessages = this.options._queuedMessages || [];
+    this._pcAvailable = false;
 
     if (this.localStream) {
       this._negotiator.startConnection(
         this,
         {_stream: this.localStream, originator: true}
       );
+      this._pcAvailable = true;
     }
   }
 
@@ -31,20 +33,24 @@ class MediaConnection extends Connection {
   }
 
   handleMessage(message) {
-    var payload = message.payload;
+    if (!this._pcAvailable) {
+      this._queuedMessages.push(message);
+    } else {
+      var payload = message.payload;
   
-    switch (message.type) {
-      case 'ANSWER':
-        // Forward to negotiator
-        this._negotiator.handleSDP(message.type, this, payload.sdp);
-        this.open = true;
-        break;
-      case 'CANDIDATE':
-        this._negotiator.handleCandidate(this, payload.candidate);
-        break;
-      default:
-        util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
-        break;
+      switch (message.type) {
+        case 'ANSWER':
+          // Forward to negotiator
+          this._negotiator.handleSDP(message.type, this, payload.sdp);
+          this.open = true;
+          break;
+        case 'CANDIDATE':
+          this._negotiator.handleCandidate(this, payload.candidate);
+          break;
+        default:
+          util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
+          break;
+      }
     }
   }
 
@@ -62,10 +68,11 @@ class MediaConnection extends Connection {
       this,
       this.options._payload
     );
+    this._pcAvailable = true;
 
     // Process messages queued because PeerConnection not set up.
-    for (let message of this._queuedMessages) {
-      this.handleMessage(message);
+    for (let i = 0; i < this._queuedMessages.length; i++) {
+      this.handleMessage(this._queuedMessages.shift());
     }
 
     this.open = true;
