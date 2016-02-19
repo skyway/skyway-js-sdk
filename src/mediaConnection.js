@@ -11,6 +11,7 @@ class MediaConnection extends Connection {
     this.type = 'media';
     // This should only be set on the caller-side
     this.localStream = this.options._stream;
+    this._queuedMessages = this.options._queuedMessages || [];
 
     if (this.localStream) {
       this._negotiator.startConnection(
@@ -29,6 +30,24 @@ class MediaConnection extends Connection {
     this.emit('stream', remoteStream);
   }
 
+  handleMessage(message) {
+    var payload = message.payload;
+  
+    switch (message.type) {
+      case 'ANSWER':
+        // Forward to negotiator
+        this._negotiator.handleSDP(message.type, this, payload.sdp);
+        this.open = true;
+        break;
+      case 'CANDIDATE':
+        this._negotiator.handleCandidate(this, payload.candidate);
+        break;
+      default:
+        util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
+        break;
+    }
+  }
+
   // This is only called by the callee
   answer(stream) {
     if (this.localStream) {
@@ -44,14 +63,11 @@ class MediaConnection extends Connection {
       this.options._payload
     );
 
-    // PeerJS has the following code for lost messages on the 'provider'
-    // But I'm not currently sure what this is (seems to come from the negotiator)
+    // Process messages queued because PeerConnection not set up.
+    for (let message of this._queuedMessages) {
+      this.handleMessage(message);
+    }
 
-    // Retrieve lost messages stored because PeerConnection not set up.
-    // var messages = this.provider._getMessages(this.id);
-    // for (var i = 0, ii = messages.length; i < ii; i += 1) {
-    //   this.handleMessage(messages[i]);
-    // }
     this.open = true;
   }
 }
