@@ -41,7 +41,7 @@ class MediaConnection extends Connection {
     }
     this.open = false;
     this._negotiator.cleanup(this);
-    this.emit('close')
+    this.emit('close');
   }
 }
 
