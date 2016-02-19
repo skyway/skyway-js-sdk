@@ -26,11 +26,30 @@ describe('MediaConnection', () => {
 
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-
       const mc = new MediaConnection(peer, {_stream: {}});
 
       assert(mc);
       assert(spy.calledOnce);
+    });
+
+    it('should store any messages passed in when created', () => {
+      const stub = sinon.stub();
+
+      const Connection = proxyquire(
+        '../src/connection',
+        {'./negotiator': stub}
+      );
+      const MediaConnection = proxyquire(
+        '../src/mediaConnection',
+        {'./connection': Connection}
+      );
+
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+      const mc = new MediaConnection(peer, {_stream: {}});
+
+      assert(mc);
+      assert(stub.messages);
     });
   });
 });
