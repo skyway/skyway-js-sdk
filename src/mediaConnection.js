@@ -3,12 +3,14 @@
 const Connection = require('./connection');
 
 class MediaConnection extends Connection {
-  constructor(peer, options) {
+  constructor(peer, options, messages) {
     super(peer, options);
 
     this._idPrefix = 'mc_';
     this.type = 'media';
     this.localStream = this.options._stream;
+    // Messages stored by peer because MC was not ready yet:
+    this.messages = messages;
 
     if (this.localStream) {
       this._negotiator.startConnection(
