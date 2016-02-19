@@ -5,8 +5,6 @@ const proxyquire  = require('proxyquire');
 const SocketIO    = require('socket.io-client');
 
 const sinon  = require('sinon');
-// const chai   = require('chai');
-// const expect = chai.expect;
 
 describe('Socket', () => {
   const serverPort = 5080;
@@ -69,13 +67,6 @@ describe('Socket', () => {
       assert.equal(socket.disconnected, true);
 
       done();
-
-      // socket.socket.on('open', () => {
-      //   socket.close();
-      //   assert.equal(socket.socket.disconnected, true);
-      //   assert.equal(socket.disconnected, true);
-      //   done();
-      // });
     });
   });
 
@@ -143,31 +134,6 @@ describe('Socket', () => {
 
       socket.close();
       done();
-
-      // socket.socket.on('open', () => {
-      //   assert.equal(socket.id, undefined);
-      //   // First pass - No peerID
-      //   socket.send(data1);
-      //   assert.deepEqual(socket._queue, [data1]);
-      //   assert.deepEqual(receivedData, undefined);
-      //   // Second pass - peerID set, queued messages sent
-      //   socket.id = 'peerId';
-      //   socket._sendQueuedMessages();
-      // });
-
-      // server.on('MSG', msg => {
-      //   console.log('Message received!');
-      //   receivedData = JSON.parse(msg);
-      //   assert.deepEqual(socket._queue, []);
-      //   assert.equal(receivedData, data1);
-      //   // Third pass - additional send() invocation
-      //   socket.send(data2);
-      //   assert.deepEqual(socket._queue, []);
-      //   assert.deepEqual(receivedData, data2);
-      //   console.log('ending');
-      //   socket.close();
-      //   done();
-      // });
     });
   });
 });

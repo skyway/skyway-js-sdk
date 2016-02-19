@@ -56,7 +56,6 @@ class Socket extends EventEmitter {
   }
 
   close() {
-    // if (!this.disconnected && (this._io.readyState === 1)) {
     if (!this.disconnected) {
       this._io.disconnect();
       this.disconnected = true;
