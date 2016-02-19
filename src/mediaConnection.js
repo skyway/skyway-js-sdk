@@ -3,12 +3,19 @@
 const Connection = require('./connection');
 
 class MediaConnection extends Connection {
-  constructor(peer, provider, options) {
-    super(peer, provider, options);
+  constructor(peer, options) {
+    super(peer, options);
 
     this._idPrefix = 'mc_';
     this.type = 'media';
     this.localStream = this.options._stream;
+
+    if (this.localStream) {
+      this._negotiator.startConnection(
+        this,
+        {_stream: this.localStream, originator: true}
+      );
+    }
   }
 
   addStream(remoteStream) {
