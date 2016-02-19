@@ -44,6 +44,14 @@ describe('MediaConnection', () => {
       assert(mc);
       assert(startSpy.calledOnce);
     });
+
+    it('should store any messages passed in when created', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+      const mc = new MediaConnection(peer, {_stream: {}, _queuedMessages: ['message']});
+
+      assert.deepEqual(mc.options._queuedMessages, ['message']);
+    });
   });
 
   describe('Add Stream', () => {
@@ -78,24 +86,6 @@ describe('MediaConnection', () => {
       assert(spy.calledWith('stream', 'fakeStream') === true);
 
       spy.restore();
-    });
-
-    it('should store any messages passed in when created', () => {
-      const stub = sinon.stub();
-      const Connection = proxyquire(
-        '../src/connection',
-        {'./negotiator': stub}
-      );
-      const MediaConnection = proxyquire(
-        '../src/mediaConnection',
-        {'./connection': Connection}
-      );
-
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
-      const mc = new MediaConnection(peer, {_stream: {}, _queuedMessages: ['message']});
-
-      assert(mc.options._queuedMessages === ['message']);
     });
   });
 });
