@@ -67,7 +67,6 @@ describe('MediaConnection', () => {
     it('should emit a \'stream\' event upon addStream being invoked', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-
       const mc = new MediaConnection(peer, {_stream: {}});
 
       let spy = sinon.spy(mc, 'emit');
@@ -79,6 +78,24 @@ describe('MediaConnection', () => {
       assert(spy.calledWith('stream', 'fakeStream') === true);
 
       spy.restore();
+    });
+
+    it('should store any messages passed in when created', () => {
+      const stub = sinon.stub();
+      const Connection = proxyquire(
+        '../src/connection',
+        {'./negotiator': stub}
+      );
+      const MediaConnection = proxyquire(
+        '../src/mediaConnection',
+        {'./connection': Connection}
+      );
+
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+      const mc = new MediaConnection(peer, {_stream: {}, _queuedMessages: ['message']});
+
+      assert(mc.options._queuedMessages === ['message']);
     });
   });
 });
