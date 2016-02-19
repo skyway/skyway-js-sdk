@@ -21,7 +21,7 @@ class Socket extends EventEmitter {
   start(id, token) {
     this._io = io(this._httpUrl, {
       'force new connection': true,
-      'query':                `apiKey=${this._key}&token=${token}&peerId=${this.id}`
+      'query':                `apiKey=${this._key}&token=${token}&peerId=${id}`
     });
 
     this._io.on('OPEN', peerId => {
@@ -33,7 +33,7 @@ class Socket extends EventEmitter {
       this._sendQueuedMessages();
 
       // To inform the peer that the socket successfully connected
-      this.emit('OPEN');
+      this.emit('OPEN', peerId);
     });
   }
 
