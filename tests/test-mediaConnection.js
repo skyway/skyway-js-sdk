@@ -10,14 +10,16 @@ let MediaConnection;
 
 describe('MediaConnection', () => {
   let stub;
-  let startSpy;
+  let negotiatorSpy;
 
   beforeEach(() => {
     stub = sinon.stub();
-    startSpy = sinon.spy();
+    negotiatorSpy = sinon.spy();
 
     stub.returns({
-      startConnection: startSpy
+      startConnection: negotiatorSpy,
+      handleSDP:       negotiatorSpy,
+      handleCandidate: negotiatorSpy
     });
 
     Connection = proxyquire(
@@ -31,7 +33,7 @@ describe('MediaConnection', () => {
   });
 
   afterEach(() => {
-    startSpy = undefined;
+    negotiatorSpy = undefined;
   });
 
   describe('Constructor', () => {
@@ -42,7 +44,7 @@ describe('MediaConnection', () => {
       const mc = new MediaConnection(peer, {_stream: {}});
 
       assert(mc);
-      assert(startSpy.calledOnce);
+      assert(negotiatorSpy.calledOnce);
     });
   });
 
@@ -112,10 +114,10 @@ describe('MediaConnection', () => {
       const peer = new Peer(peerId, {});
 
       const mc = new MediaConnection(peer, {_payload: {}});
-      assert(startSpy.calledOnce === false);
+      assert(negotiatorSpy.calledOnce === false);
       mc.answer('foobar');
-      assert(startSpy.calledOnce === true);
-      // assert.equal(startSpy.args[0], mc.options._payload);
+      assert(negotiatorSpy.calledOnce === true);
+      // assert.equal(negotiatorSpy.args[0], mc.options._payload);
     });
 
     it('should process any queued messages after PeerConnection object is created', () => {
@@ -131,6 +133,20 @@ describe('MediaConnection', () => {
       mc.answer('foobar');
       assert.deepEqual(mc._queuedMessages, []);
       assert.equal(spy.calledOnce, true);
+
+      spy.reset();
+    });
+
+    it('should queue a message if handleMessage is called before PC is available', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+
+      const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: ['message1']});
+      assert.equal(mc._pcAvailable, false);
+      mc.handleMessage('message2');
+
+      assert.deepEqual(mc._queuedMessages, ['message1', 'message2']);
+      assert(negotiatorSpy.calledOnce === false);
     });
   });
 });
