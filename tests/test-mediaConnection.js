@@ -45,9 +45,9 @@ describe('MediaConnection', () => {
 
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-      const mc = new MediaConnection(peer, {_stream: {}}, ['message']);
+      const mc = new MediaConnection(peer, {_stream: {}, _queuedMessages: ['message']});
 
-      assert(mc.messages === ['message']);
+      assert(mc.options._queuedMessages === ['message']);
     });
   });
 });
