@@ -86,7 +86,6 @@ describe('MediaConnection', () => {
     it('should close the socket and call the negotiator to cleanup on close()', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-
       const mc = new MediaConnection(peer, {_stream: {}});
 
       let spy = sinon.spy(mc, 'close');
@@ -98,6 +97,24 @@ describe('MediaConnection', () => {
       assert.equal(mc.open, false);
       // assert(spy2.calledOnce);
       // assert(spy2.calledWith(mc));
+    });
+
+    it('should store any messages passed in when created', () => {
+      const stub = sinon.stub();
+      const Connection = proxyquire(
+        '../src/connection',
+        {'./negotiator': stub}
+      );
+      const MediaConnection = proxyquire(
+        '../src/mediaConnection',
+        {'./connection': Connection}
+      );
+
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+      const mc = new MediaConnection(peer, {_stream: {}, _queuedMessages: ['message']});
+
+      assert(mc.options._queuedMessages === ['message']);
     });
   });
 });
