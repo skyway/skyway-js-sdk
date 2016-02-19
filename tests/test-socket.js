@@ -45,7 +45,7 @@ describe('Socket', () => {
       socket.start();
 
       assert(stub.called);
-      socket._socket.open('peerId');
+      socket._io.open('peerId');
 
       assert.equal(socket.disconnected, false);
 
@@ -62,7 +62,7 @@ describe('Socket', () => {
       socket.start(peerId, token);
       assert.equal(socket.disconnected, true);
 
-      socket._socket.open(peerId);
+      socket._io.open(peerId);
       assert.equal(socket.disconnected, false);
 
       socket.close();
@@ -89,7 +89,7 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket._socket.open(peerId);
+      socket._io.open(peerId);
       socket.send(data);
       assert(spy.calledWith('MSG', JSON.stringify(data)));
       socket.close();
@@ -105,7 +105,7 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket._socket.open(peerId);
+      socket._io.open(peerId);
       socket.send(data);
       assert.deepEqual(spy.args[0], ['ERR', 'Invalid message']);
 
@@ -132,7 +132,7 @@ describe('Socket', () => {
       assert.deepEqual(receivedData, undefined);
 
       // Second pass - peerID set, queued messages sent
-      socket._socket.open(peerId);
+      socket._io.open(peerId);
       assert.deepEqual(socket._queue, []);
       assert.deepEqual(spy.args[0], ['MSG', JSON.stringify(data1)]);
 

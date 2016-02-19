@@ -11,7 +11,7 @@ class Socket extends EventEmitter {
     this.disconnected = true;
     this._queue = [];
 
-    this._socket = null;
+    this._io = null;
     this._key   = key;
 
     let httpProtocol = secure ? 'https://' : 'http://';
@@ -19,12 +19,12 @@ class Socket extends EventEmitter {
   }
 
   start(id, token) {
-    this._socket = io(this._httpUrl, {
+    this._io = io(this._httpUrl, {
       'force new connection': true,
       'query':                `apiKey=${this._key}&token=${token}&peerId=${this.id}`
     });
 
-    this._socket.on('OPEN', peerId => {
+    this._io.on('OPEN', peerId => {
       if (peerId) {
         this.disconnected = false;
       }
@@ -45,20 +45,20 @@ class Socket extends EventEmitter {
     }
 
     if (!data.type) {
-      this._socket.emit('ERR', 'Invalid message');
+      this._io.emit('ERR', 'Invalid message');
       return;
     }
 
     var message = JSON.stringify(data);
-    if (this._socket.connected === true) {
-      this._socket.emit('MSG', message);
+    if (this._io.connected === true) {
+      this._io.emit('MSG', message);
     }
   }
 
   close() {
-    // if (!this.disconnected && (this._socket.readyState === 1)) {
+    // if (!this.disconnected && (this._io.readyState === 1)) {
     if (!this.disconnected) {
-      this._socket.disconnect();
+      this._io.disconnect();
       this.disconnected = true;
     }
   }
