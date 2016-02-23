@@ -1,6 +1,7 @@
 'use strict';
 
 const io           = require('socket.io-client');
+const util         = require('./util');
 
 const EventEmitter = require('events');
 
@@ -35,7 +36,7 @@ class Socket extends EventEmitter {
       'query':                query
     });
 
-    this._io.on('OPEN', peerId => {
+    this._io.on(util.MESSAGE_TYPES.OPEN.name, peerId => {
       if (peerId) {
         this._isOpen = true;
       }
@@ -44,7 +45,31 @@ class Socket extends EventEmitter {
       this._sendQueuedMessages();
 
       // To inform the peer that the socket successfully connected
-      this.emit('OPEN', peerId);
+      this.emit(util.MESSAGE_TYPES.OPEN.name, peerId);
+    });
+
+    this._io.on(util.MESSAGE_TYPES.ERROR.name, error => {
+      this._io.emit(util.MESSAGE_TYPES.ERROR.name, error);
+    });
+
+    this._io.on(util.MESSAGE_TYPES.OFFER.name, message => {
+      this._io.emit(util.MESSAGE_TYPES.OFFER.name, message);
+    });
+
+    this._io.on(util.MESSAGE_TYPES.ANSWER.name, message => {
+      this._io.emit(util.MESSAGE_TYPES.ANSWER.name, message);
+    });
+
+    this._io.on(util.MESSAGE_TYPES.LEAVE.name, message => {
+      this._io.emit(util.MESSAGE_TYPES.LEAVE.name, message);
+    });
+
+    this._io.on(util.MESSAGE_TYPES.EXPIRE.name, message => {
+      this._io.emit(util.MESSAGE_TYPES.EXPIRE.name, message);
+    });
+
+    this._io.on(util.MESSAGE_TYPES.CANDIDATE.name, message => {
+      this._io.emit(util.MESSAGE_TYPES.CANDIDATE.name, message);
     });
   }
 
