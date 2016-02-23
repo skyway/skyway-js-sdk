@@ -300,6 +300,35 @@ describe('Peer', () => {
     });
   });
 
+  describe('GetConnection', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.disconnect();
+    });
+
+    it('should get a connection if peerId and connId match', () => {
+      const peerId = 'testId';
+      const connection = {id: 'connId'};
+
+      peer._addConnection(peerId, connection);
+
+      assert(peer.getConnection(peerId, connection.id) === connection);
+    });
+
+    it('should return null if connection doesn\'t exist', () => {
+      const peerId = 'testId';
+      const connection = {id: 'connId'};
+
+      assert(peer.getConnection(peerId, connection.id) === null);
+    });
+  });
+
   describe('_CleanupPeer', () => {
     let peer;
     beforeEach(() => {
@@ -384,7 +413,7 @@ describe('Peer', () => {
 
     it('should emit a peer-unavailable error on EXPIRE events', done => {
       const peerId = 'testId';
-      peer.on(util.PEER_EVENTS.error.name, e => {
+      peer.on(Peer.EVENTS.error.name, e => {
         assert(e.type === 'peer-unavailable');
         assert(e.message === `Could not connect to peer ${peerId}`);
         done();
@@ -395,12 +424,11 @@ describe('Peer', () => {
 
     it('should create MediaConnection on media OFFER events', done => {
       const peerId = 'testId';
-      peer.on(util.PEER_EVENTS.call.name, connection => {
+      peer.on(Peer.EVENTS.call.name, connection => {
         assert(connection);
         assert(connection.constructor.name === 'MediaConnection');
         assert(Object.keys(peer.connections[peerId]).length === 1);
         assert(peer.getConnection(peerId, connection.id) === connection);
-
         done();
       });
 
@@ -415,7 +443,7 @@ describe('Peer', () => {
 
     it('should create DataConnection on data OFFER events', done => {
       const peerId = 'testId';
-      peer.on(util.PEER_EVENTS.connection.name, connection => {
+      peer.on(Peer.EVENTS.connection.name, connection => {
         assert(connection);
         assert(connection.constructor.name === 'DataConnection');
         assert(Object.keys(peer.connections[peerId]).length === 1);

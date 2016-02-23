@@ -19,16 +19,6 @@ MessageTypes.initEnum([
   'CANDIDATE'
 ]);
 
-class PeerEvents extends Enum {}
-PeerEvents.initEnum([
-  'open',
-  'error',
-  'call',
-  'connection',
-  'close',
-  'disconnected'
-]);
-
 class Util {
   constructor() {
     this.CLOUD_HOST = 'skyway.io';
@@ -43,7 +33,6 @@ class Util {
     this.setZeroTimeout = undefined;
     this.LOG_LEVELS = LogLevel;
     this.MESSAGE_TYPES = MessageTypes;
-    this.PEER_EVENTS = PeerEvents;
 
     this.defaultConfig = {
       iceServers: [{

@@ -1,6 +1,7 @@
 'use strict';
 
 const Connection = require('./connection');
+const util = require('./util');
 
 class MediaConnection extends Connection {
   constructor(peer, options) {
@@ -9,6 +10,8 @@ class MediaConnection extends Connection {
     this._idPrefix = 'mc_';
     this.type = 'media';
     this.localStream = this.options._stream;
+    // Messages stored by peer because MC was not ready yet:
+    this._queuedMessages = options._queuedMessages;
 
     if (this.localStream) {
       this._negotiator.startConnection(
@@ -19,8 +22,11 @@ class MediaConnection extends Connection {
   }
 
   addStream(remoteStream) {
-    // TODO: Remove lint bypass
-    console.log(remoteStream);
+    util.log('Receiving stream', remoteStream);
+
+    this.remoteStream = remoteStream;
+    // Is 'stream' an appropriate emit message? PeerJS contemplated using 'open' instead
+    this.emit('stream', remoteStream);
   }
 
   answer(stream) {
