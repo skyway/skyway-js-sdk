@@ -22,7 +22,6 @@ class MediaConnection extends Connection {
   }
 
   addStream(remoteStream) {
-    console.log(remoteStream);
     util.log('Receiving stream', remoteStream);
 
     this.remoteStream = remoteStream;

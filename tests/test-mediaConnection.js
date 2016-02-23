@@ -31,7 +31,7 @@ describe('MediaConnection', () => {
   });
 
   afterEach(() => {
-    startSpy = undefined;
+    startSpy.reset();
   });
 
   describe('Constructor', () => {
