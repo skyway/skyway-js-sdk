@@ -33,7 +33,7 @@ describe('MediaConnection', () => {
   });
 
   afterEach(() => {
-    negotiatorSpy = undefined;
+    negotiatorSpy.reset();
   });
 
   describe('Constructor', () => {
@@ -45,6 +45,14 @@ describe('MediaConnection', () => {
 
       assert(mc);
       assert(negotiatorSpy.calledOnce);
+    });
+
+    it('should store any messages passed in when created', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+      const mc = new MediaConnection(peer, {_stream: {}, _queuedMessages: ['message']});
+
+      assert.deepEqual(mc.options._queuedMessages, ['message']);
     });
 
     it('should store any messages passed in when created', () => {
