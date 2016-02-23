@@ -27,6 +27,8 @@ module.exports = function(config) {
       'src/**/*.js':        'browserify'
     },
     browserify: {
+      debug: true,
+
       configure: function(bundle) {
         bundle.once('prebundle', function() {
           bundle.transform(
