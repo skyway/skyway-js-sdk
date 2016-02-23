@@ -19,6 +19,9 @@ class Peer extends EventEmitter {
     this._disconnectCalled = false;
     this._destroyCalled = false;
 
+    // store peerId after disconnect to use when reconnecting
+    this._lastPeerId = null;
+
     if (id && id.constructor === Object) {
       options = id;
       id = undefined;
@@ -81,19 +84,65 @@ class Peer extends EventEmitter {
   }
 
   destroy() {
-    this._destroyCalled = true;
+    if (!this._destroyCalled) {
+      this._destroyCalled = true;
+      this._cleanup();
+      this.disconnect();
+    }
   }
 
   disconnect() {
-    this._disconnectCalled = true;
+    setTimeout(() => {
+      if (!this._disconnectCalled) {
+        this._disconnectCalled = true;
+        this.open = false;
+
+        if (this.socket) {
+          this.socket.close();
+        }
+
+        this.emit('disconnected', this.id);
+        this._lastPeerId = this.id;
+        this.id = null;
+      }
+    }, 0);
   }
 
   reconnect() {
   }
 
   listAllPeers(cb) {
-    // TODO: Remove lint bypass
-    console.log(cb);
+    cb = cb || function() {};
+    const self = this;
+    const http = new XMLHttpRequest();
+    const protocol = this.options.secure ? 'https://' : 'http://';
+
+    const url = `${protocol}${this.options.host}:` +
+              `${this.options.port}/active/list/${this.options.key}`;
+
+    // If there's no ID we need to wait for one before trying to init socket.
+    http.open('get', url, true);
+    http.onerror = function() {
+      self._abort('server-error', 'Could not get peers from the server.');
+      cb([]);
+    };
+    http.onreadystatechange = function() {
+      if (http.readyState !== 4) {
+        return;
+      }
+      if (http.status === 401) {
+        cb([]);
+        throw new Error(
+          'It doesn\'t look like you have permission to list peers IDs. ' +
+          'Please enable the SkyWay REST API on https://skyway.io/ds/'
+        );
+      } else if (http.status === 200) {
+        cb(JSON.parse(http.responseText));
+      } else {
+        cb([]);
+      }
+    };
+    http.send(null);
   }
 
   _abort(type, message) {
@@ -142,6 +191,21 @@ class Peer extends EventEmitter {
   _retrieveId(id) {
     // TODO: Remove lint bypass
     console.log(id);
+  }
+
+  _cleanup() {
+    if (this.connections) {
+      for (let peer of Object.keys(this.connections)) {
+        this._cleanupPeer(peer);
+      }
+    }
+    this.emit('close');
+  }
+
+  _cleanupPeer(peer) {
+    for (let connection of this.connections[peer]) {
+      connection.close();
+    }
   }
 }
 
