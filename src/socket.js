@@ -19,7 +19,7 @@ class Socket extends EventEmitter {
   }
 
   get disconnected() {
-    return !(this._io.connected && this._isOpen);
+    return !((this._io && this._io.connected) && this._isOpen);
   }
 
   start(id, token) {
