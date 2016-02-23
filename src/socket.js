@@ -67,10 +67,10 @@ class Socket extends EventEmitter {
   }
 
   _sendQueuedMessages() {
-    for (var i = 0; i < this._queue.length; i++) {
-      // Remove each item from queue in turn and send
-      this.send(this._queue.shift());
+    for (let message of this._queue) {
+      this.send(message);
     }
+    this._queue = [];
   }
 }
 
