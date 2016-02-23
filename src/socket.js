@@ -41,21 +41,21 @@ class Socket extends EventEmitter {
     });
   }
 
-  send(data) {
-    if (!data.type) {
+  send(type, message) {
+    if (!type) {
       this._io.emit('ERR', 'Invalid message');
       return;
     }
 
     // If we are not connected yet, queue the message
     if (this.disconnected) {
-      this._queue.push(data);
+      this._queue.push({type: type, message: message});
       return;
     }
 
-    let message = JSON.stringify(data);
+    let messageString = JSON.stringify(message);
     if (this._io.connected === true) {
-      this._io.emit('MSG', message);
+      this._io.emit(type, messageString);
     }
   }
 
@@ -67,8 +67,8 @@ class Socket extends EventEmitter {
   }
 
   _sendQueuedMessages() {
-    for (let message of this._queue) {
-      this.send(message);
+    for (let data of this._queue) {
+      this.send(data.type, data.message);
     }
     this._queue = [];
   }
