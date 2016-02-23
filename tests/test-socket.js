@@ -50,7 +50,7 @@ describe('Socket', () => {
       done();
     });
 
-    it('should close socket and have disconnect status set', done => {
+    it('should close socket and have disconnect status set', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
@@ -65,13 +65,11 @@ describe('Socket', () => {
 
       socket.close();
       assert.equal(socket.disconnected, true);
-
-      done();
     });
   });
 
   describe('Sending data', () => {
-    it('should be able to send some data', done => {
+    it('should be able to send some data', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
@@ -84,10 +82,9 @@ describe('Socket', () => {
       socket.send(data);
       assert(spy.calledWith('MSG', JSON.stringify(data)));
       socket.close();
-      done();
     });
 
-    it('should not send data without a type set', done => {
+    it('should not send data without a type set', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
@@ -101,10 +98,9 @@ describe('Socket', () => {
       assert.deepEqual(spy.args[0], ['ERR', 'Invalid message']);
 
       socket.close();
-      done();
     });
 
-    it('should send queued messages upon connecting', done => {
+    it('should send queued messages upon connecting', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
@@ -133,7 +129,6 @@ describe('Socket', () => {
       assert.deepEqual(spy.args[1], ['MSG', JSON.stringify(data2)]);
 
       socket.close();
-      done();
     });
   });
 });

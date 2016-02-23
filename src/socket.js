@@ -8,7 +8,7 @@ class Socket extends EventEmitter {
   constructor(secure, host, port, key) {
     super();
 
-    this._isOpen = false; 
+    this._isOpen = false;
     this._queue = [];
 
     this._io  = null;
@@ -53,7 +53,7 @@ class Socket extends EventEmitter {
       return;
     }
 
-    var message = JSON.stringify(data);
+    let message = JSON.stringify(data);
     if (this._io.connected === true) {
       this._io.emit('MSG', message);
     }
