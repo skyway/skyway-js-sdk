@@ -8,14 +8,18 @@ class Socket extends EventEmitter {
   constructor(secure, host, port, key) {
     super();
 
-    this.disconnected = true;
+    this._isOpen = false; 
     this._queue = [];
 
-    this._io = null;
-    this._key   = key;
+    this._io  = null;
+    this._key = key;
 
     let httpProtocol = secure ? 'https://' : 'http://';
     this._httpUrl = `${httpProtocol}${host}:${port}`;
+  }
+
+  get disconnected() {
+    return !(this._io.connected && this._isOpen);
   }
 
   start(id, token) {
@@ -26,7 +30,7 @@ class Socket extends EventEmitter {
 
     this._io.on('OPEN', peerId => {
       if (peerId) {
-        this.disconnected = false;
+        this._isOpen = true;
       }
 
       // This may be redundant, but is here to match peerjs:
@@ -58,7 +62,7 @@ class Socket extends EventEmitter {
   close() {
     if (!this.disconnected) {
       this._io.disconnect();
-      this.disconnected = true;
+      this._isOpen = false;
     }
   }
 
