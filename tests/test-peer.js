@@ -411,7 +411,7 @@ describe('Peer', () => {
 
     it('should emit a peer-unavailable error on EXPIRE events', done => {
       const peerId = 'testId';
-      peer.on(util.PEER_EVENTS.error.name, e => {
+      peer.on(Peer.EVENTS.error.name, e => {
         assert(e.type === 'peer-unavailable');
         assert(e.message === `Could not connect to peer ${peerId}`);
         done();
@@ -422,7 +422,7 @@ describe('Peer', () => {
 
     it('should create MediaConnection on media OFFER events', done => {
       const peerId = 'testId';
-      peer.on(util.PEER_EVENTS.call.name, connection => {
+      peer.on(Peer.EVENTS.call.name, connection => {
         assert(connection);
         assert(connection.constructor.name === 'MediaConnection');
         assert(Object.keys(peer.connections[peerId]).length === 1);
@@ -441,7 +441,7 @@ describe('Peer', () => {
 
     it('should create DataConnection on data OFFER events', done => {
       const peerId = 'testId';
-      peer.on(util.PEER_EVENTS.connection.name, connection => {
+      peer.on(Peer.EVENTS.connection.name, connection => {
         assert(connection);
         assert(connection.constructor.name === 'DataConnection');
         assert(Object.keys(peer.connections[peerId]).length === 1);

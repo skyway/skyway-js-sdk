@@ -7,6 +7,18 @@ const util            = require('./util');
 
 const EventEmitter = require('events');
 
+// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
+import {Enum} from 'enumify';
+class PeerEvents extends Enum {}
+PeerEvents.initEnum([
+  'open',
+  'error',
+  'call',
+  'connection',
+  'close',
+  'disconnected'
+]);
+
 class Peer extends EventEmitter {
   constructor(id, options) {
     super();
@@ -86,7 +98,7 @@ class Peer extends EventEmitter {
     }
 
     err.type = type;
-    this.emit(util.PEER_EVENTS.error.name, err);
+    this.emit(Peer.EVENTS.error.name, err);
   }
 
   destroy() {
@@ -107,7 +119,7 @@ class Peer extends EventEmitter {
           this.socket.close();
         }
 
-        this.emit(util.PEER_EVENTS.disconnected.name, this.id);
+        this.emit(Peer.EVENTS.disconnected.name, this.id);
         this._lastPeerId = this.id;
         this.id = null;
       }
@@ -227,7 +239,7 @@ class Peer extends EventEmitter {
 
         util.log('MediaConnection created in OFFER');
         this._addConnection(message.src, connection);
-        this.emit(util.PEER_EVENTS.call.name, connection);
+        this.emit(Peer.EVENTS.call.name, connection);
       } else if (message.type === 'data') {
         connection = new DataConnection(message.src, this, {
           connectionId:  connectionId,
@@ -239,7 +251,7 @@ class Peer extends EventEmitter {
 
         util.log('DataConnection created in OFFER');
         this._addConnection(message.src, connection);
-        this.emit(util.PEER_EVENTS.connection.name, connection);
+        this.emit(Peer.EVENTS.connection.name, connection);
       } else {
         util.warn('Received malformed connection type: ', message.type);
       }
@@ -264,13 +276,17 @@ class Peer extends EventEmitter {
         this._cleanupPeer(peer);
       }
     }
-    this.emit(util.PEER_EVENTS.close.name);
+    this.emit(Peer.EVENTS.close.name);
   }
 
   _cleanupPeer(peer) {
     for (let connection of this.connections[peer]) {
       connection.close();
     }
+  }
+
+  static get EVENTS() {
+    return PeerEvents;
   }
 }
 
