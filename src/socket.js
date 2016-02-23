@@ -43,7 +43,7 @@ class Socket extends EventEmitter {
 
   send(type, message) {
     if (!type) {
-      this._io.emit('ERR', 'Invalid message');
+      this._io.emit('error', 'Invalid message');
       return;
     }
 

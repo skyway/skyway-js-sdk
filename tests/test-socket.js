@@ -95,7 +95,7 @@ describe('Socket', () => {
       socket.start(peerId, token);
       socket._io.open(peerId);
       socket.send(undefined, data.message);
-      assert.deepEqual(spy.args[0], ['ERR', 'Invalid message']);
+      assert.deepEqual(spy.args[0], ['error', 'Invalid message']);
 
       socket.close();
     });
