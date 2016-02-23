@@ -1,10 +1,11 @@
 'use strict';
 
-const Peer      = require('../src/peer');
-const Socket    = require('../src/socket');
-const assert    = require('power-assert');
-const util      = require('../src/util');
-const sinon     = require('sinon');
+const Peer    = require('../src/peer');
+const Socket  = require('../src/socket');
+const util    = require('../src/util');
+
+const assert = require('power-assert');
+const sinon  = require('sinon');
 
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
@@ -101,18 +102,20 @@ describe('Peer', () => {
       assert(peer.socket instanceof Socket);
     });
 
-    it('should call _handleMessage on a socket "message" event', () => {
+    it('should set up socket message listeners', () => {
+      const spy = sinon.spy(Socket.prototype, 'on');
+
       const peer = new Peer({
         key: apiKey
       });
 
-      const testMsg = 'test message';
-      const spy = sinon.spy(peer, '_handleMessage');
-
-      peer.socket.emit('message', testMsg);
-
-      assert(spy.calledOnce === true);
-      assert(spy.calledWith(testMsg) === true);
+      assert(peer);
+      assert(spy.called === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.ERROR.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.LEAVE.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.EXPIRE.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.OFFER.name) === true);
       spy.restore();
     });
 
@@ -295,6 +298,35 @@ describe('Peer', () => {
     });
   });
 
+  describe('GetConnection', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.disconnect();
+    });
+
+    it('should get a connection if peerId and connId match', () => {
+      const peerId = 'testId';
+      const connection = {id: 'connId'};
+
+      peer._addConnection(peerId, connection);
+
+      assert(peer.getConnection(peerId, connection.id) === connection);
+    });
+
+    it('should return null if connection doesn\'t exist', () => {
+      const peerId = 'testId';
+      const connection = {id: 'connId'};
+
+      assert(peer.getConnection(peerId, connection.id) === null);
+    });
+  });
+
   describe('_CleanupPeer', () => {
     let peer;
     beforeEach(() => {
@@ -326,6 +358,105 @@ describe('Peer', () => {
       for (let spy of spies) {
         assert(spy.calledOnce === true);
       }
+    });
+  });
+
+  describe('_setupMessageHandlers', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should set peer.id on OPEN events', () => {
+      assert(peer.id === undefined);
+
+      const peerId = 'testId';
+      peer.socket.emit(util.MESSAGE_TYPES.OPEN.name, peerId);
+
+      assert(peer.id === peerId);
+    });
+
+    it('should abort with server-error on ERROR events', () => {
+      const errMsg = 'Error message';
+      try {
+        peer.socket.emit(util.MESSAGE_TYPES.ERROR.name, errMsg);
+      } catch (e) {
+        assert(e.type === 'server-error');
+        assert(e.message === errMsg);
+
+        return;
+      }
+
+      assert.fail();
+    });
+
+    it('should log a message on LEAVE events', () => {
+      const peerId = 'testId';
+
+      const spy = sinon.spy(util, 'log');
+
+      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.name, {src: peerId});
+
+      assert(spy.calledOnce === true);
+      assert(spy.calledWith(`Received leave message from ${peerId}`) === true);
+
+      spy.restore();
+    });
+
+    it('should emit a peer-unavailable error on EXPIRE events', done => {
+      const peerId = 'testId';
+      peer.on(Peer.EVENTS.error.name, e => {
+        assert(e.type === 'peer-unavailable');
+        assert(e.message === `Could not connect to peer ${peerId}`);
+        done();
+      });
+
+      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, {src: peerId});
+    });
+
+    it('should create MediaConnection on media OFFER events', done => {
+      const peerId = 'testId';
+      peer.on(Peer.EVENTS.call.name, connection => {
+        assert(connection);
+        assert(connection.constructor.name === 'MediaConnection');
+        assert(Object.keys(peer.connections[peerId]).length === 1);
+        assert(peer.getConnection(peerId, connection.id) === connection);
+        done();
+      });
+
+      const offerMsg = {
+        type:         'media',
+        connectionId: util.randomToken(),
+        src:          peerId,
+        metadata:     {}
+      };
+      peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
+    });
+
+    it('should create DataConnection on data OFFER events', done => {
+      const peerId = 'testId';
+      peer.on(Peer.EVENTS.connection.name, connection => {
+        assert(connection);
+        assert(connection.constructor.name === 'DataConnection');
+        assert(Object.keys(peer.connections[peerId]).length === 1);
+        assert(peer.getConnection(peerId, connection.id) === connection);
+
+        done();
+      });
+
+      const offerMsg = {
+        type:         'data',
+        connectionId: util.randomToken(),
+        src:          peerId,
+        metadata:     {}
+      };
+      peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
     });
   });
 

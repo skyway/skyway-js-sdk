@@ -8,6 +8,17 @@ class LogLevel extends Enum {}
 LogLevel.initEnum(['NONE', 'ERROR', 'WARN', 'FULL']);
 const LOG_PREFIX      = 'SkyWayJS: ';
 
+class MessageTypes extends Enum {}
+MessageTypes.initEnum([
+  'OPEN',
+  'ERROR',
+  'OFFER',
+  'ANSWER',
+  'LEAVE',
+  'EXPIRE',
+  'CANDIDATE'
+]);
+
 class Util {
   constructor() {
     this.CLOUD_HOST = 'skyway.io';
@@ -21,6 +32,8 @@ class Util {
     this.unpack = BinaryPack.unpack;
     this.setZeroTimeout = undefined;
     this.LOG_LEVELS = LogLevel;
+    this.MESSAGE_TYPES = MessageTypes;
+
     this.defaultConfig = {
       iceServers: [{
         urls: 'stun:stun.skyway.io:3478',
