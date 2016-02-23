@@ -577,7 +577,7 @@ describe('Peer', () => {
       peer.listAllPeers();
       assert(requests.length === 1);
 
-      var protocol = peer.options.secure ? 'https://' : 'http://';
+      const protocol = peer.options.secure ? 'https://' : 'http://';
       const url = `${protocol}${peer.options.host}:` +
         `${peer.options.port}/active/list/${apiKey}`;
       assert(requests[0].url === url);

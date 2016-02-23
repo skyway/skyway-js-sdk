@@ -83,7 +83,7 @@ class Peer extends EventEmitter {
       return null;
     }
 
-    var connection = new DataConnection(peerId, this, options);
+    const connection = new DataConnection(peerId, this, options);
     util.log('DataConnection created in connect method');
     this._addConnection(peerId, connection);
     return connection;
@@ -109,7 +109,7 @@ class Peer extends EventEmitter {
 
     options = options || {};
     options._stream = stream;
-    var mc = new MediaConnection(peerId, this, options);
+    const mc = new MediaConnection(peerId, this, options);
     util.log('MediaConnection created in call method');
     this._addConnection(peerId, mc);
     return mc;
