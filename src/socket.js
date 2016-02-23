@@ -23,9 +23,16 @@ class Socket extends EventEmitter {
   }
 
   start(id, token) {
+    let query;
+    if (id) {
+      query = `apiKey=${this._key}&token=${token}&peerId=${id}`;
+    } else {
+      query = `apiKey=${this._key}&token=${token}`;
+    }
+
     this._io = io(this._httpUrl, {
       'force new connection': true,
-      'query':                `apiKey=${this._key}&token=${token}&peerId=${id}`
+      'query':                query
     });
 
     this._io.on('OPEN', peerId => {
