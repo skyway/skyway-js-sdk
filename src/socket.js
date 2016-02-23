@@ -38,14 +38,14 @@ class Socket extends EventEmitter {
   }
 
   send(data) {
-    // If we are not connected yet, queue the message
-    if (this.disconnected) {
-      this._queue.push(data);
+    if (!data.type) {
+      this._io.emit('ERR', 'Invalid message');
       return;
     }
 
-    if (!data.type) {
-      this._io.emit('ERR', 'Invalid message');
+    // If we are not connected yet, queue the message
+    if (this.disconnected) {
+      this._queue.push(data);
       return;
     }
 
