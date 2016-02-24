@@ -109,6 +109,18 @@ describe('MediaConnection', () => {
       mc.handleAnswer(message);
       assert(answerSpy.calledOnce === true);
     });
+
+    it('should call negotiator\'s handleCandidate with a candidate', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+      const message = {type: 'CANDIDATE', answer: 'message'};
+
+      const mc = new MediaConnection(peer, {_stream: {}});
+      assert(candidateSpy.calledOnce === false);
+
+      mc.handleCandidate(message);
+      assert(candidateSpy.calledOnce === true);
+    });
   });
 
   describe('Answering', () => {
