@@ -93,7 +93,8 @@ class Peer extends EventEmitter {
     if (this._disconnectCalled) {
       util.warn('You cannot connect to a new Peer because you called ' +
         '.disconnect() on this Peer and ended your connection with the ' +
-        'server. You can create a new Peer to reconnect.');
+        'server. You can create a new Peer to reconnect, or call reconnect ' +
+        'on this peer if you believe its ID to still be available.');
       this.emitError(
         'disconnected',
         'Cannot connect to new Peer after disconnecting from server.');
