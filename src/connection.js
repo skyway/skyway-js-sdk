@@ -35,7 +35,7 @@ class Connection extends EventEmitter {
 
   // TODO: move into the negotiator class to handle signalling directly?
   handleMessage(message) {
-    var payload = message.payload;
+    const payload = message.payload;
 
     switch (message.type) {
       case 'ANSWER':
