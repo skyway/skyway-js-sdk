@@ -1,8 +1,8 @@
 'use strict';
 
-const util      = require('../src/util');
 const assert    = require('power-assert');
 const sinon     = require('sinon');
+const util      = require('../src/util');
 
 describe('Util', () => {
   before(() => {
