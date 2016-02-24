@@ -36,41 +36,24 @@ class Socket extends EventEmitter {
       'query':                query
     });
 
-    this._io.on(util.MESSAGE_TYPES.OPEN.name, peerId => {
-      if (peerId) {
-        this._isOpen = true;
+    for (let type of util.MESSAGE_TYPES) {
+      if (type.name === util.MESSAGE_TYPES.OPEN.name) {
+        this._io.on(type.name, peerId => {
+          if (peerId) {
+            this._isOpen = true;
+          }
+
+          this._sendQueuedMessages();
+
+          // To inform the peer that the socket successfully connected
+          this.emit(type.name, peerId);
+        });
+      } else {
+        this._io.on(type.name, message => {
+          this._io.emit(type.name, message);
+        });
       }
-
-      // This may be redundant, but is here to match peerjs:
-      this._sendQueuedMessages();
-
-      // To inform the peer that the socket successfully connected
-      this.emit(util.MESSAGE_TYPES.OPEN.name, peerId);
-    });
-
-    this._io.on(util.MESSAGE_TYPES.ERROR.name, error => {
-      this._io.emit(util.MESSAGE_TYPES.ERROR.name, error);
-    });
-
-    this._io.on(util.MESSAGE_TYPES.OFFER.name, message => {
-      this._io.emit(util.MESSAGE_TYPES.OFFER.name, message);
-    });
-
-    this._io.on(util.MESSAGE_TYPES.ANSWER.name, message => {
-      this._io.emit(util.MESSAGE_TYPES.ANSWER.name, message);
-    });
-
-    this._io.on(util.MESSAGE_TYPES.LEAVE.name, message => {
-      this._io.emit(util.MESSAGE_TYPES.LEAVE.name, message);
-    });
-
-    this._io.on(util.MESSAGE_TYPES.EXPIRE.name, message => {
-      this._io.emit(util.MESSAGE_TYPES.EXPIRE.name, message);
-    });
-
-    this._io.on(util.MESSAGE_TYPES.CANDIDATE.name, message => {
-      this._io.emit(util.MESSAGE_TYPES.CANDIDATE.name, message);
-    });
+    }
   }
 
   send(type, message) {
