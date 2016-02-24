@@ -176,6 +176,29 @@ describe('MediaConnection', () => {
       spy.reset();
     });
 
+    it('should not process any invalid queued messages', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+      const messages = [{type: 'WRONG', answer: 'message'}];
+
+      const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: messages});
+
+      let spy1 = sinon.spy(mc, 'handleAnswer');
+      let spy2 = sinon.spy(mc, 'handleCandidate');
+
+      assert.deepEqual(mc._queuedMessages, messages);
+      assert.equal(spy1.calledOnce, false);
+      assert.equal(spy2.calledOnce, false);
+
+      mc.answer('foobar');
+      assert.deepEqual(mc._queuedMessages, []);
+      assert.equal(spy1.calledOnce, false);
+      assert.equal(spy2.calledOnce, false);
+
+      spy1.reset();
+      spy2.reset();
+    });
+
     it('should queue a message if handleMessage is called before PC is available', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
