@@ -34,21 +34,20 @@ class Connection extends EventEmitter {
   }
 
   // TODO: move into the negotiator class to handle signalling directly?
-  handleMessage(message) {
-    const payload = message.payload;
+  handleAnswer(message) {
+    if (this._pcAvailable) {
+      this._negotiator.handleAnswer(message.answer);
+      this.open = true;
+    } else {
+      this._queuedMessages.push(message);
+    }
+  }
 
-    switch (message.type) {
-      case 'ANSWER':
-        // Forward to negotiator
-        this._negotiator.handleSDP(message.type, this, payload.sdp);
-        break;
-      case 'CANDIDATE':
-        this._negotiator.handleCandidate(this, payload.candidate);
-        break;
-      default:
-        util.warn('Unrecognized message type:',
-          message.type, 'from peer:', this.peerId);
-        break;
+  handleCandidate(message) {
+    if (this._pcAvailable) {
+      this._negotiator.handleCandidate(message.candidate);
+    } else {
+      this._queuedMessages.push(message);
     }
   }
 

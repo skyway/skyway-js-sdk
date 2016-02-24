@@ -10,16 +10,20 @@ let MediaConnection;
 
 describe('MediaConnection', () => {
   let stub;
-  let negotiatorSpy;
+  let startSpy;
+  let answerSpy;
+  let candidateSpy;
 
   beforeEach(() => {
     stub = sinon.stub();
-    negotiatorSpy = sinon.spy();
+    startSpy = sinon.spy();
+    answerSpy = sinon.spy();
+    candidateSpy = sinon.spy();
 
     stub.returns({
-      startConnection: negotiatorSpy,
-      handleAnswer:    negotiatorSpy,
-      handleCandidate: negotiatorSpy
+      startConnection: startSpy,
+      handleAnswer:    answerSpy,
+      handleCandidate: candidateSpy
     });
 
     Connection = proxyquire(
@@ -33,7 +37,9 @@ describe('MediaConnection', () => {
   });
 
   afterEach(() => {
-    negotiatorSpy.reset();
+    startSpy.reset();
+    answerSpy.reset();
+    candidateSpy.reset();
   });
 
   describe('Constructor', () => {
@@ -44,15 +50,7 @@ describe('MediaConnection', () => {
       const mc = new MediaConnection(peer, {_stream: {}});
 
       assert(mc);
-      assert(negotiatorSpy.calledOnce);
-    });
-
-    it('should store any messages passed in when created', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
-      const mc = new MediaConnection(peer, {_stream: {}, _queuedMessages: ['message']});
-
-      assert.deepEqual(mc.options._queuedMessages, ['message']);
+      assert(startSpy.calledOnce);
     });
 
     it('should store any messages passed in when created', () => {
@@ -99,6 +97,20 @@ describe('MediaConnection', () => {
     });
   });
 
+  describe('Handling messages', () => {
+    it('should call negotiator\'s handleAnswer with an answer', () => {
+      const peerId = 'peerId';
+      const peer = new Peer(peerId, {});
+      const message = {type: 'ANSWER', answer: 'message'};
+
+      const mc = new MediaConnection(peer, {_stream: {}});
+      assert(answerSpy.calledOnce === false);
+
+      mc.handleAnswer(message);
+      assert(answerSpy.calledOnce === true);
+    });
+  });
+
   describe('Answering', () => {
     it('should set the localStream upon answering', () => {
       const peerId = 'peerId';
@@ -129,13 +141,12 @@ describe('MediaConnection', () => {
       const peer = new Peer(peerId, {});
 
       const mc = new MediaConnection(peer, {_payload: {}});
-      assert(negotiatorSpy.calledOnce === false);
+      assert(startSpy.calledOnce === false);
       mc.answer('foobar');
-      assert(negotiatorSpy.calledOnce === true);
-      // assert.equal(negotiatorSpy.args[0], mc.options._payload);
+      assert(startSpy.calledOnce === true);
     });
 
-    it.only('should process any queued messages after PeerConnection object is created', () => {
+    it('should process any queued messages after PeerConnection object is created', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
       const messages = [{type: 'ANSWER', answer: 'message'}];
@@ -156,13 +167,18 @@ describe('MediaConnection', () => {
     it('should queue a message if handleMessage is called before PC is available', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
+      const message1 = {type: 'CANDIDATE', answer: 'message1'};
+      const message2 = {type: 'ANSWER', answer: 'message2'};
+      const messages = [message1];
 
-      const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: ['message1']});
+      const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: messages});
+
       assert.equal(mc._pcAvailable, false);
-      mc.handleMessage('message2');
+      mc.handleAnswer(message2);
 
-      assert.deepEqual(mc._queuedMessages, ['message1', 'message2']);
-      assert(negotiatorSpy.calledOnce === false);
+      assert.deepEqual(mc._queuedMessages, [message1, message2]);
+      assert(answerSpy.calledOnce === false);
+      assert(candidateSpy.calledOnce === false);
     });
   });
 });
