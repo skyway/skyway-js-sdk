@@ -67,7 +67,7 @@ class Peer extends EventEmitter {
       return;
     }
 
-    this._initializeServerConnection();
+    this._initializeServerConnection(id);
   }
 
   connect(peer, options) {
@@ -175,7 +175,7 @@ class Peer extends EventEmitter {
     }, 0);
   }
 
-  _initializeServerConnection() {
+  _initializeServerConnection(id) {
     this.socket = new Socket(
       this.options.secure,
       this.options.host,
@@ -195,6 +195,8 @@ class Peer extends EventEmitter {
         this.emitError('socket-error', 'Lost connection to server.');
       }
     });
+
+    this.socket.start(id, this.options.token);
 
     window.onbeforeunload = () => {
       this.destroy();

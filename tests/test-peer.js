@@ -465,14 +465,14 @@ describe('Peer', () => {
     let requests = [];
     let xhr;
     beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+
       xhr = sinon.useFakeXMLHttpRequest();
       xhr.onCreate = function(request) {
         requests.push(request);
       };
-
-      peer = new Peer({
-        key: apiKey
-      });
     });
 
     afterEach(() => {
