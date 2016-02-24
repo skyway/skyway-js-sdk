@@ -17,14 +17,14 @@ class Negotiator {
   cleanup() {
   }
 
-  handleSDP(type, sdp) {
+  handleAnswer(message) {
     // TODO: Remove lint bypass
-    console.log(type, sdp);
+    console.log(message);
   }
 
-  handleCandidate(ice) {
+  handleCandidate(message) {
     // TODO: Remove lint bypass
-    console.log(ice);
+    console.log(message);
   }
 }
 

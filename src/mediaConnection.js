@@ -50,28 +50,6 @@ class MediaConnection extends Connection {
     }
   }
 
-  // handleMessage(message) {
-  //   if (this._pcAvailable) {
-  //     var payload = message.payload;
-
-  //     switch (message.type) {
-  //       case 'ANSWER':
-  //         // Forward to negotiator
-  //         this._negotiator.handleSDP(message.type, this, payload.sdp);
-  //         this.open = true;
-  //         break;
-  //       case 'CANDIDATE':
-  //         this._negotiator.handleCandidate(this, payload.candidate);
-  //         break;
-  //       default:
-  //         util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
-  //         break;
-  //     }
-  //   } else {
-  //     this._queuedMessages.push(message);
-  //   }
-  // }
-
   // This is only called by the callee
   answer(stream) {
     if (this.localStream) {
@@ -93,9 +71,9 @@ class MediaConnection extends Connection {
       let message = this._queuedMessages.shift();
 
       switch (message.type) {
-        //case util.MESSAGE_TYPES.ANSWER.name:
-        //  this.handleAnswer(message);
-        //  break;
+        case util.MESSAGE_TYPES.ANSWER.name:
+          this.handleAnswer(message);
+          break;
         case util.MESSAGE_TYPES.CANDIDATE.name:
           this.handleCandidate(message);
           break;

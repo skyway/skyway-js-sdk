@@ -18,7 +18,7 @@ describe('MediaConnection', () => {
 
     stub.returns({
       startConnection: negotiatorSpy,
-      handleSDP:       negotiatorSpy,
+      handleAnswer:    negotiatorSpy,
       handleCandidate: negotiatorSpy
     });
 
@@ -138,12 +138,13 @@ describe('MediaConnection', () => {
     it.only('should process any queued messages after PeerConnection object is created', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
+      const messages = [{type: 'ANSWER', answer: 'message'}];
 
-      const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: ['message']});
+      const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: messages});
 
-      let spy = sinon.spy(mc, 'handleMessage');
+      let spy = sinon.spy(mc, 'handleAnswer');
 
-      assert.deepEqual(mc._queuedMessages, ['message']);
+      assert.deepEqual(mc._queuedMessages, messages);
       assert.equal(spy.calledOnce, false);
       mc.answer('foobar');
       assert.deepEqual(mc._queuedMessages, []);
