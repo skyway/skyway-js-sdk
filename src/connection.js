@@ -6,7 +6,7 @@ const Negotiator = require('./negotiator');
 const EventEmitter = require('events');
 
 class Connection extends EventEmitter {
-  constructor(peer, options) {
+  constructor(options) {
     super();
 
     // Abstract class
@@ -19,8 +19,6 @@ class Connection extends EventEmitter {
 
     this.open = false;
     this.type = undefined;
-    this.peer = peer;
-    this.peerId = peer.peerId;
     this.metadata = this.options.metadata;
 
     this._negotiator = new Negotiator();
@@ -47,7 +45,7 @@ class Connection extends EventEmitter {
         break;
       default:
         util.warn('Unrecognized message type:',
-          message.type, 'from peer:', this.peerId);
+          message.type, 'from peer:', message.src);
         break;
     }
   }
