@@ -38,7 +38,7 @@ describe('DataConnection', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
 
-      const dc = new DediaConnection(peer, {_stream: {}});
+      const dc = new DataConnection(peer, {_stream: {}});
 
       assert(dc);
       assert(startSpy.calledOnce);
