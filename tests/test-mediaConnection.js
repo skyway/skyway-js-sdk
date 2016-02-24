@@ -48,7 +48,8 @@ describe('MediaConnection', () => {
     it('should store any messages passed in when created', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-      const mc = new MediaConnection(peer, {_stream: {}, _queuedMessages: ['message']});
+      const mc = new MediaConnection(peer,
+        {_stream: {}, _queuedMessages: ['message']});
 
       assert.deepEqual(mc.options._queuedMessages, ['message']);
     });
