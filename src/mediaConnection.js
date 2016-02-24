@@ -33,23 +33,6 @@ class MediaConnection extends Connection {
     this.emit('stream', remoteStream);
   }
 
-  handleAnswer(message) {
-    if (this._pcAvailable) {
-      this._negotiator.handleAnswer(message.answer);
-      this.open = true;
-    } else {
-      this._queuedMessages.push(message);
-    }
-  }
-
-  handleCandidate(message) {
-    if (this._pcAvailable) {
-      this._negotiator.handleCandidate(message.candidate);
-    } else {
-      this._queuedMessages.push(message);
-    }
-  }
-
   // This is only called by the callee
   answer(stream) {
     if (this.localStream) {
@@ -72,10 +55,10 @@ class MediaConnection extends Connection {
 
       switch (message.type) {
         case util.MESSAGE_TYPES.ANSWER.name:
-          this.handleAnswer(message);
+          this.handleAnswer(message.payload);
           break;
         case util.MESSAGE_TYPES.CANDIDATE.name:
-          this.handleCandidate(message);
+          this.handleCandidate(message.payload);
           break;
         default:
           util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);

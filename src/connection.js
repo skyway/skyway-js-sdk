@@ -34,20 +34,20 @@ class Connection extends EventEmitter {
   }
 
   // TODO: move into the negotiator class to handle signalling directly?
-  handleAnswer(message) {
+  handleAnswer(answer) {
     if (this._pcAvailable) {
-      this._negotiator.handleAnswer(message.answer);
+      this._negotiator.handleAnswer(answer);
       this.open = true;
     } else {
-      this._queuedMessages.push(message);
+      this._queuedMessages.push({type: util.MESSAGE_TYPES.ANSWER.name, payload: answer});
     }
   }
 
-  handleCandidate(message) {
+  handleCandidate(candidate) {
     if (this._pcAvailable) {
-      this._negotiator.handleCandidate(message.candidate);
+      this._negotiator.handleCandidate(candidate);
     } else {
-      this._queuedMessages.push(message);
+      this._queuedMessages.push({type: util.MESSAGE_TYPES.CANDIDATE.name, payload: candidate});
     }
   }
 

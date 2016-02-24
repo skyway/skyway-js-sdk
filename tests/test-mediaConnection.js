@@ -1,6 +1,8 @@
 'use strict';
 
 const Peer       = require('../src/peer');
+const util       = require('../src/util');
+
 const assert     = require('power-assert');
 const proxyquire = require('proxyquire');
 const sinon      = require('sinon');
@@ -101,24 +103,24 @@ describe('MediaConnection', () => {
     it('should call negotiator\'s handleAnswer with an answer', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-      const message = {type: 'ANSWER', answer: 'message'};
+      const answer = 'message';
 
       const mc = new MediaConnection(peer, {_stream: {}});
       assert(answerSpy.calledOnce === false);
 
-      mc.handleAnswer(message);
+      mc.handleAnswer(answer);
       assert(answerSpy.calledOnce === true);
     });
 
     it('should call negotiator\'s handleCandidate with a candidate', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-      const message = {type: 'CANDIDATE', answer: 'message'};
+      const candidate = 'message';
 
       const mc = new MediaConnection(peer, {_stream: {}});
       assert(candidateSpy.calledOnce === false);
 
-      mc.handleCandidate(message);
+      mc.handleCandidate(candidate);
       assert(candidateSpy.calledOnce === true);
     });
   });
@@ -161,7 +163,7 @@ describe('MediaConnection', () => {
     it('should process any queued messages after PeerConnection object is created', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-      const messages = [{type: 'ANSWER', answer: 'message'}];
+      const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message'}];
 
       const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: messages});
 
@@ -179,7 +181,7 @@ describe('MediaConnection', () => {
     it('should not process any invalid queued messages', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-      const messages = [{type: 'WRONG', answer: 'message'}];
+      const messages = [{type: 'WRONG', payload: 'message'}];
 
       const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: messages});
 
@@ -202,14 +204,14 @@ describe('MediaConnection', () => {
     it('should queue a message if handleMessage is called before PC is available', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
-      const message1 = {type: 'CANDIDATE', answer: 'message1'};
-      const message2 = {type: 'ANSWER', answer: 'message2'};
+      const message1 = {type: util.MESSAGE_TYPES.CANDIDATE.name, payload: 'message1'};
+      const message2 = {type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message2'};
       const messages = [message1];
 
       const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: messages});
 
       assert.equal(mc._pcAvailable, false);
-      mc.handleAnswer(message2);
+      mc.handleAnswer(message2.payload);
 
       assert.deepEqual(mc._queuedMessages, [message1, message2]);
       assert(answerSpy.calledOnce === false);
