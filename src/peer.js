@@ -70,14 +70,50 @@ class Peer extends EventEmitter {
     this._initializeServerConnection(id);
   }
 
-  connect(peer, options) {
-    // TODO: Remove lint bypass
-    console.log(peer, options);
+  connect(peerId, options) {
+    if (this._disconnectCalled) {
+      util.warn('You cannot connect to a new Peer because you called ' +
+        '.disconnect() on this Peer and ended your connection with the ' +
+        'server. You can create a new Peer to reconnect, or call reconnect ' +
+        'on this peer if you believe its ID to still be available.');
+      this.emitError(
+        'disconnected',
+        'Cannot connect to new Peer after disconnecting from server.'
+      );
+      return null;
+    }
+
+    const connection = new DataConnection(peerId, options);
+    util.log('DataConnection created in connect method');
+    this._addConnection(peerId, connection);
+    return connection;
   }
 
-  call(peer, stream, options) {
-    // TODO: Remove lint bypass
-    console.log(peer, stream, options);
+  call(peerId, stream, options) {
+    if (this._disconnectCalled) {
+      util.warn('You cannot connect to a new Peer because you called ' +
+        '.disconnect() on this Peer and ended your connection with the ' +
+        'server. You can create a new Peer to reconnect, or call reconnect ' +
+        'on this peer if you believe its ID to still be available.');
+      this.emitError(
+        'disconnected',
+        'Cannot connect to new Peer after disconnecting from server.');
+      return null;
+    }
+    if (!stream) {
+      util.error(
+        'To call a peer, you must provide ' +
+        'a stream from your browser\'s `getUserMedia`.'
+      );
+      return null;
+    }
+
+    options = options || {};
+    options._stream = stream;
+    const mc = new MediaConnection(peerId, options);
+    util.log('MediaConnection created in call method');
+    this._addConnection(peerId, mc);
+    return mc;
   }
 
   getConnection(peerId, connectionId) {
