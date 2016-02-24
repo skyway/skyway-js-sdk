@@ -37,10 +37,28 @@ describe('Socket', () => {
   describe('Connecting to the server', () => {
     it('should be able to connect to a server', done => {
       let apiKey = 'apiKey';
+      let token = 'token';
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
-      socket.start();
+      socket.start(undefined, token);
+
+      assert(stub.called);
+      socket._io.open('peerId');
+
+      assert.equal(socket.disconnected, false);
+
+      done();
+    });
+
+    it('should be able to connect to a server with a PeerID', done => {
+      let apiKey = 'apiKey';
+      let peerId = 'peerId';
+      let token = 'token';
+
+      const socket = new Socket(false, 'localhost', serverPort, apiKey);
+
+      socket.start(peerId, token);
 
       assert(stub.called);
       socket._io.open('peerId');
