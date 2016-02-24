@@ -483,7 +483,6 @@ describe('Peer', () => {
     });
 
     it('should send a "GET" request to the right URL', () => {
-    //  let numRequests = requests.length;
       peer.listAllPeers();
       assert(requests.length === 1);
 
