@@ -33,27 +33,44 @@ class MediaConnection extends Connection {
     this.emit('stream', remoteStream);
   }
 
-  handleMessage(message) {
+  handleAnswer(message) {
     if (this._pcAvailable) {
-      var payload = message.payload;
-
-      switch (message.type) {
-        case 'ANSWER':
-          // Forward to negotiator
-          this._negotiator.handleSDP(message.type, this, payload.sdp);
-          this.open = true;
-          break;
-        case 'CANDIDATE':
-          this._negotiator.handleCandidate(this, payload.candidate);
-          break;
-        default:
-          util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
-          break;
-      }
+      this._negotiator.handleAnswer(message.answer);
+      this.open = true;
     } else {
       this._queuedMessages.push(message);
     }
   }
+
+  handleCandidate(message) {
+    if (this._pcAvailable) {
+      this._negotiator.handleCandidate(message.candidate);
+    } else {
+      this._queuedMessages.push(message);
+    }
+  }
+
+  // handleMessage(message) {
+  //   if (this._pcAvailable) {
+  //     var payload = message.payload;
+
+  //     switch (message.type) {
+  //       case 'ANSWER':
+  //         // Forward to negotiator
+  //         this._negotiator.handleSDP(message.type, this, payload.sdp);
+  //         this.open = true;
+  //         break;
+  //       case 'CANDIDATE':
+  //         this._negotiator.handleCandidate(this, payload.candidate);
+  //         break;
+  //       default:
+  //         util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
+  //         break;
+  //     }
+  //   } else {
+  //     this._queuedMessages.push(message);
+  //   }
+  // }
 
   // This is only called by the callee
   answer(stream) {
@@ -73,7 +90,19 @@ class MediaConnection extends Connection {
 
     // Process messages queued because PeerConnection not set up.
     for (let i = 0; i < this._queuedMessages.length; i++) {
-      this.handleMessage(this._queuedMessages.shift());
+      let message = this._queuedMessages.shift();
+
+      switch (message.type) {
+        //case util.MESSAGE_TYPES.ANSWER.name:
+        //  this.handleAnswer(message);
+        //  break;
+        case util.MESSAGE_TYPES.CANDIDATE.name:
+          this.handleCandidate(message);
+          break;
+        default:
+          util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
+          break;
+      }
     }
 
     this.open = true;

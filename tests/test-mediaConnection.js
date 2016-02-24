@@ -135,7 +135,7 @@ describe('MediaConnection', () => {
       // assert.equal(negotiatorSpy.args[0], mc.options._payload);
     });
 
-    it('should process any queued messages after PeerConnection object is created', () => {
+    it.only('should process any queued messages after PeerConnection object is created', () => {
       const peerId = 'peerId';
       const peer = new Peer(peerId, {});
 
