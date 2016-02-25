@@ -115,7 +115,7 @@ describe('Negotiator', () => {
           assert(handleSDPSpy.callCount === 0);
 
           negotiator.startConnection(options, pcConfig);
-          
+
           assert(createDCSpy.callCount === 1);
           assert(handleSDPSpy.callCount === 0);
 
@@ -155,6 +155,37 @@ describe('Negotiator', () => {
           assert(handleSDPSpy.callCount === 1);
         });
       });
+    });
+  });
+
+  describe('_createPeerConnection', () => {
+    context('when type is \'media\'', () => {
+      it('should return RTCPeerConnection object', () => {
+        const negotiator = new Negotiator();
+        const pc = negotiator._createPeerConnection('media');
+
+        assert.equal(pc.constructor.name, 'RTCPeerConnection');
+      });
+    });
+
+    context('when type is \'data\'', () => {
+      it('should return RTCPeerConnection object', () => {
+        const negotiator = new Negotiator();
+        const pc = negotiator._createPeerConnection('data');
+
+        assert.equal(pc.constructor.name, 'RTCPeerConnection');
+      });
+    });
+  });
+
+  describe('_setupPCListeners', () => {
+    it('should set up PeerConnection listeners', () => {
+      const negotiator = new Negotiator();
+      const pc = negotiator._createPeerConnection('media');
+
+      assert(pc.onicecandidate === null);
+      negotiator._setupPCListeners(pc);
+      assert(pc.onicecandidate);
     });
   });
 });
