@@ -3,8 +3,6 @@
 const assert     = require('power-assert');
 
 const Negotiator      = require('../src/negotiator');
-const DataConnection  = require('../src/dataConnection');
-const MediaConnection = require('../src/mediaConnection');
 
 describe('Negotiator', () => {
   describe('Constructor', () => {
