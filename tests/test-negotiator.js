@@ -8,28 +8,11 @@ const MediaConnection = require('../src/mediaConnection');
 
 describe('Negotiator', () => {
   describe('Constructor', () => {
-    it('should be initialized with a mediaConnection', () => {
-      const mc = new MediaConnection({});
-      const negotiator = new Negotiator(mc);
+    it('should create a Negotiator object', () => {
+      const negotiator = new Negotiator();
 
-      assert(negotiator._connection === mc);
-    });
-
-    it('should be initialized with a socket and a dataConnection', () => {
-      const dc = new DataConnection({});
-      const negotiator = new Negotiator(dc);
-
-      assert(negotiator._connection === dc);
-    });
-
-    it('should be fail when called without connection', () => {
-      let negotiator;
-      try {
-        negotiator = new Negotiator();
-      } catch (err) {
-        assert(negotiator === undefined);
-        assert(err);
-      }
+      assert(negotiator);
+      assert(negotiator instanceof Negotiator);
     });
   });
 });

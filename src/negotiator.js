@@ -3,13 +3,7 @@
 // const util = require('./util');
 
 class Negotiator {
-  constructor(connection) {
-    if (!connection) {
-      throw new Error(
-        'Negotiator\'s constructor must be called with connection.'
-      );
-    }
-    this._connection = connection;
+  constructor() {
     this._idPrefix = 'pc_';
   }
 
