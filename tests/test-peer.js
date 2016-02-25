@@ -424,9 +424,11 @@ describe('Peer', () => {
 
     it('should create MediaConnection on media OFFER events', done => {
       const peerId = 'testId';
+      const connectionId = util.randomToken();
       peer.on(Peer.EVENTS.call.name, connection => {
         assert(connection);
         assert(connection.constructor.name === 'MediaConnection');
+        assert(connection.options.connectionId === connectionId);
         assert(Object.keys(peer.connections[peerId]).length === 1);
         assert(peer.getConnection(peerId, connection.id) === connection);
         done();
@@ -434,7 +436,7 @@ describe('Peer', () => {
 
       const offerMsg = {
         type:         'media',
-        connectionId: util.randomToken(),
+        connectionId: connectionId,
         src:          peerId,
         metadata:     {}
       };
@@ -443,9 +445,11 @@ describe('Peer', () => {
 
     it('should create DataConnection on data OFFER events', done => {
       const peerId = 'testId';
+      const connectionId = util.randomToken();
       peer.on(Peer.EVENTS.connection.name, connection => {
         assert(connection);
         assert(connection.constructor.name === 'DataConnection');
+        assert(connection.options.connectionId === connectionId);
         assert(Object.keys(peer.connections[peerId]).length === 1);
         assert(peer.getConnection(peerId, connection.id) === connection);
 
@@ -454,7 +458,7 @@ describe('Peer', () => {
 
       const offerMsg = {
         type:         'data',
-        connectionId: util.randomToken(),
+        connectionId: connectionId,
         src:          peerId,
         metadata:     {}
       };

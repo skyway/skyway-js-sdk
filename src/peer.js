@@ -110,7 +110,7 @@ class Peer extends EventEmitter {
 
     options = options || {};
     options._stream = stream;
-    const mc = new MediaConnection(peerId, options);
+    const mc = new MediaConnection(options);
     util.log('MediaConnection created in call method');
     this._addConnection(peerId, mc);
     return mc;
@@ -269,7 +269,7 @@ class Peer extends EventEmitter {
       }
 
       if (message.type === 'media') {
-        connection = new MediaConnection(message.src, this, {
+        connection = new MediaConnection({
           connectionId: connectionId,
           payload:      message,
           metadata:     message.metadata
@@ -279,7 +279,7 @@ class Peer extends EventEmitter {
         this._addConnection(message.src, connection);
         this.emit(Peer.EVENTS.call.name, connection);
       } else if (message.type === 'data') {
-        connection = new DataConnection(message.src, this, {
+        connection = new DataConnection({
           connectionId:  connectionId,
           _payload:      message,
           metadata:      message.metadata,
