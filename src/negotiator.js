@@ -1,17 +1,69 @@
 'use strict';
 
-// const util = require('./util');
+const adapter = require('webrtc-adapter-test');
 
-class Negotiator {
-  constructor(socket, connection) {
-    this._socket = socket;
-    this._connection = connection;
+const RTCPeerConnection     = adapter.RTCPeerConnection;
+
+const util = require('./util');
+
+const EventEmitter = require('events');
+
+class Negotiator extends EventEmitter {
+  constructor() {
+    super();
     this._idPrefix = 'pc_';
   }
 
-  startConnection(options) {
-    // TODO: Remove lint bypass
-    console.log(options);
+  startConnection(options, pcConfig) {
+    this._pc = this._createPeerConnection(options.type, pcConfig);
+    this._setupPCListeners(options);
+
+    if (options.type === 'media' && options.stream) {
+      this._pc.addStream(options.stream);
+    }
+
+    if (options.originator) {
+      if (options.type === 'data') {
+        const label = options.label || "";
+        const dc = this._pc.createDataChannel(options.label);
+        console.log(dc);
+        this.emit('dataChannel', dc);
+      }
+    } else {
+      this.handleSDP('OFFER', options.sdp);
+    }
+  }
+
+  _createPeerConnection(type, pcConfig) {
+    util.log('Creating RTCPeerConnection');
+
+    const optional = {};
+
+    if (type === 'data') {
+      optional.optional = [{RtpDataChannels: true}];
+    } else if (type === 'media') {
+      optional.optional = [{DtlsSrtpKeyAgreement: true}];
+    }
+
+    pcConfig = pcConfig || {};
+    pcConfig.iceServers = pcConfig.iceServers || util.defaultConfig.iceServers;
+
+    return new RTCPeerConnection(pcConfig, optional);
+  }
+
+  _setupPCListeners() {
+    util.log('Listening for ICE candidates.');
+
+    this._pc.onicecandidate = evt => {
+      const candidate = evt.candidate || evt;
+
+      if (!candidate || candidate.candidate === null) {
+        util.log('ICE canddidates gathering complete');
+      } else {
+        util.log('Generated ICE candidate for:', candidate);
+        this.emit('ice-candidate', candidate);
+      }
+    };
   }
 
   cleanup() {

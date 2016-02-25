@@ -15,8 +15,11 @@ class MediaConnection extends Connection {
 
     if (this.localStream) {
       this._negotiator.startConnection(
-        this,
-        {_stream: this.localStream, originator: true}
+        {
+          type:       'media',
+          _stream:    this.localStream,
+          originator: true
+        }
       );
     }
   }
