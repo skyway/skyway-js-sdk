@@ -16,7 +16,7 @@ class Negotiator extends EventEmitter {
 
   startConnection(options, pcConfig) {
     this._pc = this._createPeerConnection(options.type, pcConfig);
-    this._setupPCListeners(options);
+    this._setupPCListeners(this._pc);
 
     if (options.type === 'media' && options.stream) {
       this._pc.addStream(options.stream);
@@ -24,9 +24,8 @@ class Negotiator extends EventEmitter {
 
     if (options.originator) {
       if (options.type === 'data') {
-        const label = options.label || "";
-        const dc = this._pc.createDataChannel(options.label);
-        console.log(dc);
+        const label = options.label || '';
+        const dc = this._pc.createDataChannel(label);
         this.emit('dataChannel', dc);
       }
     } else {
@@ -52,18 +51,6 @@ class Negotiator extends EventEmitter {
   }
 
   _setupPCListeners() {
-    util.log('Listening for ICE candidates.');
-
-    this._pc.onicecandidate = evt => {
-      const candidate = evt.candidate || evt;
-
-      if (!candidate || candidate.candidate === null) {
-        util.log('ICE canddidates gathering complete');
-      } else {
-        util.log('Generated ICE candidate for:', candidate);
-        this.emit('ice-candidate', candidate);
-      }
-    };
   }
 
   cleanup() {
