@@ -1,6 +1,5 @@
 'use strict';
 
-const Peer       = require('../src/peer');
 const util       = require('../src/util');
 
 const assert     = require('power-assert');
@@ -46,30 +45,23 @@ describe('MediaConnection', () => {
 
   describe('Constructor', () => {
     it('should call negotiator\'s startConnection method when created', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
-
-      const mc = new MediaConnection(peer, {_stream: {}});
+      const mc = new MediaConnection({_stream: {}});
 
       assert(mc);
       assert(startSpy.calledOnce);
     });
 
     it('should store any messages passed in when created', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
-      const mc = new MediaConnection(peer, {_stream: {}, _queuedMessages: ['message']});
-
+      const mc = new MediaConnection(
+        {_stream: {}, _queuedMessages: ['message']}
+      );
       assert.deepEqual(mc.options._queuedMessages, ['message']);
     });
   });
 
   describe('Add Stream', () => {
     it('should set remoteStream upon addStream being invoked', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
-
-      const mc = new MediaConnection(peer, {_stream: {}});
+      const mc = new MediaConnection({_stream: {}});
 
       let spy = sinon.spy(mc, 'addStream');
 
@@ -83,9 +75,7 @@ describe('MediaConnection', () => {
     });
 
     it('should emit a \'stream\' event upon addStream being invoked', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
-      const mc = new MediaConnection(peer, {_stream: {}});
+      const mc = new MediaConnection({_stream: {}});
 
       let spy = sinon.spy(mc, 'emit');
 
@@ -101,11 +91,9 @@ describe('MediaConnection', () => {
 
   describe('Handling messages', () => {
     it('should call negotiator\'s handleAnswer with an answer', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
       const answer = 'message';
 
-      const mc = new MediaConnection(peer, {_stream: {}});
+      const mc = new MediaConnection({_stream: {}});
       assert(answerSpy.calledOnce === false);
 
       mc.handleAnswer(answer);
@@ -113,11 +101,9 @@ describe('MediaConnection', () => {
     });
 
     it('should call negotiator\'s handleCandidate with a candidate', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
       const candidate = 'message';
 
-      const mc = new MediaConnection(peer, {_stream: {}});
+      const mc = new MediaConnection({_stream: {}});
       assert(candidateSpy.calledOnce === false);
 
       mc.handleCandidate(candidate);
@@ -127,11 +113,8 @@ describe('MediaConnection', () => {
 
   describe('Answering', () => {
     it('should set the localStream upon answering', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
-
       // Callee, so no _stream option provided at first
-      const mc = new MediaConnection(peer, {_payload: {}});
+      const mc = new MediaConnection({_payload: {}});
       assert.equal(mc.localStream, undefined);
       mc.answer('foobar');
       assert.equal(mc.localStream, 'foobar');
@@ -139,11 +122,8 @@ describe('MediaConnection', () => {
     });
 
     it('should not set the localStream if already set', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
-
       // Caller, so _stream option is initially provided
-      const mc = new MediaConnection(peer, {_stream: 'exists', _payload: {}});
+      const mc = new MediaConnection({_stream: 'exists', _payload: {}});
       assert.equal(mc.localStream, 'exists');
       mc.answer('foobar');
       assert.equal(mc.localStream, 'exists');
@@ -151,21 +131,16 @@ describe('MediaConnection', () => {
     });
 
     it('should call negotiator\'s startConnection method upon answering', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
-
-      const mc = new MediaConnection(peer, {_payload: {}});
+      const mc = new MediaConnection({_payload: {}});
       assert(startSpy.calledOnce === false);
       mc.answer('foobar');
       assert(startSpy.calledOnce === true);
     });
 
     it('should process any queued messages after PeerConnection object is created', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
       const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message'}];
 
-      const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: messages});
+      const mc = new MediaConnection({_payload: {}, _queuedMessages: messages});
 
       let spy = sinon.spy(mc, 'handleAnswer');
 
@@ -179,11 +154,9 @@ describe('MediaConnection', () => {
     });
 
     it('should not process any invalid queued messages', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
       const messages = [{type: 'WRONG', payload: 'message'}];
 
-      const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: messages});
+      const mc = new MediaConnection({_payload: {}, _queuedMessages: messages});
 
       let spy1 = sinon.spy(mc, 'handleAnswer');
       let spy2 = sinon.spy(mc, 'handleCandidate');
@@ -202,13 +175,11 @@ describe('MediaConnection', () => {
     });
 
     it('should queue a message if handleMessage is called before PC is available', () => {
-      const peerId = 'peerId';
-      const peer = new Peer(peerId, {});
       const message1 = {type: util.MESSAGE_TYPES.CANDIDATE.name, payload: 'message1'};
       const message2 = {type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message2'};
       const messages = [message1];
 
-      const mc = new MediaConnection(peer, {_payload: {}, _queuedMessages: messages});
+      const mc = new MediaConnection({_payload: {}, _queuedMessages: messages});
 
       assert.equal(mc._pcAvailable, false);
       mc.handleAnswer(message2.payload);

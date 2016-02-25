@@ -1,8 +1,10 @@
 'use strict';
 
-const Peer    = require('../src/peer');
-const Socket  = require('../src/socket');
-const util    = require('../src/util');
+const Peer            = require('../src/peer');
+const Socket          = require('../src/socket');
+const MediaConnection = require('../src/mediaConnection');
+const DataConnection  = require('../src/dataConnection');
+const util            = require('../src/util');
 
 const assert = require('power-assert');
 const sinon  = require('sinon');
@@ -422,9 +424,11 @@ describe('Peer', () => {
 
     it('should create MediaConnection on media OFFER events', done => {
       const peerId = 'testId';
+      const connectionId = util.randomToken();
       peer.on(Peer.EVENTS.call.name, connection => {
         assert(connection);
         assert(connection.constructor.name === 'MediaConnection');
+        assert(connection.options.connectionId === connectionId);
         assert(Object.keys(peer.connections[peerId]).length === 1);
         assert(peer.getConnection(peerId, connection.id) === connection);
         done();
@@ -432,7 +436,7 @@ describe('Peer', () => {
 
       const offerMsg = {
         type:         'media',
-        connectionId: util.randomToken(),
+        connectionId: connectionId,
         src:          peerId,
         metadata:     {}
       };
@@ -441,9 +445,11 @@ describe('Peer', () => {
 
     it('should create DataConnection on data OFFER events', done => {
       const peerId = 'testId';
+      const connectionId = util.randomToken();
       peer.on(Peer.EVENTS.connection.name, connection => {
         assert(connection);
         assert(connection.constructor.name === 'DataConnection');
+        assert(connection.options.connectionId === connectionId);
         assert(Object.keys(peer.connections[peerId]).length === 1);
         assert(peer.getConnection(peerId, connection.id) === connection);
 
@@ -452,11 +458,100 @@ describe('Peer', () => {
 
       const offerMsg = {
         type:         'data',
-        connectionId: util.randomToken(),
+        connectionId: connectionId,
         src:          peerId,
         metadata:     {}
       };
       peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
+    });
+  });
+
+  describe('call', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should create a new MediaConnection, add it, and return it', () => {
+      const spy = sinon.spy(peer, '_addConnection');
+
+      const peerId = 'testId';
+
+      const conn = peer.call(peerId, {});
+
+      assert(conn instanceof MediaConnection);
+      assert(spy.calledOnce === true);
+      assert(spy.calledWith(peerId, conn));
+
+      spy.restore();
+    });
+
+    it('should emit an error if disconnected', done => {
+      peer.on('error', e => {
+        assert(e.type === 'disconnected');
+        done();
+      });
+
+      peer.disconnect();
+
+      setTimeout(() => {
+        peer.call('testId', {});
+      }, timeForAsync);
+    });
+
+    it('should log an error if stream is undefined', () => {
+      const spy = sinon.spy(util, 'error');
+
+      peer.call('testId', undefined);
+
+      assert(spy.calledOnce === true);
+      spy.restore();
+    });
+  });
+
+  describe('connect', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should create a new DataConnection, add it, and return it', () => {
+      const spy = sinon.spy(peer, '_addConnection');
+
+      const peerId = 'testId';
+
+      const conn = peer.connect(peerId, {});
+
+      assert(conn instanceof DataConnection);
+      assert(spy.calledOnce === true);
+      assert(spy.calledWith(peerId, conn));
+
+      spy.restore();
+    });
+
+    it('should emit an error if disconnected', done => {
+      peer.on('error', e => {
+        assert(e.type === 'disconnected');
+        done();
+      });
+
+      peer.disconnect();
+
+      setTimeout(() => {
+        peer.connect('testId');
+      }, timeForAsync);
     });
   });
 
