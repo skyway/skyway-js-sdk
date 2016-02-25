@@ -1,6 +1,6 @@
 'use strict';
 
-const assert     = require('assert');
+const assert     = require('power-assert');
 
 const Negotiator      = require('../src/negotiator');
 const DataConnection  = require('../src/dataConnection');
