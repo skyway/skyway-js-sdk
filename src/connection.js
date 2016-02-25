@@ -23,7 +23,7 @@ class Connection extends EventEmitter {
     this.peerId = peer.peerId;
     this.metadata = this.options.metadata;
 
-    this._negotiator = new Negotiator();
+    this._negotiator = new Negotiator(this);
 
     this._idPrefix = 'c_';
     this._randomIdSuffix = util.randomToken();
