@@ -74,7 +74,7 @@ class DataConnection extends Connection {
           console.log(data);
           console.log(ab);
           console.log('hi there');
-          this.emit('data', data);
+          this.emit('data', ab);
         });
         return;
       } else if (datatype === ArrayBuffer) {

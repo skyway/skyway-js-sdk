@@ -117,6 +117,7 @@ class Util {
   blobToArrayBuffer(blob, cb) {
     // TODO: Remove lint bypass
     console.log(blob, cb);
+    cb('foobar');
   }
 
   blobToBinaryString(blob, cb) {
