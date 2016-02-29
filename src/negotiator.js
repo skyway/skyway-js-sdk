@@ -3,9 +3,7 @@
 // const util = require('./util');
 
 class Negotiator {
-  constructor(socket, connection) {
-    this._socket = socket;
-    this._connection = connection;
+  constructor() {
     this._idPrefix = 'pc_';
   }
 
