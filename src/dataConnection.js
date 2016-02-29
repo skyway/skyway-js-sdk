@@ -1,6 +1,7 @@
 'use strict';
 
 const Connection = require('./connection');
+const util = require('./util');
 
 class DataConnection extends Connection {
   constructor(options) {
@@ -31,7 +32,7 @@ class DataConnection extends Connection {
     );
   }
 
-  /** Called by the Negotiator when the DataChannel is ready. */
+  // Called by the Negotiator when the DataChannel is ready
   initialize(dc) {
     this._dc = dc;
     this._configureDataChannel();
@@ -44,19 +45,67 @@ class DataConnection extends Connection {
 
     this._dc.on('OPEN', () => {
       util.log('Data channel connection success');
-      self.open = true;
-      self.emit('open');
+      this.open = true;
+      this.emit('open');
     });
-  
+
     // We no longer need the reliable shim here
     this._dc.on('MSG', msg => {
-      self._handleDataMessage(msg);
+      this._handleDataMessage(msg);
     });
 
     this._dc.on('CLOSE', () => {
-      util.log('DataChannel closed for:', self.peer);
-      self.close();
+      util.log('DataChannel closed for:', this.peer);
+      this.close();
     });
+  }
+
+  // Handles a DataChannel message.
+  _handleDataMessage(msg) {
+    let data = msg.data;
+    let datatype = data.constructor;
+    if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
+      if (datatype === Blob) {
+        // Datatype should apparently never be blob?
+        util.blobToArrayBuffer(data, ab => {
+          data = util.unpack(ab);
+          this.emit('data', data);
+        });
+        return;
+      } else if (datatype === ArrayBuffer) {
+        data = util.unpack(data);
+      } else if (datatype === String) {
+        // String fallback for binary data for browsers that don't support binary yet
+        let ab = util.binaryStringToArrayBuffer(data);
+        data = util.unpack(ab);
+      }
+    } else if (this.serialization === 'json') {
+      data = JSON.parse(data);
+    }
+
+    // Check if we've chunked--if so, piece things back together.
+    // We're guaranteed that this isn't 0.
+    if (data.__peerData) {
+      let id = data.__peerData;
+      let chunkInfo = this._chunkedData[id] || {data: [], count: 0, total: data.total};
+
+      chunkInfo.data[data.n] = data.data;
+      chunkInfo.count += 1;
+
+      if (chunkInfo.total === chunkInfo.count) {
+        // Clean up before making the recursive call to `_handleDataMessage`.
+        delete this._chunkedData[id];
+
+        // We've received all the chunks--time to construct the complete data.
+        data = new Blob(chunkInfo.data);
+        this._handleDataMessage({data: data});
+      }
+
+      this._chunkedData[id] = chunkInfo;
+      return;
+    }
+
+    this.emit('data', data);
   }
 
   send(data, chunked) {
