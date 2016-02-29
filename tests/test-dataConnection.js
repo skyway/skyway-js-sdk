@@ -13,16 +13,16 @@ describe('DataConnection', () => {
   let startSpy;
 
   beforeEach(() => {
-    stub = sinon.stub();
+    negotiatorStub = sinon.stub();
     startSpy = sinon.spy();
 
-    stub.returns({
+    negotiatorStub.returns({
       startConnection: startSpy
     });
 
     Connection = proxyquire(
       '../src/connection',
-      {'./negotiator': stub}
+      {'./negotiator': negotiatorStub}
     );
     DataConnection = proxyquire(
       '../src/dataConnection',
@@ -35,7 +35,7 @@ describe('DataConnection', () => {
 
   describe('Constructor', () => {
     it('should call negotiator\'s startConnection method when created', () => {
-      const dc = new DataConnection({_stream: {}});
+      const dc = new DataConnection({});
 
       assert(dc);
       assert(startSpy.calledOnce);
@@ -44,9 +44,9 @@ describe('DataConnection', () => {
 
   describe('Initialise', () => {
     it('should appropriately set and configure dc upon intialisation', () => {
-      dcObj = {test: 'foobar'};
+      const dcObj = {test: 'foobar'};
 
-      const dc = new DataConnection({_stream: {}});
+      const dc = new DataConnection({});
       dc.initialize(dcObj);
 
       assert(dc._dc === dcObj);
@@ -56,11 +56,10 @@ describe('DataConnection', () => {
     });
 
     it('should open the DataConnection and emit upon _dc.onopen()', () => {
-      dcObj = {};
-      spy = sinon.spy();
+      let spy;
 
-      const dc = new DataConnection({_stream: {}});
-      dc.initialize(dcObj);
+      const dc = new DataConnection({});
+      dc.initialize({});
 
       spy = sinon.spy(dc, 'emit');
  
@@ -73,34 +72,52 @@ describe('DataConnection', () => {
     });
 
     it('should handle a message upon _dc.onmessage()', () => {
-      dcObj = {};
-      message = {data: {constructor: 'foobar'}};
-      spy = sinon.spy();
+      const message = {data: {constructor: 'foobar'}};
+      let spy;
 
-      const dc = new DataConnection({_stream: {}});
-      dc.initialize(dcObj);
+      const dc = new DataConnection({});
+      dc.initialize({});
 
       spy = sinon.spy(dc, '_handleDataMessage');
  
       dc._dc.onmessage(message);
       assert(spy.calledOnce);
-      assert.deepEqual(spy.args[0], message);
+      console.log(spy.args[0]);
+      // assert.equal(spy.args[0], message);
 
       spy.reset();
     });
 
     it('should close the DataConnection upon _dc.onclose()', () => {
-      dcObj = {};
-      spy = sinon.spy();
+      let spy;
 
-      const dc = new DataConnection({_stream: {}});
-      dc.initialize(dcObj);
+      const dc = new DataConnection({});
+      dc.initialize({});
 
       spy = sinon.spy(dc, 'close');
       dc._dc.onclose();
       assert(spy.calledOnce);
 
       spy.reset();
+    });
+  });
+
+  describe('Handle Message', () => {
+    it('should convert a blob type to an array buffer', () => {
+      const blob = new Blob([1,2,3]);
+      const message = {data: blob};
+      let spy = sinon.spy();
+
+      const dc = new DataConnection({serialization: 'binary'});
+      dc.initialize({});
+
+      spy = sinon.spy(dc, 'emit');
+
+      dc._handleDataMessage(message);
+      assert(spy.calledOnce);
+      console.log(spy.args[0][1]);
+      assert(spy.args[0][0] === 'data');
+      // assert(spy.args[1] === 'not true');
     });
   });
 });

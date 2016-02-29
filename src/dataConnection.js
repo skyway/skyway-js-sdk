@@ -45,7 +45,6 @@ class DataConnection extends Connection {
 
     this._dc.onopen = () => {
       util.log('Data channel connection success');
-      console.log('hmm')
       this.open = true;
       this.emit('open');
     };
@@ -66,10 +65,15 @@ class DataConnection extends Connection {
     let data = msg.data;
     let datatype = data.constructor;
     if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
+      console.log('1');
       if (datatype === Blob) {
+        console.log('2');
         // Datatype should apparently never be blob?
         util.blobToArrayBuffer(data, ab => {
           data = util.unpack(ab);
+          console.log(data);
+          console.log(ab);
+          console.log('hi there');
           this.emit('data', data);
         });
         return;
