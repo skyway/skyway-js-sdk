@@ -65,21 +65,19 @@ class DataConnection extends Connection {
     let data = msg.data;
     let datatype = data.constructor;
     if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
-      console.log('1');
       if (datatype === Blob) {
-        console.log('2');
+        console.log('Type Blob');
         // Datatype should apparently never be blob?
         util.blobToArrayBuffer(data, ab => {
           data = util.unpack(ab);
-          console.log(data);
-          console.log(ab);
-          console.log('hi there');
           this.emit('data', ab);
         });
         return;
       } else if (datatype === ArrayBuffer) {
+        console.log('Type ArrayBuffer');
         data = util.unpack(data);
       } else if (datatype === String) {
+        console.log('Type String');
         // String fallback for binary data for browsers that don't support binary yet
         let ab = util.binaryStringToArrayBuffer(data);
         data = util.unpack(ab);

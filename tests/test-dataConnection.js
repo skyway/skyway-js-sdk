@@ -128,21 +128,21 @@ describe('DataConnection', () => {
       dc._handleDataMessage(message);
     });
 
-    // it('should unpack an ArrayBuffer message', () => {
-    //   const ab = new ArrayBuffer();
-    //   const message = {data: ab};
+    it.only('should unpack an ArrayBuffer message', done => {
+      const ab = new ArrayBuffer();
+      const message = {data: ab};
 
-    //   const dc = new DataConnection({});
-    //   dc.initialize({});
+      const dc = new DataConnection({serialization: 'binary'});
+      dc.initialize({});
 
-    //   let spy = sinon.spy(util, 'unpack');
+      dc.on('data', data => {
+        console.log('Got some data');
+        assert.equal(data, util.unpack(ab));
+        done();
+      });
 
-    //   dc._handleDataMessage(message);
-    //   assert(spy.calledOnce);
-    //   assert.deepEqual(spy.args[0], ['foobar', 'hi']);
-
-    //   spy.reset;
-    // });
+      dc._handleDataMessage(message);
+    });
 
     it('should convert a blob type to an array buffer', done => {
       const blob = new Blob([1, 2, 3]);
