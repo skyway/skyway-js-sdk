@@ -35,29 +35,30 @@ class DataConnection extends Connection {
   // Called by the Negotiator when the DataChannel is ready
   initialize(dc) {
     this._dc = dc;
-    this._configureDataChannel();
+    this._setupMessageHandlers();
   }
 
-  _configureDataChannel() {
-    if (util.supports.sctp) {
-      this._dc.binaryType = 'arraybuffer';
-    }
+  _setupMessageHandlers() {
+    // if (util.supports.sctp) {
+    //   this._dc.binaryType = 'arraybuffer';
+    // }
 
-    this._dc.on('OPEN', () => {
+    this._dc.onopen = () => {
       util.log('Data channel connection success');
+      console.log('hmm')
       this.open = true;
       this.emit('open');
-    });
+    };
 
     // We no longer need the reliable shim here
-    this._dc.on('MSG', msg => {
+    this._dc.onmessage = msg => {
       this._handleDataMessage(msg);
-    });
+    };
 
-    this._dc.on('CLOSE', () => {
+    this._dc.onclose = () => {
       util.log('DataChannel closed for:', this.peer);
       this.close();
-    });
+    };
   }
 
   // Handles a DataChannel message.
