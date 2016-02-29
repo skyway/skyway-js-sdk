@@ -31,9 +31,32 @@ class DataConnection extends Connection {
     );
   }
 
+  /** Called by the Negotiator when the DataChannel is ready. */
   initialize(dc) {
-    // TODO: Remove lint bypass
-    console.log(dc);
+    this._dc = dc;
+    this._configureDataChannel();
+  }
+
+  _configureDataChannel() {
+    if (util.supports.sctp) {
+      this._dc.binaryType = 'arraybuffer';
+    }
+
+    this._dc.on('OPEN', () => {
+      util.log('Data channel connection success');
+      self.open = true;
+      self.emit('open');
+    });
+  
+    // We no longer need the reliable shim here
+    this._dc.on('MSG', msg => {
+      self._handleDataMessage(msg);
+    });
+
+    this._dc.on('CLOSE', () => {
+      util.log('DataChannel closed for:', self.peer);
+      self.close();
+    });
   }
 
   send(data, chunked) {
