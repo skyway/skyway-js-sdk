@@ -84,6 +84,7 @@ describe('DataConnection', () => {
  
       dc._dc.onmessage(message);
       assert(spy.calledOnce);
+      assert.deepEqual(spy.args[0], message);
 
       spy.reset();
     });
