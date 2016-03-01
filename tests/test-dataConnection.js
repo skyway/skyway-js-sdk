@@ -128,7 +128,6 @@ describe('DataConnection', () => {
       dc.initialize({});
 
       dc.on('data', data => {
-        console.log('Got some data');
         assert.equal(data, string);
         done();
       });
@@ -146,7 +145,6 @@ describe('DataConnection', () => {
       dc.initialize({});
 
       dc.on('data', data => {
-        console.log('Got some data');
         assert.equal(data, unpacked);
         done();
       });
@@ -164,16 +162,27 @@ describe('DataConnection', () => {
       dc.initialize({});
 
       dc.on('data', data => {
-        console.log('Got some data');
         assert.equal(data, string);
-        // util.blobToArrayBuffer(message.data, ab => {
-        //   assert.equal(data, util.unpack(ab));
-        // });
         done();
       });
-      dc._handleDataMessage(message);
 
-      // assert(utilSpy.calledOnce);
+      dc._handleDataMessage(message);
+    });
+
+    it('should parse JSON messages', done => {
+      const obj = {name: 'foobar'};
+      const json = JSON.stringify(obj);
+      const message = {data: json};
+
+      const dc = new DataConnection({serialization: 'json'});
+      dc.initialize({});
+
+      dc.on('data', data => {
+        assert.deepEqual(data, obj);
+        done();
+      });
+
+      dc._handleDataMessage(message);
     });
   });
 });

@@ -115,9 +115,6 @@ class Util {
   }
 
   blobToArrayBuffer(blob, cb) {
-    // TODO: Remove lint bypass
-    console.log(blob, cb);
-
     let fr = new FileReader();
     fr.onload = function(event) {
       cb(event.target.result);
@@ -126,9 +123,6 @@ class Util {
   }
 
   blobToBinaryString(blob, cb) {
-    // TODO: Remove lint bypass
-    console.log(blob, cb);
-
     let fr = new FileReader();
     fr.onload = function(event) {
       cb(event.target.result);
@@ -137,9 +131,6 @@ class Util {
   }
 
   binaryStringToArrayBuffer(binary) {
-    // TODO: Remove lint bypass
-    console.log(binary);
-
     let byteArray = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) {
       byteArray[i] = binary.charCodeAt(i) & 0xff;
