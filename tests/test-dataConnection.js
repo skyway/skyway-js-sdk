@@ -29,9 +29,6 @@ describe('DataConnection', () => {
     );
   });
 
-  afterEach(() => {
-  });
-
   describe('Constructor', () => {
     it('should call negotiator\'s startConnection method when created', () => {
       const dc = new DataConnection({});
