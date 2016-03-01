@@ -1,10 +1,13 @@
 'use strict';
 
-const Peer      = require('../src/peer');
-const Socket    = require('../src/socket');
-const assert    = require('power-assert');
-const util      = require('../src/util');
-const sinon     = require('sinon');
+const Peer            = require('../src/peer');
+const Socket          = require('../src/socket');
+const MediaConnection = require('../src/mediaConnection');
+const DataConnection  = require('../src/dataConnection');
+const util            = require('../src/util');
+
+const assert = require('power-assert');
+const sinon  = require('sinon');
 
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
@@ -101,18 +104,20 @@ describe('Peer', () => {
       assert(peer.socket instanceof Socket);
     });
 
-    it('should call _handleMessage on a socket "message" event', () => {
+    it('should set up socket message listeners', () => {
+      const spy = sinon.spy(Socket.prototype, 'on');
+
       const peer = new Peer({
         key: apiKey
       });
 
-      const testMsg = 'test message';
-      const spy = sinon.spy(peer, '_handleMessage');
-
-      peer.socket.emit('message', testMsg);
-
-      assert(spy.calledOnce === true);
-      assert(spy.calledWith(testMsg) === true);
+      assert(peer);
+      assert(spy.called === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.ERROR.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.LEAVE.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.EXPIRE.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.OFFER.name) === true);
       spy.restore();
     });
 
@@ -295,6 +300,35 @@ describe('Peer', () => {
     });
   });
 
+  describe('GetConnection', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.disconnect();
+    });
+
+    it('should get a connection if peerId and connId match', () => {
+      const peerId = 'testId';
+      const connection = {id: 'connId'};
+
+      peer._addConnection(peerId, connection);
+
+      assert(peer.getConnection(peerId, connection.id) === connection);
+    });
+
+    it('should return null if connection doesn\'t exist', () => {
+      const peerId = 'testId';
+      const connection = {id: 'connId'};
+
+      assert(peer.getConnection(peerId, connection.id) === null);
+    });
+  });
+
   describe('_CleanupPeer', () => {
     let peer;
     beforeEach(() => {
@@ -329,19 +363,211 @@ describe('Peer', () => {
     });
   });
 
+  describe('_setupMessageHandlers', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should set peer.id on OPEN events', () => {
+      assert(peer.id === undefined);
+
+      const peerId = 'testId';
+      peer.socket.emit(util.MESSAGE_TYPES.OPEN.name, peerId);
+
+      assert(peer.id === peerId);
+    });
+
+    it('should abort with server-error on ERROR events', () => {
+      const errMsg = 'Error message';
+      try {
+        peer.socket.emit(util.MESSAGE_TYPES.ERROR.name, errMsg);
+      } catch (e) {
+        assert(e.type === 'server-error');
+        assert(e.message === errMsg);
+
+        return;
+      }
+
+      assert.fail();
+    });
+
+    it('should log a message on LEAVE events', () => {
+      const peerId = 'testId';
+
+      const spy = sinon.spy(util, 'log');
+
+      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.name, {src: peerId});
+
+      assert(spy.calledOnce === true);
+      assert(spy.calledWith(`Received leave message from ${peerId}`) === true);
+
+      spy.restore();
+    });
+
+    it('should emit a peer-unavailable error on EXPIRE events', done => {
+      const peerId = 'testId';
+      peer.on(Peer.EVENTS.error.name, e => {
+        assert(e.type === 'peer-unavailable');
+        assert(e.message === `Could not connect to peer ${peerId}`);
+        done();
+      });
+
+      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, {src: peerId});
+    });
+
+    it('should create MediaConnection on media OFFER events', done => {
+      const peerId = 'testId';
+      const connectionId = util.randomToken();
+      peer.on(Peer.EVENTS.call.name, connection => {
+        assert(connection);
+        assert(connection.constructor.name === 'MediaConnection');
+        assert(connection.options.connectionId === connectionId);
+        assert(Object.keys(peer.connections[peerId]).length === 1);
+        assert(peer.getConnection(peerId, connection.id) === connection);
+        done();
+      });
+
+      const offerMsg = {
+        type:         'media',
+        connectionId: connectionId,
+        src:          peerId,
+        metadata:     {}
+      };
+      peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
+    });
+
+    it('should create DataConnection on data OFFER events', done => {
+      const peerId = 'testId';
+      const connectionId = util.randomToken();
+      peer.on(Peer.EVENTS.connection.name, connection => {
+        assert(connection);
+        assert(connection.constructor.name === 'DataConnection');
+        assert(connection.options.connectionId === connectionId);
+        assert(Object.keys(peer.connections[peerId]).length === 1);
+        assert(peer.getConnection(peerId, connection.id) === connection);
+
+        done();
+      });
+
+      const offerMsg = {
+        type:         'data',
+        connectionId: connectionId,
+        src:          peerId,
+        metadata:     {}
+      };
+      peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
+    });
+  });
+
+  describe('call', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should create a new MediaConnection, add it, and return it', () => {
+      const spy = sinon.spy(peer, '_addConnection');
+
+      const peerId = 'testId';
+
+      const conn = peer.call(peerId, {});
+
+      assert(conn instanceof MediaConnection);
+      assert(spy.calledOnce === true);
+      assert(spy.calledWith(peerId, conn));
+
+      spy.restore();
+    });
+
+    it('should emit an error if disconnected', done => {
+      peer.on('error', e => {
+        assert(e.type === 'disconnected');
+        done();
+      });
+
+      peer.disconnect();
+
+      setTimeout(() => {
+        peer.call('testId', {});
+      }, timeForAsync);
+    });
+
+    it('should log an error if stream is undefined', () => {
+      const spy = sinon.spy(util, 'error');
+
+      peer.call('testId', undefined);
+
+      assert(spy.calledOnce === true);
+      spy.restore();
+    });
+  });
+
+  describe('connect', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should create a new DataConnection, add it, and return it', () => {
+      const spy = sinon.spy(peer, '_addConnection');
+
+      const peerId = 'testId';
+
+      const conn = peer.connect(peerId, {});
+
+      assert(conn instanceof DataConnection);
+      assert(spy.calledOnce === true);
+      assert(spy.calledWith(peerId, conn));
+
+      spy.restore();
+    });
+
+    it('should emit an error if disconnected', done => {
+      peer.on('error', e => {
+        assert(e.type === 'disconnected');
+        done();
+      });
+
+      peer.disconnect();
+
+      setTimeout(() => {
+        peer.connect('testId');
+      }, timeForAsync);
+    });
+  });
+
   describe('ListAllPeers', () => {
     let peer;
     let requests = [];
     let xhr;
     beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+
       xhr = sinon.useFakeXMLHttpRequest();
       xhr.onCreate = function(request) {
         requests.push(request);
       };
-
-      peer = new Peer({
-        key: apiKey
-      });
     });
 
     afterEach(() => {
@@ -355,7 +581,7 @@ describe('Peer', () => {
       peer.listAllPeers();
       assert(requests.length === 1);
 
-      var protocol = peer.options.secure ? 'https://' : 'http://';
+      const protocol = peer.options.secure ? 'https://' : 'http://';
       const url = `${protocol}${peer.options.host}:` +
         `${peer.options.port}/active/list/${apiKey}`;
       assert(requests[0].url === url);

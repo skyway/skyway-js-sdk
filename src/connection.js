@@ -6,7 +6,7 @@ const Negotiator = require('./negotiator');
 const EventEmitter = require('events');
 
 class Connection extends EventEmitter {
-  constructor(peer, options) {
+  constructor(options) {
     super();
 
     // Abstract class
@@ -19,22 +19,21 @@ class Connection extends EventEmitter {
 
     this.open = false;
     this.type = undefined;
-    this.peer = peer;
-    this.peerId = peer.peerId;
     this.metadata = this.options.metadata;
 
-    this._negotiator = new Negotiator();
+    this._negotiator = new Negotiator(this);
 
     this._idPrefix = 'c_';
+    this._randomIdSuffix = util.randomToken();
   }
 
   get id() {
-    return this.options.connectionId || this._idPrefix + util.randomToken();
+    return this.options.connectionId || this._idPrefix + this._randomIdSuffix;
   }
 
   // TODO: move into the negotiator class to handle signalling directly?
   handleMessage(message) {
-    var payload = message.payload;
+    const payload = message.payload;
 
     switch (message.type) {
       case 'ANSWER':
@@ -46,7 +45,7 @@ class Connection extends EventEmitter {
         break;
       default:
         util.warn('Unrecognized message type:',
-          message.type, 'from peer:', this.peerId);
+          message.type, 'from peer:', message.src);
         break;
     }
   }

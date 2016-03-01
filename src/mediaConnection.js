@@ -4,8 +4,8 @@ const Connection = require('./connection');
 const util = require('./util');
 
 class MediaConnection extends Connection {
-  constructor(peer, options) {
-    super(peer, options);
+  constructor(options) {
+    super(options);
 
     this._idPrefix = 'mc_';
     this.type = 'media';
@@ -22,7 +22,6 @@ class MediaConnection extends Connection {
   }
 
   addStream(remoteStream) {
-    console.log(remoteStream);
     util.log('Receiving stream', remoteStream);
 
     this.remoteStream = remoteStream;
