@@ -94,7 +94,7 @@ describe('MediaConnection', () => {
       const answer = 'message';
 
       const mc = new MediaConnection({_stream: {}});
-      assert(answerSpy.calledOnce === false);
+      assert(answerSpy.called === false);
 
       mc.handleAnswer(answer);
       assert(answerSpy.calledOnce === true);
@@ -104,7 +104,7 @@ describe('MediaConnection', () => {
       const candidate = 'message';
 
       const mc = new MediaConnection({_stream: {}});
-      assert(candidateSpy.calledOnce === false);
+      assert(candidateSpy.called === false);
 
       mc.handleCandidate(candidate);
       assert(candidateSpy.calledOnce === true);
@@ -132,7 +132,7 @@ describe('MediaConnection', () => {
 
     it('should call negotiator\'s startConnection method upon answering', () => {
       const mc = new MediaConnection({_payload: {}});
-      assert(startSpy.calledOnce === false);
+      assert(startSpy.called === false);
       mc.answer('foobar');
       assert(startSpy.calledOnce === true);
     });
@@ -145,7 +145,7 @@ describe('MediaConnection', () => {
       let spy = sinon.spy(mc, 'handleAnswer');
 
       assert.deepEqual(mc._queuedMessages, messages);
-      assert.equal(spy.calledOnce, false);
+      assert.equal(spy.called, false);
       mc.answer('foobar');
       assert.deepEqual(mc._queuedMessages, []);
       assert.equal(spy.calledOnce, true);
@@ -162,13 +162,13 @@ describe('MediaConnection', () => {
       let spy2 = sinon.spy(mc, 'handleCandidate');
 
       assert.deepEqual(mc._queuedMessages, messages);
-      assert.equal(spy1.calledOnce, false);
-      assert.equal(spy2.calledOnce, false);
+      assert.equal(spy1.called, false);
+      assert.equal(spy2.called, false);
 
       mc.answer('foobar');
       assert.deepEqual(mc._queuedMessages, []);
-      assert.equal(spy1.calledOnce, false);
-      assert.equal(spy2.calledOnce, false);
+      assert.equal(spy1.called, false);
+      assert.equal(spy2.called, false);
 
       spy1.reset();
       spy2.reset();
@@ -185,8 +185,8 @@ describe('MediaConnection', () => {
       mc.handleAnswer(message2.payload);
 
       assert.deepEqual(mc._queuedMessages, [message1, message2]);
-      assert(answerSpy.calledOnce === false);
-      assert(candidateSpy.calledOnce === false);
+      assert(answerSpy.called === false);
+      assert(candidateSpy.called === false);
     });
   });
 });
