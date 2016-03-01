@@ -7,14 +7,10 @@ const util       = require('../src/util');
 
 let Connection;
 let DataConnection;
-//let util;
 
 describe('DataConnection', () => {
   let negotiatorStub;
   let startSpy;
-
-  let utilStub;
-  let utilSpy;
 
   beforeEach(() => {
     // Negotiator stub and spies
@@ -25,9 +21,6 @@ describe('DataConnection', () => {
       startConnection: startSpy
     });
 
-    // Util stub and spies
-    //utilSpy = sinon.spy(util, 'blobToArrayBuffer');
-
     Connection = proxyquire(
       '../src/connection',
       {'./negotiator': negotiatorStub}
@@ -35,13 +28,11 @@ describe('DataConnection', () => {
     DataConnection = proxyquire(
       '../src/dataConnection',
       {'./connection': Connection}
-//       './util':       util}
     );
   });
 
   afterEach(() => {
     startSpy.reset();
-    // utilSpy.reset();
   });
 
   describe('Constructor', () => {
@@ -166,9 +157,9 @@ describe('DataConnection', () => {
     it('should convert a blob type to an array buffer', done => {
       const string = 'foobar';
       const arrayBuffer = util.pack(string);
-      const blob = new Blob([arrayBuffer], {type : 'text/plain'});
+      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
       const message = {data: blob};
-      
+
       const dc = new DataConnection({serialization: 'binary'});
       dc.initialize({});
 

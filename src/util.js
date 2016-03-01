@@ -118,7 +118,7 @@ class Util {
     // TODO: Remove lint bypass
     console.log(blob, cb);
 
-    var fr = new FileReader();
+    let fr = new FileReader();
     fr.onload = function(event) {
       cb(event.target.result);
     };
@@ -129,7 +129,7 @@ class Util {
     // TODO: Remove lint bypass
     console.log(blob, cb);
 
-    var fr = new FileReader();
+    let fr = new FileReader();
     fr.onload = function(event) {
       cb(event.target.result);
     };
@@ -140,8 +140,8 @@ class Util {
     // TODO: Remove lint bypass
     console.log(binary);
 
-    var byteArray = new Uint8Array(binary.length);
-    for (var i = 0; i < binary.length; i++) {
+    let byteArray = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
       byteArray[i] = binary.charCodeAt(i) & 0xff;
     }
     return byteArray.buffer;
