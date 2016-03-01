@@ -86,6 +86,7 @@ class DataConnection extends Connection {
     // Check if we've chunked--if so, piece things back together.
     // We're guaranteed that this isn't 0.
     if (data.__peerData) {
+      console.log('Let\'s try chunking!');
       let id = data.__peerData;
       let chunkInfo = this._chunkedData[id] || {data: [], count: 0, total: data.total};
 

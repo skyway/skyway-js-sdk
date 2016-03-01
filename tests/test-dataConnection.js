@@ -184,5 +184,32 @@ describe('DataConnection', () => {
 
       dc._handleDataMessage(message);
     });
+
+    it('should be able to recombine chunked blobs', done => {
+      // Chunk size is 16300
+      // Each char is 2 bytes
+      const len = 16300*3;
+      const string = new Array(len + 1).join('a');
+      const arrayBuffer = util.pack(string);
+      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
+
+      let chunked = util.chunk(blob);
+      console.log('Blob size: ' + blob.size);
+      console.log('Chunks: ' + chunked.length);
+
+      const dc = new DataConnection({});
+      dc.initialize({});
+
+      dc.on('data', data => {
+        // Receives the reconstructed blob after all chunks have been handled
+        assert.deepEqual(data, blob);
+        done();
+      });
+
+      for (let chunk of chunked) {
+        let message = {data: chunk};
+        dc._handleDataMessage(message);
+      }
+    });
   });
 });
