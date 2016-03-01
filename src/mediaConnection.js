@@ -68,6 +68,15 @@ class MediaConnection extends Connection {
 
     this.open = true;
   }
+
+  close() {
+    if (!this.open) {
+      return;
+    }
+    this.open = false;
+    this._negotiator.cleanup(this);
+    this.emit('close');
+  }
 }
 
 module.exports = MediaConnection;
