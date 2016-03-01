@@ -19,6 +19,8 @@ MessageTypes.initEnum([
   'CANDIDATE'
 ]);
 
+let dataCount = 1;
+
 class Util {
   constructor() {
     this.CLOUD_HOST = 'skyway.io';
@@ -114,17 +116,18 @@ class Util {
   chunk(bl) {
     let chunks = [];
     let size = bl.size;
-    let start = index = 0;
-    let total = Math.ceil(size / util.chunkedMTU);
+    let start = 0;
+    let index = 0;
+    let total = Math.ceil(size / this.chunkedMTU);
     while (start < size) {
-      let end = Math.min(size, start + util.chunkedMTU);
+      let end = Math.min(size, start + this.chunkedMTU);
       let b = bl.slice(start, end);
 
       let chunk = {
         __peerData: dataCount,
-        n: index,
-        data: b,
-        total: total
+        n:          index,
+        data:       b,
+        total:      total
       };
 
       chunks.push(chunk);
