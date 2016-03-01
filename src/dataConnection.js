@@ -70,7 +70,7 @@ class DataConnection extends Connection {
         // Datatype should apparently never be blob?
         util.blobToArrayBuffer(data, ab => {
           data = util.unpack(ab);
-          this.emit('data', ab);
+          this.emit('data', data);
         });
         return;
       } else if (datatype === ArrayBuffer) {

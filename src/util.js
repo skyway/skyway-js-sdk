@@ -117,17 +117,34 @@ class Util {
   blobToArrayBuffer(blob, cb) {
     // TODO: Remove lint bypass
     console.log(blob, cb);
-    cb('foobar');
+
+    var fr = new FileReader();
+    fr.onload = function(event) {
+      cb(event.target.result);
+    };
+    fr.readAsArrayBuffer(blob);
   }
 
   blobToBinaryString(blob, cb) {
     // TODO: Remove lint bypass
     console.log(blob, cb);
+
+    var fr = new FileReader();
+    fr.onload = function(event) {
+      cb(event.target.result);
+    };
+    fr.readAsBinaryString(blob);
   }
 
   binaryStringToArrayBuffer(binary) {
     // TODO: Remove lint bypass
     console.log(binary);
+
+    var byteArray = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) {
+      byteArray[i] = binary.charCodeAt(i) & 0xff;
+    }
+    return byteArray.buffer;
   }
 
   isSecure() {

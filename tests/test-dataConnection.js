@@ -128,16 +128,17 @@ describe('DataConnection', () => {
       dc._handleDataMessage(message);
     });
 
-    it.only('should unpack an ArrayBuffer message', done => {
-      const ab = new ArrayBuffer();
-      const message = {data: ab};
+    it('should unpack an ArrayBuffer message', done => {
+      const string = 'foobar';
+      const arrayBuffer = util.pack(string);
+      const message = {data: arrayBuffer};
 
       const dc = new DataConnection({serialization: 'binary'});
       dc.initialize({});
 
       dc.on('data', data => {
         console.log('Got some data');
-        assert.equal(data, util.unpack(ab));
+        assert.equal(data, string);
         done();
       });
 
@@ -145,17 +146,20 @@ describe('DataConnection', () => {
     });
 
     it('should convert a blob type to an array buffer', done => {
-      const blob = new Blob([1, 2, 3]);
+      const string = 'foobar';
+      const arrayBuffer = util.pack(string);
+      const blob = new Blob([arrayBuffer], {type : 'text/plain'});
       const message = {data: blob};
-
+      
       const dc = new DataConnection({serialization: 'binary'});
       dc.initialize({});
 
       dc.on('data', data => {
         console.log('Got some data');
-        util.blobToArrayBuffer(message.data, ab => {
-          assert.equal(data, ab);
-        });
+        assert.equal(data, string);
+        // util.blobToArrayBuffer(message.data, ab => {
+        //   assert.equal(data, util.unpack(ab));
+        // });
         done();
       });
       dc._handleDataMessage(message);
