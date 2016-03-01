@@ -3,9 +3,7 @@
 // const util = require('./util');
 
 class Negotiator {
-  constructor(socket, connection) {
-    this._socket = socket;
-    this._connection = connection;
+  constructor() {
     this._idPrefix = 'pc_';
   }
 
@@ -17,14 +15,14 @@ class Negotiator {
   cleanup() {
   }
 
-  handleSDP(type, sdp) {
+  handleAnswer(message) {
     // TODO: Remove lint bypass
-    console.log(type, sdp);
+    console.log(message);
   }
 
-  handleCandidate(ice) {
+  handleCandidate(message) {
     // TODO: Remove lint bypass
-    console.log(ice);
+    console.log(message);
   }
 }
 
