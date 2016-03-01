@@ -34,6 +34,8 @@ class Util {
     this.LOG_LEVELS = LogLevel;
     this.MESSAGE_TYPES = MessageTypes;
 
+    this.chunkedMTU = 16300;
+
     this.defaultConfig = {
       iceServers: [{
         urls: 'stun:stun.skyway.io:3478',
@@ -110,8 +112,28 @@ class Util {
   }
 
   chunk(bl) {
-    // TODO: Remove lint bypass
-    console.log(bl);
+    let chunks = [];
+    let size = bl.size;
+    let start = index = 0;
+    let total = Math.ceil(size / util.chunkedMTU);
+    while (start < size) {
+      let end = Math.min(size, start + util.chunkedMTU);
+      let b = bl.slice(start, end);
+
+      let chunk = {
+        __peerData: dataCount,
+        n: index,
+        data: b,
+        total: total
+      };
+
+      chunks.push(chunk);
+
+      start = end;
+      index += 1;
+    }
+    dataCount += 1;
+    return chunks;
   }
 
   blobToArrayBuffer(blob, cb) {
