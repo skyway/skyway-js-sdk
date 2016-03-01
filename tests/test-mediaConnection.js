@@ -10,13 +10,16 @@ let MediaConnection;
 describe('MediaConnection', () => {
   let stub;
   let startSpy;
+  let cleanupSpy;
 
   beforeEach(() => {
     stub = sinon.stub();
     startSpy = sinon.spy();
+    cleanupSpy = sinon.spy();
 
     stub.returns({
-      startConnection: startSpy
+      startConnection: startSpy,
+      cleanup:         cleanupSpy
     });
 
     Connection = proxyquire(
@@ -31,6 +34,7 @@ describe('MediaConnection', () => {
 
   afterEach(() => {
     startSpy.reset();
+    cleanupSpy.reset();
   });
 
   describe('Constructor', () => {
@@ -83,15 +87,18 @@ describe('MediaConnection', () => {
     it('should close the socket and call the negotiator to cleanup on close()', () => {
       const mc = new MediaConnection({_stream: {}});
 
+      // Force to be open
+      mc.open = true;
+
       let spy = sinon.spy(mc, 'close');
-      // TODO: fix this spy
-      // let spy2 = sinon.spy(mc, '_negotiator.cleanup');
+
       mc.close();
       assert(mc);
       assert(spy.calledOnce);
       assert.equal(mc.open, false);
-      // assert(spy2.calledOnce);
-      // assert(spy2.calledWith(mc));
+
+      assert(cleanupSpy.called);
+      assert(cleanupSpy.calledWith(mc));
     });
   });
 });
