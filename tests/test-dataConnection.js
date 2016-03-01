@@ -145,6 +145,24 @@ describe('DataConnection', () => {
       dc._handleDataMessage(message);
     });
 
+    it('should convert and unpack a String message', done => {
+      const string = 'foobar';
+      const arrayBuffer = util.binaryStringToArrayBuffer(string);
+      const unpacked = util.unpack(arrayBuffer);
+      const message = {data: string};
+
+      const dc = new DataConnection({serialization: 'binary'});
+      dc.initialize({});
+
+      dc.on('data', data => {
+        console.log('Got some data');
+        assert.equal(data, unpacked);
+        done();
+      });
+
+      dc._handleDataMessage(message);
+    });
+
     it('should convert a blob type to an array buffer', done => {
       const string = 'foobar';
       const arrayBuffer = util.pack(string);
