@@ -311,5 +311,19 @@ describe('DataConnection', () => {
         done();
       }, 100);
     });
+
+    it('should push a message onto the buffer if we are buffering', () => {
+      const message = 'foobar';
+
+      const dc = new DataConnection({});
+      dc.initialize({});
+      dc._dc.onopen();
+
+      dc.buffering = true;
+      dc._bufferedSend(message);
+
+      assert.deepEqual(dc._buffer, [message]);
+      assert.equal(dc.bufferSize, 1);
+    });
   });
 });
