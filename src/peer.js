@@ -343,7 +343,8 @@ class Peer extends EventEmitter {
     if (!this._queuedMessages[message.connectionId]) {
       this._queuedMessages[message.connectionId] = [];
     }
-    this._queuedMessages[message.connectionId].push({type: type, payload: message});
+    this._queuedMessages[message.connectionId]
+      .push({type: type, payload: message});
   }
 
   _cleanup() {
