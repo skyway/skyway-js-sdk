@@ -246,7 +246,7 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.OPEN.name, id => {
       this.id = id;
       this.open = true;
-      this.emit(Peer.EVENTS.open, id);
+      this.emit(Peer.EVENTS.open.name, id);
     });
 
     this.socket.on(util.MESSAGE_TYPES.ERROR.name, error => {
