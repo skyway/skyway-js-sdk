@@ -198,23 +198,46 @@ describe('Util', () => {
       const blob = new Blob([arrayBuffer], {type: 'text/plain'});
 
       util.blobToBinaryString(blob, result => {
-        assert.deepEqual(typeof(result), 'string');
+        assert.deepEqual(typeof result, 'string');
         assert.equal(result, string);
         done();
       });
     });
 
-    it.only('should correctly chunk a Blob', () => {
+    it('should correctly chunk a Blob', () => {
       // Chunk size is 16300
       // Each char is 2 bytes
-      const len = 16300 * 3;
+      const chunkSize = util.chunkedMTU;
+      const multiple = 3;
+      const len = chunkSize * multiple;
+
       const string = new Array(len + 1).join('e');
       const arrayBuffer = util.pack(string);
       const blob = new Blob([arrayBuffer], {type: 'text/plain'});
 
-      let chunked = util.chunk(blob);
+      const chunked = util.chunk(blob);
+
       console.log('Blob size: ' + blob.size);
       console.log('Chunks: ' + chunked.length);
+
+      // There are 3 overhead bytes, so actual size is actually 16300*X + 3
+      assert.equal(chunked.length, multiple + 1);
+
+      // __peerData increments with each chunking operation
+      // Since a DataConnection test has already chunked once, this will now be 2 for each of our chunks
+      // (Just checking all chunks have the same value since checking == 2 could break later)
+      //
+      // (__peerData is a terrible name for this - can we change it?)
+      const timesChunked = chunked[0].__peerData;
+
+      for (let i = 0; i < chunked.length; i++) {
+        assert.equal(chunked[i].__peerData, timesChunked);
+        assert.equal(chunked[i].n, i);
+        assert.equal(chunked[i].total, chunked.length);
+      }
+
+      const reconstructed = new Blob(chunked);
+      assert.deepEqual(reconstructed, blob);
     });
   });
 
