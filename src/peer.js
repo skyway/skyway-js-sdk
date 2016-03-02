@@ -314,7 +314,7 @@ class Peer extends EventEmitter {
       if (connection) {
         connection.handleAnswer(answerMessage);
       } else {
-        this._storeMessage(answerMessage);
+        this._storeMessage(util.MESSAGE_TYPES.ANSWER.name, answerMessage);
       }
     });
 
@@ -327,7 +327,7 @@ class Peer extends EventEmitter {
       if (connection) {
         connection.handleAnswer(candidateMessage);
       } else {
-        this._storeMessage(candidateMessage);
+        this._storeMessage(util.MESSAGE_TYPES.CANDIDATE.name, candidateMessage);
       }
     });
   }
@@ -339,11 +339,11 @@ class Peer extends EventEmitter {
     this.connections[peerId].push(connection);
   }
 
-  _storeMessage(message) {
+  _storeMessage(type, message) {
     if (this._queuedMessages[message.connectionId]) {
       this._queuedMessages[message.connectionId] = [];
     }
-    this._queuedMessages[message.connectionId].push(message);
+    this._queuedMessages[message.connectionId].push({type: type, payload: message});
   }
 
   _cleanup() {
