@@ -56,14 +56,14 @@ class Negotiator extends EventEmitter {
   cleanup() {
   }
 
-  handleSDP(type, sdp) {
+  handleSDP(message) {
     // TODO: Remove lint bypass
-    console.log(type, sdp);
+    console.log(message);
   }
 
-  handleCandidate(ice) {
+  handleCandidate(message) {
     // TODO: Remove lint bypass
-    console.log(ice);
+    console.log(message);
   }
 }
 

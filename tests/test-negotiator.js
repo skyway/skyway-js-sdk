@@ -4,9 +4,18 @@ const assert     = require('power-assert');
 const sinon      = require('sinon');
 const proxyquire = require('proxyquire');
 
-const Negotiator      = require('../src/negotiator');
+const Negotiator = require('../src/negotiator');
 
 describe('Negotiator', () => {
+  describe('Constructor', () => {
+    it('should create a Negotiator object', () => {
+      const negotiator = new Negotiator();
+
+      assert(negotiator);
+      assert(negotiator instanceof Negotiator);
+    });
+  });
+
   describe('startConnection', () => {
     let pcStub;
     let addStreamSpy;
