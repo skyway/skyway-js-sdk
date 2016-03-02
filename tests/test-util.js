@@ -170,7 +170,7 @@ describe('Util', () => {
       assert.equal(result, binary);
     });
 
-    it('should correctly convert a Blob to an Array Buffer', done => {
+    it('should correctly convert a Blob to an ArrayBuffer', done => {
       const string = 'foobar';
 
       let arrayBuffer = new ArrayBuffer(string.length);
@@ -202,7 +202,19 @@ describe('Util', () => {
         assert.equal(result, string);
         done();
       });
+    });
 
+    it.only('should correctly chunk a Blob', () => {
+      // Chunk size is 16300
+      // Each char is 2 bytes
+      const len = 16300 * 3;
+      const string = new Array(len + 1).join('e');
+      const arrayBuffer = util.pack(string);
+      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
+
+      let chunked = util.chunk(blob);
+      console.log('Blob size: ' + blob.size);
+      console.log('Chunks: ' + chunked.length);
     });
   });
 
