@@ -118,6 +118,8 @@ describe('Peer', () => {
       assert(spy.calledWith(util.MESSAGE_TYPES.LEAVE.name) === true);
       assert(spy.calledWith(util.MESSAGE_TYPES.EXPIRE.name) === true);
       assert(spy.calledWith(util.MESSAGE_TYPES.OFFER.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.ANSWER.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.CANDIDATE.name) === true);
       spy.restore();
     });
 
@@ -403,7 +405,7 @@ describe('Peer', () => {
 
       const spy = sinon.spy(util, 'log');
 
-      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.name, {src: peerId});
+      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.name, peerId);
 
       assert(spy.calledOnce === true);
       assert(spy.calledWith(`Received leave message from ${peerId}`) === true);
@@ -419,7 +421,7 @@ describe('Peer', () => {
         done();
       });
 
-      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, {src: peerId});
+      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, peerId);
     });
 
     it('should create MediaConnection on media OFFER events', done => {
