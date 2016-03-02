@@ -158,7 +158,7 @@ describe('Util', () => {
       });
     });
   });
-  // FIXME: Lint error since location is not defined explicitly
+
   describe('isSecure', () => {
     // Test only 'HTTP' becauuse Karma only runs on 'HTTP'
     it('should return false if HTTP', () => {
