@@ -325,7 +325,7 @@ class Peer extends EventEmitter {
                           );
 
       if (connection) {
-        connection.handleAnswer(candidateMessage);
+        connection.handleCandidate(candidateMessage);
       } else {
         this._storeMessage(util.MESSAGE_TYPES.CANDIDATE.name, candidateMessage);
       }
@@ -340,7 +340,7 @@ class Peer extends EventEmitter {
   }
 
   _storeMessage(type, message) {
-    if (this._queuedMessages[message.connectionId]) {
+    if (!this._queuedMessages[message.connectionId]) {
       this._queuedMessages[message.connectionId] = [];
     }
     this._queuedMessages[message.connectionId].push({type: type, payload: message});
