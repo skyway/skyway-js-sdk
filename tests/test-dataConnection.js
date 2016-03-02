@@ -212,4 +212,52 @@ describe('DataConnection', () => {
       }
     });
   });
+
+  describe('Send', () => {
+    it('should emit an error if send() is called while DC is not open', done => {
+      const dc = new DataConnection({});
+      assert.equal(dc.open, false);
+
+      dc.on('error', error => {
+        assert(error instanceof Error);
+        done();
+      });
+
+      dc.send('foobar', false);
+    });
+
+    it('should stringify JSON data and call _bufferedSend', () => {
+      const obj = {name: 'foobar'};
+
+      const dc = new DataConnection({});
+      dc.initialize({});
+      dc._dc.onopen();
+      dc.serialization = 'json';
+
+      spy = sinon.spy(dc, '_bufferedSend');
+
+      dc.send(obj, false);
+      assert(spy.calledOnce);
+      assert(spy.calledWith(JSON.stringify(obj)));
+
+      spy.reset();
+    });
+
+    it('should call _bufferedSend on data with other types of serialization', () => {
+      const message = 'foobar'; 
+
+      const dc = new DataConnection({});
+      dc.initialize({});
+      dc._dc.onopen();
+      dc.serialization = 'test';
+
+      spy = sinon.spy(dc, '_bufferedSend');
+
+      dc.send(message, false);
+      assert(spy.calledOnce);
+      assert(spy.calledWith(message));
+
+      spy.reset();
+    }); 
+  });
 });

@@ -109,14 +109,9 @@ class DataConnection extends Connection {
   }
 
   send(data, chunked) {
-    // TODO: Remove lint bypass
-    console.log(data, chunked);
-
     if (!this.open) {
       this.emit('error', new Error('Connection is not open. You should listen for the `open` event before sending messages.'));
     }
-
-    // No more reliable shim
 
     if (this.serialization === 'json') {
       this._bufferedSend(JSON.stringify(data));
@@ -151,7 +146,7 @@ class DataConnection extends Connection {
   }
 
   _bufferedSend(msg) {
-    if (this.buffering || !this.trySend(msg)) {
+    if (this.buffering || !this._trySend(msg)) {
       this._buffer.push(msg);
       this.bufferSize = this._buffer.length;
     }
