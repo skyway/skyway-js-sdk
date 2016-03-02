@@ -243,7 +243,7 @@ describe('DataConnection', () => {
       spy.reset();
     });
 
-    it('should call _bufferedSend on data with other types of serialization', () => {
+    it('should call _bufferedSend on data with non-regular types of serialization', () => {
       const message = 'foobar'; 
 
       const dc = new DataConnection({});
@@ -258,6 +258,54 @@ describe('DataConnection', () => {
       assert(spy.calledWith(message));
 
       spy.reset();
-    }); 
+    });
+
+    it('should send data as a Blob if serialization is binary', () => {
+      const message = 'foobar'; 
+
+      const dc = new DataConnection({});
+      dc.initialize({});
+      dc._dc.onopen();
+      dc.serialization = 'binary';
+      util.supports = {binaryBlob: true};
+
+      spy = sinon.spy(dc, '_bufferedSend');
+
+      dc.send(message, false);
+      assert(spy.calledOnce);
+      assert(spy.args[0][0] instanceof Blob);
+
+      spy.reset();
+    });
+
+    it('should convert a Blob to an ArrayBuffer if Blobs are not supported', done => {
+      util.supports = {binaryBlob: false};
+
+      DataConnection = proxyquire(
+        '../src/dataConnection',
+        {'./connection': Connection,
+         './util':       util}
+      );
+      const message = 'foobar'; 
+
+      const dc = new DataConnection({});
+      dc.initialize({});
+      dc._dc.onopen();
+      dc.serialization = 'binary';
+
+      util.supports = {binaryBlob: false};
+
+      spy = sinon.spy(dc, '_bufferedSend');
+
+      dc.send(message, false);
+
+      setTimeout(() => {
+        assert(spy.calledOnce);
+        assert(spy.args[0][0] instanceof ArrayBuffer);
+
+        spy.reset();
+        done();
+      }, 100);
+    });
   });
 });

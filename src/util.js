@@ -36,6 +36,7 @@ class Util {
     this.LOG_LEVELS = LogLevel;
     this.MESSAGE_TYPES = MessageTypes;
 
+    this.chunkedBrowsers = {'Chrome': 1};
     this.chunkedMTU = 16300;
 
     this.defaultConfig = {

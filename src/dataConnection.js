@@ -125,13 +125,7 @@ class DataConnection extends Connection {
         return;
       }
 
-      // DataChannel currently only supports strings
-      // (This may have changed - check this)
-      if (!util.supports.sctp) {
-        util.blobToBinaryString(blob, str => {
-          this._bufferedSend(str);
-        });
-      } else if (!util.supports.binaryBlob) {
+      if (util.supports && !util.supports.binaryBlob) {
         // We only do this if we really need to (e.g. blobs are not supported),
         // because this conversion is costly
         util.blobToArrayBuffer(blob, ab => {
