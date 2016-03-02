@@ -4,6 +4,8 @@ const assert    = require('power-assert');
 const sinon     = require('sinon');
 const util      = require('../src/util');
 
+const BinaryPack = require('js-binarypack');
+
 describe('Util', () => {
   before(() => {
     util.debug = true;
@@ -160,15 +162,32 @@ describe('Util', () => {
   });
 
   describe('Message type conversion', () => {
-    it.only('should correctly convert a String to an ArrayBuffer', () => {
+    it('should correctly convert a Binary String to an ArrayBuffer', () => {
       // Convert to binary String
       const binary = 'foobar'.toString(2);
       const arrayBuffer = util.binaryStringToArrayBuffer(binary);
-
       assert.equal(arrayBuffer.constructor, ArrayBuffer);
-      const test = String.fromCharCode.apply(null, Array.prototype.slice.apply(new Uint8Array(arrayBuffer)));
-      console.log(test);
-      assert.equal(test, binary);
+
+      const result = String.fromCharCode.apply(null, Array.prototype.slice.apply(new Uint8Array(arrayBuffer)));
+      assert.equal(result, binary);
+    });
+
+    it.only('should correctly convert a Blob to an Array Buffer', done => {
+      const string = 'foobar';
+
+      // 2 bytes for each string
+      let arrayBuffer = new ArrayBuffer(string.length * 2);
+      let bufferView = new Uint16Array(arrayBuffer);
+      for (let i=0; i < string.length; i++) {
+        bufferView[i] = string.charCodeAt(i);
+      }
+      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
+
+      util.blobToArrayBuffer(blob, result => {
+        assert.deepEqual(result.constructor, ArrayBuffer); 
+        assert.deepEqual(arrayBuffer, result);
+        done();
+      });
     });
   });
 
