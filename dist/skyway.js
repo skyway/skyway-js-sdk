@@ -1,6 +1,6 @@
 /* skywayjs Copyright(c) 2016 NTT Communications Corporation      *
  * peerjs Copyright(c) 2013 Michelle Bu <michelle@michellebu.com> */
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Peer = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = after
 
 function after(count, callback, err_cb) {
@@ -8340,8 +8340,84 @@ module.exports = yeast;
 },{}],51:[function(require,module,exports){
 'use strict';
 
-// const DataConnection  = require('./dataConnection');
-// const MediaConnection = require('./mediaConnection');
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var util = require('./util');
+var Negotiator = require('./negotiator');
+
+var EventEmitter = require('events');
+
+var Connection = function (_EventEmitter) {
+  _inherits(Connection, _EventEmitter);
+
+  function Connection(options) {
+    _classCallCheck(this, Connection);
+
+    // Abstract class
+
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Connection).call(this));
+
+    if (_this.constructor === Connection) {
+      throw new TypeError('Cannot construct Connection instances directly');
+    }
+
+    // TODO use util.extend (or Object.assign)
+    _this.options = options;
+
+    _this.open = false;
+    _this.type = undefined;
+    _this.metadata = _this.options.metadata;
+
+    _this._negotiator = new Negotiator(_this);
+
+    _this._idPrefix = 'c_';
+    _this._randomIdSuffix = util.randomToken();
+    return _this;
+  }
+
+  _createClass(Connection, [{
+    key: 'handleMessage',
+
+    // TODO: move into the negotiator class to handle signalling directly?
+    value: function handleMessage(message) {
+      var payload = message.payload;
+
+      switch (message.type) {
+        case 'ANSWER':
+          // Forward to negotiator
+          this._negotiator.handleSDP(message.type, this, payload.sdp);
+          break;
+        case 'CANDIDATE':
+          this._negotiator.handleCandidate(this, payload.candidate);
+          break;
+        default:
+          util.warn('Unrecognized message type:', message.type, 'from peer:', message.src);
+          break;
+      }
+    }
+  }, {
+    key: 'close',
+    value: function close() {}
+  }, {
+    key: 'id',
+    get: function get() {
+      return this.options.connectionId || this._idPrefix + this._randomIdSuffix;
+    }
+  }]);
+
+  return Connection;
+}(EventEmitter);
+
+module.exports = Connection;
+
+},{"./negotiator":54,"./util":57,"events":27}],52:[function(require,module,exports){
+'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -8351,10 +8427,177 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var Connection = require('./connection');
+
+var DataConnection = function (_Connection) {
+  _inherits(DataConnection, _Connection);
+
+  function DataConnection(options) {
+    _classCallCheck(this, DataConnection);
+
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(DataConnection).call(this, options));
+
+    _this._idPrefix = 'dc_';
+    _this.type = 'data';
+    _this.label = _this.options.label || _this.id;
+    _this.serialization = _this.options.serialization;
+    return _this;
+  }
+
+  _createClass(DataConnection, [{
+    key: 'initialize',
+    value: function initialize(dc) {
+      // TODO: Remove lint bypass
+      console.log(dc);
+    }
+  }, {
+    key: 'send',
+    value: function send(data, chunked) {
+      // TODO: Remove lint bypass
+      console.log(data, chunked);
+    }
+  }]);
+
+  return DataConnection;
+}(Connection);
+
+module.exports = DataConnection;
+
+},{"./connection":51}],53:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Connection = require('./connection');
+var util = require('./util');
+
+var MediaConnection = function (_Connection) {
+  _inherits(MediaConnection, _Connection);
+
+  function MediaConnection(options) {
+    _classCallCheck(this, MediaConnection);
+
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(MediaConnection).call(this, options));
+
+    _this._idPrefix = 'mc_';
+    _this.type = 'media';
+    _this.localStream = _this.options._stream;
+    // Messages stored by peer because MC was not ready yet:
+    _this._queuedMessages = options._queuedMessages;
+
+    if (_this.localStream) {
+      _this._negotiator.startConnection(_this, { _stream: _this.localStream, originator: true });
+    }
+    return _this;
+  }
+
+  _createClass(MediaConnection, [{
+    key: 'addStream',
+    value: function addStream(remoteStream) {
+      util.log('Receiving stream', remoteStream);
+
+      this.remoteStream = remoteStream;
+      // Is 'stream' an appropriate emit message? PeerJS contemplated using 'open' instead
+      this.emit('stream', remoteStream);
+    }
+  }, {
+    key: 'answer',
+    value: function answer(stream) {
+      // TODO: Remove lint bypass
+      console.log(stream);
+    }
+  }]);
+
+  return MediaConnection;
+}(Connection);
+
+module.exports = MediaConnection;
+
+},{"./connection":51,"./util":57}],54:[function(require,module,exports){
+'use strict';
+
+// const util = require('./util');
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Negotiator = function () {
+  function Negotiator() {
+    _classCallCheck(this, Negotiator);
+
+    this._idPrefix = 'pc_';
+  }
+
+  _createClass(Negotiator, [{
+    key: 'startConnection',
+    value: function startConnection(options) {
+      // TODO: Remove lint bypass
+      console.log(options);
+    }
+  }, {
+    key: 'cleanup',
+    value: function cleanup() {}
+  }, {
+    key: 'handleSDP',
+    value: function handleSDP(type, sdp) {
+      // TODO: Remove lint bypass
+      console.log(type, sdp);
+    }
+  }, {
+    key: 'handleCandidate',
+    value: function handleCandidate(ice) {
+      // TODO: Remove lint bypass
+      console.log(ice);
+    }
+  }]);
+
+  return Negotiator;
+}();
+
+module.exports = Negotiator;
+
+},{}],55:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _enumify = require('enumify');
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var DataConnection = require('./dataConnection');
+var MediaConnection = require('./mediaConnection');
 var Socket = require('./socket');
 var util = require('./util');
 
 var EventEmitter = require('events');
+
+// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
+
+var PeerEvents = function (_Enum) {
+  _inherits(PeerEvents, _Enum);
+
+  function PeerEvents() {
+    _classCallCheck(this, PeerEvents);
+
+    return _possibleConstructorReturn(this, Object.getPrototypeOf(PeerEvents).apply(this, arguments));
+  }
+
+  return PeerEvents;
+}(_enumify.Enum);
+
+PeerEvents.initEnum(['open', 'error', 'call', 'connection', 'close', 'disconnected']);
 
 var Peer = function (_EventEmitter) {
   _inherits(Peer, _EventEmitter);
@@ -8364,14 +8607,17 @@ var Peer = function (_EventEmitter) {
 
     // true when connected to SkyWay server
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Peer).call(this));
+    var _this2 = _possibleConstructorReturn(this, Object.getPrototypeOf(Peer).call(this));
 
-    _this.open = false;
-    _this.connections = {};
+    _this2.open = false;
+    _this2.connections = {};
 
     // to prevent duplicate calls to destroy/disconnect
-    _this._disconnectCalled = false;
-    _this._destroyCalled = false;
+    _this2._disconnectCalled = false;
+    _this2._destroyCalled = false;
+
+    // store peerId after disconnect to use when reconnecting
+    _this2._lastPeerId = null;
 
     if (id && id.constructor === Object) {
       options = id;
@@ -8388,45 +8634,94 @@ var Peer = function (_EventEmitter) {
       config: util.defaultConfig,
       turn: true
     };
-    _this.options = Object.assign({}, defaultOptions, options);
+    _this2.options = Object.assign({}, defaultOptions, options);
 
-    if (_this.options.host === '/') {
-      _this.options.host = window.location.hostname;
+    if (_this2.options.host === '/') {
+      _this2.options.host = window.location.hostname;
     }
 
-    util.setLogLevel(_this.options.debug);
+    util.setLogLevel(_this2.options.debug);
 
     if (!util.validateId(id)) {
-      _this._abort('invalid-id', 'ID "' + id + '" is invalid');
-      return _possibleConstructorReturn(_this);
+      _this2._abort('invalid-id', 'ID "' + id + '" is invalid');
+      return _possibleConstructorReturn(_this2);
     }
 
-    if (!util.validateKey(_this.options.key)) {
-      _this._abort('invalid-key', 'API KEY "' + _this.options.key + '" is invalid');
-      return _possibleConstructorReturn(_this);
+    if (!util.validateKey(_this2.options.key)) {
+      _this2._abort('invalid-key', 'API KEY "' + _this2.options.key + '" is invalid');
+      return _possibleConstructorReturn(_this2);
     }
 
-    _this._initializeServerConnection();
-    return _this;
+    _this2._initializeServerConnection(id);
+    return _this2;
   }
 
   _createClass(Peer, [{
     key: 'connect',
-    value: function connect(peer, options) {
-      // TODO: Remove lint bypass
-      console.log(peer, options);
+    value: function connect(peerId, options) {
+      if (this._disconnectCalled) {
+        util.warn('You cannot connect to a new Peer because you called ' + '.disconnect() on this Peer and ended your connection with the ' + 'server. You can create a new Peer to reconnect, or call reconnect ' + 'on this peer if you believe its ID to still be available.');
+        this.emitError('disconnected', 'Cannot connect to new Peer after disconnecting from server.');
+        return null;
+      }
+
+      var connection = new DataConnection(peerId, options);
+      util.log('DataConnection created in connect method');
+      this._addConnection(peerId, connection);
+      return connection;
     }
   }, {
     key: 'call',
-    value: function call(peer, stream, options) {
-      // TODO: Remove lint bypass
-      console.log(peer, stream, options);
+    value: function call(peerId, stream, options) {
+      if (this._disconnectCalled) {
+        util.warn('You cannot connect to a new Peer because you called ' + '.disconnect() on this Peer and ended your connection with the ' + 'server. You can create a new Peer to reconnect, or call reconnect ' + 'on this peer if you believe its ID to still be available.');
+        this.emitError('disconnected', 'Cannot connect to new Peer after disconnecting from server.');
+        return null;
+      }
+      if (!stream) {
+        util.error('To call a peer, you must provide ' + 'a stream from your browser\'s `getUserMedia`.');
+        return null;
+      }
+
+      options = options || {};
+      options._stream = stream;
+      var mc = new MediaConnection(options);
+      util.log('MediaConnection created in call method');
+      this._addConnection(peerId, mc);
+      return mc;
     }
   }, {
     key: 'getConnection',
-    value: function getConnection(peer, id) {
-      // TODO: Remove lint bypass
-      console.log(peer, id);
+    value: function getConnection(peerId, connectionId) {
+      if (this.connections[peerId]) {
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = this.connections[peerId][Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var connection = _step.value;
+
+            if (connection.id === connectionId) {
+              return connection;
+            }
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+              _iterator.return();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
+        }
+      }
+      return null;
     }
   }, {
     key: 'emitError',
@@ -8437,17 +8732,36 @@ var Peer = function (_EventEmitter) {
       }
 
       err.type = type;
-      this.emit('error', err);
+      this.emit(Peer.EVENTS.error.name, err);
     }
   }, {
     key: 'destroy',
     value: function destroy() {
-      this._destroyCalled = true;
+      if (!this._destroyCalled) {
+        this._destroyCalled = true;
+        this._cleanup();
+        this.disconnect();
+      }
     }
   }, {
     key: 'disconnect',
     value: function disconnect() {
-      this._disconnectCalled = true;
+      var _this3 = this;
+
+      setTimeout(function () {
+        if (!_this3._disconnectCalled) {
+          _this3._disconnectCalled = true;
+          _this3.open = false;
+
+          if (_this3.socket) {
+            _this3.socket.close();
+          }
+
+          _this3.emit(Peer.EVENTS.disconnected.name, _this3.id);
+          _this3._lastPeerId = _this3.id;
+          _this3.id = null;
+        }
+      }, 0);
     }
   }, {
     key: 'reconnect',
@@ -8455,8 +8769,33 @@ var Peer = function (_EventEmitter) {
   }, {
     key: 'listAllPeers',
     value: function listAllPeers(cb) {
-      // TODO: Remove lint bypass
-      console.log(cb);
+      cb = cb || function () {};
+      var self = this;
+      var http = new XMLHttpRequest();
+      var protocol = this.options.secure ? 'https://' : 'http://';
+
+      var url = '' + protocol + this.options.host + ':' + (this.options.port + '/active/list/' + this.options.key);
+
+      // If there's no ID we need to wait for one before trying to init socket.
+      http.open('get', url, true);
+      http.onerror = function () {
+        self._abort('server-error', 'Could not get peers from the server.');
+        cb([]);
+      };
+      http.onreadystatechange = function () {
+        if (http.readyState !== 4) {
+          return;
+        }
+        if (http.status === 401) {
+          cb([]);
+          throw new Error('It doesn\'t look like you have permission to list peers IDs. ' + 'Please enable the SkyWay REST API on https://skyway.io/ds/');
+        } else if (http.status === 200) {
+          cb(JSON.parse(http.responseText));
+        } else {
+          cb([]);
+        }
+      };
+      http.send(null);
     }
   }, {
     key: '_abort',
@@ -8468,47 +8807,173 @@ var Peer = function (_EventEmitter) {
   }, {
     key: '_delayedAbort',
     value: function _delayedAbort(type, message) {
-      var _this2 = this;
+      var _this4 = this;
 
       setTimeout(function () {
-        _this2._abort(type, message);
+        _this4._abort(type, message);
       }, 0);
     }
   }, {
     key: '_initializeServerConnection',
-    value: function _initializeServerConnection() {
-      var _this3 = this;
+    value: function _initializeServerConnection(id) {
+      var _this5 = this;
 
       this.socket = new Socket(this.options.secure, this.options.host, this.options.port, this.options.key);
 
-      this.socket.on('message', function (data) {
-        _this3._handleMessage(data);
-      });
+      this._setupMessageHandlers();
 
       this.socket.on('error', function (error) {
-        _this3._abort('socket-error', error);
+        _this5._abort('socket-error', error);
       });
 
       this.socket.on('disconnect', function () {
         // If we haven't explicitly disconnected, emit error and disconnect.
-        if (!_this3._disconnectCalled) {
-          _this3.disconnect();
-          _this3.emitError('socket-error', 'Lost connection to server.');
+        if (!_this5._disconnectCalled) {
+          _this5.disconnect();
+          _this5.emitError('socket-error', 'Lost connection to server.');
         }
       });
 
+      this.socket.start(id, this.options.token);
+
       window.onbeforeunload = function () {
-        _this3.destroy();
+        _this5.destroy();
       };
     }
   }, {
-    key: '_handleMessage',
-    value: function _handleMessage() {}
+    key: '_setupMessageHandlers',
+    value: function _setupMessageHandlers() {
+      var _this6 = this;
+
+      this.socket.on(util.MESSAGE_TYPES.OPEN.name, function (id) {
+        _this6.id = id;
+      });
+
+      this.socket.on(util.MESSAGE_TYPES.ERROR.name, function (error) {
+        _this6._abort('server-error', error);
+      });
+
+      this.socket.on(util.MESSAGE_TYPES.LEAVE.name, function (message) {
+        util.log('Received leave message from ' + message.src);
+      });
+
+      this.socket.on(util.MESSAGE_TYPES.EXPIRE.name, function (message) {
+        _this6.emitError('peer-unavailable', 'Could not connect to peer ' + message.src);
+      });
+
+      this.socket.on(util.MESSAGE_TYPES.OFFER.name, function (message) {
+        var connectionId = message.connectionId;
+        var connection = _this6.getConnection(message.src, connectionId);
+
+        if (connection) {
+          util.warn('Offer received for existing Connection ID:', connectionId);
+          return;
+        }
+
+        if (message.type === 'media') {
+          connection = new MediaConnection({
+            connectionId: connectionId,
+            payload: message,
+            metadata: message.metadata
+          });
+
+          util.log('MediaConnection created in OFFER');
+          _this6._addConnection(message.src, connection);
+          _this6.emit(Peer.EVENTS.call.name, connection);
+        } else if (message.type === 'data') {
+          connection = new DataConnection({
+            connectionId: connectionId,
+            _payload: message,
+            metadata: message.metadata,
+            label: message.label,
+            serialization: message.serialization
+          });
+
+          util.log('DataConnection created in OFFER');
+          _this6._addConnection(message.src, connection);
+          _this6.emit(Peer.EVENTS.connection.name, connection);
+        } else {
+          util.warn('Received malformed connection type: ', message.type);
+        }
+      });
+    }
   }, {
     key: '_retrieveId',
     value: function _retrieveId(id) {
       // TODO: Remove lint bypass
       console.log(id);
+    }
+  }, {
+    key: '_addConnection',
+    value: function _addConnection(peerId, connection) {
+      if (!this.connections[peerId]) {
+        this.connections[peerId] = [];
+      }
+      this.connections[peerId].push(connection);
+    }
+  }, {
+    key: '_cleanup',
+    value: function _cleanup() {
+      if (this.connections) {
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
+
+        try {
+          for (var _iterator2 = Object.keys(this.connections)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var peer = _step2.value;
+
+            this._cleanupPeer(peer);
+          }
+        } catch (err) {
+          _didIteratorError2 = true;
+          _iteratorError2 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+              _iterator2.return();
+            }
+          } finally {
+            if (_didIteratorError2) {
+              throw _iteratorError2;
+            }
+          }
+        }
+      }
+      this.emit(Peer.EVENTS.close.name);
+    }
+  }, {
+    key: '_cleanupPeer',
+    value: function _cleanupPeer(peer) {
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
+
+      try {
+        for (var _iterator3 = this.connections[peer][Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var connection = _step3.value;
+
+          connection.close();
+        }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
+        }
+      }
+    }
+  }], [{
+    key: 'EVENTS',
+    get: function get() {
+      return PeerEvents;
     }
   }]);
 
@@ -8517,7 +8982,7 @@ var Peer = function (_EventEmitter) {
 
 module.exports = Peer;
 
-},{"./socket":52,"./util":53,"events":27}],52:[function(require,module,exports){
+},{"./dataConnection":52,"./mediaConnection":53,"./socket":56,"./util":57,"enumify":26,"events":27}],56:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -8529,7 +8994,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var io = require('socket.io-client');
-var EventEmitter = require('events').EventEmitter;
+var util = require('./util');
+
+var EventEmitter = require('events');
 
 var Socket = function (_EventEmitter) {
   _inherits(Socket, _EventEmitter);
@@ -8539,8 +9006,10 @@ var Socket = function (_EventEmitter) {
 
     var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Socket).call(this));
 
-    _this.disconnected = false;
+    _this._isOpen = false;
+    _this._queue = [];
 
+    _this._io = null;
     _this._key = key;
 
     var httpProtocol = secure ? 'https://' : 'http://';
@@ -8551,22 +9020,126 @@ var Socket = function (_EventEmitter) {
   _createClass(Socket, [{
     key: 'start',
     value: function start(id, token) {
-      this.id = id;
+      var _this2 = this;
 
-      this.socket = io(this._httpUrl);
+      var query = undefined;
+      if (id) {
+        query = 'apiKey=' + this._key + '&token=' + token + '&peerId=' + id;
+      } else {
+        query = 'apiKey=' + this._key + '&token=' + token;
+      }
 
-      // TODO: Remove lint bypass
-      console.log(token);
+      this._io = io(this._httpUrl, {
+        'force new connection': true,
+        'query': query
+      });
+
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        var _loop = function _loop() {
+          var type = _step.value;
+
+          if (type.name === util.MESSAGE_TYPES.OPEN.name) {
+            _this2._io.on(type.name, function (peerId) {
+              if (peerId) {
+                _this2._isOpen = true;
+              }
+
+              _this2._sendQueuedMessages();
+
+              // To inform the peer that the socket successfully connected
+              _this2.emit(type.name, peerId);
+            });
+          } else {
+            _this2._io.on(type.name, function (message) {
+              _this2._io.emit(type.name, message);
+            });
+          }
+        };
+
+        for (var _iterator = util.MESSAGE_TYPES[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          _loop();
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
     }
   }, {
     key: 'send',
-    value: function send(data) {
-      // TODO: Remove lint bypass
-      console.log(data);
+    value: function send(type, message) {
+      if (!type) {
+        this._io.emit('error', 'Invalid message');
+        return;
+      }
+
+      // If we are not connected yet, queue the message
+      if (this.disconnected) {
+        this._queue.push({ type: type, message: message });
+        return;
+      }
+
+      var messageString = JSON.stringify(message);
+      if (this._io.connected === true) {
+        this._io.emit(type, messageString);
+      }
     }
   }, {
     key: 'close',
-    value: function close() {}
+    value: function close() {
+      if (!this.disconnected) {
+        this._io.disconnect();
+        this._isOpen = false;
+      }
+    }
+  }, {
+    key: '_sendQueuedMessages',
+    value: function _sendQueuedMessages() {
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = this._queue[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var data = _step2.value;
+
+          this.send(data.type, data.message);
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
+
+      this._queue = [];
+    }
+  }, {
+    key: 'disconnected',
+    get: function get() {
+      return !(this._io && this._io.connected && this._isOpen);
+    }
   }]);
 
   return Socket;
@@ -8574,7 +9147,7 @@ var Socket = function (_EventEmitter) {
 
 module.exports = Socket;
 
-},{"events":27,"socket.io-client":39}],53:[function(require,module,exports){
+},{"./util":57,"events":27,"socket.io-client":39}],57:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -8606,6 +9179,20 @@ var LogLevel = function (_Enum) {
 LogLevel.initEnum(['NONE', 'ERROR', 'WARN', 'FULL']);
 var LOG_PREFIX = 'SkyWayJS: ';
 
+var MessageTypes = function (_Enum2) {
+  _inherits(MessageTypes, _Enum2);
+
+  function MessageTypes() {
+    _classCallCheck(this, MessageTypes);
+
+    return _possibleConstructorReturn(this, Object.getPrototypeOf(MessageTypes).apply(this, arguments));
+  }
+
+  return MessageTypes;
+}(_enumify.Enum);
+
+MessageTypes.initEnum(['OPEN', 'ERROR', 'OFFER', 'ANSWER', 'LEAVE', 'EXPIRE', 'CANDIDATE']);
+
 var Util = function () {
   function Util() {
     _classCallCheck(this, Util);
@@ -8621,6 +9208,8 @@ var Util = function () {
     this.unpack = BinaryPack.unpack;
     this.setZeroTimeout = undefined;
     this.LOG_LEVELS = LogLevel;
+    this.MESSAGE_TYPES = MessageTypes;
+
     this.defaultConfig = {
       iceServers: [{
         urls: 'stun:stun.skyway.io:3478',
@@ -8739,4 +9328,5 @@ var Util = function () {
 
 module.exports = new Util();
 
-},{"enumify":26,"js-binarypack":32}]},{},[51]);
+},{"enumify":26,"js-binarypack":32}]},{},[55])(55)
+});
