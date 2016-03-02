@@ -4,8 +4,6 @@ const assert    = require('power-assert');
 const sinon     = require('sinon');
 const util      = require('../src/util');
 
-const BinaryPack = require('js-binarypack');
-
 describe('Util', () => {
   before(() => {
     util.debug = true;
@@ -172,22 +170,39 @@ describe('Util', () => {
       assert.equal(result, binary);
     });
 
-    it.only('should correctly convert a Blob to an Array Buffer', done => {
+    it('should correctly convert a Blob to an Array Buffer', done => {
       const string = 'foobar';
 
-      // 2 bytes for each string
-      let arrayBuffer = new ArrayBuffer(string.length * 2);
-      let bufferView = new Uint16Array(arrayBuffer);
-      for (let i=0; i < string.length; i++) {
+      let arrayBuffer = new ArrayBuffer(string.length);
+      let bufferView = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < string.length; i++) {
         bufferView[i] = string.charCodeAt(i);
       }
       const blob = new Blob([arrayBuffer], {type: 'text/plain'});
 
       util.blobToArrayBuffer(blob, result => {
-        assert.deepEqual(result.constructor, ArrayBuffer); 
+        assert.deepEqual(result.constructor, ArrayBuffer);
         assert.deepEqual(arrayBuffer, result);
         done();
       });
+    });
+
+    it('should correctly convert a Blob to a Binary String', done => {
+      const string = 'foobar';
+
+      let arrayBuffer = new ArrayBuffer(string.length);
+      let bufferView = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < string.length; i++) {
+        bufferView[i] = string.charCodeAt(i);
+      }
+      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
+
+      util.blobToBinaryString(blob, result => {
+        assert.deepEqual(typeof(result), 'string');
+        assert.equal(result, string);
+        done();
+      });
+
     });
   });
 
