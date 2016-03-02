@@ -166,18 +166,4 @@ describe('Negotiator', () => {
       });
     });
   });
-<<<<<<< HEAD
-=======
-
-  describe('_setupPCListeners', () => {
-    it('should set up PeerConnection listeners', () => {
-      const negotiator = new Negotiator();
-      const pc = negotiator._createPeerConnection('media');
-
-      assert(pc.onicecandidate === null);
-      negotiator._setupPCListeners(pc);
-      assert(pc.onicecandidate);
-    });
-  });
->>>>>>> 1e87c48c75e1b0711d7b11cdbd739afe65f1e81c
 });
