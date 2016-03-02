@@ -188,7 +188,7 @@ describe('DataConnection', () => {
     it('should be able to recombine chunked blobs', done => {
       // Chunk size is 16300
       // Each char is 2 bytes
-      const len = 16300*3;
+      const len = 16300 * 3;
       const string = new Array(len + 1).join('a');
       const arrayBuffer = util.pack(string);
       const blob = new Blob([arrayBuffer], {type: 'text/plain'});

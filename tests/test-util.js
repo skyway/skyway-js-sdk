@@ -158,6 +158,20 @@ describe('Util', () => {
       });
     });
   });
+
+  describe('Message type conversion', () => {
+    it.only('should correctly convert a String to an ArrayBuffer', () => {
+      // Convert to binary String
+      const binary = 'foobar'.toString(2);
+      const arrayBuffer = util.binaryStringToArrayBuffer(binary);
+
+      assert.equal(arrayBuffer.constructor, ArrayBuffer);
+      const test = String.fromCharCode.apply(null, Array.prototype.slice.apply(new Uint8Array(arrayBuffer)));
+      console.log(test);
+      assert.equal(test, binary);
+    });
+  });
+
   // FIXME: Lint error since location is not defined explicitly
   describe('isSecure', () => {
     // Test only 'HTTP' becauuse Karma only runs on 'HTTP'
