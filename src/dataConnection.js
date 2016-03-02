@@ -86,7 +86,6 @@ class DataConnection extends Connection {
     // Check if we've chunked--if so, piece things back together.
     // We're guaranteed that this isn't 0.
     if (data.__peerData) {
-      console.log('Let\'s try chunking!');
       let id = data.__peerData;
       let chunkInfo = this._chunkedData[id] || {data: [], count: 0, total: data.total};
 
@@ -112,6 +111,86 @@ class DataConnection extends Connection {
   send(data, chunked) {
     // TODO: Remove lint bypass
     console.log(data, chunked);
+
+    if (!this.open) {
+      this.emit('error', new Error('Connection is not open. You should listen for the `open` event before sending messages.'));
+    }
+
+    // No more reliable shim
+
+    if (this.serialization === 'json') {
+      this._bufferedSend(JSON.stringify(data));
+    } else if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
+      var blob = util.pack(data);
+
+      // For Chrome-Firefox interoperability, we need to make Firefox "chunk" the data it sends out
+      var needsChunking = util.chunkedBrowsers[this._peerBrowser] || util.chunkedBrowsers[util.browser];
+      if (needsChunking && !chunked && blob.size > util.chunkedMTU) {
+        this._sendChunks(blob);
+        return;
+      }
+
+      // DataChannel currently only supports strings
+      // (This may have changed - check this)
+      if (!util.supports.sctp) {
+        util.blobToBinaryString(blob, str => {
+          this._bufferedSend(str);
+        });
+      } else if (!util.supports.binaryBlob) {
+        // We only do this if we really need to (e.g. blobs are not supported),
+        // because this conversion is costly
+        util.blobToArrayBuffer(blob, ab => {
+          this._bufferedSend(ab)
+        });
+      } else {
+        this._bufferedSend(blob);
+      }
+    } else {
+      this._bufferedSend(data);
+    }
+  }
+
+  _bufferedSend(msg) {
+    if (this.buffering || !this.trySend(msg)) {
+      this._buffer.push(msg);
+      this.bufferSize = this._buffer.length;
+    }
+  }
+
+  // returns true if the send succeeds
+  _trySend(msg) {
+    try {
+      this._dc.send(msg);
+    } catch (error) {
+      this._buffering = true;
+
+      setTimeout(() => {
+        // Try again
+        this._buffering = true;
+        this._tryBuffer();
+      }, 100);
+      return false;
+    }
+    return true;
+  }
+
+  // Try to send the first message in the buffer
+  _tryBuffer() {
+    if (this._buffer.length === 0) {
+      return;
+    }
+
+    const msg = this._buffer[0];
+
+    if (this._trySend(msg)) {
+      this._buffer.shift();
+      this.bufferSize = this._buffer.length;
+      this._tryBuffer();
+    }
+  }
+
+  _sendChunks(blob) {
+    // TODO
   }
 }
 
