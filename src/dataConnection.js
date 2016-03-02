@@ -116,10 +116,10 @@ class DataConnection extends Connection {
     if (this.serialization === 'json') {
       this._bufferedSend(JSON.stringify(data));
     } else if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
-      var blob = util.pack(data);
+      const blob = util.pack(data);
 
       // For Chrome-Firefox interoperability, we need to make Firefox "chunk" the data it sends out
-      var needsChunking = util.chunkedBrowsers[this._peerBrowser] || util.chunkedBrowsers[util.browser];
+      const needsChunking = util.chunkedBrowsers[this._peerBrowser] || util.chunkedBrowsers[util.browser];
       if (needsChunking && !chunked && blob.size > util.chunkedMTU) {
         this._sendChunks(blob);
         return;
@@ -128,8 +128,8 @@ class DataConnection extends Connection {
       if (util.supports && !util.supports.binaryBlob) {
         // We only do this if we really need to (e.g. blobs are not supported),
         // because this conversion is costly
-        util.blobToArrayBuffer(blob, ab => {
-          this._bufferedSend(ab)
+        util.blobToArrayBuffer(blob, arrayBuffer => {
+          this._bufferedSend(arrayBuffer);
         });
       } else {
         this._bufferedSend(blob);

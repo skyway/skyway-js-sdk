@@ -234,7 +234,7 @@ describe('DataConnection', () => {
       dc._dc.onopen();
       dc.serialization = 'json';
 
-      spy = sinon.spy(dc, '_bufferedSend');
+      let spy = sinon.spy(dc, '_bufferedSend');
 
       dc.send(obj, false);
       assert(spy.calledOnce);
@@ -244,14 +244,14 @@ describe('DataConnection', () => {
     });
 
     it('should call _bufferedSend on data with non-regular types of serialization', () => {
-      const message = 'foobar'; 
+      const message = 'foobar';
 
       const dc = new DataConnection({});
       dc.initialize({});
       dc._dc.onopen();
       dc.serialization = 'test';
 
-      spy = sinon.spy(dc, '_bufferedSend');
+      let spy = sinon.spy(dc, '_bufferedSend');
 
       dc.send(message, false);
       assert(spy.calledOnce);
@@ -261,15 +261,21 @@ describe('DataConnection', () => {
     });
 
     it('should send data as a Blob if serialization is binary', () => {
-      const message = 'foobar'; 
+      util.supports = {binaryBlob: true};
+
+      DataConnection = proxyquire(
+        '../src/dataConnection',
+        {'./connection': Connection,
+         './util':       util}
+      );
+      const message = 'foobar';
 
       const dc = new DataConnection({});
       dc.initialize({});
       dc._dc.onopen();
       dc.serialization = 'binary';
-      util.supports = {binaryBlob: true};
 
-      spy = sinon.spy(dc, '_bufferedSend');
+      let spy = sinon.spy(dc, '_bufferedSend');
 
       dc.send(message, false);
       assert(spy.calledOnce);
@@ -286,16 +292,14 @@ describe('DataConnection', () => {
         {'./connection': Connection,
          './util':       util}
       );
-      const message = 'foobar'; 
+      const message = 'foobar';
 
       const dc = new DataConnection({});
       dc.initialize({});
       dc._dc.onopen();
       dc.serialization = 'binary';
 
-      util.supports = {binaryBlob: false};
-
-      spy = sinon.spy(dc, '_bufferedSend');
+      let spy = sinon.spy(dc, '_bufferedSend');
 
       dc.send(message, false);
 
