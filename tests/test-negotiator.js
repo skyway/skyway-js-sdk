@@ -166,4 +166,31 @@ describe('Negotiator', () => {
       });
     });
   });
+
+  describe('handleCandidate', () => {
+    it('should call _pc.addIceCandidate with an RTCIceCandidate', () => {
+      const negotiator = new Negotiator();
+      negotiator.startConnection({type: 'data', originator: true});
+
+      const candidate = {
+        candidate: "candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0",
+        sdpMLineIndex: 0,
+        sdpMid: "data"
+      };
+
+      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
+
+      assert(addIceStub.callCount === 0);
+
+      negotiator.handleCandidate(candidate);
+
+      assert(addIceStub.callCount === 1);
+
+      const addIceArg = addIceStub.args[0][0];
+      assert(addIceArg.constructor.name === 'RTCIceCandidate');
+      assert(candidate.candidate === addIceArg.candidate);
+      assert(candidate.sdpMLineIndex === addIceArg.sdpMLineIndex);
+      assert(candidate.sdpMid === addIceArg.sdpMid);
+    });
+  });
 });
