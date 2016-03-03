@@ -187,6 +187,7 @@ class DataConnection extends Connection {
 
   _sendChunks(blob) {
     // TODO
+    console.log(blob);
   }
 
   static get EVENTS() {

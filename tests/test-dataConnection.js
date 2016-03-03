@@ -337,7 +337,9 @@ describe('DataConnection', () => {
 
       const dc = new DataConnection({});
       dc._negotiator.emit('dc-ready', {});
-      dc._dc.send = () => {return true}; 
+      dc._dc.send = () => {
+        return true;
+      };
       dc._dc.onopen();
 
       const result = dc._trySend(message);
