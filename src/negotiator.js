@@ -1,12 +1,12 @@
 'use strict';
 
-const adapter = require('webrtc-adapter-test');
+const EventEmitter = require('events');
+const adapter      = require('webrtc-adapter-test');
 
-const RTCPeerConnection     = adapter.RTCPeerConnection;
+const RTCPeerConnection = adapter.RTCPeerConnection;
+const RTCIceCandidate   = adapter.RTCIceCandidate;
 
 const util = require('./util');
-
-const EventEmitter = require('events');
 
 class Negotiator extends EventEmitter {
   constructor() {
@@ -61,9 +61,9 @@ class Negotiator extends EventEmitter {
     console.log(message);
   }
 
-  handleCandidate(message) {
-    // TODO: Remove lint bypass
-    console.log(message);
+  handleCandidate(candidate) {
+    this._pc.addIceCandidate(new RTCIceCandidate(candidate));
+    util.log('Added ICE candidate');
   }
 }
 
