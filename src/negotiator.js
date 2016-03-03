@@ -3,8 +3,8 @@
 const EventEmitter = require('events');
 const adapter      = require('webrtc-adapter-test');
 
-const RTCPeerConnection = adapter.RTCPeerConnection;
-const RTCIceCandidate   = adapter.RTCIceCandidate;
+const RTCPeerConnection     = adapter.RTCPeerConnection;
+const RTCIceCandidate       = adapter.RTCIceCandidate;
 const RTCSessionDescription = adapter.RTCSessionDescription;
 
 const util = require('./util');
@@ -68,20 +68,20 @@ class Negotiator extends EventEmitter {
   cleanup() {
   }
 
-  handleOffer(offerSdp) {
-    const sdp = new RTCSessionDescription(offerSdp);
+  handleSDP() {
+  }
 
-    this._setRemoteDescription(sdp).then(() => {
-      return this._makeAnswerSdp()
-    }).then(answer => {
-      this.emit(Negotiator.EVENTS.answerCreated.name, answer);
-    });
+  _handleOffer(offerSdp) {
+    this._setRemoteDescription(offerSdp)
+      .then(() => {
+        return this._makeAnswerSdp();
+      }).then(answer => {
+        this.emit(Negotiator.EVENTS.answerCreated.name, answer);
+      });
   }
 
   handleAnswer(answerSdp) {
-    const sdp = new RTCSessionDescription(answerSdp);
-
-    this._setRemoteDescription(sdp);
+    this._setRemoteDescription(answerSdp);
   }
 
   handleCandidate(candidate) {
@@ -91,13 +91,13 @@ class Negotiator extends EventEmitter {
 
   _setRemoteDescription(sdp) {
     util.log(`Setting remote description ${sdp}`);
-    return this._pc.setRemoteDescription(sdp)
+    return this._pc.setRemoteDescription(new RTCSessionDescription(sdp))
       .then(() => {
-        util.log('Set remoteDescription:', type);
+        util.log('Set remoteDescription:', sdp.type);
       }).catch(err => {
-      this.emitError('webrtc', err);
-      util.log('Failed to setRemoteDescription: ', err);
-    });
+        this.emitError('webrtc', err);
+        util.log('Failed to setRemoteDescription: ', err);
+      });
   }
 
   _makeAnswerSdp() {
