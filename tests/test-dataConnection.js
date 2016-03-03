@@ -454,6 +454,28 @@ describe('DataConnection', () => {
         dc.send(message, chunked);
         assert.equal(spy.calledOnce, false);
       });
+
+      it('should NOT try to chunk our message if our message is too short to require it', () => {
+        util.browser = 'Chrome';
+        const chunked = false;
+
+        const message = 'foobar';
+
+        DataConnection = proxyquire(
+          '../src/dataConnection',
+          {'./connection': Connection,
+           './util':       util}
+        );
+
+        const dc = new DataConnection({serialization: 'binary'});
+        dc._negotiator.emit('dc-ready', {});
+        dc._dc.onopen();
+
+        let spy = sinon.spy(dc, '_sendChunks');
+
+        dc.send(message, chunked);
+        assert.equal(spy.calledOnce, false);
+      });
     });
   });
 });

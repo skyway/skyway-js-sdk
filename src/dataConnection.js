@@ -185,9 +185,9 @@ class DataConnection extends Connection {
   }
 
   _sendChunks(blob) {
-    var blobs = util.chunk(blob);
-    for (var i = 0; i < blobs.length; i++) {
-      var blob = blobs[i];
+    const blobs = util.chunk(blob);
+    for (let i = 0; i < blobs.length; i++) {
+      let blob = blobs[i];
       this.send(blob, true);
     }
   }
