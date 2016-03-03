@@ -3,6 +3,14 @@
 const Connection = require('./connection');
 const util = require('./util');
 
+// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
+import {Enum} from 'enumify';
+class DCEvents extends Enum {}
+DCEvents.initEnum([
+  'open',
+  'data'
+]);
+
 class DataConnection extends Connection {
   constructor(options) {
     super(options);
@@ -39,14 +47,10 @@ class DataConnection extends Connection {
   }
 
   _setupMessageHandlers() {
-    // if (util.supports.sctp) {
-    //   this._dc.binaryType = 'arraybuffer';
-    // }
-
     this._dc.onopen = () => {
       util.log('Data channel connection success');
       this.open = true;
-      this.emit('open');
+      this.emit(DataConnection.EVENTS.open.name);
     };
 
     // We no longer need the reliable shim here
@@ -69,7 +73,7 @@ class DataConnection extends Connection {
         // Datatype should apparently never be blob?
         util.blobToArrayBuffer(data, ab => {
           data = util.unpack(ab);
-          this.emit('data', data);
+          this.emit(DataConnection.EVENTS.data.name, data);
         });
         return;
       } else if (datatype === ArrayBuffer) {
@@ -106,12 +110,16 @@ class DataConnection extends Connection {
       return;
     }
 
-    this.emit('data', data);
+    this.emit(DataConnection.EVENTS.data.name, data);
   }
 
   send(data, chunked) {
     // TODO: Remove lint bypass
     console.log(data, chunked);
+  }
+
+  static get EVENTS() {
+    return DCEvents;
   }
 }
 
