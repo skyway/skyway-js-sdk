@@ -170,12 +170,17 @@ describe('Negotiator', () => {
   describe('handleCandidate', () => {
     it('should call _pc.addIceCandidate with an RTCIceCandidate', () => {
       const negotiator = new Negotiator();
-      negotiator.startConnection({type: 'data', originator: true});
+      const options = {
+        type:       'data',
+        originator: false
+      };
+      const pcConfig = {};
+      negotiator.startConnection(options, pcConfig);
 
       const candidate = {
-        candidate: "candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0",
+        candidate:     'candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0',
         sdpMLineIndex: 0,
-        sdpMid: "data"
+        sdpMid:        'data'
       };
 
       const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
@@ -191,6 +196,55 @@ describe('Negotiator', () => {
       assert(candidate.candidate === addIceArg.candidate);
       assert(candidate.sdpMLineIndex === addIceArg.sdpMLineIndex);
       assert(candidate.sdpMid === addIceArg.sdpMid);
+    });
+  });
+
+  describe('handleOffer', () => {
+    const waitForAsync = 100;
+    it('should setRemoteDescription', done => {
+      const negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection('data', {});
+
+      const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+
+      negotiator._pc.createOffer()
+        .then(offer => {
+          const offerObject = {
+            sdp:  offer.sdp,
+            type: offer.type
+          };
+
+          negotiator._handleOffer(offerObject);
+
+          setTimeout(() => {
+            assert(setRemoteSpy.callCount === 1);
+            assert(setRemoteSpy.calledWith(new RTCSessionDescription(offerObject)));
+            done();
+          }, waitForAsync);
+        });
+    });
+
+    it('should emit answerCreated', done => {
+      const negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection('data', {});
+
+      const emitSpy = sinon.spy(negotiator, 'emit');
+
+      negotiator._pc.createOffer()
+        .then(offer => {
+          const offerObject = {
+            sdp:  offer.sdp,
+            type: offer.type
+          };
+
+          negotiator._handleOffer(offerObject);
+
+          setTimeout(() => {
+            assert(emitSpy.callCount === 1);
+            assert(emitSpy.calledWith(Negotiator.EVENTS.answerCreated.name));
+            done();
+          }, waitForAsync);
+        });
     });
   });
 });
