@@ -18,6 +18,12 @@ describe('DataConnection', () => {
     startSpy = sinon.spy();
 
     negotiatorStub.returns({
+      on: function(event, callback) {
+        this[event] = callback;
+      },
+      emit: function(event, arg) {
+        this[event](arg);
+      },
       startConnection: startSpy
     });
 
@@ -44,12 +50,12 @@ describe('DataConnection', () => {
     });
   });
 
-  describe('Initialise', () => {
-    it('should appropriately set and configure dc upon intialisation', () => {
+  describe('Initialize', () => {
+    it('should appropriately set and configure dc upon intialization', () => {
       const dcObj = {test: 'foobar'};
 
       const dc = new DataConnection({});
-      dc.initialize(dcObj);
+      dc._negotiator.emit('dc-ready', dcObj);
 
       assert(dc._dc === dcObj);
       assert(dc._dc.onopen);
@@ -61,7 +67,7 @@ describe('DataConnection', () => {
       let spy;
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
 
       spy = sinon.spy(dc, 'emit');
 
@@ -78,14 +84,14 @@ describe('DataConnection', () => {
       let spy;
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
 
       spy = sinon.spy(dc, '_handleDataMessage');
 
       dc._dc.onmessage(message);
       assert(spy.calledOnce);
       console.log(spy.args[0]);
-      // assert.equal(spy.args[0], message);
+      assert(spy.calledWith, message);
 
       spy.reset();
     });
@@ -94,7 +100,7 @@ describe('DataConnection', () => {
       let spy;
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
 
       spy = sinon.spy(dc, 'close');
       dc._dc.onclose();
@@ -109,7 +115,7 @@ describe('DataConnection', () => {
       const message = {data: 'foobar'};
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
 
       dc.on('data', data => {
         assert.equal(data, message.data);
@@ -125,7 +131,7 @@ describe('DataConnection', () => {
       const message = {data: arrayBuffer};
 
       const dc = new DataConnection({serialization: 'binary'});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
 
       dc.on('data', data => {
         assert.equal(data, string);
@@ -142,7 +148,7 @@ describe('DataConnection', () => {
       const message = {data: string};
 
       const dc = new DataConnection({serialization: 'binary'});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
 
       dc.on('data', data => {
         assert.equal(data, unpacked);
@@ -159,7 +165,7 @@ describe('DataConnection', () => {
       const message = {data: blob};
 
       const dc = new DataConnection({serialization: 'binary'});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
 
       dc.on('data', data => {
         assert.equal(data, string);
@@ -175,7 +181,7 @@ describe('DataConnection', () => {
       const message = {data: json};
 
       const dc = new DataConnection({serialization: 'json'});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
 
       dc.on('data', data => {
         assert.deepEqual(data, obj);
@@ -198,7 +204,7 @@ describe('DataConnection', () => {
       console.log('Chunks: ' + chunked.length);
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
 
       dc.on('data', data => {
         // Receives the reconstructed blob after all chunks have been handled
@@ -230,7 +236,7 @@ describe('DataConnection', () => {
       const obj = {name: 'foobar'};
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
       dc._dc.onopen();
       dc.serialization = 'json';
 
@@ -247,7 +253,7 @@ describe('DataConnection', () => {
       const message = 'foobar';
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
       dc._dc.onopen();
       dc.serialization = 'test';
 
@@ -271,7 +277,7 @@ describe('DataConnection', () => {
       const message = 'foobar';
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
       dc._dc.onopen();
       dc.serialization = 'binary';
 
@@ -295,7 +301,7 @@ describe('DataConnection', () => {
       const message = 'foobar';
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
       dc._dc.onopen();
       dc.serialization = 'binary';
 
@@ -316,7 +322,7 @@ describe('DataConnection', () => {
       const message = 'foobar';
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
       dc._dc.onopen();
 
       dc.buffering = true;
@@ -326,11 +332,11 @@ describe('DataConnection', () => {
       assert.equal(dc.bufferSize, 1);
     });
 
-    it.only('should return `true` to _trySend if the DataChannel send succeeds', () => {
+    it('should return `true` to _trySend if the DataChannel send succeeds', () => {
       const message = 'foobar';
 
       const dc = new DataConnection({});
-      dc.initialize({});
+      dc._negotiator.emit('dc-ready', {});
       dc._dc.send = () => {return true}; 
       dc._dc.onopen();
 

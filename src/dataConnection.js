@@ -3,6 +3,14 @@
 const Connection = require('./connection');
 const util = require('./util');
 
+// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
+import {Enum} from 'enumify';
+class DCEvents extends Enum {}
+DCEvents.initEnum([
+  'open',
+  'data'
+]);
+
 class DataConnection extends Connection {
   constructor(options) {
     super(options);
@@ -30,23 +38,19 @@ class DataConnection extends Connection {
         originator: true
       }
     );
-  }
 
-  // Called by the Negotiator when the DataChannel is ready
-  initialize(dc) {
-    this._dc = dc;
-    this._setupMessageHandlers();
+    // This replaces the PeerJS 'initialize' method
+    this._negotiator.on('dc-ready', dc => {
+      this._dc = dc;
+      this._setupMessageHandlers();
+    });
   }
 
   _setupMessageHandlers() {
-    // if (util.supports.sctp) {
-    //   this._dc.binaryType = 'arraybuffer';
-    // }
-
     this._dc.onopen = () => {
       util.log('Data channel connection success');
       this.open = true;
-      this.emit('open');
+      this.emit(DataConnection.EVENTS.open.name);
     };
 
     // We no longer need the reliable shim here
@@ -55,7 +59,7 @@ class DataConnection extends Connection {
     };
 
     this._dc.onclose = () => {
-      util.log('DataChannel closed for:', this.peer);
+      util.log('DataChannel closed for:', this.id);
       this.close();
     };
   }
@@ -66,10 +70,10 @@ class DataConnection extends Connection {
     let datatype = data.constructor;
     if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
       if (datatype === Blob) {
-        // Datatype should apparently never be blob?
+        // Convert to ArrayBuffer if datatype is Blob
         util.blobToArrayBuffer(data, ab => {
           data = util.unpack(ab);
-          this.emit('data', data);
+          this.emit(DataConnection.EVENTS.data.name, data);
         });
         return;
       } else if (datatype === ArrayBuffer) {
@@ -86,6 +90,7 @@ class DataConnection extends Connection {
     // Check if we've chunked--if so, piece things back together.
     // We're guaranteed that this isn't 0.
     if (data.__peerData) {
+      util.log('Let\'s try chunking!');
       let id = data.__peerData;
       let chunkInfo = this._chunkedData[id] || {data: [], count: 0, total: data.total};
 
@@ -105,7 +110,7 @@ class DataConnection extends Connection {
       return;
     }
 
-    this.emit('data', data);
+    this.emit(DataConnection.EVENTS.data.name, data);
   }
 
   send(data, chunked) {
@@ -182,6 +187,10 @@ class DataConnection extends Connection {
 
   _sendChunks(blob) {
     // TODO
+  }
+
+  static get EVENTS() {
+    return DCEvents;
   }
 }
 

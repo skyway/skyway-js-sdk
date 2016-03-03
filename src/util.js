@@ -19,8 +19,6 @@ MessageTypes.initEnum([
   'CANDIDATE'
 ]);
 
-let dataCount = 1;
-
 class Util {
   constructor() {
     this.CLOUD_HOST = 'skyway.io';
@@ -38,6 +36,7 @@ class Util {
 
     this.chunkedBrowsers = {Chrome: 1};
     this.chunkedMTU = 16300;
+    this.dataCount = 1;
 
     this.defaultConfig = {
       iceServers: [{
@@ -125,7 +124,7 @@ class Util {
       let b = bl.slice(start, end);
 
       let chunk = {
-        __peerData: dataCount,
+        __peerData: this.dataCount,
         n:          index,
         data:       b,
         total:      total
@@ -134,9 +133,9 @@ class Util {
       chunks.push(chunk);
 
       start = end;
-      index += 1;
+      index++;
     }
-    dataCount += 1;
+    this.dataCount++;
     return chunks;
   }
 
