@@ -55,7 +55,7 @@ describe('DataConnection', () => {
       const dcObj = {test: 'foobar'};
 
       const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', dcObj);
+      dc._negotiator.emit('dcReady', dcObj);
 
       assert(dc._dc === dcObj);
       assert(dc._dc.onopen);
@@ -67,7 +67,7 @@ describe('DataConnection', () => {
       let spy;
 
       const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
 
       spy = sinon.spy(dc, 'emit');
 
@@ -84,7 +84,7 @@ describe('DataConnection', () => {
       let spy;
 
       const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
 
       spy = sinon.spy(dc, '_handleDataMessage');
 
@@ -100,7 +100,7 @@ describe('DataConnection', () => {
       let spy;
 
       const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
 
       spy = sinon.spy(dc, 'close');
       dc._dc.onclose();
@@ -115,7 +115,7 @@ describe('DataConnection', () => {
       const message = {data: 'foobar'};
 
       const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
         assert.equal(data, message.data);
@@ -131,7 +131,7 @@ describe('DataConnection', () => {
       const message = {data: arrayBuffer};
 
       const dc = new DataConnection({serialization: 'binary'});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
         assert.equal(data, string);
@@ -148,7 +148,7 @@ describe('DataConnection', () => {
       const message = {data: string};
 
       const dc = new DataConnection({serialization: 'binary'});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
         assert.equal(data, unpacked);
@@ -165,7 +165,7 @@ describe('DataConnection', () => {
       const message = {data: blob};
 
       const dc = new DataConnection({serialization: 'binary'});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
         assert.equal(data, string);
@@ -181,7 +181,7 @@ describe('DataConnection', () => {
       const message = {data: json};
 
       const dc = new DataConnection({serialization: 'json'});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
         assert.deepEqual(data, obj);
@@ -204,7 +204,7 @@ describe('DataConnection', () => {
       console.log('Chunks: ' + chunked.length);
 
       const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
         // Receives the reconstructed blob after all chunks have been handled
