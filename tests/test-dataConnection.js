@@ -318,90 +318,142 @@ describe('DataConnection', () => {
       }, 100);
     });
 
-    it('should push a message onto the buffer if we are buffering', () => {
-      const message = 'foobar';
+    describe('Helper Methods', () => {
+      it('should push a message onto the buffer if we are buffering', () => {
+        const message = 'foobar';
 
-      const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
-      dc._dc.onopen();
+        const dc = new DataConnection({});
+        dc._negotiator.emit('dc-ready', {});
+        dc._dc.onopen();
 
-      dc.buffering = true;
-      dc._bufferedSend(message);
+        dc.buffering = true;
+        dc._bufferedSend(message);
 
-      assert.deepEqual(dc._buffer, [message]);
-      assert.equal(dc.bufferSize, 1);
-    });
+        assert.deepEqual(dc._buffer, [message]);
+        assert.equal(dc.bufferSize, 1);
+      });
 
-    it('should return `true` to _trySend if the DataChannel send succeeds', () => {
-      const message = 'foobar';
+      it('should return `true` to _trySend if the DataChannel send succeeds', () => {
+        const message = 'foobar';
 
-      const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
-      dc._dc.send = () => {
-        return true;
-      };
-      dc._dc.onopen();
+        const dc = new DataConnection({});
+        dc._negotiator.emit('dc-ready', {});
+        dc._dc.send = () => {
+          return true;
+        };
+        dc._dc.onopen();
 
-      const result = dc._trySend(message);
-      assert.equal(result, true);
-    });
+        const result = dc._trySend(message);
+        assert.equal(result, true);
+      });
 
-    it('should return `false` to _trySend and start buffering if the DataChannel send fails', done => {
-      const message = 'foobar';
+      it('should return `false` to _trySend and start buffering if the DataChannel send fails', done => {
+        const message = 'foobar';
 
-      const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
-      dc._dc.send = () => {
-        const error = new Error();
-        throw error;
-      };
-      dc._dc.onopen();
+        const dc = new DataConnection({});
+        dc._negotiator.emit('dc-ready', {});
+        dc._dc.send = () => {
+          const error = new Error();
+          throw error;
+        };
+        dc._dc.onopen();
 
-      let spy = sinon.spy(dc, '_tryBuffer');
+        let spy = sinon.spy(dc, '_tryBuffer');
 
-      const result = dc._trySend(message);
-      assert.equal(result, false);
-      assert.equal(dc._buffering, true);
+        const result = dc._trySend(message);
+        assert.equal(result, false);
+        assert.equal(dc._buffering, true);
 
-      setTimeout(() => {
+        setTimeout(() => {
+          assert(spy.calledOnce);
+
+          spy.reset();
+          done();
+        }, 100);
+      });
+
+      it('should not try to call _trySend if buffer is empty when _tryBuffer is called', () => {
+        const dc = new DataConnection({});
+        dc._negotiator.emit('dc-ready', {});
+        dc._dc.onopen();
+
+        let spy = sinon.spy(dc, '_trySend');
+
+        dc._buffer = [];
+        dc._tryBuffer();
+        assert.equal(spy.called, false);
+      });
+
+      it('should try and send the first message in buffer when _tryBuffer is called', () => {
+        const message = 'foobar';
+
+        const dc = new DataConnection({});
+        dc._negotiator.emit('dc-ready', {});
+        dc._dc.send = () => {
+          return true;
+        };
+        dc._dc.onopen();
+
+        let spy = sinon.spy(dc, '_trySend');
+
+        dc._buffer = [message];
+        dc._tryBuffer();
+
         assert(spy.calledOnce);
-
-        spy.reset();
-        done();
-      }, 100);
+        assert(spy.calledWith(message));
+        assert.deepEqual(dc._buffer, []);
+        assert.equal(dc.bufferSize, 0);
+      });
     });
 
-    it('should not try to call _trySend if buffer is empty when _tryBuffer is called', () => {
-      const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
-      dc._dc.onopen();
+    describe('Chunking', () => {
+      it('should try to chunk our message ONCE if our browser needs it (i.e. Chrome)', () => {
+        util.browser = 'Chrome';
+        const chunked = false;
 
-      let spy = sinon.spy(dc, '_trySend');
+        // Ensure that our message is long enough to require chunking
+        const len = util.chunkedMTU + 1;
+        const message = new Array(len + 1).join('a');
 
-      dc._buffer = [];
-      dc._tryBuffer();
-      assert.equal(spy.called, false);
-    });
+        DataConnection = proxyquire(
+          '../src/dataConnection',
+          {'./connection': Connection,
+           './util':       util}
+        );
 
-    it('should try and send the first message in buffer when _tryBuffer is called', () => {
-      const message = 'foobar';
+        const dc = new DataConnection({serialization: 'binary'});
+        dc._negotiator.emit('dc-ready', {});
+        dc._dc.onopen();
 
-      const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
-      dc._dc.send = () => {
-        return true;
-      };
-      dc._dc.onopen();
+        let spy = sinon.spy(dc, '_sendChunks');
 
-      let spy = sinon.spy(dc, '_trySend');
+        dc.send(message, chunked);
+        assert.equal(spy.calledOnce, true);
+      });
 
-      dc._buffer = [message];
-      dc._tryBuffer();
+      it('should NOT try to chunk our message if we indicate that we\'ve already chunked', () => {
+        util.browser = 'Chrome';
+        const chunked = true;
 
-      assert(spy.calledOnce);
-      assert(spy.calledWith(message));
-      assert.deepEqual(dc._buffer, []);
-      assert.equal(dc.bufferSize, 0);
+        // Ensure that our message is long enough to require chunking
+        const len = util.chunkedMTU + 1;
+        const message = new Array(len + 1).join('a');
+
+        DataConnection = proxyquire(
+          '../src/dataConnection',
+          {'./connection': Connection,
+           './util':       util}
+        );
+
+        const dc = new DataConnection({serialization: 'binary'});
+        dc._negotiator.emit('dc-ready', {});
+        dc._dc.onopen();
+
+        let spy = sinon.spy(dc, '_sendChunks');
+
+        dc.send(message, chunked);
+        assert.equal(spy.calledOnce, false);
+      });
     });
   });
 });

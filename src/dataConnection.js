@@ -8,7 +8,8 @@ import {Enum} from 'enumify';
 class DCEvents extends Enum {}
 DCEvents.initEnum([
   'open',
-  'data'
+  'data',
+  'error'
 ]);
 
 class DataConnection extends Connection {
@@ -114,9 +115,8 @@ class DataConnection extends Connection {
   }
 
   send(data, chunked) {
-    console.log('trying sending');
     if (!this.open) {
-      this.emit('error', new Error('Connection is not open. You should listen for the `open` event before sending messages.'));
+      this.emit(DataConnection.EVENTS.error.name, new Error('Connection is not open. You should listen for the `open` event before sending messages.'));
     }
 
     if (this.serialization === 'json') {
@@ -185,8 +185,11 @@ class DataConnection extends Connection {
   }
 
   _sendChunks(blob) {
-    // TODO
-    console.log(blob);
+    var blobs = util.chunk(blob);
+    for (var i = 0; i < blobs.length; i++) {
+      var blob = blobs[i];
+      this.send(blob, true);
+    }
   }
 
   static get EVENTS() {
