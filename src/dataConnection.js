@@ -41,7 +41,7 @@ class DataConnection extends Connection {
     );
 
     // This replaces the PeerJS 'initialize' method
-    this._negotiator.on('dc-ready', dc => {
+    this._negotiator.on('dcReady', dc => {
       this._dc = dc;
       this._setupMessageHandlers();
     });
