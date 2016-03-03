@@ -8,6 +8,17 @@ const RTCIceCandidate   = adapter.RTCIceCandidate;
 
 const util = require('./util');
 
+// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
+import {Enum} from 'enumify';
+class NegotiatorEvents extends Enum {}
+NegotiatorEvents.initEnum([
+  'addStream',
+  'dcReady',
+  'offerCreated',
+  'answerCreated',
+  'iceCandidate'
+]);
+
 class Negotiator extends EventEmitter {
   constructor() {
     super();
@@ -64,6 +75,10 @@ class Negotiator extends EventEmitter {
   handleCandidate(candidate) {
     this._pc.addIceCandidate(new RTCIceCandidate(candidate));
     util.log('Added ICE candidate');
+  }
+
+  static get EVENTS() {
+    return NegotiatorEvents;
   }
 }
 
