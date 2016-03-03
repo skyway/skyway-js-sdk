@@ -35,7 +35,6 @@ class Util {
     this.setZeroTimeout = undefined;
     this.LOG_LEVELS = LogLevel;
     this.MESSAGE_TYPES = MessageTypes;
-    //this.supports = undefined;
 
     this.chunkedBrowsers = {Chrome: 1};
     this.chunkedMTU = 16300;
@@ -113,7 +112,7 @@ class Util {
     let pc;
     let dc;
     try {
-      pc = new RTCPeerConnection(defaultConfig, {optional: [{TrpDataChannels: true}]});
+      pc = new RTCPeerConnection(this.defaultConfig, {optional: [{RtpDataChannels: true}]});
     } catch (e) {
       data = false;
     }
@@ -128,8 +127,12 @@ class Util {
 
     if (data) {
       // Binary test
-      dc.binaryType = 'blob';
-      binaryBlob = true;
+      try {
+        dc.binaryType = 'blob';
+        binaryBlob = true;
+      } catch (e) {
+        // binaryBlob is already false
+      }
     }
 
     if (pc) {
@@ -138,7 +141,7 @@ class Util {
 
     return {
       binaryBlob: binaryBlob
-    }
+    };
   }
 
   validateId(id) {

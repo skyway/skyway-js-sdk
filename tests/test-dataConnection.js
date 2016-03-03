@@ -267,7 +267,11 @@ describe('DataConnection', () => {
     });
 
     it('should send data as a Blob if serialization is binary', () => {
-      let stub = sinon.stub(util, 'supports', { get: function() {return {binaryBlob: true}}} );
+      let stub = sinon.stub(util, 'supports', {
+        get: function() {
+          return {binaryBlob: true};
+        }
+      });
 
       DataConnection = proxyquire(
         '../src/dataConnection',
