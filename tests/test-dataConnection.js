@@ -267,7 +267,7 @@ describe('DataConnection', () => {
     });
 
     it('should send data as a Blob if serialization is binary', () => {
-      util.supports = {binaryBlob: true};
+      let stub = sinon.stub(util, 'supports', { get: function() {return {binaryBlob: true}}} );
 
       DataConnection = proxyquire(
         '../src/dataConnection',
@@ -287,6 +287,7 @@ describe('DataConnection', () => {
       assert(spy.calledOnce);
       assert(spy.args[0][0] instanceof Blob);
 
+      stub.restore();
       spy.reset();
     });
 

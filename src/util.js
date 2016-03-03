@@ -2,6 +2,9 @@
 
 const BinaryPack = require('js-binarypack');
 
+const adapter = require('webrtc-adapter-test');
+const RTCPeerConnection     = adapter.RTCPeerConnection;
+
 // Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
 import {Enum} from 'enumify';
 class LogLevel extends Enum {}
@@ -26,13 +29,13 @@ class Util {
     this.TURN_HOST = 'turn.skyway.io';
     this.TURN_PORT = 443;
     this.browser = undefined;
-    this.supports = undefined;
     this.debug = false;
     this.pack = BinaryPack.pack;
     this.unpack = BinaryPack.unpack;
     this.setZeroTimeout = undefined;
     this.LOG_LEVELS = LogLevel;
     this.MESSAGE_TYPES = MessageTypes;
+    //this.supports = undefined;
 
     this.chunkedBrowsers = {Chrome: 1};
     this.chunkedMTU = 16300;
@@ -96,6 +99,45 @@ class Util {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
       console.log.apply(console, copy);
+    }
+  }
+
+  get supports() {
+    if (typeof RTCPeerConnection === 'undefined') {
+      return {};
+    }
+
+    let data = true;
+    let binaryBlob = false;
+
+    let pc;
+    let dc;
+    try {
+      pc = new RTCPeerConnection(defaultConfig, {optional: [{TrpDataChannels: true}]});
+    } catch (e) {
+      data = false;
+    }
+
+    if (data) {
+      try {
+        dc = pc.createDataChannel('_SKYWAYTEST');
+      } catch (e) {
+        data = false;
+      }
+    }
+
+    if (data) {
+      // Binary test
+      dc.binaryType = 'blob';
+      binaryBlob = true;
+    }
+
+    if (pc) {
+      pc.close();
+    }
+
+    return {
+      binaryBlob: binaryBlob
     }
   }
 
