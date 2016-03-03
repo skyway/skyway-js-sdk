@@ -8,10 +8,19 @@ const util = require('./util');
 
 const EventEmitter = require('events');
 
+import {Enum} from 'enumify';
+class NegotiatorEvents extends Enum {}
+NegotiatorEvents.initEnum([
+  'addStream',
+  'dcReady',
+  'offerCreated',
+  'answerCreated',
+  'iceCandidate'
+]);
+
 class Negotiator extends EventEmitter {
   constructor() {
     super();
-    this._idPrefix = 'pc_';
   }
 
   startConnection(options, pcConfig) {
@@ -26,28 +35,20 @@ class Negotiator extends EventEmitter {
       if (options.type === 'data') {
         const label = options.label || '';
         const dc = this._pc.createDataChannel(label);
-        this.emit('dataChannel', dc);
+        this.emit(Negotiator.EVENTS.dcReady.name, dc);
       }
     } else {
-      this.handleSDP('OFFER', options.sdp);
+      this.handleOffer(options.sdp);
     }
   }
 
   _createPeerConnection(type, pcConfig) {
     util.log('Creating RTCPeerConnection');
 
-    const optional = {};
-
-    if (type === 'data') {
-      optional.optional = [{RtpDataChannels: true}];
-    } else if (type === 'media') {
-      optional.optional = [{DtlsSrtpKeyAgreement: true}];
-    }
-
     pcConfig = pcConfig || {};
     pcConfig.iceServers = pcConfig.iceServers || util.defaultConfig.iceServers;
 
-    return new RTCPeerConnection(pcConfig, optional);
+    return new RTCPeerConnection(pcConfig);
   }
 
   _setupPCListeners() {
@@ -56,7 +57,12 @@ class Negotiator extends EventEmitter {
   cleanup() {
   }
 
-  handleSDP(message) {
+  handleOffer(message) {
+    // TODO: Remove lint bypass
+    console.log(message);
+  }
+
+  handleAnswer(message) {
     // TODO: Remove lint bypass
     console.log(message);
   }
@@ -64,6 +70,10 @@ class Negotiator extends EventEmitter {
   handleCandidate(message) {
     // TODO: Remove lint bypass
     console.log(message);
+  }
+
+  static get EVENTS() {
+    return NegotiatorEvents;
   }
 }
 
