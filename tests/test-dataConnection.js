@@ -345,5 +345,30 @@ describe('DataConnection', () => {
       const result = dc._trySend(message);
       assert.equal(result, true);
     });
+
+    it('should return `false` to _trySend and start buffering if the DataChannel send fails', done => {
+      const message = 'foobar';
+
+      const dc = new DataConnection({});
+      dc._negotiator.emit('dc-ready', {});
+      dc._dc.send = () => {
+        const error = new Error();
+        throw error;
+      };
+      dc._dc.onopen();
+
+      let spy = sinon.spy(dc, '_tryBuffer');
+
+      const result = dc._trySend(message);
+      assert.equal(result, false);
+      assert.equal(dc._buffering, true);
+
+      setTimeout(() => {
+        assert(spy.calledOnce);
+
+        spy.reset();
+        done();
+      }, 100);
+    });
   });
 });
