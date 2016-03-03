@@ -5,10 +5,11 @@ const adapter      = require('webrtc-adapter-test');
 
 const RTCPeerConnection = adapter.RTCPeerConnection;
 const RTCIceCandidate   = adapter.RTCIceCandidate;
+const RTCSessionDescription = adapter.RTCSessionDescription;
 
 const util = require('./util');
 
-// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
+// Negotiator ENUM setup. 'enumify' is only used with `import`, not 'require'.
 import {Enum} from 'enumify';
 class NegotiatorEvents extends Enum {}
 NegotiatorEvents.initEnum([
@@ -67,14 +68,51 @@ class Negotiator extends EventEmitter {
   cleanup() {
   }
 
-  handleSDP(message) {
-    // TODO: Remove lint bypass
-    console.log(message);
+  handleOffer(offerSdp) {
+    const sdp = new RTCSessionDescription(offerSdp);
+
+    this._setRemoteDescription(sdp).then(() => {
+      return this._makeAnswerSdp()
+    }).then(answer => {
+      this.emit(Negotiator.EVENTS.answerCreated.name, answer);
+    });
+  }
+
+  handleAnswer(answerSdp) {
+    const sdp = new RTCSessionDescription(answerSdp);
+
+    this._setRemoteDescription(sdp);
   }
 
   handleCandidate(candidate) {
     this._pc.addIceCandidate(new RTCIceCandidate(candidate));
     util.log('Added ICE candidate');
+  }
+
+  _setRemoteDescription(sdp) {
+    util.log(`Setting remote description ${sdp}`);
+    return this._pc.setRemoteDescription(sdp)
+      .then(() => {
+        util.log('Set remoteDescription:', type);
+      }).catch(err => {
+      this.emitError('webrtc', err);
+      util.log('Failed to setRemoteDescription: ', err);
+    });
+  }
+
+  _makeAnswerSdp() {
+    return this._pc.createAnswer()
+      .then(answer => {
+        util.log('Created answer.');
+
+        return this._pc.setLocalDescription(answer);
+      }, err => {
+        this.emitError('webrtc', err);
+        util.log('Failed to createAnswer, ', err);
+      }).catch(err => {
+        this.emitError('webrtc', err);
+        util.log('Failed to setLocalDescription, ', err);
+      });
   }
 
   static get EVENTS() {
