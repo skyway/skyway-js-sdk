@@ -218,7 +218,7 @@ describe('Negotiator', () => {
 
           setTimeout(() => {
             assert(setRemoteSpy.callCount === 1);
-            assert(setRemoteSpy.calledWith(new RTCSessionDescription(offerObject)));
+            assert(setRemoteSpy.calledWith(offer));
             done();
           }, waitForAsync);
         });
@@ -237,6 +237,8 @@ describe('Negotiator', () => {
             type: offer.type
           };
 
+          assert(emitSpy.callCount === 0);
+
           negotiator._handleOffer(offerObject);
 
           setTimeout(() => {
@@ -245,6 +247,35 @@ describe('Negotiator', () => {
             done();
           }, waitForAsync);
         });
+    });
+
+    describe('handleAnswer', () => {
+      const waitForAsync = 100;
+      it('should setRemoteDescription', done => {
+        const negotiator = new Negotiator();
+        negotiator._pc = negotiator._createPeerConnection('data', {});
+        const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+        negotiator._pc.createOffer()
+          .then(offer => {
+            // creating an answer is complicated so just use an offer
+            const answerObject = {
+              sdp:  offer.sdp,
+              type: 'answer'
+            };
+
+            assert(setRemoteSpy.callCount === 0);
+
+            negotiator.handleAnswer(answerObject);
+
+            setTimeout(() => {
+              assert(setRemoteSpy.callCount === 1);
+              assert(setRemoteSpy.calledWith(
+                new RTCSessionDescription(answerObject))
+              );
+              done();
+            }, waitForAsync);
+          });
+      });
     });
   });
 });
