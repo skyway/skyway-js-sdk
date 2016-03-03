@@ -2,8 +2,11 @@
 
 // const util = require('./util');
 
-class Negotiator {
+const EventEmitter = require('events');
+
+class Negotiator extends EventEmitter {
   constructor() {
+    super();
     this._idPrefix = 'pc_';
   }
 
@@ -23,10 +26,6 @@ class Negotiator {
   handleCandidate(message) {
     // TODO: Remove lint bypass
     console.log(message);
-  }
-
-  on() {
-    // To prevent test errors in Peer
   }
 }
 
