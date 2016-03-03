@@ -59,7 +59,7 @@ class DataConnection extends Connection {
     };
 
     this._dc.onclose = () => {
-      util.log('DataChannel closed for:', this.peer);
+      util.log('DataChannel closed for:', this.id);
       this.close();
     };
   }
@@ -70,7 +70,7 @@ class DataConnection extends Connection {
     let datatype = data.constructor;
     if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
       if (datatype === Blob) {
-        // Datatype should apparently never be blob?
+        // Convert to ArrayBuffer if datatype is Blob
         util.blobToArrayBuffer(data, ab => {
           data = util.unpack(ab);
           this.emit(DataConnection.EVENTS.data.name, data);
@@ -90,7 +90,7 @@ class DataConnection extends Connection {
     // Check if we've chunked--if so, piece things back together.
     // We're guaranteed that this isn't 0.
     if (data.__peerData) {
-      console.log('Let\'s try chunking!');
+      util.log('Let\'s try chunking!');
       let id = data.__peerData;
       let chunkInfo = this._chunkedData[id] || {data: [], count: 0, total: data.total};
 
