@@ -24,6 +24,10 @@ class Negotiator {
     // TODO: Remove lint bypass
     console.log(message);
   }
+
+  on() {
+    // To prevent test errors in Peer
+  }
 }
 
 module.exports = Negotiator;
