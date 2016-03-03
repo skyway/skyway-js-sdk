@@ -44,8 +44,8 @@ describe('DataConnection', () => {
     });
   });
 
-  describe('Initialise', () => {
-    it('should appropriately set and configure dc upon intialisation', () => {
+  describe('Initialize', () => {
+    it('should appropriately set and configure dc upon intialization', () => {
       const dcObj = {test: 'foobar'};
 
       const dc = new DataConnection({});
