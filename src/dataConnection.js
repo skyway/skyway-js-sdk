@@ -109,6 +109,7 @@ class DataConnection extends Connection {
   }
 
   send(data, chunked) {
+    console.log('trying sending');
     if (!this.open) {
       this.emit('error', new Error('Connection is not open. You should listen for the `open` event before sending messages.'));
     }
@@ -151,6 +152,7 @@ class DataConnection extends Connection {
     try {
       this._dc.send(msg);
     } catch (error) {
+      console.log('error!');
       this._buffering = true;
 
       setTimeout(() => {

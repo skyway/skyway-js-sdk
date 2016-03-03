@@ -325,5 +325,17 @@ describe('DataConnection', () => {
       assert.deepEqual(dc._buffer, [message]);
       assert.equal(dc.bufferSize, 1);
     });
+
+    it.only('should return `true` to _trySend if the DataChannel send succeeds', () => {
+      const message = 'foobar';
+
+      const dc = new DataConnection({});
+      dc.initialize({});
+      dc._dc.send = () => {return true}; 
+      dc._dc.onopen();
+
+      const result = dc._trySend(message);
+      assert.equal(result, true);
+    });
   });
 });
