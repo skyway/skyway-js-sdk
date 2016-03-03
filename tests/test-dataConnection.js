@@ -236,7 +236,7 @@ describe('DataConnection', () => {
       const obj = {name: 'foobar'};
 
       const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
       dc._dc.onopen();
       dc.serialization = 'json';
 
@@ -253,7 +253,7 @@ describe('DataConnection', () => {
       const message = 'foobar';
 
       const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
       dc._dc.onopen();
       dc.serialization = 'test';
 
@@ -277,7 +277,7 @@ describe('DataConnection', () => {
       const message = 'foobar';
 
       const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
       dc._dc.onopen();
       dc.serialization = 'binary';
 
@@ -301,7 +301,7 @@ describe('DataConnection', () => {
       const message = 'foobar';
 
       const dc = new DataConnection({});
-      dc._negotiator.emit('dc-ready', {});
+      dc._negotiator.emit('dcReady', {});
       dc._dc.onopen();
       dc.serialization = 'binary';
 
@@ -323,7 +323,7 @@ describe('DataConnection', () => {
         const message = 'foobar';
 
         const dc = new DataConnection({});
-        dc._negotiator.emit('dc-ready', {});
+        dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
         dc.buffering = true;
@@ -337,7 +337,7 @@ describe('DataConnection', () => {
         const message = 'foobar';
 
         const dc = new DataConnection({});
-        dc._negotiator.emit('dc-ready', {});
+        dc._negotiator.emit('dcReady', {});
         dc._dc.send = () => {
           return true;
         };
@@ -351,7 +351,7 @@ describe('DataConnection', () => {
         const message = 'foobar';
 
         const dc = new DataConnection({});
-        dc._negotiator.emit('dc-ready', {});
+        dc._negotiator.emit('dcReady', {});
         dc._dc.send = () => {
           const error = new Error();
           throw error;
@@ -374,7 +374,7 @@ describe('DataConnection', () => {
 
       it('should not try to call _trySend if buffer is empty when _tryBuffer is called', () => {
         const dc = new DataConnection({});
-        dc._negotiator.emit('dc-ready', {});
+        dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
         let spy = sinon.spy(dc, '_trySend');
@@ -388,7 +388,7 @@ describe('DataConnection', () => {
         const message = 'foobar';
 
         const dc = new DataConnection({});
-        dc._negotiator.emit('dc-ready', {});
+        dc._negotiator.emit('dcReady', {});
         dc._dc.send = () => {
           return true;
         };
@@ -422,7 +422,7 @@ describe('DataConnection', () => {
         );
 
         const dc = new DataConnection({serialization: 'binary'});
-        dc._negotiator.emit('dc-ready', {});
+        dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
         let spy = sinon.spy(dc, '_sendChunks');
@@ -446,7 +446,7 @@ describe('DataConnection', () => {
         );
 
         const dc = new DataConnection({serialization: 'binary'});
-        dc._negotiator.emit('dc-ready', {});
+        dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
         let spy = sinon.spy(dc, '_sendChunks');
@@ -468,7 +468,7 @@ describe('DataConnection', () => {
         );
 
         const dc = new DataConnection({serialization: 'binary'});
-        dc._negotiator.emit('dc-ready', {});
+        dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
         let spy = sinon.spy(dc, '_sendChunks');
