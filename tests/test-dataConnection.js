@@ -370,5 +370,38 @@ describe('DataConnection', () => {
         done();
       }, 100);
     });
+
+    it('should not try to call _trySend if buffer is empty when _tryBuffer is called', () => {
+      const dc = new DataConnection({});
+      dc._negotiator.emit('dc-ready', {});
+      dc._dc.onopen();
+
+      let spy = sinon.spy(dc, '_trySend');
+
+      dc._buffer = [];
+      dc._tryBuffer();
+      assert.equal(spy.called, false);
+    });
+
+    it('should try and send the first message in buffer when _tryBuffer is called', () => {
+      const message = 'foobar';
+
+      const dc = new DataConnection({});
+      dc._negotiator.emit('dc-ready', {});
+      dc._dc.send = () => {
+        return true;
+      };
+      dc._dc.onopen();
+
+      let spy = sinon.spy(dc, '_trySend');
+
+      dc._buffer = [message];
+      dc._tryBuffer();
+
+      assert(spy.calledOnce);
+      assert(spy.calledWith(message));
+      assert.deepEqual(dc._buffer, []);
+      assert.equal(dc.bufferSize, 0);
+    });
   });
 });

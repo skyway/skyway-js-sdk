@@ -157,7 +157,6 @@ class DataConnection extends Connection {
     try {
       this._dc.send(msg);
     } catch (error) {
-      util.log('error!');
       this._buffering = true;
 
       setTimeout(() => {
