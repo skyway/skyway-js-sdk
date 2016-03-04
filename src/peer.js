@@ -31,6 +31,9 @@ class Peer extends EventEmitter {
     this._disconnectCalled = false;
     this._destroyCalled = false;
 
+    // messages received before connection is ready
+    this._queuedMessages = {};
+
     // store peerId after disconnect to use when reconnecting
     this._lastPeerId = null;
 
@@ -242,63 +245,91 @@ class Peer extends EventEmitter {
   _setupMessageHandlers() {
     this.socket.on(util.MESSAGE_TYPES.OPEN.name, id => {
       this.id = id;
+      this.open = true;
+      this.emit(Peer.EVENTS.open.name, id);
     });
 
     this.socket.on(util.MESSAGE_TYPES.ERROR.name, error => {
       this._abort('server-error', error);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.LEAVE.name, message => {
-      util.log(`Received leave message from ${message.src}`);
+    this.socket.on(util.MESSAGE_TYPES.LEAVE.name, peerId => {
+      util.log(`Received leave message from ${peerId}`);
+      this._cleanupPeer(peerId);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.EXPIRE.name, message => {
+    this.socket.on(util.MESSAGE_TYPES.EXPIRE.name, peerId => {
       this.emitError(
         'peer-unavailable',
-        `Could not connect to peer ${message.src}`
+        `Could not connect to peer ${peerId}`
       );
     });
 
-    this.socket.on(util.MESSAGE_TYPES.OFFER.name, message => {
-      const connectionId = message.connectionId;
-      let connection = this.getConnection(message.src, connectionId);
+    this.socket.on(util.MESSAGE_TYPES.OFFER.name, offerMessage => {
+      const connectionId = offerMessage.connectionId;
+      let connection = this.getConnection(offerMessage.src, connectionId);
 
       if (connection) {
         util.warn('Offer received for existing Connection ID:', connectionId);
         return;
       }
 
-      if (message.type === 'media') {
+      if (offerMessage.type === 'media') {
         connection = new MediaConnection({
-          connectionId: connectionId,
-          payload:      message,
-          metadata:     message.metadata
+          connectionId:    connectionId,
+          payload:         offerMessage,
+          metadata:        offerMessage.metadata,
+          _queuedMessages: this._queuedMessages[connectionId]
         });
 
         util.log('MediaConnection created in OFFER');
-        this._addConnection(message.src, connection);
+        this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.call.name, connection);
-      } else if (message.type === 'data') {
+      } else if (offerMessage.type === 'data') {
         connection = new DataConnection({
-          connectionId:  connectionId,
-          _payload:      message,
-          metadata:      message.metadata,
-          label:         message.label,
-          serialization: message.serialization
+          connectionId:    connectionId,
+          _payload:        offerMessage,
+          metadata:        offerMessage.metadata,
+          label:           offerMessage.label,
+          serialization:   offerMessage.serialization,
+          _queuedMessages: this._queuedMessages[connectionId]
         });
 
         util.log('DataConnection created in OFFER');
-        this._addConnection(message.src, connection);
+        this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.connection.name, connection);
       } else {
-        util.warn('Received malformed connection type: ', message.type);
+        util.warn('Received malformed connection type: ', offerMessage.type);
+      }
+
+      delete this._queuedMessages[connectionId];
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.ANSWER.name, answerMessage => {
+      const connection = this.getConnection(
+                            answerMessage.src,
+                            answerMessage.connectionId
+                          );
+
+      if (connection) {
+        connection.handleAnswer(answerMessage);
+      } else {
+        this._storeMessage(util.MESSAGE_TYPES.ANSWER.name, answerMessage);
       }
     });
-  }
 
-  _retrieveId(id) {
-    // TODO: Remove lint bypass
-    console.log(id);
+    this.socket.on(util.MESSAGE_TYPES.CANDIDATE.name, candidateMessage => {
+      const connection = this.getConnection(
+                            candidateMessage.src,
+                            candidateMessage.connectionId
+                          );
+
+      if (connection) {
+        connection.handleCandidate(candidateMessage);
+      } else {
+        this._storeMessage(util.MESSAGE_TYPES.CANDIDATE.name, candidateMessage);
+      }
+    });
   }
 
   _addConnection(peerId, connection) {
@@ -306,6 +337,14 @@ class Peer extends EventEmitter {
       this.connections[peerId] = [];
     }
     this.connections[peerId].push(connection);
+  }
+
+  _storeMessage(type, message) {
+    if (!this._queuedMessages[message.connectionId]) {
+      this._queuedMessages[message.connectionId] = [];
+    }
+    this._queuedMessages[message.connectionId]
+      .push({type: type, payload: message});
   }
 
   _cleanup() {
@@ -318,8 +357,10 @@ class Peer extends EventEmitter {
   }
 
   _cleanupPeer(peer) {
-    for (let connection of this.connections[peer]) {
-      connection.close();
+    if (this.connections[peer]) {
+      for (let connection of this.connections[peer]) {
+        connection.close();
+      }
     }
   }
 
