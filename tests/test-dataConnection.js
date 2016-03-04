@@ -94,6 +94,42 @@ describe('DataConnection', () => {
       spy.reset();
     });
 
+    it('should not process any invalid queued messages', () => {
+      const messages = [{type: 'WRONG', payload: 'message'}];
+
+      const dc = new DataConnection({_queuedMessages: messages});
+      dc._pcAvailable = true;
+
+      let spy1 = sinon.spy(dc, 'handleAnswer');
+      let spy2 = sinon.spy(dc, 'handleCandidate');
+
+      assert.deepEqual(dc._queuedMessages, messages);
+      assert.equal(spy1.called, false);
+      assert.equal(spy2.called, false);
+
+      dc._negotiator.emit('dcReady', {});
+      assert.deepEqual(dc._queuedMessages, []);
+      assert.equal(spy1.called, false);
+      assert.equal(spy2.called, false);
+
+      spy1.reset();
+      spy2.reset();
+    });
+
+    it('should queue a message if handleMessage is called before PC is available', () => {
+      const message1 = {type: util.MESSAGE_TYPES.CANDIDATE.name, payload: 'message1'};
+      const message2 = {type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message2'};
+      const messages = [message1];
+
+      const dc = new DataConnection({_queuedMessages: messages});
+
+      dc.handleAnswer(message2.payload);
+
+      assert.deepEqual(dc._queuedMessages, [message1, message2]);
+      assert(answerSpy.called === false);
+      assert(candidateSpy.called === false);
+    });
+
     it('should open the DataConnection and emit upon _dc.onopen()', () => {
       let spy;
 
