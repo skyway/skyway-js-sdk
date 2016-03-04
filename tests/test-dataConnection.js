@@ -198,9 +198,9 @@ describe('DataConnection', () => {
       const arrayBuffer = util.pack(string);
       const blob = new Blob([arrayBuffer], {type: 'text/plain'});
 
-      let chunked = util.chunk(blob);
+      let chunks = util.chunk(blob);
       console.log('Blob size: ' + blob.size);
-      console.log('Chunks: ' + chunked.length);
+      console.log('Chunks: ' + chunks.length);
 
       const dc = new DataConnection({});
       dc._negotiator.emit('dcReady', {});
@@ -211,7 +211,7 @@ describe('DataConnection', () => {
         done();
       });
 
-      for (let chunk of chunked) {
+      for (let chunk of chunks) {
         let message = {data: chunk};
         dc._handleDataMessage(message);
       }

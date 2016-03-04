@@ -36,9 +36,10 @@ class Util {
 
     this.chunkedBrowsers = {Chrome: 1};
     // Current recommended maximum chunksize is 16KB (DataChannel spec)
+    // https://tools.ietf.org/html/draft-ietf-rtcweb-data-channel-13
     this.chunkedMTU = 16300;
     // Number of times DataChannel has chunked (in total)
-    this.timesChunked = 1;
+    this.chunkedCount = 1;
 
     this.defaultConfig = {
       iceServers: [{
@@ -126,10 +127,10 @@ class Util {
       let b = bl.slice(start, end);
 
       let chunk = {
-        __peerData: this.timesChunked,
-        n:          index,
-        data:       b,
-        total:      total
+        parentMsgId: this.chunkedCount,
+        chunkIndex:  index,
+        chunkData:   b,
+        totalChunks: total
       };
 
       chunks.push(chunk);
@@ -137,7 +138,7 @@ class Util {
       start = end;
       index++;
     }
-    this.timesChunked++;
+    this.chunkedCount++;
     return chunks;
   }
 
