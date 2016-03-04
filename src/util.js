@@ -140,7 +140,7 @@ class Util {
 
   blobToArrayBuffer(blob, cb) {
     let fr = new FileReader();
-    fr.onload = function(event) {
+    fr.onload = (event) => {
       cb(event.target.result);
     };
     fr.readAsArrayBuffer(blob);
@@ -148,7 +148,7 @@ class Util {
 
   blobToBinaryString(blob, cb) {
     let fr = new FileReader();
-    fr.onload = function(event) {
+    fr.onload = (event) => {
       cb(event.target.result);
     };
     fr.readAsBinaryString(blob);
