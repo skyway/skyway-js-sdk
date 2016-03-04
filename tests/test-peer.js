@@ -118,6 +118,8 @@ describe('Peer', () => {
       assert(spy.calledWith(util.MESSAGE_TYPES.LEAVE.name) === true);
       assert(spy.calledWith(util.MESSAGE_TYPES.EXPIRE.name) === true);
       assert(spy.calledWith(util.MESSAGE_TYPES.OFFER.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.ANSWER.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.CANDIDATE.name) === true);
       spy.restore();
     });
 
@@ -403,7 +405,7 @@ describe('Peer', () => {
 
       const spy = sinon.spy(util, 'log');
 
-      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.name, {src: peerId});
+      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.name, peerId);
 
       assert(spy.calledOnce === true);
       assert(spy.calledWith(`Received leave message from ${peerId}`) === true);
@@ -419,7 +421,7 @@ describe('Peer', () => {
         done();
       });
 
-      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, {src: peerId});
+      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, peerId);
     });
 
     it('should create MediaConnection on media OFFER events', done => {
@@ -463,6 +465,108 @@ describe('Peer', () => {
         metadata:     {}
       };
       peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
+    });
+
+    it('should queue ANSWER/CANDIDATEs if connection doesn\'t exist', () => {
+      const connId1 = 'connId1';
+      const connId2 = 'connId2';
+      const mediaAnswerMessage = {
+        src:            'id1',
+        dst:            'id2',
+        answer:         {},
+        connectionId:   connId1,
+        connectionType: 'media'
+      };
+      const mediaCandidateMessage = {
+        src:            'id1',
+        dst:            'id2',
+        candidate:      {},
+        connectionId:   connId1,
+        connectionType: 'media'
+      };
+      const dataAnswerMessage = {
+        src:            'id1',
+        dst:            'id2',
+        answer:         {},
+        connectionId:   connId2,
+        connectionType: 'data'
+      };
+      const dataCandidateMessage = {
+        src:            'id1',
+        dst:            'id2',
+        candidate:      {},
+        connectionId:   connId2,
+        connectionType: 'data'
+      };
+
+      peer.socket.emit(
+        util.MESSAGE_TYPES.ANSWER.name,
+        mediaAnswerMessage);
+      peer.socket.emit(
+        util.MESSAGE_TYPES.CANDIDATE.name,
+        mediaCandidateMessage);
+      peer.socket.emit(
+        util.MESSAGE_TYPES.ANSWER.name,
+        dataAnswerMessage);
+      peer.socket.emit(
+        util.MESSAGE_TYPES.CANDIDATE.name,
+        dataCandidateMessage);
+
+      const messages1 = peer._queuedMessages[connId1];
+
+      assert(messages1[0].type === util.MESSAGE_TYPES.ANSWER.name);
+      assert(messages1[0].payload === mediaAnswerMessage);
+      assert(messages1[1].type === util.MESSAGE_TYPES.CANDIDATE.name);
+      assert(messages1[1].payload === mediaCandidateMessage);
+
+      const messages2 = peer._queuedMessages[connId2];
+
+      assert(messages2[0].type === util.MESSAGE_TYPES.ANSWER.name);
+      assert(messages2[0].payload === dataAnswerMessage);
+      assert(messages2[1].type === util.MESSAGE_TYPES.CANDIDATE.name);
+      assert(messages2[1].payload === dataCandidateMessage);
+    });
+
+    it('should call handleAnswer on ANSWER if connection exists', () => {
+      // The connection type doesn't matter so just test one
+      const mediaConnection = new MediaConnection({});
+      const srcId  = 'srcId';
+      const mediaAnswerMessage = {
+        src:            srcId,
+        dst:            'id',
+        answer:         {},
+        connectionId:   mediaConnection.id,
+        connectionType: 'media'
+      };
+
+      const stub = sinon.stub(mediaConnection, 'handleAnswer');
+
+      peer._addConnection(srcId, mediaConnection);
+
+      peer.socket.emit(util.MESSAGE_TYPES.ANSWER.name, mediaAnswerMessage);
+      assert(stub.calledOnce);
+      assert(stub.calledWith(mediaAnswerMessage));
+    });
+
+    it('should call handleCandidate on CANDIDATE if connection exists', () => {
+      // The connection type doesn't matter so just test one
+      const dataConnection = new DataConnection({});
+      const srcId  = 'srcId';
+      const dataCandidateMessage = {
+        src:            srcId,
+        dst:            'id',
+        candidate:      {},
+        connectionId:   dataConnection.id,
+        connectionType: 'data'
+      };
+
+      const stub = sinon.stub(dataConnection, 'handleCandidate');
+
+      peer._addConnection(srcId, dataConnection);
+
+      peer.socket.emit(util.MESSAGE_TYPES.CANDIDATE.name, dataCandidateMessage);
+      assert(stub.calledOnce);
+      assert(stub.calledWith(dataCandidateMessage));
     });
   });
 
