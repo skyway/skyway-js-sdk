@@ -159,6 +159,84 @@ describe('Util', () => {
     });
   });
 
+  describe('Message type conversion', () => {
+    it('should correctly convert a Binary String to an ArrayBuffer', () => {
+      // Convert to binary String
+      const binary = 'foobar'.toString(2);
+      const arrayBuffer = util.binaryStringToArrayBuffer(binary);
+      assert.equal(arrayBuffer.constructor, ArrayBuffer);
+
+      const result = String.fromCharCode.apply(null, Array.prototype.slice.apply(new Uint8Array(arrayBuffer)));
+      assert.equal(result, binary);
+    });
+
+    it('should correctly convert a Blob to an ArrayBuffer', done => {
+      const string = 'foobar';
+
+      let arrayBuffer = new ArrayBuffer(string.length);
+      let bufferView = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < string.length; i++) {
+        bufferView[i] = string.charCodeAt(i);
+      }
+      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
+
+      util.blobToArrayBuffer(blob, result => {
+        assert.deepEqual(result.constructor, ArrayBuffer);
+        assert.deepEqual(arrayBuffer, result);
+        done();
+      });
+    });
+
+    it('should correctly convert a Blob to a Binary String', done => {
+      const string = 'foobar';
+
+      let arrayBuffer = new ArrayBuffer(string.length);
+      let bufferView = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < string.length; i++) {
+        bufferView[i] = string.charCodeAt(i);
+      }
+      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
+
+      util.blobToBinaryString(blob, result => {
+        assert.deepEqual(typeof result, 'string');
+        assert.equal(result, string);
+        done();
+      });
+    });
+
+    it('should correctly chunk a Blob', () => {
+      // Chunk size is 16300
+      // Each char is 2 bytes
+      const chunkSize = util.chunkedMTU;
+      const multiple = 3;
+      const len = chunkSize * multiple;
+
+      const string = new Array(len + 1).join('e');
+      const arrayBuffer = util.pack(string);
+      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
+
+      const chunks = util.chunk(blob);
+
+      // There are 3 overhead bytes, so actual size is actually 16300*X + 3
+      assert.equal(chunks.length, multiple + 1);
+
+      // parentMsgId increments with each chunking operation
+      // Since a DataConnection test has already chunked once, this will now be 2 for each of our chunks
+      // (Just checking all chunks have the same value since checking == 2 could break later)
+      const chunkedCount = chunks[0].parentMsgId;
+
+      for (let i = 0; i < chunks.length; i++) {
+        assert.equal(chunks[i].parentMsgId, chunkedCount);
+        assert.equal(chunks[i].chunkIndex, i);
+        assert.equal(chunks[i].totalChunks, chunks.length);
+      }
+
+      const reconstructed = new Blob(chunks);
+      assert.deepEqual(reconstructed, blob);
+    });
+  });
+
+  // FIXME: Lint error since location is not defined explicitly
   describe('isSecure', () => {
     // Test only 'HTTP' becauuse Karma only runs on 'HTTP'
     it('should return false if HTTP', () => {
