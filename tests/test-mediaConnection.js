@@ -12,17 +12,20 @@ let MediaConnection;
 describe('MediaConnection', () => {
   let stub;
   let startSpy;
+  let cleanupSpy;
   let answerSpy;
   let candidateSpy;
 
   beforeEach(() => {
     stub = sinon.stub();
     startSpy = sinon.spy();
+    cleanupSpy = sinon.spy();
     answerSpy = sinon.spy();
     candidateSpy = sinon.spy();
 
     stub.returns({
       startConnection: startSpy,
+      cleanup:         cleanupSpy,
       handleAnswer:    answerSpy,
       handleCandidate: candidateSpy
     });
@@ -39,6 +42,7 @@ describe('MediaConnection', () => {
 
   afterEach(() => {
     startSpy.reset();
+    cleanupSpy.reset();
     answerSpy.reset();
     candidateSpy.reset();
   });
@@ -187,6 +191,25 @@ describe('MediaConnection', () => {
       assert.deepEqual(mc._queuedMessages, [message1, message2]);
       assert(answerSpy.called === false);
       assert(candidateSpy.called === false);
+    });
+  });
+
+  describe('Cleanup', () => {
+    it('should close the socket and call the negotiator to cleanup on close()', () => {
+      const mc = new MediaConnection({_stream: {}});
+
+      // Force to be open
+      mc.open = true;
+
+      let spy = sinon.spy(mc, 'close');
+
+      mc.close();
+      assert(mc);
+      assert(spy.calledOnce);
+      assert.equal(mc.open, false);
+
+      assert(cleanupSpy.called);
+      assert(cleanupSpy.calledWith(mc));
     });
   });
 });

@@ -30,7 +30,7 @@ gulp.task('build', () => {
     `NTT Communications Corporation      *\n` +
     ` * peerjs Copyright(c) 2013 Michelle Bu <michelle@michellebu.com> */\n`;
 
-  return browserify('./src/peer.js')
+  return browserify('./src/peer.js', {standalone: 'Peer'})
     .transform(babelify, {presets: ['es2015']})
     .bundle()
     .pipe(source('skyway.js'))
