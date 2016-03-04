@@ -52,6 +52,8 @@ class MediaConnection extends Connection {
     );
     this._pcAvailable = true;
 
+    this._handleQueuedMessages();
+
     this.open = true;
   }
 
