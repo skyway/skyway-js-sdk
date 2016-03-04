@@ -16,7 +16,6 @@ class Connection extends EventEmitter {
       throw new TypeError('Cannot construct Connection instances directly');
     }
 
-    // TODO use util.extend (or Object.assign)
     this.options = options;
 
     this.open = false;
@@ -33,7 +32,6 @@ class Connection extends EventEmitter {
     return this.options.connectionId || this._idPrefix + this._randomIdSuffix;
   }
 
-  // TODO: move into the negotiator class to handle signalling directly?
   handleAnswer(answer) {
     if (this._pcAvailable) {
       this._negotiator.handleAnswer(answer);
