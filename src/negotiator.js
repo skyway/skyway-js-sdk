@@ -1,23 +1,52 @@
 'use strict';
 
+const adapter = require('webrtc-adapter-test');
+const RTCPeerConnection     = adapter.RTCPeerConnection;
 const util = require('./util');
 
 const EventEmitter = require('events');
 
+import {Enum} from 'enumify';
+class NegotiatorEvents extends Enum {}
+NegotiatorEvents.initEnum([
+  'addStream',
+  'dcReady',
+  'offerCreated',
+  'answerCreated',
+  'iceCandidate'
+]);
+
 class Negotiator extends EventEmitter {
   constructor() {
     super();
-
-    this._idPrefix = 'pc_';
   }
 
-  startConnection(options) {
-    // TODO: Remove lint bypass
-    console.log(options);
+  startConnection(options, pcConfig) {
+    this._pc = this._createPeerConnection(options.type, pcConfig);
+    this._setupPCListeners(this._pc);
+
+    if (options.type === 'media' && options.stream) {
+      this._pc.addStream(options.stream);
+    }
+
+    if (options.originator) {
+      if (options.type === 'data') {
+        const label = options.label || '';
+        const dc = this._pc.createDataChannel(label);
+        this.emit(Negotiator.EVENTS.dcReady.name, dc);
+      }
+    } else {
+      this.handleOffer(options.sdp);
+    }
   }
 
-  _createPeerConnection(type) {
-    return {};
+  _createPeerConnection(type, pcConfig) {
+    util.log('Creating RTCPeerConnection');
+
+    pcConfig = pcConfig || {};
+    pcConfig.iceServers = pcConfig.iceServers || util.defaultConfig.iceServers;
+
+    return new RTCPeerConnection(pcConfig);
   }
 
   _setupPCListeners(pc) {
@@ -36,7 +65,6 @@ class Negotiator extends EventEmitter {
 
     pc.onicecandidate = evt => {
       const candidate = evt.candidate;
-      console.log(candidate)
       if (!candidate) {
         util.log('ICE canddidates gathering complete');
       } else {
@@ -46,6 +74,7 @@ class Negotiator extends EventEmitter {
     };
 
     pc.oniceconnectionstatechange = () => {
+      console.log(pc.iceConnectionState)
       switch (pc.iceConnectionState) {
         case 'disconnected':
         case 'failed':
@@ -60,7 +89,13 @@ class Negotiator extends EventEmitter {
 
     pc.onnegotiationneeded = () => {
       util.log('`negotiationneeded` triggered');
-      this._makeOffer();
+      //this._makeOffer(pc);
+      this._makeOffer(pc)
+      .then(this._setOffer, 
+        error => {
+          console.log(error)
+        }
+      );
     };
 
     pc.onremovestream = () => {
@@ -74,30 +109,45 @@ class Negotiator extends EventEmitter {
     return pc;
   }
 
-  _makeOffer() {
-    var pc = this._pc;
+  _makeOffer(pc) {
+
+    console.log("_makeOffer")
 
     if(!!pc.remoteDescription && !!pc.remoteDescription.type) return;
 
-    pc.createOffer(option)
+    console.log("start createOffer") 
+    console.log(pc.createOffer)
+    return pc.createOffer()
     .then(offer => {
+      console.log("offer created", offer)
       util.log('Created offer.');
-      console.log(offer)
-      return pc.setLocalDescription(offer);
+      return Promise.resolve(pc, offer);
     }, error => {
-      this.emitError('webrtc', err);
-      util.log('Failed to createOffer, ', err);
-    }).then(offer => {
+      console.log("error createOffer", error)
+      this.emitError('webrtc', error);
+      util.log('Failed to createOffer, ', error);
+      return Promise.reject(error);
+    })
+  }
+
+  _setOffer(pc, offer) {
+    pc.setLocalDescription(offer).then(offer => {
       console.log("set localDescription")
       util.log('Set localDescription: offer');
       this.emit('offerCreated', offer);
     }, error => {
-      this.emitError('webrtc', err);
-      util.log('Failed to setLocalDescription, ', err);
+      console.log("error setLocalDescription")
+      this.emitError('webrtc', error);
+      util.log('Failed to setLocalDescription, ', error);
     });
   }
 
   cleanup() {
+  }
+
+  handleOffer(message) {
+    // TODO: Remove lint bypass
+    console.log(message);
   }
 
   handleAnswer(message) {
@@ -108,6 +158,10 @@ class Negotiator extends EventEmitter {
   handleCandidate(message) {
     // TODO: Remove lint bypass
     console.log(message);
+  }
+
+  static get EVENTS() {
+    return NegotiatorEvents;
   }
 }
 

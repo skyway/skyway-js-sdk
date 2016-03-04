@@ -9,6 +9,8 @@ class Connection extends EventEmitter {
   constructor(options) {
     super();
 
+    options = options || {};
+
     // Abstract class
     if (this.constructor === Connection) {
       throw new TypeError('Cannot construct Connection instances directly');
