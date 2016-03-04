@@ -116,20 +116,20 @@ class Util {
     return Math.random().toString(36).substr(2);
   }
 
-  chunk(bl) {
+  chunk(blob) {
     let chunks = [];
-    let size = bl.size;
+    let size = blob.size;
     let start = 0;
     let index = 0;
     let total = Math.ceil(size / this.chunkedMTU);
     while (start < size) {
       let end = Math.min(size, start + this.chunkedMTU);
-      let b = bl.slice(start, end);
+      let blobSlice = blob.slice(start, end);
 
       let chunk = {
         parentMsgId: this.chunkedCount,
         chunkIndex:  index,
-        chunkData:   b,
+        chunkData:   blobSlice,
         totalChunks: total
       };
 
