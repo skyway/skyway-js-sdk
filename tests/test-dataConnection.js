@@ -48,6 +48,11 @@ describe('DataConnection', () => {
       assert(dc);
       assert(startSpy.calledOnce);
     });
+
+    it('should store any messages passed in when created', () => {
+      const dc = new DataConnection({});
+      assert.deepEqual(dc.options._queuedMessages, ['message']);
+    });
   });
 
   describe('Initialize', () => {

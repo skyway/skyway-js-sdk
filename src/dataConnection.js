@@ -32,6 +32,9 @@ class DataConnection extends Connection {
       this._peerBrowser = this.options._payload.browser;
     }
 
+    // Messages stored by peer because DC was not ready yet
+    this._queuedMessages = this.options._queuedMessages || [];
+
     this._negotiator.startConnection(
       this,
       this.options._payload || {
@@ -43,6 +46,23 @@ class DataConnection extends Connection {
     this._negotiator.on('dcReady', dc => {
       this._dc = dc;
       this._setupMessageHandlers();
+
+      // Process messages queued because PeerConnection not set up.
+      for (let i = 0; i < this._queuedMessages.length; i++) {
+        let message = this._queuedMessages.shift();
+
+        switch (message.type) {
+          case util.MESSAGE_TYPES.ANSWER.name:
+            this.handleAnswer(message.payload);
+            break;
+          case util.MESSAGE_TYPES.CANDIDATE.name:
+            this.handleCandidate(message.payload);
+            break;
+          default:
+            util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
+            break;
+        }
+      }
     });
   }
 
