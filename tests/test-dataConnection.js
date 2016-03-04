@@ -224,7 +224,7 @@ describe('DataConnection', () => {
 
   describe('Cleanup', () => {
     it('should close the socket and call the negotiator to cleanup on close()', () => {
-      const dc = new DataConnection({_stream: {}});
+      const dc = new DataConnection({});
 
       // Force to be open
       dc.open = true;
