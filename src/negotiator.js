@@ -21,11 +21,6 @@ NegotiatorEvents.initEnum([
 ]);
 
 class Negotiator extends EventEmitter {
-  constructor() {
-    super();
-    this._idPrefix = 'pc_';
-  }
-
   startConnection(options, pcConfig) {
     this._pc = this._createPeerConnection(options.type, pcConfig);
     this._setupPCListeners(this._pc);
@@ -38,28 +33,20 @@ class Negotiator extends EventEmitter {
       if (options.type === 'data') {
         const label = options.label || '';
         const dc = this._pc.createDataChannel(label);
-        this.emit('dataChannel', dc);
+        this.emit(Negotiator.EVENTS.dcReady.name, dc);
       }
     } else {
-      this.handleSDP('OFFER', options.sdp);
+      this.handleOffer(options.sdp);
     }
   }
 
   _createPeerConnection(type, pcConfig) {
     util.log('Creating RTCPeerConnection');
 
-    const optional = {};
-
-    if (type === 'data') {
-      optional.optional = [{RtpDataChannels: true}];
-    } else if (type === 'media') {
-      optional.optional = [{DtlsSrtpKeyAgreement: true}];
-    }
-
     pcConfig = pcConfig || {};
     pcConfig.iceServers = pcConfig.iceServers || util.defaultConfig.iceServers;
 
-    return new RTCPeerConnection(pcConfig, optional);
+    return new RTCPeerConnection(pcConfig);
   }
 
   _setupPCListeners() {
@@ -68,10 +55,7 @@ class Negotiator extends EventEmitter {
   cleanup() {
   }
 
-  handleSDP() {
-  }
-
-  _handleOffer(offerSdp) {
+  handleOffer(offerSdp) {
     this._setRemoteDescription(offerSdp)
       .then(() => {
         return this._makeAnswerSdp();

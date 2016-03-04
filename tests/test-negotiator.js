@@ -21,8 +21,7 @@ describe('Negotiator', () => {
     let addStreamSpy;
     let createDCSpy;
     let negotiator;
-    let handleSDPSpy;
-    let emitSpy;
+    let handleOfferSpy;
 
     before(() => {
       pcStub = sinon.stub();
@@ -40,15 +39,14 @@ describe('Negotiator', () => {
       });
 
       negotiator = new Negotiator();
-      handleSDPSpy = sinon.spy(negotiator, 'handleSDP');
-      emitSpy = sinon.spy(negotiator, 'emit');
+      handleOfferSpy = sinon.spy();
+      negotiator.handleOffer = handleOfferSpy;
     });
 
     afterEach(() => {
       addStreamSpy.reset();
       createDCSpy.reset();
-      handleSDPSpy.reset();
-      emitSpy.reset();
+      handleOfferSpy.reset();
     });
 
     it('should create a _pc property of type RTCPeerConnection', () => {
@@ -57,7 +55,7 @@ describe('Negotiator', () => {
       };
       const pcConfig = {};
 
-      // not stab
+      // not stub
       const negotiator = new Negotiator();
       negotiator.startConnection(options, pcConfig);
 
@@ -65,8 +63,8 @@ describe('Negotiator', () => {
       assert.equal(negotiator._pc.constructor.name, 'RTCPeerConnection');
     });
 
-    context('when type is \'media\'', () => {
-      context('when originator is true', () => {
+    describe('when type is \'media\'', () => {
+      describe('when originator is true', () => {
         it('should call pc.addStream', () => {
           const options = {
             type:       'media',
@@ -76,17 +74,17 @@ describe('Negotiator', () => {
           const pcConfig = {};
 
           assert(addStreamSpy.callCount === 0);
-          assert(handleSDPSpy.callCount === 0);
+          assert(handleOfferSpy.callCount === 0);
 
           negotiator.startConnection(options, pcConfig);
 
           assert(addStreamSpy.callCount === 1);
-          assert(handleSDPSpy.callCount === 0);
+          assert(handleOfferSpy.callCount === 0);
         });
       });
 
-      context('when originator is false', () => {
-        it('should call pc.addStream and handleSDP', () => {
+      describe('when originator is false', () => {
+        it('should call pc.addStream and handleOffer', () => {
           const options = {
             type:       'media',
             stream:     {},
@@ -95,40 +93,41 @@ describe('Negotiator', () => {
           const pcConfig = {};
 
           assert(addStreamSpy.callCount === 0);
-          assert(handleSDPSpy.callCount === 0);
+          assert(handleOfferSpy.callCount === 0);
 
           negotiator.startConnection(options, pcConfig);
 
           assert(addStreamSpy.callCount === 1);
-          assert(handleSDPSpy.callCount === 1);
+          assert(handleOfferSpy.callCount === 1);
         });
       });
     });
 
-    context('when type is \'data\'', () => {
-      context('when originator is true', () => {
-        it('should call createDataChannel and emit \'dataChannel\'', () => {
+    describe('when type is \'data\'', () => {
+      describe('when originator is true', () => {
+        it('should call createDataChannel and emit \'dataChannel\'', done => {
           const options = {
             type:       'data',
             originator: true
           };
           const pcConfig = {};
 
+          negotiator.on(Negotiator.EVENTS.dcReady.name, () => {
+            done();
+          });
+
           assert(createDCSpy.callCount === 0);
-          assert(handleSDPSpy.callCount === 0);
-          assert(emitSpy.callCount === 0);
+          assert(handleOfferSpy.callCount === 0);
 
           negotiator.startConnection(options, pcConfig);
 
           assert(createDCSpy.callCount === 1);
-          assert(handleSDPSpy.callCount === 0);
-          assert(emitSpy.callCount === 1);
-          assert(emitSpy.calledWith('dataChannel') === true);
+          assert(handleOfferSpy.callCount === 0);
         });
       });
 
-      context('when originator is false', () => {
-        it('should call handleSDP', () => {
+      describe('when originator is false', () => {
+        it('should call handleOffer', () => {
           const options = {
             type:       'data',
             originator: false
@@ -136,19 +135,19 @@ describe('Negotiator', () => {
           const pcConfig = {};
 
           assert(createDCSpy.callCount === 0);
-          assert(handleSDPSpy.callCount === 0);
+          assert(handleOfferSpy.callCount === 0);
 
           negotiator.startConnection(options, pcConfig);
 
           assert(createDCSpy.callCount === 0);
-          assert(handleSDPSpy.callCount === 1);
+          assert(handleOfferSpy.callCount === 1);
         });
       });
     });
   });
 
   describe('_createPeerConnection', () => {
-    context('when type is \'media\'', () => {
+    describe('when type is \'media\'', () => {
       it('should return RTCPeerConnection object', () => {
         const negotiator = new Negotiator();
         const pc = negotiator._createPeerConnection('media');
@@ -157,7 +156,7 @@ describe('Negotiator', () => {
       });
     });
 
-    context('when type is \'data\'', () => {
+    describe('when type is \'data\'', () => {
       it('should return RTCPeerConnection object', () => {
         const negotiator = new Negotiator();
         const pc = negotiator._createPeerConnection('data');
@@ -214,7 +213,7 @@ describe('Negotiator', () => {
             type: offer.type
           };
 
-          negotiator._handleOffer(offerObject);
+          negotiator.handleOffer(offerObject);
 
           setTimeout(() => {
             assert(setRemoteSpy.callCount === 1);
@@ -239,7 +238,7 @@ describe('Negotiator', () => {
 
           assert(emitSpy.callCount === 0);
 
-          negotiator._handleOffer(offerObject);
+          negotiator.handleOffer(offerObject);
 
           setTimeout(() => {
             assert(emitSpy.callCount === 1);
