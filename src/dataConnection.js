@@ -8,7 +8,8 @@ import {Enum} from 'enumify';
 class DCEvents extends Enum {}
 DCEvents.initEnum([
   'open',
-  'data'
+  'data',
+  'close'
 ]);
 
 class DataConnection extends Connection {
@@ -117,6 +118,15 @@ class DataConnection extends Connection {
   send(data, chunked) {
     // TODO: Remove lint bypass
     console.log(data, chunked);
+  }
+
+  close() {
+    if (!this.open) {
+      return;
+    }
+    this.open = false;
+    this._negotiator.cleanup(this);
+    this.emit(DataConnection.EVENTS.close.name);
   }
 
   static get EVENTS() {
