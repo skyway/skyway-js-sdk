@@ -65,7 +65,7 @@ class DataConnection extends Connection {
     };
   }
 
-  // Handles a DataChannel message.
+  // Handles a DataChannel message (i.e. every time we get data from _dc.onmessage)
   _handleDataMessage(msg) {
     let data = msg.data;
     let datatype = data.constructor;
@@ -87,22 +87,23 @@ class DataConnection extends Connection {
     } else if (this.serialization === 'json') {
       data = JSON.parse(data);
     }
+    // At this stage `data` is one type of: ArrayBuffer, String, JSON
 
     // Check if we've chunked--if so, piece things back together.
     // We're guaranteed that this isn't 0.
-    if (data.__peerData) {
-      util.log('Let\'s try chunking!');
-      let id = data.__peerData;
-      let chunkInfo = this._chunkedData[id] || {data: [], count: 0, total: data.total};
+    if (data.parentMsgId) {
+      let id = data.parentMsgId;
+      let chunkInfo = this._chunkedData[id] || {data: [], count: 0, total: data.totalChunks};
 
-      chunkInfo.data[data.n] = data.data;
-      chunkInfo.count += 1;
+      chunkInfo.data[data.chunkIndex] = data.chunkData;
+      chunkInfo.count++;
 
       if (chunkInfo.total === chunkInfo.count) {
         // Clean up before making the recursive call to `_handleDataMessage`.
         delete this._chunkedData[id];
 
         // We've received all the chunks--time to construct the complete data.
+        // Type is Blob - we need to convert to ArrayBuffer before emitting
         data = new Blob(chunkInfo.data);
         this._handleDataMessage({data: data});
       }

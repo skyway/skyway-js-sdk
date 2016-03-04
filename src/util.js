@@ -37,8 +37,11 @@ class Util {
     this.MESSAGE_TYPES = MessageTypes;
 
     this.chunkedBrowsers = {Chrome: 1};
+    // Current recommended maximum chunksize is 16KB (DataChannel spec)
+    // https://tools.ietf.org/html/draft-ietf-rtcweb-data-channel-13
     this.chunkedMTU = 16300;
-    this.dataCount = 1;
+    // Number of times DataChannel has chunked (in total)
+    this.chunkedCount = 1;
 
     this.defaultConfig = {
       iceServers: [{
@@ -169,10 +172,10 @@ class Util {
       let b = bl.slice(start, end);
 
       let chunk = {
-        __peerData: this.dataCount,
-        n:          index,
-        data:       b,
-        total:      total
+        parentMsgId: this.chunkedCount,
+        chunkIndex:  index,
+        chunkData:   b,
+        totalChunks: total
       };
 
       chunks.push(chunk);
@@ -180,13 +183,13 @@ class Util {
       start = end;
       index++;
     }
-    this.dataCount++;
+    this.chunkedCount++;
     return chunks;
   }
 
   blobToArrayBuffer(blob, cb) {
     let fr = new FileReader();
-    fr.onload = function(event) {
+    fr.onload = event => {
       cb(event.target.result);
     };
     fr.readAsArrayBuffer(blob);
@@ -194,7 +197,7 @@ class Util {
 
   blobToBinaryString(blob, cb) {
     let fr = new FileReader();
-    fr.onload = function(event) {
+    fr.onload = event => {
       cb(event.target.result);
     };
     fr.readAsBinaryString(blob);

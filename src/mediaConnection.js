@@ -18,8 +18,11 @@ class MediaConnection extends Connection {
 
     if (this.localStream) {
       this._negotiator.startConnection(
-        this,
-        {_stream: this.localStream, originator: true}
+        {
+          type:       'media',
+          _stream:    this.localStream,
+          originator: true
+        }
       );
       this._pcAvailable = true;
     }
@@ -67,6 +70,15 @@ class MediaConnection extends Connection {
     }
 
     this.open = true;
+  }
+
+  close() {
+    if (!this.open) {
+      return;
+    }
+    this.open = false;
+    this._negotiator.cleanup(this);
+    this.emit('close');
   }
 }
 

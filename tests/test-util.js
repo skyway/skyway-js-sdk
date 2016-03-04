@@ -215,28 +215,23 @@ describe('Util', () => {
       const arrayBuffer = util.pack(string);
       const blob = new Blob([arrayBuffer], {type: 'text/plain'});
 
-      const chunked = util.chunk(blob);
-
-      console.log('Blob size: ' + blob.size);
-      console.log('Chunks: ' + chunked.length);
+      const chunks = util.chunk(blob);
 
       // There are 3 overhead bytes, so actual size is actually 16300*X + 3
-      assert.equal(chunked.length, multiple + 1);
+      assert.equal(chunks.length, multiple + 1);
 
-      // __peerData increments with each chunking operation
+      // parentMsgId increments with each chunking operation
       // Since a DataConnection test has already chunked once, this will now be 2 for each of our chunks
       // (Just checking all chunks have the same value since checking == 2 could break later)
-      //
-      // (__peerData is a terrible name for this - can we change it?)
-      const timesChunked = chunked[0].__peerData;
+      const chunkedCount = chunks[0].parentMsgId;
 
-      for (let i = 0; i < chunked.length; i++) {
-        assert.equal(chunked[i].__peerData, timesChunked);
-        assert.equal(chunked[i].n, i);
-        assert.equal(chunked[i].total, chunked.length);
+      for (let i = 0; i < chunks.length; i++) {
+        assert.equal(chunks[i].parentMsgId, chunkedCount);
+        assert.equal(chunks[i].chunkIndex, i);
+        assert.equal(chunks[i].totalChunks, chunks.length);
       }
 
-      const reconstructed = new Blob(chunked);
+      const reconstructed = new Blob(chunks);
       assert.deepEqual(reconstructed, blob);
     });
   });
