@@ -50,7 +50,7 @@ describe('DataConnection', () => {
     });
 
     it('should store any messages passed in when created', () => {
-      const dc = new DataConnection({});
+      const dc = new DataConnection({_queuedMessages: ['message']});
       assert.deepEqual(dc.options._queuedMessages, ['message']);
     });
   });
