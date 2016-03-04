@@ -17,7 +17,8 @@ NegotiatorEvents.initEnum([
   'dcReady',
   'offerCreated',
   'answerCreated',
-  'iceCandidate'
+  'iceCandidate',
+  'error'
 ]);
 
 class Negotiator extends EventEmitter {
@@ -97,6 +98,16 @@ class Negotiator extends EventEmitter {
         this.emitError('webrtc', err);
         util.log('Failed to setLocalDescription, ', err);
       });
+  }
+
+  emitError(type, err) {
+    util.error('Error:', err);
+    if (typeof err === 'string') {
+      err = new Error(err);
+    }
+
+    err.type = type;
+    this.emit(Negotiator.EVENTS.error.name, err);
   }
 
   static get EVENTS() {
