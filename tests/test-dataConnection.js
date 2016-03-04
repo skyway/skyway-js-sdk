@@ -11,11 +11,15 @@ let DataConnection;
 describe('DataConnection', () => {
   let negotiatorStub;
   let startSpy;
+  let answerSpy;
+  let candidateSpy;
 
   beforeEach(() => {
     // Negotiator stub and spies
     negotiatorStub = sinon.stub();
     startSpy = sinon.spy();
+    answerSpy = sinon.spy();
+    candidateSpy = sinon.spy();
 
     negotiatorStub.returns({
       on: function(event, callback) {
@@ -24,7 +28,9 @@ describe('DataConnection', () => {
       emit: function(event, arg) {
         this[event](arg);
       },
-      startConnection: startSpy
+      startConnection: startSpy,
+      handleAnswer:    answerSpy,
+      handleCandidate: candidateSpy
     });
 
     Connection = proxyquire(
@@ -39,6 +45,8 @@ describe('DataConnection', () => {
 
   afterEach(() => {
     startSpy.reset();
+    answerSpy.reset();
+    candidateSpy.reset();
   });
 
   describe('Constructor', () => {
@@ -66,6 +74,24 @@ describe('DataConnection', () => {
       assert(dc._dc.onopen);
       assert(dc._dc.onmessage);
       assert(dc._dc.onclose);
+    });
+
+    it('should process any queued messages after PeerConnection object is created', () => {
+      const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message'}];
+
+      const dc = new DataConnection({_queuedMessages: messages});
+      dc._pcAvailable = true;
+
+      let spy = sinon.spy(dc, 'handleAnswer');
+
+      assert.deepEqual(dc._queuedMessages, messages);
+      assert.equal(spy.called, false);
+      dc._negotiator.emit('dcReady', {});
+
+      assert.deepEqual(dc._queuedMessages, []);
+      assert.equal(spy.calledOnce, true);
+
+      spy.reset();
     });
 
     it('should open the DataConnection and emit upon _dc.onopen()', () => {

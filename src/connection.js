@@ -64,7 +64,7 @@ class Connection extends EventEmitter {
           this.handleCandidate(message.payload);
           break;
         default:
-          util.warn('Unrecognized message type:', message.type);
+          util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
           break;
       }
     }
