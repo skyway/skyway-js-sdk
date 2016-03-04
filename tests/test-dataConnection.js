@@ -90,7 +90,6 @@ describe('DataConnection', () => {
 
       dc._dc.onmessage(message);
       assert(spy.calledOnce);
-      console.log(spy.args[0]);
       assert(spy.calledWith, message);
 
       spy.reset();

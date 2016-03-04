@@ -34,8 +34,11 @@ class Util {
     this.LOG_LEVELS = LogLevel;
     this.MESSAGE_TYPES = MessageTypes;
 
+    this.chunkedBrowsers = {Chrome: 1};
+    // Current recommended maximum chunksize is 16KB (DataChannel spec)
     this.chunkedMTU = 16300;
-    this.dataCount = 1;
+    // Number of times DataChannel has chunked (in total)
+    this.timesChunked = 1;
 
     this.defaultConfig = {
       iceServers: [{
@@ -123,7 +126,7 @@ class Util {
       let b = bl.slice(start, end);
 
       let chunk = {
-        __peerData: this.dataCount,
+        __peerData: this.timesChunked,
         n:          index,
         data:       b,
         total:      total
@@ -134,13 +137,13 @@ class Util {
       start = end;
       index++;
     }
-    this.dataCount++;
+    this.timesChunked++;
     return chunks;
   }
 
   blobToArrayBuffer(blob, cb) {
     let fr = new FileReader();
-    fr.onload = (event) => {
+    fr.onload = event => {
       cb(event.target.result);
     };
     fr.readAsArrayBuffer(blob);
@@ -148,7 +151,7 @@ class Util {
 
   blobToBinaryString(blob, cb) {
     let fr = new FileReader();
-    fr.onload = (event) => {
+    fr.onload = event => {
       cb(event.target.result);
     };
     fr.readAsBinaryString(blob);

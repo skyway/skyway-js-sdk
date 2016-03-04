@@ -217,9 +217,6 @@ describe('Util', () => {
 
       const chunked = util.chunk(blob);
 
-      console.log('Blob size: ' + blob.size);
-      console.log('Chunks: ' + chunked.length);
-
       // There are 3 overhead bytes, so actual size is actually 16300*X + 3
       assert.equal(chunked.length, multiple + 1);
 

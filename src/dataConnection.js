@@ -64,7 +64,7 @@ class DataConnection extends Connection {
     };
   }
 
-  // Handles a DataChannel message.
+  // Handles a DataChannel message (i.e. every time we get data from _dc.onmessage)
   _handleDataMessage(msg) {
     let data = msg.data;
     let datatype = data.constructor;
@@ -86,11 +86,11 @@ class DataConnection extends Connection {
     } else if (this.serialization === 'json') {
       data = JSON.parse(data);
     }
+    // At this stage `data` is one type of: ArrayBuffer, String, JSON
 
     // Check if we've chunked--if so, piece things back together.
     // We're guaranteed that this isn't 0.
     if (data.__peerData) {
-      util.log('Let\'s try chunking!');
       let id = data.__peerData;
       let chunkInfo = this._chunkedData[id] || {data: [], count: 0, total: data.total};
 
