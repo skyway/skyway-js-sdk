@@ -53,9 +53,7 @@ class Connection extends EventEmitter {
 
   _handleQueuedMessages() {
     // Process messages queued because PeerConnection not set up.
-    for (let i = 0; i < this._queuedMessages.length; i++) {
-      let message = this._queuedMessages.shift();
-
+    for (let message of this._queuedMessages) {
       switch (message.type) {
         case util.MESSAGE_TYPES.ANSWER.name:
           this.handleAnswer(message.payload);
@@ -68,6 +66,7 @@ class Connection extends EventEmitter {
           break;
       }
     }
+    this._queuedMessages = [];
   }
 
   close() {
