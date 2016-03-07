@@ -83,14 +83,9 @@ describe('DataConnection', () => {
     it('should process any queued messages after PeerConnection object is created', () => {
       const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message'}];
 
+      let spy = sinon.spy();
+      sinon.stub(DataConnection.prototype, 'handleAnswer', spy);
       const dc = new DataConnection({_queuedMessages: messages});
-      dc._pcAvailable = true;
-
-      let spy = sinon.spy(dc, 'handleAnswer');
-
-      assert.deepEqual(dc._queuedMessages, messages);
-      assert.equal(spy.called, false);
-      dc._negotiator.emit('dcReady', {});
 
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy.calledOnce, true);
@@ -102,60 +97,33 @@ describe('DataConnection', () => {
       const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message1'},
                         {type: util.MESSAGE_TYPES.CANDIDATE.name, payload: 'message2'}];
 
+      let spy1 = sinon.spy();
+      let spy2 = sinon.spy();
+      sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
+      sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
+
       const dc = new DataConnection({_queuedMessages: messages});
-      dc._pcAvailable = true;
-
-      let spy1 = sinon.spy(dc, 'handleAnswer');
-      let spy2 = sinon.spy(dc, 'handleCandidate');
-
-      assert.deepEqual(dc._queuedMessages, messages);
-      assert.equal(spy1.called, false);
-      assert.equal(spy2.called, false);
-      dc._negotiator.emit('dcReady', {});
+      // dc._pcAvailable = true;
 
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy1.calledOnce, true);
       assert.equal(spy2.calledOnce, true);
-
-      spy1.reset();
-      spy2.reset();
-
     });
 
     it('should not process any invalid queued messages', () => {
       const messages = [{type: 'WRONG', payload: 'message'}];
 
+      let spy1 = sinon.spy();
+      let spy2 = sinon.spy();
+      sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
+      sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
+
       const dc = new DataConnection({_queuedMessages: messages});
-      dc._pcAvailable = true;
+      // dc._pcAvailable = true;
 
-      let spy1 = sinon.spy(dc, 'handleAnswer');
-      let spy2 = sinon.spy(dc, 'handleCandidate');
-
-      assert.deepEqual(dc._queuedMessages, messages);
-      assert.equal(spy1.called, false);
-      assert.equal(spy2.called, false);
-
-      dc._negotiator.emit('dcReady', {});
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy1.called, false);
       assert.equal(spy2.called, false);
-
-      spy1.reset();
-      spy2.reset();
-    });
-
-    it('should queue a message if handleMessage is called before PC is available', () => {
-      const message1 = {type: util.MESSAGE_TYPES.CANDIDATE.name, payload: 'message1'};
-      const message2 = {type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message2'};
-      const messages = [message1];
-
-      const dc = new DataConnection({_queuedMessages: messages});
-
-      dc.handleAnswer(message2.payload);
-
-      assert.deepEqual(dc._queuedMessages, [message1, message2]);
-      assert(answerSpy.called === false);
-      assert(candidateSpy.called === false);
     });
 
     it('should open the DataConnection and emit upon _dc.onopen()', () => {

@@ -35,20 +35,21 @@ class DataConnection extends Connection {
     // Messages stored by peer because DC was not ready yet
     this._queuedMessages = this.options._queuedMessages || [];
 
+    // This replaces the PeerJS 'initialize' method
+    this._negotiator.on('dcReady', dc => {
+      this._dc = dc;
+      this._setupMessageHandlers();
+    });
+
     this._negotiator.startConnection(
       this,
       this.options._payload || {
         originator: true
       }
     );
+    this._pcAvailable = true;
 
-    // This replaces the PeerJS 'initialize' method
-    this._negotiator.on('dcReady', dc => {
-      this._dc = dc;
-      this._setupMessageHandlers();
-
-      this._handleQueuedMessages();
-    });
+    this._handleQueuedMessages();
   }
 
   _setupMessageHandlers() {
