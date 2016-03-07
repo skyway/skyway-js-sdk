@@ -235,7 +235,7 @@ describe('Negotiator', () => {
         });
       });
 
-      describe('when pc listen \'oniceconnectionstatechange\'', () => {
+      describe('when pc listen \'iceconnectionstatechange\'', () => {
         let pcStub;
         let negotiator;
         let pc;
@@ -295,6 +295,19 @@ describe('Negotiator', () => {
           assert(spy.callCount === 0);
           pc.onnegotiationneeded();
           assert(spy.callCount === 1);
+        });
+
+        it('should emit \'offerCreated\'', done => {
+          const promiseStub = sinon.stub().returnsPromise();
+          const offer = 'offer';
+          pc.setLocalDescription = promiseStub.resolves(offer);
+
+          negotiator.on(Negotiator.EVENTS.offerCreated.name, offer => {
+            assert(offer);
+            done();
+          });
+
+          negotiator._makeOfferSdp(pc);
         });
       });
     });
@@ -406,6 +419,118 @@ describe('Negotiator', () => {
 
         assert(promiseStub.callCount === 1);
       });
+    });
+  });
+
+  describe('handleCandidate', () => {
+    it('should call _pc.addIceCandidate with an RTCIceCandidate', () => {
+      const negotiator = new Negotiator();
+      const options = {
+        type:       'data',
+        originator: false
+      };
+      const pcConfig = {};
+      negotiator.startConnection(options, pcConfig);
+
+      const candidate = {
+        candidate:     'candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0',
+        sdpMLineIndex: 0,
+        sdpMid:        'data'
+      };
+
+      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
+
+      assert(addIceStub.callCount === 0);
+
+      negotiator.handleCandidate(candidate);
+
+      assert(addIceStub.callCount === 1);
+
+      const addIceArg = addIceStub.args[0][0];
+      assert(addIceArg.constructor.name === 'RTCIceCandidate');
+      assert(candidate.candidate === addIceArg.candidate);
+      assert(candidate.sdpMLineIndex === addIceArg.sdpMLineIndex);
+      assert(candidate.sdpMid === addIceArg.sdpMid);
+    });
+  });
+
+  describe('handleOffer', () => {
+    const waitForAsync = 100;
+    it('should setRemoteDescription', done => {
+      const negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection('data', {});
+
+      const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+
+      negotiator._pc.createOffer()
+        .then(offer => {
+          const offerObject = {
+            sdp:  offer.sdp,
+            type: offer.type
+          };
+
+          negotiator.handleOffer(offerObject);
+
+          setTimeout(() => {
+            assert(setRemoteSpy.callCount === 1);
+            assert(setRemoteSpy.calledWith(offer));
+            done();
+          }, waitForAsync);
+        });
+    });
+
+    it('should emit answerCreated', done => {
+      const negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection('data', {});
+
+      const emitSpy = sinon.spy(negotiator, 'emit');
+
+      negotiator._pc.createOffer()
+        .then(offer => {
+          const offerObject = {
+            sdp:  offer.sdp,
+            type: offer.type
+          };
+
+          assert(emitSpy.callCount === 0);
+
+          negotiator.handleOffer(offerObject);
+
+          setTimeout(() => {
+            assert(emitSpy.callCount === 1);
+            assert(emitSpy.calledWith(Negotiator.EVENTS.answerCreated.name));
+            done();
+          }, waitForAsync);
+        });
+    });
+  });
+
+  describe('handleAnswer', () => {
+    const waitForAsync = 100;
+    it('should setRemoteDescription', done => {
+      const negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection('data', {});
+      const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+      negotiator._pc.createOffer()
+        .then(offer => {
+          // creating an answer is complicated so just use an offer
+          const answerObject = {
+            sdp:  offer.sdp,
+            type: 'answer'
+          };
+
+          assert(setRemoteSpy.callCount === 0);
+
+          negotiator.handleAnswer(answerObject);
+
+          setTimeout(() => {
+            assert(setRemoteSpy.callCount === 1);
+            assert(setRemoteSpy.calledWith(
+              new RTCSessionDescription(answerObject))
+            );
+            done();
+          }, waitForAsync);
+        });
     });
   });
 });
