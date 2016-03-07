@@ -338,7 +338,7 @@ describe('DataConnection', () => {
         dc._bufferedSend(message);
 
         assert.deepEqual(dc._buffer, [message]);
-        assert.equal(dc.bufferSize, 1);
+        assert.equal(dc._buffer.length, 1);
       });
 
       it('should return `true` to _trySend if the DataChannel send succeeds', () => {
@@ -410,7 +410,7 @@ describe('DataConnection', () => {
         assert(spy.calledOnce);
         assert(spy.calledWith(message));
         assert.deepEqual(dc._buffer, []);
-        assert.equal(dc.bufferSize, 0);
+        assert.equal(dc._buffer.length, 0);
       });
     });
 

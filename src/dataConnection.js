@@ -24,7 +24,6 @@ class DataConnection extends Connection {
     // Data channel buffering.
     this._buffer = [];
     this._buffering = false;
-    this.bufferSize = 0;
 
     // For storing large data.
     this._chunkedData = {};
@@ -149,7 +148,6 @@ class DataConnection extends Connection {
   _bufferedSend(msg) {
     if (this.buffering || !this._trySend(msg)) {
       this._buffer.push(msg);
-      this.bufferSize = this._buffer.length;
     }
   }
 
@@ -180,7 +178,6 @@ class DataConnection extends Connection {
 
     if (this._trySend(msg)) {
       this._buffer.shift();
-      this.bufferSize = this._buffer.length;
       this._tryBuffer();
     }
   }
