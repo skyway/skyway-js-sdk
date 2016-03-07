@@ -11,6 +11,7 @@ let DataConnection;
 describe('DataConnection', () => {
   let negotiatorStub;
   let startSpy;
+  let cleanupSpy;
   let answerSpy;
   let candidateSpy;
 
@@ -18,6 +19,7 @@ describe('DataConnection', () => {
     // Negotiator stub and spies
     negotiatorStub = sinon.stub();
     startSpy = sinon.spy();
+    cleanupSpy = sinon.spy();
     answerSpy = sinon.spy();
     candidateSpy = sinon.spy();
 
@@ -29,6 +31,7 @@ describe('DataConnection', () => {
         this[event](arg);
       },
       startConnection: startSpy,
+      cleanup:         cleanupSpy,
       handleAnswer:    answerSpy,
       handleCandidate: candidateSpy
     });
@@ -45,6 +48,7 @@ describe('DataConnection', () => {
 
   afterEach(() => {
     startSpy.reset();
+    cleanupSpy.reset();
     answerSpy.reset();
     candidateSpy.reset();
   });
@@ -282,6 +286,25 @@ describe('DataConnection', () => {
         let message = {data: chunk};
         dc._handleDataMessage(message);
       }
+    });
+  });
+
+  describe('Cleanup', () => {
+    it('should close the socket and call the negotiator to cleanup on close()', () => {
+      const dc = new DataConnection({});
+
+      // Force to be open
+      dc.open = true;
+
+      let spy = sinon.spy(dc, 'close');
+
+      dc.close();
+      assert(dc);
+      assert(spy.calledOnce);
+      assert.equal(dc.open, false);
+
+      assert(cleanupSpy.called);
+      assert(cleanupSpy.calledWith(dc));
     });
   });
 });
