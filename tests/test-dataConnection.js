@@ -11,11 +11,13 @@ let DataConnection;
 describe('DataConnection', () => {
   let negotiatorStub;
   let startSpy;
+  let cleanupSpy;
 
   beforeEach(() => {
     // Negotiator stub and spies
     negotiatorStub = sinon.stub();
     startSpy = sinon.spy();
+    cleanupSpy = sinon.spy();
 
     negotiatorStub.returns({
       on: function(event, callback) {
@@ -24,7 +26,8 @@ describe('DataConnection', () => {
       emit: function(event, arg) {
         this[event](arg);
       },
-      startConnection: startSpy
+      startConnection: startSpy,
+      cleanup:         cleanupSpy
     });
 
     Connection = proxyquire(
@@ -39,6 +42,7 @@ describe('DataConnection', () => {
 
   afterEach(() => {
     startSpy.reset();
+    cleanupSpy.reset();
   });
 
   describe('Constructor', () => {
@@ -215,6 +219,25 @@ describe('DataConnection', () => {
         let message = {data: chunk};
         dc._handleDataMessage(message);
       }
+    });
+  });
+
+  describe('Cleanup', () => {
+    it('should close the socket and call the negotiator to cleanup on close()', () => {
+      const dc = new DataConnection({});
+
+      // Force to be open
+      dc.open = true;
+
+      let spy = sinon.spy(dc, 'close');
+
+      dc.close();
+      assert(dc);
+      assert(spy.calledOnce);
+      assert.equal(dc.open, false);
+
+      assert(cleanupSpy.called);
+      assert(cleanupSpy.calledWith(dc));
     });
   });
 });
