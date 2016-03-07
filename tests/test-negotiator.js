@@ -1,10 +1,13 @@
 'use strict';
 
-const assert     = require('power-assert');
-const sinon      = require('sinon');
-const proxyquire = require('proxyquire');
+const assert           = require('power-assert');
+const sinon            = require('sinon');
+const sinonStubPromise = require('sinon-stub-promise');
+const proxyquire       = require('proxyquire');
 
-const Negotiator      = require('../src/negotiator');
+const Negotiator       = require('../src/negotiator');
+
+sinonStubPromise(sinon);
 
 describe('Negotiator', () => {
   describe('Constructor', () => {
@@ -167,7 +170,6 @@ describe('Negotiator', () => {
   });
 
   describe('_setupPCListeners', () => {
-
     it('should set up PeerConnection listeners', () => {
       const negotiator = new Negotiator();
       const pc = negotiator._createPeerConnection('media');
@@ -183,17 +185,19 @@ describe('Negotiator', () => {
     });
 
     describe('RTCPeerConnection\'s event listeners', () => {
-
       let negotiator;
       let pc;
       let ev;
 
-      beforeEach(() => {
+      before(() => {
         negotiator = new Negotiator();
         pc = negotiator._createPeerConnection('media');
         negotiator._setupPCListeners(pc);
+      });
+
+      beforeEach(() => {
         ev = {};
-      })
+      });
 
       describe('when pc listen \'addstream\'', () => {
         it('should emit \'addStream\' with remote stream', done => {
@@ -204,8 +208,9 @@ describe('Negotiator', () => {
           });
 
           pc.onaddstream(ev);
-        })
-      })
+        });
+      });
+
       describe('when pc listen \'datachannel\'', () => {
         it('should emit \'dcReady\' with datachannel', done => {
           ev.channel = 'dc';
@@ -215,8 +220,9 @@ describe('Negotiator', () => {
           });
 
           pc.ondatachannel(ev);
-        })
-      })
+        });
+      });
+
       describe('when pc listen \'icecandidate\'', () => {
         it('should emit \'iceCandidate\' with ice candidate', done => {
           ev.candidate = 'candidate';
@@ -226,122 +232,180 @@ describe('Negotiator', () => {
           });
 
           pc.onicecandidate(ev);
-        })
-      })
+        });
+      });
 
       describe('when pc listen \'oniceconnectionstatechange\'', () => {
+        let pcStub;
+        let negotiator;
+        let pc;
+
+        before(() => {
+          pcStub = sinon.stub();
+          pcStub.returns({
+            iceConnectionState: 'disconnected'
+          });
+          const Negotiator = proxyquire('../src/negotiator', {
+            'webrtc-adapter-test': {
+              RTCPeerConnection: pcStub
+            }
+          });
+          negotiator = new Negotiator();
+          pc = negotiator._createPeerConnection('media');
+          negotiator._setupPCListeners(pc);
+        });
+
         describe('when pc.iceConnectionState is \'disconnected\'', () => {
           it('should emit \'iceConnectionDisconnected\'', done => {
             negotiator.on('iceConnectionDisconnected', () => {
               done();
             });
+            pc.iceConnectionState = 'disconnected';
+
             pc.oniceconnectionstatechange();
-          })
-        })
+          });
+        });
+
         describe('when pc.iceConnectionState is \'failed\'', () => {
           it('should emit \'iceConnectionDisconnected\'', done => {
             negotiator.on('iceConnectionDisconnected', () => {
               done();
             });
-            pc.oniceconnectionstatechange();
-          })
-        })
-        describe('when pc.iceConnectionState is \'completed\'', () => {
-          it('should set pc.onicecandidate noop', () => {
-            pc.iceConnectionState = 'completed';
-            pc.oniceconnectionstatechange();
+            pc.iceConnectionState = 'failed';
 
-            assert(pc.onicecandidate);
-          })
-        })
-      })
+            pc.oniceconnectionstatechange();
+          });
+        });
+
+        describe('when pc.iceConnectionState is \'completed\'', () => {
+          it('should set pc.onicecandidate empty function', () => {
+            pc.iceConnectionState = 'completed';
+            pc.onicecandidate = 'string';
+
+            pc.oniceconnectionstatechange();
+            assert(typeof pc.onicecandidate === 'function');
+          });
+        });
+      });
 
       describe('when pc listen \'negotiationneeded\'', () => {
-        it('should call _makeOffer', () => {
-          const spy = sinon.spy(negotiator, '_makeOffer');
+        it('should call _makeOfferSdp', () => {
+          const spy = sinon.spy(negotiator, '_makeOfferSdp');
 
+          assert(spy.callCount === 0);
           pc.onnegotiationneeded();
-
-          console.log(spy.callCount)
-
-          assert(spy.calledOnce, true);
+          assert(spy.callCount === 1);
         });
-      })
+      });
+    });
+  });
 
-      describe('when pc listen \'removestream\'', () => {
-        it('do nothing', () => {
-        })
-      })
-
-      describe('when pc listen \'signalingstatechange\'', () => {
-        it('do nothing', () => {
-        })
-      })
-    })
-  })
-
-  describe('_makeOffer', () => {
-
+  describe('_makeOfferSdp', () => {
     let negotiator;
     let pc;
-    let ev;
+    let promiseStub;
 
     beforeEach(() => {
       negotiator = new Negotiator();
       pc = negotiator._createPeerConnection('media');
       negotiator._setupPCListeners(pc);
-      ev = {};
-    })
+      promiseStub = sinon.stub().returnsPromise();
+    });
 
     it('should call pc.createOffer', () => {
-      pc.createOffer = sinon.spy();
       const offer = 'offer';
-      //pc.createOffer = Promise.resolve(offer);
-      //const spy = sinon.spy(pc, 'createOffer');
+      pc.createOffer = promiseStub.resolves(offer);
 
-      negotiator._makeOffer(pc);
-      console.log(spy.callCount)
-      assert(spy.calledOnce, true);
+      assert(promiseStub.callCount === 0);
+      negotiator._makeOfferSdp(pc);
+      assert(promiseStub.callCount === 1);
     });
 
-    it('should return offer', done => {
-      Promise.resolve(negotiator._makeOffer(pc))
+    it('should return offer when createOffer resolved', done => {
+      negotiator._makeOfferSdp(pc)
       .then(offer => {
-        console.log(offer);
+        assert(offer);
+        assert(offer instanceof RTCSessionDescription);
         done();
-      }).catch(error => {
-        console.log(error)
+      }).catch(() => {
+        assert.fail();
       });
     });
-  })
 
-  describe('_setOffer', () => {
+    it('should emit Error when createOffer rejected', done => {
+      const fakeError = 'fakeError';
+      pc.createOffer = promiseStub.rejects(fakeError);
 
+      negotiator.on(Negotiator.EVENTS.error.name, err => {
+        assert(err instanceof Error);
+        assert.equal(err.type, 'webrtc');
+        done();
+      });
+
+      negotiator._makeOfferSdp(pc)
+      .then(() => {
+        assert.fail();
+      })
+      .catch(error => {
+        assert(error);
+        assert(error, fakeError);
+      });
+
+      assert(promiseStub.callCount === 1);
+    });
+  });
+
+  describe('_setLocalDescription', () => {
     let negotiator;
     let pc;
-    let ev;
+    let promiseStub;
 
-    beforeEach(() => {
+    before(() => {
       negotiator = new Negotiator();
       pc = negotiator._createPeerConnection('media');
       negotiator._setupPCListeners(pc);
-      ev = {};
-    })
-
-    it('should call pc.setLocalDescription', done => {
-      const offer = 'offer';
-      pc.createOffer = sinon.spy();
-
-      negotiator._makeOffer(pc, offer);
-      assert(spy.calledOnce, true);
+      promiseStub = sinon.stub().returnsPromise();
     });
 
-    it('should call pc.setLocalDescription', done => {
-      Promise.resolve(negotiator._setOffer(offer))
-      .then(offer => {
-        console.log(offer);
-        done();
+    it('should call pc.setLocalDescription', () => {
+      const offer = 'offer';
+      pc.setLocalDescription = promiseStub.resolves(offer);
+
+      assert(promiseStub.callCount === 0);
+      negotiator._setLocalDescription(pc, offer);
+      assert(promiseStub.callCount === 1);
+    });
+
+    describe('when setLocalDescription resolved', () => {
+      it('should emit \'offerCreated\'', done => {
+        const offer = 'offer';
+        pc.setLocalDescription = promiseStub.resolves(offer);
+
+        negotiator.on(Negotiator.EVENTS.offerCreated.name, offer => {
+          assert(offer);
+          done();
+        });
+
+        negotiator._setLocalDescription(pc, offer);
       });
     });
-  })
+
+    describe('when setLocalDescription rejected', () => {
+      it('should emit Error', done => {
+        const offer = 'offer';
+        const fakeError = 'fakeError';
+        pc.setLocalDescription = promiseStub.rejects(fakeError);
+
+        negotiator.on(Negotiator.EVENTS.error.name, err => {
+          assert(err instanceof Error);
+          assert.equal(err.type, 'webrtc');
+          done();
+        });
+
+        negotiator._setLocalDescription(pc, offer);
+
+        assert(promiseStub.callCount === 1);
+      });
+    });
+  });
 });

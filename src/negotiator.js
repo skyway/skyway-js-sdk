@@ -13,7 +13,8 @@ NegotiatorEvents.initEnum([
   'dcReady',
   'offerCreated',
   'answerCreated',
-  'iceCandidate'
+  'iceCandidate',
+  'error'
 ]);
 
 class Negotiator extends EventEmitter {
@@ -50,31 +51,31 @@ class Negotiator extends EventEmitter {
   }
 
   _setupPCListeners(pc) {
-
     pc.onaddstream = evt => {
       util.log('Received remote media stream');
-      var stream = evt.stream;
+      const stream = evt.stream;
       this.emit('addStream', stream);
     };
 
     pc.ondatachannel = evt => {
       util.log('Received data channel');
-      var dc = evt.channel;
+      const dc = evt.channel;
       this.emit('dcReady', dc);
     };
 
     pc.onicecandidate = evt => {
       const candidate = evt.candidate;
-      if (!candidate) {
+      if (candidate) {
         util.log('ICE canddidates gathering complete');
-      } else {
+
         util.log('Generated ICE candidate for:', candidate);
         this.emit('iceCandidate', candidate);
+      } else {
+        util.log('ICE canddidates gathering complete');
       }
     };
 
     pc.oniceconnectionstatechange = () => {
-      console.log(pc.iceConnectionState)
       switch (pc.iceConnectionState) {
         case 'disconnected':
         case 'failed':
@@ -82,18 +83,18 @@ class Negotiator extends EventEmitter {
           this.emit('iceConnectionDisconnected');
           break;
         case 'completed':
-          pc.onicecandidate = () => {};
+          pc.onicecandidate = util.noop;
+          break;
+        default:
           break;
       }
     };
 
     pc.onnegotiationneeded = () => {
       util.log('`negotiationneeded` triggered');
-      //this._makeOffer(pc);
-      this._makeOffer(pc)
-      .then(this._setOffer, 
-        error => {
-          console.log(error)
+      this._makeOfferSdp(pc)
+        .then(offer => {
+          this._setLocalDescription(offer, pc);
         }
       );
     };
@@ -102,44 +103,34 @@ class Negotiator extends EventEmitter {
       util.log('`removestream` triggerd');
     };
 
-    pc.onsignalingstatechange = evt => {
+    pc.onsignalingstatechange = () => {
       util.log('`signalingstatechange` triggerd');
     };
 
     return pc;
   }
 
-  _makeOffer(pc) {
-
-    console.log("_makeOffer")
-
-    if(!!pc.remoteDescription && !!pc.remoteDescription.type) return;
-
-    console.log("start createOffer") 
-    console.log(pc.createOffer)
+  _makeOfferSdp(pc) {
     return pc.createOffer()
-    .then(offer => {
-      console.log("offer created", offer)
-      util.log('Created offer.');
-      return Promise.resolve(pc, offer);
-    }, error => {
-      console.log("error createOffer", error)
-      this.emitError('webrtc', error);
-      util.log('Failed to createOffer, ', error);
-      return Promise.reject(error);
-    })
+      .then(offer => {
+        util.log('Created offer.');
+        return Promise.resolve(offer);
+      }, error => {
+        this.emitError('webrtc', error);
+        util.log('Failed to createOffer, ', error);
+        return Promise.reject(error);
+      });
   }
 
-  _setOffer(pc, offer) {
-    pc.setLocalDescription(offer).then(offer => {
-      console.log("set localDescription")
-      util.log('Set localDescription: offer');
-      this.emit('offerCreated', offer);
-    }, error => {
-      console.log("error setLocalDescription")
-      this.emitError('webrtc', error);
-      util.log('Failed to setLocalDescription, ', error);
-    });
+  _setLocalDescription(pc, offer) {
+    return pc.setLocalDescription(offer)
+      .then(offer => {
+        util.log('Set localDescription: offer');
+        this.emit('offerCreated', offer);
+      }, error => {
+        this.emitError('webrtc', error);
+        util.log('Failed to setLocalDescription, ', error);
+      });
   }
 
   cleanup() {
@@ -158,6 +149,16 @@ class Negotiator extends EventEmitter {
   handleCandidate(message) {
     // TODO: Remove lint bypass
     console.log(message);
+  }
+
+  emitError(type, err) {
+    util.error('Error:', err);
+    if (typeof err === 'string') {
+      err = new Error(err);
+    }
+
+    err.type = type;
+    this.emit(Negotiator.EVENTS.error.name, err);
   }
 
   static get EVENTS() {
