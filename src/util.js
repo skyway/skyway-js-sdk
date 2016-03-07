@@ -34,6 +34,13 @@ class Util {
     this.LOG_LEVELS = LogLevel;
     this.MESSAGE_TYPES = MessageTypes;
 
+    this.chunkedBrowsers = {Chrome: 1};
+    // Current recommended maximum chunksize is 16KB (DataChannel spec)
+    // https://tools.ietf.org/html/draft-ietf-rtcweb-data-channel-13
+    this.chunkedMTU = 16300;
+    // Number of times DataChannel has chunked (in total)
+    this.chunkedCount = 1;
+
     this.defaultConfig = {
       iceServers: [{
         urls: 'stun:stun.skyway.io:3478',
@@ -109,24 +116,54 @@ class Util {
     return Math.random().toString(36).substr(2);
   }
 
-  chunk(bl) {
-    // TODO: Remove lint bypass
-    console.log(bl);
+  chunk(blob) {
+    let chunks = [];
+    let size = blob.size;
+    let start = 0;
+    let index = 0;
+    let total = Math.ceil(size / this.chunkedMTU);
+    while (start < size) {
+      let end = Math.min(size, start + this.chunkedMTU);
+      let blobSlice = blob.slice(start, end);
+
+      let chunk = {
+        parentMsgId: this.chunkedCount,
+        chunkIndex:  index,
+        chunkData:   blobSlice,
+        totalChunks: total
+      };
+
+      chunks.push(chunk);
+
+      start = end;
+      index++;
+    }
+    this.chunkedCount++;
+    return chunks;
   }
 
   blobToArrayBuffer(blob, cb) {
-    // TODO: Remove lint bypass
-    console.log(blob, cb);
+    let fr = new FileReader();
+    fr.onload = event => {
+      cb(event.target.result);
+    };
+    fr.readAsArrayBuffer(blob);
   }
 
   blobToBinaryString(blob, cb) {
-    // TODO: Remove lint bypass
-    console.log(blob, cb);
+    let fr = new FileReader();
+    fr.onload = event => {
+      cb(event.target.result);
+    };
+    fr.readAsBinaryString(blob);
   }
 
   binaryStringToArrayBuffer(binary) {
-    // TODO: Remove lint bypass
-    console.log(binary);
+    let byteArray = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      byteArray[i] = binary.charCodeAt(i) & 0xff;
+    }
+    return byteArray.buffer;
   }
 
   isSecure() {

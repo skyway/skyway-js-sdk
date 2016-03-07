@@ -1,6 +1,15 @@
 'use strict';
 
 const Connection = require('./connection');
+const util = require('./util');
+
+// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
+import {Enum} from 'enumify';
+class DCEvents extends Enum {}
+DCEvents.initEnum([
+  'open',
+  'data'
+]);
 
 class DataConnection extends Connection {
   constructor(options) {
@@ -29,16 +38,89 @@ class DataConnection extends Connection {
         originator: true
       }
     );
+
+    // This replaces the PeerJS 'initialize' method
+    this._negotiator.on('dcReady', dc => {
+      this._dc = dc;
+      this._setupMessageHandlers();
+    });
   }
 
-  initialize(dc) {
-    // TODO: Remove lint bypass
-    console.log(dc);
+  _setupMessageHandlers() {
+    this._dc.onopen = () => {
+      util.log('Data channel connection success');
+      this.open = true;
+      this.emit(DataConnection.EVENTS.open.name);
+    };
+
+    // We no longer need the reliable shim here
+    this._dc.onmessage = msg => {
+      this._handleDataMessage(msg);
+    };
+
+    this._dc.onclose = () => {
+      util.log('DataChannel closed for:', this.id);
+      this.close();
+    };
+  }
+
+  // Handles a DataChannel message (i.e. every time we get data from _dc.onmessage)
+  _handleDataMessage(msg) {
+    let data = msg.data;
+    let datatype = data.constructor;
+    if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
+      if (datatype === Blob) {
+        // Convert to ArrayBuffer if datatype is Blob
+        util.blobToArrayBuffer(data, ab => {
+          data = util.unpack(ab);
+          this.emit(DataConnection.EVENTS.data.name, data);
+        });
+        return;
+      } else if (datatype === ArrayBuffer) {
+        data = util.unpack(data);
+      } else if (datatype === String) {
+        // String fallback for binary data for browsers that don't support binary yet
+        let ab = util.binaryStringToArrayBuffer(data);
+        data = util.unpack(ab);
+      }
+    } else if (this.serialization === 'json') {
+      data = JSON.parse(data);
+    }
+    // At this stage `data` is one type of: ArrayBuffer, String, JSON
+
+    // Check if we've chunked--if so, piece things back together.
+    // We're guaranteed that this isn't 0.
+    if (data.parentMsgId) {
+      let id = data.parentMsgId;
+      let chunkInfo = this._chunkedData[id] || {data: [], count: 0, total: data.totalChunks};
+
+      chunkInfo.data[data.chunkIndex] = data.chunkData;
+      chunkInfo.count++;
+
+      if (chunkInfo.total === chunkInfo.count) {
+        // Clean up before making the recursive call to `_handleDataMessage`.
+        delete this._chunkedData[id];
+
+        // We've received all the chunks--time to construct the complete data.
+        // Type is Blob - we need to convert to ArrayBuffer before emitting
+        data = new Blob(chunkInfo.data);
+        this._handleDataMessage({data: data});
+      }
+
+      this._chunkedData[id] = chunkInfo;
+      return;
+    }
+
+    this.emit(DataConnection.EVENTS.data.name, data);
   }
 
   send(data, chunked) {
     // TODO: Remove lint bypass
     console.log(data, chunked);
+  }
+
+  static get EVENTS() {
+    return DCEvents;
   }
 }
 

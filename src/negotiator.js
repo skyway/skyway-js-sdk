@@ -83,7 +83,7 @@ class Negotiator extends EventEmitter {
           this.emit('iceConnectionDisconnected');
           break;
         case 'completed':
-          pc.onicecandidate = util.noop;
+          pc.onicecandidate = () => {};
           break;
         default:
           break;
