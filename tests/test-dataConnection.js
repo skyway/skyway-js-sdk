@@ -98,6 +98,30 @@ describe('DataConnection', () => {
       spy.reset();
     });
 
+    it('should correctly handle ALL of multiple queued messages', () => {
+      const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message1'},
+                        {type: util.MESSAGE_TYPES.CANDIDATE.name, payload: 'message2'}];
+
+      const dc = new DataConnection({_queuedMessages: messages});
+      dc._pcAvailable = true;
+
+      let spy1 = sinon.spy(dc, 'handleAnswer');
+      let spy2 = sinon.spy(dc, 'handleCandidate');
+
+      assert.deepEqual(dc._queuedMessages, messages);
+      assert.equal(spy1.called, false);
+      assert.equal(spy2.called, false);
+      dc._negotiator.emit('dcReady', {});
+
+      assert.deepEqual(dc._queuedMessages, []);
+      assert.equal(spy1.calledOnce, true);
+      assert.equal(spy2.calledOnce, true);
+
+      spy1.reset();
+      spy2.reset();
+
+    });
+
     it('should not process any invalid queued messages', () => {
       const messages = [{type: 'WRONG', payload: 'message'}];
 
