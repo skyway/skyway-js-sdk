@@ -132,16 +132,13 @@ class DataConnection extends Connection {
         return;
       }
 
-      console.log(1);
       if (util.supports && !util.supports.binaryBlob) {
-        console.log(2);
         // We only do this if we really need to (e.g. blobs are not supported),
         // because this conversion is costly
         util.blobToArrayBuffer(blob, arrayBuffer => {
           this._bufferedSend(arrayBuffer);
         });
       } else {
-        console.log(3);
         this._bufferedSend(blob);
       }
     } else {
