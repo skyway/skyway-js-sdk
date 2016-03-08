@@ -334,7 +334,7 @@ describe('DataConnection', () => {
         dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
-        dc.buffering = true;
+        dc._isBuffering = true;
         dc._bufferedSend(message);
 
         assert.deepEqual(dc._buffer, [message]);
@@ -370,7 +370,7 @@ describe('DataConnection', () => {
 
         const result = dc._trySend(message);
         assert.equal(result, false);
-        assert.equal(dc._buffering, true);
+        assert.equal(dc._isBuffering, true);
 
         setTimeout(() => {
           assert(spy.calledOnce);
