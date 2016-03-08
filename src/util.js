@@ -50,6 +50,49 @@ class Util {
       }]
     };
 
+    supports: (function() {
+      if (typeof RTCPeerConnection === 'undefined') {
+        return {};
+      }
+
+      let data = true;
+      let binaryBlob = false;
+
+      let pc;
+      let dc;
+      try {
+        pc = new RTCPeerConnection(this.defaultConfig, {});
+      } catch (e) {
+        data = false;
+      }
+
+      if (data) {
+        try {
+          dc = pc.createDataChannel('_SKYWAYTEST');
+        } catch (e) {
+          data = false;
+        }
+      }
+
+      if (data) {
+        // Binary test
+        try {
+          dc.binaryType = 'blob';
+          binaryBlob = true;
+        } catch (e) {
+          // binaryBlob is already false
+        }
+      }
+
+      if (pc) {
+        pc.close();
+      }
+
+      return {
+        binaryBlob: binaryBlob
+      };
+    }());
+
     this._logLevel = LogLevel.NONE.ordinal;
   }
 
@@ -104,48 +147,6 @@ class Util {
     }
   }
 
-  get supports() {
-    if (typeof RTCPeerConnection === 'undefined') {
-      return {};
-    }
-
-    let data = true;
-    let binaryBlob = false;
-
-    let pc;
-    let dc;
-    try {
-      pc = new RTCPeerConnection(this.defaultConfig, {});
-    } catch (e) {
-      data = false;
-    }
-
-    if (data) {
-      try {
-        dc = pc.createDataChannel('_SKYWAYTEST');
-      } catch (e) {
-        data = false;
-      }
-    }
-
-    if (data) {
-      // Binary test
-      try {
-        dc.binaryType = 'blob';
-        binaryBlob = true;
-      } catch (e) {
-        // binaryBlob is already false
-      }
-    }
-
-    if (pc) {
-      pc.close();
-    }
-
-    return {
-      binaryBlob: binaryBlob
-    };
-  }
 
   validateId(id) {
     // Allow empty ids

@@ -271,7 +271,7 @@ describe('DataConnection', () => {
 
     it('should send data as a Blob if serialization is binary', () => {
       let stub = sinon.stub(util, 'supports', {
-        get: function() {
+        function() {
           return {binaryBlob: true};
         }
       });
