@@ -116,7 +116,8 @@ class DataConnection extends Connection {
 
   send(data, chunked) {
     if (!this.open) {
-      this.emit(DataConnection.EVENTS.error.name, new Error('Connection is not open. You should listen for the `open` event before sending messages.'));
+      this.emit(DataConnection.EVENTS.error.name, new Error('Connection is not open.' +
+        ' You should listen for the `open` event before sending messages.'));
     }
 
     if (this.serialization === 'json') {
