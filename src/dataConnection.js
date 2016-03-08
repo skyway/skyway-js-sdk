@@ -148,7 +148,7 @@ class DataConnection extends Connection {
 
   // Called from send()
   //
-  // If we are buffering, add message to buffer
+  // If we are buffering, message is added to the buffer
   // Otherwise try sending, and start buffering if it fails
   _bufferedSend(msg) {
     if (this._isBuffering || !this._trySend(msg)) {
@@ -158,8 +158,8 @@ class DataConnection extends Connection {
 
   // Called from _bufferedSend()
   //
-  // Try sending on the data channel, return trus if successful
-  // Else start buffering and set a timeout callback to _tryBuffer()
+  // Try sending data over the dataChannel
+  // If an error occurs, wait and try sending using a buffer
   _trySend(msg) {
     try {
       this._dc.send(msg);
@@ -168,7 +168,7 @@ class DataConnection extends Connection {
 
       setTimeout(() => {
         // Try again
-        this._isBuffering = true;
+        this._isBuffering = false;
         this._tryBuffer();
       }, 100);
       return false;
@@ -178,8 +178,7 @@ class DataConnection extends Connection {
 
   // Called from _trySend() when buffering
   //
-  // If buffer is empty, return immediately
-  // Else try calling _trySend() and recursively execute if successful
+  // Recursively tries to send all messages in the buffer, until the buffer is empty
   _tryBuffer() {
     if (this._buffer.length === 0) {
       return;
