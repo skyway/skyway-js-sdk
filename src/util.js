@@ -50,7 +50,7 @@ class Util {
       }]
     };
 
-    supports: (function() {
+    this.supports = (function() {
       if (typeof RTCPeerConnection === 'undefined') {
         return {};
       }
@@ -91,7 +91,7 @@ class Util {
       return {
         binaryBlob: binaryBlob
       };
-    }());
+    })();
 
     this._logLevel = LogLevel.NONE.ordinal;
   }
@@ -146,7 +146,6 @@ class Util {
       console.log.apply(console, copy);
     }
   }
-
 
   validateId(id) {
     // Allow empty ids

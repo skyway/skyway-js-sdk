@@ -270,18 +270,14 @@ describe('DataConnection', () => {
     });
 
     it('should send data as a Blob if serialization is binary', () => {
-      let stub = sinon.stub(util, 'supports', {
-        function() {
-          return {binaryBlob: true};
-        }
-      });
+      const message = 'foobar';
 
+      util.supports = {binaryBlob: true};
       DataConnection = proxyquire(
         '../src/dataConnection',
         {'./connection': Connection,
          './util':       util}
       );
-      const message = 'foobar';
 
       const dc = new DataConnection({});
       dc._negotiator.emit('dcReady', {});
@@ -294,7 +290,6 @@ describe('DataConnection', () => {
       assert(spy.calledOnce);
       assert(spy.args[0][0] instanceof Blob);
 
-      stub.restore();
       spy.reset();
     });
 
