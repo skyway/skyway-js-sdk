@@ -1,13 +1,15 @@
 'use strict';
 
-const adapter = require('webrtc-adapter-test');
+const EventEmitter = require('events');
+const adapter      = require('webrtc-adapter-test');
 
 const RTCPeerConnection     = adapter.RTCPeerConnection;
+const RTCIceCandidate       = adapter.RTCIceCandidate;
+const RTCSessionDescription = adapter.RTCSessionDescription;
 
 const util = require('./util');
 
-const EventEmitter = require('events');
-
+// Negotiator ENUM setup. 'enumify' is only used with `import`, not 'require'.
 import {Enum} from 'enumify';
 class NegotiatorEvents extends Enum {}
 NegotiatorEvents.initEnum([
@@ -15,14 +17,11 @@ NegotiatorEvents.initEnum([
   'dcReady',
   'offerCreated',
   'answerCreated',
-  'iceCandidate'
+  'iceCandidate',
+  'error'
 ]);
 
 class Negotiator extends EventEmitter {
-  constructor() {
-    super();
-  }
-
   startConnection(options, pcConfig) {
     this._pc = this._createPeerConnection(options.type, pcConfig);
     this._setupPCListeners(this._pc);
@@ -57,19 +56,58 @@ class Negotiator extends EventEmitter {
   cleanup() {
   }
 
-  handleOffer(message) {
-    // TODO: Remove lint bypass
-    console.log(message);
+  handleOffer(offerSdp) {
+    this._setRemoteDescription(offerSdp)
+      .then(() => {
+        return this._makeAnswerSdp();
+      }).then(answer => {
+        this.emit(Negotiator.EVENTS.answerCreated.name, answer);
+      });
   }
 
-  handleAnswer(message) {
-    // TODO: Remove lint bypass
-    console.log(message);
+  handleAnswer(answerSdp) {
+    this._setRemoteDescription(answerSdp);
   }
 
-  handleCandidate(message) {
-    // TODO: Remove lint bypass
-    console.log(message);
+  handleCandidate(candidate) {
+    this._pc.addIceCandidate(new RTCIceCandidate(candidate));
+    util.log('Added ICE candidate');
+  }
+
+  _setRemoteDescription(sdp) {
+    util.log(`Setting remote description ${sdp}`);
+    return this._pc.setRemoteDescription(new RTCSessionDescription(sdp))
+      .then(() => {
+        util.log('Set remoteDescription:', sdp.type);
+      }).catch(err => {
+        this.emitError('webrtc', err);
+        util.log('Failed to setRemoteDescription: ', err);
+      });
+  }
+
+  _makeAnswerSdp() {
+    return this._pc.createAnswer()
+      .then(answer => {
+        util.log('Created answer.');
+
+        return this._pc.setLocalDescription(answer);
+      }, err => {
+        this.emitError('webrtc', err);
+        util.log('Failed to createAnswer, ', err);
+      }).catch(err => {
+        this.emitError('webrtc', err);
+        util.log('Failed to setLocalDescription, ', err);
+      });
+  }
+
+  emitError(type, err) {
+    util.error('Error:', err);
+    if (typeof err === 'string') {
+      err = new Error(err);
+    }
+
+    err.type = type;
+    this.emit(Negotiator.EVENTS.error.name, err);
   }
 
   static get EVENTS() {
