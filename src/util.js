@@ -115,7 +115,7 @@ class Util {
     let pc;
     let dc;
     try {
-      pc = new RTCPeerConnection(this.defaultConfig, {optional: [{RtpDataChannels: true}]});
+      pc = new RTCPeerConnection(this.defaultConfig, {});
     } catch (e) {
       data = false;
     }

@@ -145,13 +145,20 @@ class DataConnection extends Connection {
     }
   }
 
+  // Called from send()
+  //
+  // If we are buffering, add message to buffer
+  // Otherwise try sending, and start buffering if it fails
   _bufferedSend(msg) {
     if (this._isBuffering || !this._trySend(msg)) {
       this._buffer.push(msg);
     }
   }
 
-  // returns true if the send succeeds
+  // Called from _bufferedSend()
+  //
+  // Try sending on the data channel, return trus if successful
+  // Else start buffering and set a timeout callback to _tryBuffer()
   _trySend(msg) {
     try {
       this._dc.send(msg);
@@ -168,7 +175,10 @@ class DataConnection extends Connection {
     return true;
   }
 
-  // Try to send the first message in the buffer
+  // Called from _trySend() when buffering
+  //
+  // If buffer is empty, return immediately
+  // Else try calling _trySend() and recursively execute if successful
   _tryBuffer() {
     if (this._buffer.length === 0) {
       return;
@@ -182,6 +192,9 @@ class DataConnection extends Connection {
     }
   }
 
+  // Called from send()
+  //
+  // Chunks a blob, then re-calls send() with each chunk in turn
   _sendChunks(blob) {
     const blobs = util.chunk(blob);
     for (let i = 0; i < blobs.length; i++) {
