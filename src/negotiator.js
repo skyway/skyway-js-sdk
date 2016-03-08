@@ -53,7 +53,15 @@ class Negotiator extends EventEmitter {
   _setupPCListeners() {
   }
 
-  cleanup() {
+  cleanup(connection) {
+    util.log('Cleaning up PeerConnection to ' + connection.peer);
+
+    // Double exclamation point ensures a boolean type
+    if (!!_pc && (_pc.readyState !== 'closed' || _pc.signalingState !== 'closed')) {
+      _pc.close();
+      // Do we need to do this? I feel this method doesn't need a parameter anymore
+      connection._pcAvailable = false;
+    }
   }
 
   handleOffer(offerSdp) {
