@@ -72,7 +72,7 @@ class Connection extends EventEmitter {
       return;
     }
     this.open = false;
-    this._negotiator.cleanup(this);
+    this._negotiator.cleanup();
     this.emit('close');
   }
 }

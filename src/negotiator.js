@@ -54,6 +54,12 @@ class Negotiator extends EventEmitter {
   }
 
   cleanup() {
+    util.log('Cleaning up PeerConnection');
+
+    if (this._pc && (this._pc.readyState !== 'closed' || this._pc.signalingState !== 'closed')) {
+      this._pc.close();
+      this._pc = null;
+    }
   }
 
   handleOffer(offerSdp) {

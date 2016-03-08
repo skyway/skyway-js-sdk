@@ -209,7 +209,6 @@ describe('MediaConnection', () => {
       assert.equal(mc.open, false);
 
       assert(cleanupSpy.called);
-      assert(cleanupSpy.calledWith(mc));
     });
   });
 });

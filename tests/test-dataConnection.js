@@ -296,7 +296,6 @@ describe('DataConnection', () => {
       assert.equal(dc.open, false);
 
       assert(cleanupSpy.called);
-      assert(cleanupSpy.calledWith(dc));
     });
   });
 });

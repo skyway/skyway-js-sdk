@@ -276,5 +276,16 @@ describe('Negotiator', () => {
           });
       });
     });
+
+    describe('cleanup', () => {
+      it('should close and remove PC upon cleanup()', () => {
+        const negotiator = new Negotiator();
+        negotiator._pc = negotiator._createPeerConnection('data', {});
+
+        assert(negotiator._pc);
+        negotiator.cleanup();
+        assert.equal(negotiator._pc, null);
+      });
+    });
   });
 });
