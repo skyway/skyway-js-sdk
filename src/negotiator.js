@@ -53,15 +53,12 @@ class Negotiator extends EventEmitter {
   _setupPCListeners() {
   }
 
-  cleanup(connection) {
+  cleanup() {
     util.log('Cleaning up PeerConnection');
 
     if (this._pc && (this._pc.readyState !== 'closed' || this._pc.signalingState !== 'closed')) {
       this._pc.close();
       this._pc = null;
-
-      // Do we need to do this? I feel this method doesn't need a parameter anymore
-      connection._pcAvailable = false;
     }
   }
 
