@@ -28,7 +28,6 @@ class Util {
     this.CLOUD_PORT = 443;
     this.TURN_HOST = 'turn.skyway.io';
     this.TURN_PORT = 443;
-    this.browser = undefined;
     this.debug = false;
     this.pack = BinaryPack.pack;
     this.unpack = BinaryPack.unpack;
@@ -49,6 +48,20 @@ class Util {
         url:  'stun:stun.skyway.io:3478'
       }]
     };
+
+    // Returns the current browser.
+    this.browser = (function() {
+      if (window.mozRTCPeerConnection) {
+        return 'Firefox';
+      }
+      if (window.webkitRTCPeerConnection) {
+        return 'Chrome';
+      }
+      if (window.RTCPeerConnection) {
+        return 'Supported';
+      }
+      return 'Unsupported';
+    })();
 
     this.supports = (function() {
       if (typeof RTCPeerConnection === 'undefined') {

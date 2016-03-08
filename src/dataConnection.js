@@ -25,7 +25,7 @@ class DataConnection extends Connection {
     this._buffer = [];
     this._isBuffering = false;
 
-    // For storing large data.
+    // For storing chunks of large messages
     this._chunkedData = {};
 
     if (this.options._payload) {
