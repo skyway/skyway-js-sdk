@@ -8,7 +8,8 @@ import {Enum} from 'enumify';
 class DCEvents extends Enum {}
 DCEvents.initEnum([
   'open',
-  'data'
+  'data',
+  'error'
 ]);
 
 class DataConnection extends Connection {
@@ -22,10 +23,9 @@ class DataConnection extends Connection {
 
     // Data channel buffering.
     this._buffer = [];
-    this._buffering = false;
-    this.bufferSize = 0;
+    this._isBuffering = false;
 
-    // For storing large data.
+    // For storing chunks of large messages
     this._chunkedData = {};
 
     if (this.options._payload) {
@@ -121,8 +121,92 @@ class DataConnection extends Connection {
   }
 
   send(data, chunked) {
-    // TODO: Remove lint bypass
-    console.log(data, chunked);
+    if (!this.open) {
+      this.emit(DataConnection.EVENTS.error.name, new Error('Connection is not open.' +
+        ' You should listen for the `open` event before sending messages.'));
+    }
+
+    if (this.serialization === 'json') {
+      this._bufferedSend(JSON.stringify(data));
+    } else if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
+      const blob = util.pack(data);
+
+      // For Chrome-Firefox interoperability, we need to make Firefox "chunk" the data it sends out
+      const needsChunking = util.chunkedBrowsers[this._peerBrowser] || util.chunkedBrowsers[util.browser];
+      if (needsChunking && !chunked && blob.size > util.chunkedMTU) {
+        this._sendChunks(blob);
+        return;
+      }
+
+      if (util.supports && !util.supports.binaryBlob) {
+        // We only do this if we really need to (e.g. blobs are not supported),
+        // because this conversion is costly
+        util.blobToArrayBuffer(blob, arrayBuffer => {
+          this._bufferedSend(arrayBuffer);
+        });
+      } else {
+        this._bufferedSend(blob);
+      }
+    } else {
+      this._bufferedSend(data);
+    }
+  }
+
+  // Called from send()
+  //
+  // If we are buffering, message is added to the buffer
+  // Otherwise try sending, and start buffering if it fails
+  _bufferedSend(msg) {
+    if (this._isBuffering || !this._trySend(msg)) {
+      this._buffer.push(msg);
+    }
+  }
+
+  // Called from _bufferedSend()
+  //
+  // Try sending data over the dataChannel
+  // If an error occurs, wait and try sending using a buffer
+  _trySend(msg) {
+    try {
+      this._dc.send(msg);
+    } catch (error) {
+      this._isBuffering = true;
+
+      setTimeout(() => {
+        // Try again
+        this._isBuffering = false;
+        this._tryBuffer();
+      }, 100);
+      return false;
+    }
+    return true;
+  }
+
+  // Called from _trySend() when buffering
+  //
+  // Recursively tries to send all messages in the buffer, until the buffer is empty
+  _tryBuffer() {
+    if (this._buffer.length === 0) {
+      return;
+    }
+
+    const msg = this._buffer[0];
+
+    if (this._trySend(msg)) {
+      this._buffer.shift();
+      this._tryBuffer();
+    }
+  }
+
+  // Called from send()
+  //
+  // Chunks a blob, then re-calls send() with each chunk in turn
+  _sendChunks(blob) {
+    const blobs = util.chunk(blob);
+    for (let i = 0; i < blobs.length; i++) {
+      let blob = blobs[i];
+      this.send(blob, true);
+    }
   }
 
   static get EVENTS() {
