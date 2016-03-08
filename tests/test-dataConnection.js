@@ -12,12 +12,16 @@ describe('DataConnection', () => {
   let negotiatorStub;
   let startSpy;
   let cleanupSpy;
+  let answerSpy;
+  let candidateSpy;
 
   beforeEach(() => {
     // Negotiator stub and spies
     negotiatorStub = sinon.stub();
     startSpy = sinon.spy();
     cleanupSpy = sinon.spy();
+    answerSpy = sinon.spy();
+    candidateSpy = sinon.spy();
 
     negotiatorStub.returns({
       on: function(event, callback) {
@@ -27,7 +31,9 @@ describe('DataConnection', () => {
         this[event](arg);
       },
       startConnection: startSpy,
-      cleanup:         cleanupSpy
+      cleanup:         cleanupSpy,
+      handleAnswer:    answerSpy,
+      handleCandidate: candidateSpy
     });
 
     Connection = proxyquire(
@@ -43,6 +49,8 @@ describe('DataConnection', () => {
   afterEach(() => {
     startSpy.reset();
     cleanupSpy.reset();
+    answerSpy.reset();
+    candidateSpy.reset();
   });
 
   describe('Constructor', () => {
@@ -51,6 +59,11 @@ describe('DataConnection', () => {
 
       assert(dc);
       assert(startSpy.calledOnce);
+    });
+
+    it('should store any messages passed in when created', () => {
+      const dc = new DataConnection({_queuedMessages: ['message']});
+      assert.deepEqual(dc.options._queuedMessages, ['message']);
     });
   });
 
@@ -65,6 +78,52 @@ describe('DataConnection', () => {
       assert(dc._dc.onopen);
       assert(dc._dc.onmessage);
       assert(dc._dc.onclose);
+    });
+
+    it('should process any queued messages after PeerConnection object is created', () => {
+      const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message'}];
+
+      let spy = sinon.spy();
+      sinon.stub(DataConnection.prototype, 'handleAnswer', spy);
+      const dc = new DataConnection({_queuedMessages: messages});
+
+      assert.deepEqual(dc._queuedMessages, []);
+      assert.equal(spy.calledOnce, true);
+
+      spy.reset();
+    });
+
+    it('should correctly handle ALL of multiple queued messages', () => {
+      const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message1'},
+                        {type: util.MESSAGE_TYPES.CANDIDATE.name, payload: 'message2'}];
+
+      let spy1 = sinon.spy();
+      let spy2 = sinon.spy();
+      sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
+      sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
+
+      const dc = new DataConnection({_queuedMessages: messages});
+      // dc._pcAvailable = true;
+
+      assert.deepEqual(dc._queuedMessages, []);
+      assert.equal(spy1.calledOnce, true);
+      assert.equal(spy2.calledOnce, true);
+    });
+
+    it('should not process any invalid queued messages', () => {
+      const messages = [{type: 'WRONG', payload: 'message'}];
+
+      let spy1 = sinon.spy();
+      let spy2 = sinon.spy();
+      sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
+      sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
+
+      const dc = new DataConnection({_queuedMessages: messages});
+      // dc._pcAvailable = true;
+
+      assert.deepEqual(dc._queuedMessages, []);
+      assert.equal(spy1.called, false);
+      assert.equal(spy2.called, false);
     });
 
     it('should open the DataConnection and emit upon _dc.onopen()', () => {
@@ -237,7 +296,6 @@ describe('DataConnection', () => {
       assert.equal(dc.open, false);
 
       assert(cleanupSpy.called);
-      assert(cleanupSpy.calledWith(dc));
     });
   });
 });

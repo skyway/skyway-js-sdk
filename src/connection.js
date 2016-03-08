@@ -49,12 +49,30 @@ class Connection extends EventEmitter {
     }
   }
 
+  _handleQueuedMessages() {
+    // Process messages queued because PeerConnection not set up.
+    for (let message of this._queuedMessages) {
+      switch (message.type) {
+        case util.MESSAGE_TYPES.ANSWER.name:
+          this.handleAnswer(message.payload);
+          break;
+        case util.MESSAGE_TYPES.CANDIDATE.name:
+          this.handleCandidate(message.payload);
+          break;
+        default:
+          util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
+          break;
+      }
+    }
+    this._queuedMessages = [];
+  }
+
   close() {
     if (!this.open) {
       return;
     }
     this.open = false;
-    this._negotiator.cleanup(this);
+    this._negotiator.cleanup();
     this.emit('close');
   }
 }
