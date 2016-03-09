@@ -55,6 +55,13 @@ describe('MediaConnection', () => {
       assert(startSpy.calledOnce);
     });
 
+    it('should call set mc.remoteId to the first argument', () => {
+      const id = 'id';
+      const mc = new MediaConnection(id, {_stream: {}});
+
+      assert.equal(id, mc.remoteId);
+    });
+
     it('should store any messages passed in when created', () => {
       const mc = new MediaConnection('id',
         {_stream: {}, _queuedMessages: ['message']}

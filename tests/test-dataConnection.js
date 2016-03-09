@@ -61,6 +61,13 @@ describe('DataConnection', () => {
       assert(startSpy.calledOnce);
     });
 
+    it('should call set dc.remoteId to the first argument', () => {
+      const id = 'id';
+      const dc = new DataConnection(id, {});
+
+      assert.equal(id, dc.remoteId);
+    });
+
     it('should store any messages passed in when created', () => {
       const dc = new DataConnection('id', {_queuedMessages: ['message']});
       assert.deepEqual(dc.options._queuedMessages, ['message']);
