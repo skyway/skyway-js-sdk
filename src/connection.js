@@ -46,18 +46,18 @@ class Connection extends EventEmitter {
 
   handleAnswer(answer) {
     if (this._pcAvailable) {
-      this._negotiator.handleAnswer(answer);
+      this._negotiator.handleAnswer(answer.answer);
       this.open = true;
     } else {
       this._queuedMessages.push({type: util.MESSAGE_TYPES.ANSWER.name, payload: answer});
     }
   }
 
-  handleCandidate(candidate) {
+  handleCandidate(candidateMessage) {
     if (this._pcAvailable) {
-      this._negotiator.handleCandidate(candidate);
+      this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.CANDIDATE.name, payload: candidate});
+      this._queuedMessages.push({type: util.MESSAGE_TYPES.CANDIDATE.name, payload: candidateMessage});
     }
   }
 
