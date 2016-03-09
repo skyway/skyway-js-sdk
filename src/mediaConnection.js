@@ -1,6 +1,7 @@
 'use strict';
 
 const Connection = require('./connection');
+const Negotiator = require('./negotiator');
 const util = require('./util');
 
 class MediaConnection extends Connection {
@@ -47,8 +48,12 @@ class MediaConnection extends Connection {
 
     this.localStream = stream;
     this._negotiator.startConnection(
-      this,
-      this.options._payload
+      {
+        type:       'media',
+        _stream:    this.localStream,
+        originator: false,
+        offer:      this.options._payload.offer
+      }
     );
     this._pcAvailable = true;
 
