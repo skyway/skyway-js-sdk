@@ -91,37 +91,37 @@ class Connection extends EventEmitter {
   _setupNegotiatorMessageHandlers() {
     this._negotiator.on(Negotiator.EVENTS.answerCreated.name, answer => {
       const connectionAnswer = {
-        answer: answer,
-        dst: this.remoteId,
-        connectionId: this.id,
+        answer:         answer,
+        dst:            this.remoteId,
+        connectionId:   this.id,
         connectionType: this.type
       };
-      this.emit(Connection.EVENTS.answer.name, connectionAnswer)
+      this.emit(Connection.EVENTS.answer.name, connectionAnswer);
     });
 
     this._negotiator.on(Negotiator.EVENTS.offerCreated.name, offer => {
       const connectionOffer = {
-        offer: offer,
-        dst: this.remoteId,
-        connectionId: this.id,
+        offer:          offer,
+        dst:            this.remoteId,
+        connectionId:   this.id,
         connectionType: this.type,
-        label: this.label,
-        metadata: this.metadata
+        label:          this.label,
+        metadata:       this.metadata
       };
       if (this.serialization) {
         connectionOffer.serialization = this.serialization;
       }
-      this.emit(Connection.EVENTS.offer.name, connectionOffer)
+      this.emit(Connection.EVENTS.offer.name, connectionOffer);
     });
 
     this._negotiator.on(Negotiator.EVENTS.iceCandidate.name, candidate => {
       const connectionCandidate = {
-        candidate: candidate,
-        dst: this.remoteId,
-        connectionId: this.id,
+        candidate:      candidate,
+        dst:            this.remoteId,
+        connectionId:   this.id,
         connectionType: this.type
       };
-      this.emit(Connection.EVENTS.candidate.name, connectionCandidate)
+      this.emit(Connection.EVENTS.candidate.name, connectionCandidate);
     });
   }
 

@@ -68,14 +68,12 @@ describe('MediaConnection', () => {
       assert.deepEqual(mc.options._queuedMessages, ['message']);
     });
 
-
     it('should set properties from arguments properly', () => {
       const id = 'id';
-      const label = 'label';
       const metadata = 'meta';
       const stream = Symbol();
       const options = {
-        _stream: stream,
+        _stream:  stream,
         metadata: metadata
       };
 

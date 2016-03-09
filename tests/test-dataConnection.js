@@ -75,10 +75,10 @@ describe('DataConnection', () => {
       const peerBrowser = 'browser';
       const metadata = 'meta';
       const options = {
-        label: label,
+        label:         label,
         serialization: serialization,
-        metadata: metadata,
-        _payload: {browser: peerBrowser}
+        metadata:      metadata,
+        _payload:      {browser: peerBrowser}
       };
 
       const dc = new DataConnection(id, options);
