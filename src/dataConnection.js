@@ -13,8 +13,8 @@ DCEvents.initEnum([
 ]);
 
 class DataConnection extends Connection {
-  constructor(options) {
-    super(options);
+  constructor(remoteId, options) {
+    super(remoteId, options);
 
     this._idPrefix = 'dc_';
     this.type = 'data';

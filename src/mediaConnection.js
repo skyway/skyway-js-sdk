@@ -4,8 +4,8 @@ const Connection = require('./connection');
 const util = require('./util');
 
 class MediaConnection extends Connection {
-  constructor(options) {
-    super(options);
+  constructor(remoteId, options) {
+    super(remoteId, options);
 
     this._idPrefix = 'mc_';
     this.type = 'media';

@@ -529,11 +529,11 @@ describe('Peer', () => {
 
     it('should call handleAnswer on ANSWER if connection exists', () => {
       // The connection type doesn't matter so just test one
-      const mediaConnection = new MediaConnection({});
+      const mediaConnection = new MediaConnection('remoteId', {});
       const srcId  = 'srcId';
       const mediaAnswerMessage = {
         src:            srcId,
-        dst:            'id',
+        dst:            'remoteId',
         answer:         {},
         connectionId:   mediaConnection.id,
         connectionType: 'media'
@@ -550,11 +550,11 @@ describe('Peer', () => {
 
     it('should call handleCandidate on CANDIDATE if connection exists', () => {
       // The connection type doesn't matter so just test one
-      const dataConnection = new DataConnection({});
+      const dataConnection = new DataConnection('remoteId', {});
       const srcId  = 'srcId';
       const dataCandidateMessage = {
         src:            srcId,
-        dst:            'id',
+        dst:            'remoteId',
         candidate:      {},
         connectionId:   dataConnection.id,
         connectionType: 'data'

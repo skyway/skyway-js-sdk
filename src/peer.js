@@ -113,7 +113,7 @@ class Peer extends EventEmitter {
 
     options = options || {};
     options._stream = stream;
-    const mc = new MediaConnection(options);
+    const mc = new MediaConnection(peerId, options);
     util.log('MediaConnection created in call method');
     this._addConnection(peerId, mc);
     return mc;
@@ -275,25 +275,31 @@ class Peer extends EventEmitter {
       }
 
       if (offerMessage.type === 'media') {
-        connection = new MediaConnection({
-          connectionId:    connectionId,
-          payload:         offerMessage,
-          metadata:        offerMessage.metadata,
-          _queuedMessages: this._queuedMessages[connectionId]
-        });
+        connection = new MediaConnection(
+          offerMessage.src,
+          {
+            connectionId:    connectionId,
+            payload:         offerMessage,
+            metadata:        offerMessage.metadata,
+            _queuedMessages: this._queuedMessages[connectionId]
+          }
+        );
 
         util.log('MediaConnection created in OFFER');
         this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.call.name, connection);
       } else if (offerMessage.type === 'data') {
-        connection = new DataConnection({
-          connectionId:    connectionId,
-          _payload:        offerMessage,
-          metadata:        offerMessage.metadata,
-          label:           offerMessage.label,
-          serialization:   offerMessage.serialization,
-          _queuedMessages: this._queuedMessages[connectionId]
-        });
+        connection = new DataConnection(
+          offerMessage.src,
+          {
+            connectionId:    connectionId,
+            _payload:        offerMessage,
+            metadata:        offerMessage.metadata,
+            label:           offerMessage.label,
+            serialization:   offerMessage.serialization,
+            _queuedMessages: this._queuedMessages[connectionId]
+          }
+        );
 
         util.log('DataConnection created in OFFER');
         this._addConnection(offerMessage.src, connection);
