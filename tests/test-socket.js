@@ -196,7 +196,7 @@ describe('Socket', () => {
         assert(spy.calledWith(type.name, message));
       }
 
-      assert.equal(spy.callCount, util.MESSAGE_TYPES.enumValues.length - 1)
+      assert.equal(spy.callCount, util.MESSAGE_TYPES.enumValues.length - 1);
     });
   });
 });
