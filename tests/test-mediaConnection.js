@@ -24,6 +24,12 @@ describe('MediaConnection', () => {
     candidateSpy = sinon.spy();
 
     stub.returns({
+      on: function(event, callback) {
+        this[event] = callback;
+      },
+      emit: function(event, arg) {
+        this[event](arg);
+      },
       startConnection: startSpy,
       cleanup:         cleanupSpy,
       handleAnswer:    answerSpy,

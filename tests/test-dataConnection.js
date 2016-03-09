@@ -3,7 +3,9 @@
 const assert     = require('power-assert');
 const proxyquire = require('proxyquire');
 const sinon      = require('sinon');
+
 const util       = require('../src/util');
+const Negotiator = require('../src/negotiator');
 
 let Connection;
 let DataConnection;
@@ -61,16 +63,32 @@ describe('DataConnection', () => {
       assert(startSpy.calledOnce);
     });
 
-    it('should call set dc.remoteId to the first argument', () => {
-      const id = 'id';
-      const dc = new DataConnection(id, {});
-
-      assert.equal(id, dc.remoteId);
-    });
-
     it('should store any messages passed in when created', () => {
       const dc = new DataConnection('id', {_queuedMessages: ['message']});
       assert.deepEqual(dc.options._queuedMessages, ['message']);
+    });
+
+    it('should set properties from arguments properly', () => {
+      const id = 'id';
+      const label = 'label';
+      const serialization = 'binary';
+      const peerBrowser = 'browser';
+      const metadata = 'meta';
+      const options = {
+        label: label,
+        serialization: serialization,
+        metadata: metadata,
+        _payload: {browser: peerBrowser}
+      };
+
+      const dc = new DataConnection(id, options);
+      assert.equal(dc.type, 'data');
+      assert.equal(dc.remoteId, id);
+      assert.equal(dc.label, label);
+      assert.equal(dc.serialization, serialization);
+      assert.equal(dc.metadata, metadata);
+      assert.equal(dc._peerBrowser, peerBrowser);
+      assert.equal(dc.options, options);
     });
   });
 
@@ -176,6 +194,58 @@ describe('DataConnection', () => {
       assert(spy.calledOnce);
 
       spy.reset();
+    });
+  });
+
+  describe('_setupNegotiatorMessageHandlers', () => {
+    let dc;
+    beforeEach(() => {
+      dc = new DataConnection('id', {});
+    });
+
+    it('should emit \'candidate\' on negotiator \'iceCandidate\' event', done => {
+      const candidate = Symbol();
+      dc.on(Connection.EVENTS.candidate.name, connectionCandidate => {
+        assert(connectionCandidate);
+        assert.equal(connectionCandidate.candidate, candidate);
+        assert.equal(connectionCandidate.dst, dc.remoteId);
+        assert.equal(connectionCandidate.connectionId, dc.id);
+        assert.equal(connectionCandidate.connectionType, dc.type);
+        done();
+      });
+
+      dc._negotiator.emit(Negotiator.EVENTS.iceCandidate.name, candidate);
+    });
+
+    it('should emit \'answer\' on negotiator \'answerCreated\' event', done => {
+      const answer = Symbol();
+      dc.on(Connection.EVENTS.answer.name, connectionCandidate => {
+        assert(connectionCandidate);
+        assert.equal(connectionCandidate.answer, answer);
+        assert.equal(connectionCandidate.dst, dc.remoteId);
+        assert.equal(connectionCandidate.connectionId, dc.id);
+        assert.equal(connectionCandidate.connectionType, dc.type);
+        done();
+      });
+
+      dc._negotiator.emit(Negotiator.EVENTS.answerCreated.name, answer);
+    });
+
+    it('should emit \'offer\' on negotiator \'offerCreated\' event', done => {
+      const offer = Symbol();
+      dc.on(Connection.EVENTS.offer.name, connectionOffer => {
+        assert(connectionOffer);
+        assert.equal(connectionOffer.offer, offer);
+        assert.equal(connectionOffer.dst, dc.remoteId);
+        assert.equal(connectionOffer.connectionId, dc.id);
+        assert.equal(connectionOffer.connectionType, dc.type);
+        assert.equal(connectionOffer.serialization, dc.serialization);
+        assert.equal(connectionOffer.label, dc.label);
+        assert.equal(connectionOffer.metadata, dc.metadata);
+        done();
+      });
+
+      dc._negotiator.emit(Negotiator.EVENTS.offerCreated.name, offer);
     });
   });
 
