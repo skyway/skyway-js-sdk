@@ -105,11 +105,13 @@ class Connection extends EventEmitter {
         dst:            this.remoteId,
         connectionId:   this.id,
         connectionType: this.type,
-        label:          this.label,
         metadata:       this.metadata
       };
       if (this.serialization) {
         connectionOffer.serialization = this.serialization;
+      }
+      if (this.label) {
+        connectionOffer.label = this.label;
       }
       this.emit(Connection.EVENTS.offer.name, connectionOffer);
     });
