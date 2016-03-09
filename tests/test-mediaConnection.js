@@ -1,10 +1,11 @@
 'use strict';
 
-const util       = require('../src/util');
-
 const assert     = require('power-assert');
 const proxyquire = require('proxyquire');
 const sinon      = require('sinon');
+
+const util       = require('../src/util');
+const Negotiator = require('../src/negotiator');
 
 let Connection;
 let MediaConnection;
@@ -60,19 +61,80 @@ describe('MediaConnection', () => {
       assert(mc);
       assert(startSpy.calledOnce);
     });
-
-    it('should call set mc.remoteId to the first argument', () => {
-      const id = 'id';
-      const mc = new MediaConnection(id, {_stream: {}});
-
-      assert.equal(id, mc.remoteId);
-    });
-
     it('should store any messages passed in when created', () => {
       const mc = new MediaConnection('id',
         {_stream: {}, _queuedMessages: ['message']}
       );
       assert.deepEqual(mc.options._queuedMessages, ['message']);
+    });
+
+
+    it('should set properties from arguments properly', () => {
+      const id = 'id';
+      const label = 'label';
+      const metadata = 'meta';
+      const stream = Symbol();
+      const options = {
+        _stream: stream,
+        metadata: metadata
+      };
+
+      const mc = new MediaConnection(id, options);
+      assert.equal(mc.type, 'media');
+      assert.equal(mc.remoteId, id);
+      assert.equal(mc.localStream, stream);
+      assert.equal(mc.metadata, metadata);
+      assert.equal(mc.options, options);
+    });
+  });
+
+  describe('_setupNegotiatorMessageHandlers', () => {
+    let mc;
+    beforeEach(() => {
+      mc = new MediaConnection('id', {});
+    });
+
+    it('should emit \'candidate\' on negotiator \'iceCandidate\' event', done => {
+      const candidate = Symbol();
+      mc.on(Connection.EVENTS.candidate.name, connectionCandidate => {
+        assert(connectionCandidate);
+        assert.equal(connectionCandidate.candidate, candidate);
+        assert.equal(connectionCandidate.dst, mc.remoteId);
+        assert.equal(connectionCandidate.connectionId, mc.id);
+        assert.equal(connectionCandidate.connectionType, mc.type);
+        done();
+      });
+
+      mc._negotiator.emit(Negotiator.EVENTS.iceCandidate.name, candidate);
+    });
+
+    it('should emit \'answer\' on negotiator \'answerCreated\' event', done => {
+      const answer = Symbol();
+      mc.on(Connection.EVENTS.answer.name, connectionCandidate => {
+        assert(connectionCandidate);
+        assert.equal(connectionCandidate.answer, answer);
+        assert.equal(connectionCandidate.dst, mc.remoteId);
+        assert.equal(connectionCandidate.connectionId, mc.id);
+        assert.equal(connectionCandidate.connectionType, mc.type);
+        done();
+      });
+
+      mc._negotiator.emit(Negotiator.EVENTS.answerCreated.name, answer);
+    });
+
+    it('should emit \'offer\' on negotiator \'offerCreated\' event', done => {
+      const offer = Symbol();
+      mc.on(Connection.EVENTS.offer.name, connectionOffer => {
+        assert(connectionOffer);
+        assert.equal(connectionOffer.offer, offer);
+        assert.equal(connectionOffer.dst, mc.remoteId);
+        assert.equal(connectionOffer.connectionId, mc.id);
+        assert.equal(connectionOffer.connectionType, mc.type);
+        assert.equal(connectionOffer.metadata, mc.metadata);
+        done();
+      });
+
+      mc._negotiator.emit(Negotiator.EVENTS.offerCreated.name, offer);
     });
   });
 
