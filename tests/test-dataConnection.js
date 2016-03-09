@@ -57,19 +57,19 @@ describe('DataConnection', () => {
 
   describe('Constructor', () => {
     it('should call negotiator\'s startConnection method when created', () => {
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
 
       assert(dc);
       assert(startSpy.calledOnce);
     });
 
     it('should store any messages passed in when created', () => {
-      const dc = new DataConnection('id', {_queuedMessages: ['message']});
+      const dc = new DataConnection('remoteId', {_queuedMessages: ['message']});
       assert.deepEqual(dc.options._queuedMessages, ['message']);
     });
 
     it('should set properties from arguments properly', () => {
-      const id = 'id';
+      const id = 'remoteId';
       const label = 'label';
       const serialization = 'binary';
       const peerBrowser = 'browser';
@@ -96,7 +96,7 @@ describe('DataConnection', () => {
     it('should appropriately set and configure dc upon intialization', () => {
       const dcObj = {test: 'foobar'};
 
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', dcObj);
 
       assert(dc._dc === dcObj);
@@ -110,7 +110,7 @@ describe('DataConnection', () => {
 
       let spy = sinon.spy();
       sinon.stub(DataConnection.prototype, 'handleAnswer', spy);
-      const dc = new DataConnection('id', {_queuedMessages: messages});
+      const dc = new DataConnection('remoteId', {_queuedMessages: messages});
 
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy.calledOnce, true);
@@ -127,7 +127,7 @@ describe('DataConnection', () => {
       sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
       sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
 
-      const dc = new DataConnection('id', {_queuedMessages: messages});
+      const dc = new DataConnection('remoteId', {_queuedMessages: messages});
       // dc._pcAvailable = true;
 
       assert.deepEqual(dc._queuedMessages, []);
@@ -143,7 +143,7 @@ describe('DataConnection', () => {
       sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
       sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
 
-      const dc = new DataConnection('id', {_queuedMessages: messages});
+      const dc = new DataConnection('remoteId', {_queuedMessages: messages});
       // dc._pcAvailable = true;
 
       assert.deepEqual(dc._queuedMessages, []);
@@ -154,7 +154,7 @@ describe('DataConnection', () => {
     it('should open the DataConnection and emit upon _dc.onopen()', () => {
       let spy;
 
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
 
       spy = sinon.spy(dc, 'emit');
@@ -171,7 +171,7 @@ describe('DataConnection', () => {
       const message = {data: {constructor: 'foobar'}};
       let spy;
 
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
 
       spy = sinon.spy(dc, '_handleDataMessage');
@@ -186,7 +186,7 @@ describe('DataConnection', () => {
     it('should close the DataConnection upon _dc.onclose()', () => {
       let spy;
 
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
 
       spy = sinon.spy(dc, 'close');
@@ -200,7 +200,7 @@ describe('DataConnection', () => {
   describe('_setupNegotiatorMessageHandlers', () => {
     let dc;
     beforeEach(() => {
-      dc = new DataConnection('id', {});
+      dc = new DataConnection('remoteId', {});
     });
 
     it('should emit \'candidate\' on negotiator \'iceCandidate\' event', done => {
@@ -253,7 +253,7 @@ describe('DataConnection', () => {
     it('should emit a \'data\' event when handling a data message', done => {
       const message = {data: 'foobar'};
 
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -269,7 +269,7 @@ describe('DataConnection', () => {
       const arrayBuffer = util.pack(string);
       const message = {data: arrayBuffer};
 
-      const dc = new DataConnection('id', {serialization: 'binary'});
+      const dc = new DataConnection('remoteId', {serialization: 'binary'});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -286,7 +286,7 @@ describe('DataConnection', () => {
       const unpacked = util.unpack(arrayBuffer);
       const message = {data: string};
 
-      const dc = new DataConnection('id', {serialization: 'binary'});
+      const dc = new DataConnection('remoteId', {serialization: 'binary'});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -303,7 +303,7 @@ describe('DataConnection', () => {
       const blob = new Blob([arrayBuffer], {type: 'text/plain'});
       const message = {data: blob};
 
-      const dc = new DataConnection('id', {serialization: 'binary'});
+      const dc = new DataConnection('remoteId', {serialization: 'binary'});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -319,7 +319,7 @@ describe('DataConnection', () => {
       const json = JSON.stringify(obj);
       const message = {data: json};
 
-      const dc = new DataConnection('id', {serialization: 'json'});
+      const dc = new DataConnection('remoteId', {serialization: 'json'});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -342,7 +342,7 @@ describe('DataConnection', () => {
       console.log('Blob size: ' + blob.size);
       console.log('Chunks: ' + chunks.length);
 
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -360,7 +360,7 @@ describe('DataConnection', () => {
 
   describe('Send', () => {
     it('should emit an error if send() is called while DC is not open', done => {
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       assert.equal(dc.open, false);
 
       dc.on('error', error => {
@@ -374,7 +374,7 @@ describe('DataConnection', () => {
     it('should stringify JSON data and call _bufferedSend', () => {
       const obj = {name: 'foobar'};
 
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
       dc._dc.onopen();
       dc.serialization = 'json';
@@ -391,7 +391,7 @@ describe('DataConnection', () => {
     it('should call _bufferedSend on data with non-regular types of serialization', () => {
       const message = 'foobar';
 
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
       dc._dc.onopen();
       dc.serialization = 'test';
@@ -415,7 +415,7 @@ describe('DataConnection', () => {
          './util':       util}
       );
 
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
       dc._dc.onopen();
       dc.serialization = 'binary';
@@ -439,7 +439,7 @@ describe('DataConnection', () => {
       );
       const message = 'foobar';
 
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
       dc._dc.onopen();
       dc.serialization = 'binary';
@@ -461,7 +461,7 @@ describe('DataConnection', () => {
       it('should push a message onto the buffer if we are buffering', () => {
         const message = 'foobar';
 
-        const dc = new DataConnection('id', {});
+        const dc = new DataConnection('remoteId', {});
         dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
@@ -475,7 +475,7 @@ describe('DataConnection', () => {
       it('should return `true` to _trySend if the DataChannel send succeeds', () => {
         const message = 'foobar';
 
-        const dc = new DataConnection('id', {});
+        const dc = new DataConnection('remoteId', {});
         dc._negotiator.emit('dcReady', {});
         dc._dc.send = () => {
           return true;
@@ -489,7 +489,7 @@ describe('DataConnection', () => {
       it('should return `false` to _trySend and start buffering if the DataChannel send fails', done => {
         const message = 'foobar';
 
-        const dc = new DataConnection('id', {});
+        const dc = new DataConnection('remoteId', {});
         dc._negotiator.emit('dcReady', {});
         dc._dc.send = () => {
           const error = new Error();
@@ -512,7 +512,7 @@ describe('DataConnection', () => {
       });
 
       it('should not try to call _trySend if buffer is empty when _tryBuffer is called', () => {
-        const dc = new DataConnection('id', {});
+        const dc = new DataConnection('remoteId', {});
         dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
@@ -526,7 +526,7 @@ describe('DataConnection', () => {
       it('should try and send the first message in buffer when _tryBuffer is called', () => {
         const message = 'foobar';
 
-        const dc = new DataConnection('id', {});
+        const dc = new DataConnection('remoteId', {});
         dc._negotiator.emit('dcReady', {});
         dc._dc.send = () => {
           return true;
@@ -560,7 +560,7 @@ describe('DataConnection', () => {
            './util':       util}
         );
 
-        const dc = new DataConnection('id', {serialization: 'binary'});
+        const dc = new DataConnection('remoteId', {serialization: 'binary'});
         dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
@@ -584,7 +584,7 @@ describe('DataConnection', () => {
            './util':       util}
         );
 
-        const dc = new DataConnection('id', {serialization: 'binary'});
+        const dc = new DataConnection('remoteId', {serialization: 'binary'});
         dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
@@ -606,7 +606,7 @@ describe('DataConnection', () => {
            './util':       util}
         );
 
-        const dc = new DataConnection('id', {serialization: 'binary'});
+        const dc = new DataConnection('remoteId', {serialization: 'binary'});
         dc._negotiator.emit('dcReady', {});
         dc._dc.onopen();
 
@@ -620,7 +620,7 @@ describe('DataConnection', () => {
 
   describe('Cleanup', () => {
     it('should close the socket and call the negotiator to cleanup on close()', () => {
-      const dc = new DataConnection('id', {});
+      const dc = new DataConnection('remoteId', {});
 
       // Force to be open
       dc.open = true;
