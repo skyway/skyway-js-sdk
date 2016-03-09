@@ -7,7 +7,7 @@ const sinon       = require('sinon');
 
 const util = require('../src/util');
 
-describe.only('Socket', () => {
+describe('Socket', () => {
   const serverPort = 5080;
   let Socket;
   let stub;
