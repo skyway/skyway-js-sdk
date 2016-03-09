@@ -37,7 +37,7 @@ class Negotiator extends EventEmitter {
         this.emit(Negotiator.EVENTS.dcReady.name, dc);
       }
     } else {
-      this.handleOffer(options.sdp);
+      this.handleOffer(options.offer);
     }
   }
 
@@ -69,7 +69,7 @@ class Negotiator extends EventEmitter {
         util.log('ICE canddidates gathering complete');
 
         util.log('Generated ICE candidate for:', candidate);
-        this.emit('iceCandidate', candidate);
+        this.emit(Negotiator.EVENTS.iceCandidate.name, candidate);
       } else {
         util.log('ICE canddidates gathering complete');
       }
@@ -161,9 +161,9 @@ class Negotiator extends EventEmitter {
 
   _setLocalDescription(pc, offer) {
     return pc.setLocalDescription(offer)
-      .then(offer => {
+      .then(() => {
         util.log('Set localDescription: offer');
-        this.emit('offerCreated', offer);
+        this.emit(Negotiator.EVENTS.offerCreated.name, offer);
       }, error => {
         this.emitError('webrtc', error);
         util.log('Failed to setLocalDescription, ', error);
@@ -209,15 +209,19 @@ class Negotiator extends EventEmitter {
   }
 
   _makeAnswerSdp() {
+    let answerSdp;
     return this._pc.createAnswer()
       .then(answer => {
         util.log('Created answer.');
 
+        answerSdp = answer;
         return this._pc.setLocalDescription(answer);
       }, err => {
         this.emitError('webrtc', err);
         util.log('Failed to createAnswer, ', err);
-      }).catch(err => {
+      }).then(() => {
+        return answerSdp;
+      }, err => {
         this.emitError('webrtc', err);
         util.log('Failed to setLocalDescription, ', err);
       });
