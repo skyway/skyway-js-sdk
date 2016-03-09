@@ -6,7 +6,7 @@ const Negotiator = require('./negotiator');
 const EventEmitter = require('events');
 
 class Connection extends EventEmitter {
-  constructor(options) {
+  constructor(remoteId, options) {
     super();
 
     options = options || {};
@@ -21,6 +21,7 @@ class Connection extends EventEmitter {
     this.open = false;
     this.type = undefined;
     this.metadata = this.options.metadata;
+    this.remoteId = remoteId;
 
     this._negotiator = new Negotiator(this);
 

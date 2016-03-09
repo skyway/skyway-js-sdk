@@ -49,14 +49,14 @@ describe('MediaConnection', () => {
 
   describe('Constructor', () => {
     it('should call negotiator\'s startConnection method when created', () => {
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('id', {_stream: {}});
 
       assert(mc);
       assert(startSpy.calledOnce);
     });
 
     it('should store any messages passed in when created', () => {
-      const mc = new MediaConnection(
+      const mc = new MediaConnection('id',
         {_stream: {}, _queuedMessages: ['message']}
       );
       assert.deepEqual(mc.options._queuedMessages, ['message']);
@@ -65,7 +65,7 @@ describe('MediaConnection', () => {
 
   describe('Add Stream', () => {
     it('should set remoteStream upon addStream being invoked', () => {
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('id', {_stream: {}});
 
       let spy = sinon.spy(mc, 'addStream');
 
@@ -79,7 +79,7 @@ describe('MediaConnection', () => {
     });
 
     it('should emit a \'stream\' event upon addStream being invoked', () => {
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('id', {_stream: {}});
 
       let spy = sinon.spy(mc, 'emit');
 
@@ -97,7 +97,7 @@ describe('MediaConnection', () => {
     it('should call negotiator\'s handleAnswer with an answer', () => {
       const answer = 'message';
 
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('id', {_stream: {}});
       assert(answerSpy.called === false);
 
       mc.handleAnswer(answer);
@@ -107,7 +107,7 @@ describe('MediaConnection', () => {
     it('should call negotiator\'s handleCandidate with a candidate', () => {
       const candidate = 'message';
 
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('id', {_stream: {}});
       assert(candidateSpy.called === false);
 
       mc.handleCandidate(candidate);
@@ -118,7 +118,7 @@ describe('MediaConnection', () => {
   describe('Answering', () => {
     it('should set the localStream upon answering', () => {
       // Callee, so no _stream option provided at first
-      const mc = new MediaConnection({_payload: {}});
+      const mc = new MediaConnection('id', {_payload: {}});
       assert.equal(mc.localStream, undefined);
       mc.answer('foobar');
       assert.equal(mc.localStream, 'foobar');
@@ -127,7 +127,7 @@ describe('MediaConnection', () => {
 
     it('should not set the localStream if already set', () => {
       // Caller, so _stream option is initially provided
-      const mc = new MediaConnection({_stream: 'exists', _payload: {}});
+      const mc = new MediaConnection('id', {_stream: 'exists', _payload: {}});
       assert.equal(mc.localStream, 'exists');
       mc.answer('foobar');
       assert.equal(mc.localStream, 'exists');
@@ -135,7 +135,7 @@ describe('MediaConnection', () => {
     });
 
     it('should call negotiator\'s startConnection method upon answering', () => {
-      const mc = new MediaConnection({_payload: {}});
+      const mc = new MediaConnection('id', {_payload: {}});
       assert(startSpy.called === false);
       mc.answer('foobar');
       assert(startSpy.calledOnce === true);
@@ -144,7 +144,7 @@ describe('MediaConnection', () => {
     it('should process any queued messages after PeerConnection object is created', () => {
       const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message'}];
 
-      const mc = new MediaConnection({_payload: {}, _queuedMessages: messages});
+      const mc = new MediaConnection('id', {_payload: {}, _queuedMessages: messages});
 
       let spy = sinon.spy(mc, 'handleAnswer');
 
@@ -160,7 +160,7 @@ describe('MediaConnection', () => {
     it('should not process any invalid queued messages', () => {
       const messages = [{type: 'WRONG', payload: 'message'}];
 
-      const mc = new MediaConnection({_payload: {}, _queuedMessages: messages});
+      const mc = new MediaConnection('id', {_payload: {}, _queuedMessages: messages});
 
       let spy1 = sinon.spy(mc, 'handleAnswer');
       let spy2 = sinon.spy(mc, 'handleCandidate');
@@ -183,7 +183,7 @@ describe('MediaConnection', () => {
       const message2 = {type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message2'};
       const messages = [message1];
 
-      const mc = new MediaConnection({_payload: {}, _queuedMessages: messages});
+      const mc = new MediaConnection('id', {_payload: {}, _queuedMessages: messages});
 
       assert.equal(mc._pcAvailable, false);
       mc.handleAnswer(message2.payload);
@@ -196,7 +196,7 @@ describe('MediaConnection', () => {
 
   describe('Cleanup', () => {
     it('should close the socket and call the negotiator to cleanup on close()', () => {
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('id', {_stream: {}});
 
       // Force to be open
       mc.open = true;
