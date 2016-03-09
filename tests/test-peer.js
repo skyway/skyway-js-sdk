@@ -9,6 +9,8 @@ const util            = require('../src/util');
 const assert = require('power-assert');
 const sinon  = require('sinon');
 
+const MediaStream = window.MediaStream || window.webkitMediaStream;
+
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
   const timeForAsync = 10;
@@ -587,7 +589,7 @@ describe('Peer', () => {
 
       const peerId = 'testId';
 
-      const conn = peer.call(peerId, {});
+      const conn = peer.call(peerId, new MediaStream());
 
       assert(conn instanceof MediaConnection);
       assert(spy.calledOnce === true);
