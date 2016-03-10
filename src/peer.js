@@ -271,7 +271,8 @@ class Peer extends EventEmitter {
       let connection = this.getConnection(offerMessage.src, connectionId);
 
       if (connection) {
-        util.warn('Offer received for existing Connection ID:', connectionId);
+        util.log('Received an updated offer for: ', connectionId);
+        connection.updateOffer(offerMessage);
         return;
       }
 
