@@ -59,7 +59,7 @@ describe('Peer', () => {
 
     // TODO: run after socket is implemented.
     // Can't stub as socket.start is run in constructor
-    it.skip('should create a Peer object with ID', done => {
+    it('should create a Peer object with ID', done => {
       const peerId = 'myID';
       const peer = new Peer(peerId, {
         key: apiKey
@@ -439,10 +439,10 @@ describe('Peer', () => {
       });
 
       const offerMsg = {
-        connectionType:         'media',
-        connectionId: connectionId,
-        src:          peerId,
-        metadata:     {}
+        connectionType: 'media',
+        connectionId:   connectionId,
+        src:            peerId,
+        metadata:       {}
       };
       peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
     });
@@ -461,10 +461,10 @@ describe('Peer', () => {
       });
 
       const offerMsg = {
-        connectionType:         'data',
-        connectionId: connectionId,
-        src:          peerId,
-        metadata:     {}
+        connectionType: 'data',
+        connectionId:   connectionId,
+        src:            peerId,
+        metadata:       {}
       };
       peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
     });

@@ -65,7 +65,8 @@ describe('Util', () => {
     });
 
     it('should produce distinct outputs when run multiple times', () => {
-      // There's a very small possibility that this test will fail because randomID could produce the same number twice
+      // There's a very small possibility that this test will
+      // fail because randomID could produce the same number twice
       assert.notEqual(util.randomToken(), util.randomToken());
     });
   });
@@ -166,7 +167,8 @@ describe('Util', () => {
       const arrayBuffer = util.binaryStringToArrayBuffer(binary);
       assert.equal(arrayBuffer.constructor, ArrayBuffer);
 
-      const result = String.fromCharCode.apply(null, Array.prototype.slice.apply(new Uint8Array(arrayBuffer)));
+      const result = String.fromCharCode.apply(
+        null, Array.prototype.slice.apply(new Uint8Array(arrayBuffer)));
       assert.equal(result, binary);
     });
 
@@ -236,7 +238,6 @@ describe('Util', () => {
     });
   });
 
-  // FIXME: Lint error since location is not defined explicitly
   describe('isSecure', () => {
     // Test only 'HTTP' becauuse Karma only runs on 'HTTP'
     it('should return false if HTTP', () => {
