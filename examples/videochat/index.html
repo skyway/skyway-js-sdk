@@ -9,10 +9,7 @@
     navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
     // PeerJS object
     var peer = new Peer({
-      host: 'localhost',
-      port: 8080,
-      secure: false,
-      key: 'active00-a515-486b-8488-407b41150e43',
+      key: 'yourkey-a515-486b-8488-407b41150e43',
       debug: 3
     });
 
@@ -73,7 +70,7 @@
       });
       // UI stuff
       window.existingCall = call;
-      $('#their-id').text(call.peer);
+      $('#their-id').text(call.remoteId);
       call.on('close', step2);
       $('#step1, #step2').hide();
       $('#step3').show();
