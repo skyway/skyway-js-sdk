@@ -44,12 +44,12 @@ class Connection extends EventEmitter {
     return this.options.connectionId || this._idPrefix + this._randomIdSuffix;
   }
 
-  handleAnswer(answer) {
+  handleAnswer(answerMessage) {
     if (this._pcAvailable) {
-      this._negotiator.handleAnswer(answer.answer);
+      this._negotiator.handleAnswer(answerMessage.answer);
       this.open = true;
     } else {
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.ANSWER.name, payload: answer});
+      this._queuedMessages.push({type: util.MESSAGE_TYPES.ANSWER.name, payload: answerMessage});
     }
   }
 
@@ -72,7 +72,7 @@ class Connection extends EventEmitter {
           this.handleCandidate(message.payload);
           break;
         default:
-          util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
+          util.warn('Unrecognized message type:', message.type, 'from peer:', this.remoteId);
           break;
       }
     }
