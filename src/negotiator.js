@@ -108,7 +108,7 @@ class Negotiator extends EventEmitter {
     this._pc.onnegotiationneeded = () => {
       util.log('`negotiationneeded` triggered');
 
-      // don't make a new offer if it's already stable
+      // don't make a new offer if it's not stable
       if (this._pc.signalingState === 'stable') {
         this._makeOfferSdp()
           .then(offer => {
