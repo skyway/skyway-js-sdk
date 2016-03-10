@@ -27,14 +27,14 @@ class MediaConnection extends Connection {
       );
       this._pcAvailable = true;
     }
-  }
 
-  addStream(remoteStream) {
-    util.log('Receiving stream', remoteStream);
+    this._negotiator.on(Negotiator.EVENTS.addStream.name, remoteStream => {
+      util.log('Receiving stream', remoteStream);
 
-    this.remoteStream = remoteStream;
-    // Is 'stream' an appropriate emit message? PeerJS contemplated using 'open' instead
-    this.emit('stream', remoteStream);
+      this.remoteStream = remoteStream;
+      // Is 'stream' an appropriate emit message? PeerJS contemplated using 'open' instead
+      this.emit('stream', remoteStream);
+    });
   }
 
   // This is only called by the callee
