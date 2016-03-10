@@ -107,11 +107,14 @@ class Negotiator extends EventEmitter {
 
     pc.onnegotiationneeded = () => {
       util.log('`negotiationneeded` triggered');
-      this._makeOfferSdp(pc)
-        .then(offer => {
-          this._setLocalDescription(pc, offer);
-        }
-      );
+
+      // don't make a new offer if it's already stable
+      if (this._pc.signalingState === 'stable') {
+        this._makeOfferSdp(pc)
+          .then(offer => {
+            this._setLocalDescription(pc, offer);
+          });
+      }
     };
 
     pc.onremovestream = () => {
@@ -219,6 +222,7 @@ class Negotiator extends EventEmitter {
         this.emitError('webrtc', err);
         util.log('Failed to createAnswer, ', err);
       }).then(() => {
+        util.log('Set localDescription: answer');
         return answerSdp;
       }, err => {
         this.emitError('webrtc', err);
