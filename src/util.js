@@ -2,6 +2,9 @@
 
 const BinaryPack = require('js-binarypack');
 
+const adapter = require('webrtc-adapter-test');
+const RTCPeerConnection     = adapter.RTCPeerConnection;
+
 // Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
 import {Enum} from 'enumify';
 class LogLevel extends Enum {}
@@ -25,8 +28,6 @@ class Util {
     this.CLOUD_PORT = 443;
     this.TURN_HOST = 'turn.skyway.io';
     this.TURN_PORT = 443;
-    this.browser = undefined;
-    this.supports = undefined;
     this.debug = false;
     this.pack = BinaryPack.pack;
     this.unpack = BinaryPack.unpack;
@@ -47,6 +48,63 @@ class Util {
         url:  'stun:stun.skyway.io:3478'
       }]
     };
+
+    // Returns the current browser.
+    this.browser = (function() {
+      if (window.mozRTCPeerConnection) {
+        return 'Firefox';
+      }
+      if (window.webkitRTCPeerConnection) {
+        return 'Chrome';
+      }
+      if (window.RTCPeerConnection) {
+        return 'Supported';
+      }
+      return 'Unsupported';
+    })();
+
+    this.supports = (function() {
+      if (typeof RTCPeerConnection === 'undefined') {
+        return {};
+      }
+
+      let data = true;
+      let binaryBlob = false;
+
+      let pc;
+      let dc;
+      try {
+        pc = new RTCPeerConnection(this.defaultConfig, {});
+      } catch (e) {
+        data = false;
+      }
+
+      if (data) {
+        try {
+          dc = pc.createDataChannel('_SKYWAYTEST');
+        } catch (e) {
+          data = false;
+        }
+      }
+
+      if (data) {
+        // Binary test
+        try {
+          dc.binaryType = 'blob';
+          binaryBlob = true;
+        } catch (e) {
+          // binaryBlob is already false
+        }
+      }
+
+      if (pc) {
+        pc.close();
+      }
+
+      return {
+        binaryBlob: binaryBlob
+      };
+    })();
 
     this._logLevel = LogLevel.NONE.ordinal;
   }

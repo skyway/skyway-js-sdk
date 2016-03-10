@@ -1,10 +1,11 @@
 'use strict';
 
-const util       = require('../src/util');
-
 const assert     = require('power-assert');
 const proxyquire = require('proxyquire');
 const sinon      = require('sinon');
+
+const util       = require('../src/util');
+const Negotiator = require('../src/negotiator');
 
 let Connection;
 let MediaConnection;
@@ -24,6 +25,12 @@ describe('MediaConnection', () => {
     candidateSpy = sinon.spy();
 
     stub.returns({
+      on: function(event, callback) {
+        this[event] = callback;
+      },
+      emit: function(event, arg) {
+        this[event](arg);
+      },
       startConnection: startSpy,
       cleanup:         cleanupSpy,
       handleAnswer:    answerSpy,
@@ -49,23 +56,89 @@ describe('MediaConnection', () => {
 
   describe('Constructor', () => {
     it('should call negotiator\'s startConnection method when created', () => {
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('remoteId', {_stream: {}});
 
       assert(mc);
       assert(startSpy.calledOnce);
     });
-
     it('should store any messages passed in when created', () => {
-      const mc = new MediaConnection(
+      const mc = new MediaConnection('remoteId',
         {_stream: {}, _queuedMessages: ['message']}
       );
       assert.deepEqual(mc.options._queuedMessages, ['message']);
+    });
+
+    it('should set properties from arguments properly', () => {
+      const id = 'remoteId';
+      const metadata = 'meta';
+      const stream = Symbol();
+      const options = {
+        _stream:  stream,
+        metadata: metadata
+      };
+
+      const mc = new MediaConnection(id, options);
+      assert.equal(mc.type, 'media');
+      assert.equal(mc.remoteId, id);
+      assert.equal(mc.localStream, stream);
+      assert.equal(mc.metadata, metadata);
+      assert.equal(mc.options, options);
+    });
+  });
+
+  describe('_setupNegotiatorMessageHandlers', () => {
+    let mc;
+    beforeEach(() => {
+      mc = new MediaConnection('remoteId', {});
+    });
+
+    it('should emit \'candidate\' on negotiator \'iceCandidate\' event', done => {
+      const candidate = Symbol();
+      mc.on(Connection.EVENTS.candidate.name, connectionCandidate => {
+        assert(connectionCandidate);
+        assert.equal(connectionCandidate.candidate, candidate);
+        assert.equal(connectionCandidate.dst, mc.remoteId);
+        assert.equal(connectionCandidate.connectionId, mc.id);
+        assert.equal(connectionCandidate.connectionType, mc.type);
+        done();
+      });
+
+      mc._negotiator.emit(Negotiator.EVENTS.iceCandidate.name, candidate);
+    });
+
+    it('should emit \'answer\' on negotiator \'answerCreated\' event', done => {
+      const answer = Symbol();
+      mc.on(Connection.EVENTS.answer.name, connectionCandidate => {
+        assert(connectionCandidate);
+        assert.equal(connectionCandidate.answer, answer);
+        assert.equal(connectionCandidate.dst, mc.remoteId);
+        assert.equal(connectionCandidate.connectionId, mc.id);
+        assert.equal(connectionCandidate.connectionType, mc.type);
+        done();
+      });
+
+      mc._negotiator.emit(Negotiator.EVENTS.answerCreated.name, answer);
+    });
+
+    it('should emit \'offer\' on negotiator \'offerCreated\' event', done => {
+      const offer = Symbol();
+      mc.on(Connection.EVENTS.offer.name, connectionOffer => {
+        assert(connectionOffer);
+        assert.equal(connectionOffer.offer, offer);
+        assert.equal(connectionOffer.dst, mc.remoteId);
+        assert.equal(connectionOffer.connectionId, mc.id);
+        assert.equal(connectionOffer.connectionType, mc.type);
+        assert.equal(connectionOffer.metadata, mc.metadata);
+        done();
+      });
+
+      mc._negotiator.emit(Negotiator.EVENTS.offerCreated.name, offer);
     });
   });
 
   describe('Add Stream', () => {
     it('should set remoteStream upon addStream being invoked', () => {
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('remoteId', {_stream: {}});
 
       let spy = sinon.spy(mc, 'addStream');
 
@@ -79,7 +152,7 @@ describe('MediaConnection', () => {
     });
 
     it('should emit a \'stream\' event upon addStream being invoked', () => {
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('remoteId', {_stream: {}});
 
       let spy = sinon.spy(mc, 'emit');
 
@@ -97,7 +170,7 @@ describe('MediaConnection', () => {
     it('should call negotiator\'s handleAnswer with an answer', () => {
       const answer = 'message';
 
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('remoteId', {_stream: {}});
       assert(answerSpy.called === false);
 
       mc.handleAnswer(answer);
@@ -107,7 +180,7 @@ describe('MediaConnection', () => {
     it('should call negotiator\'s handleCandidate with a candidate', () => {
       const candidate = 'message';
 
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('remoteId', {_stream: {}});
       assert(candidateSpy.called === false);
 
       mc.handleCandidate(candidate);
@@ -118,7 +191,7 @@ describe('MediaConnection', () => {
   describe('Answering', () => {
     it('should set the localStream upon answering', () => {
       // Callee, so no _stream option provided at first
-      const mc = new MediaConnection({_payload: {}});
+      const mc = new MediaConnection('remoteId', {_payload: {}});
       assert.equal(mc.localStream, undefined);
       mc.answer('foobar');
       assert.equal(mc.localStream, 'foobar');
@@ -127,7 +200,7 @@ describe('MediaConnection', () => {
 
     it('should not set the localStream if already set', () => {
       // Caller, so _stream option is initially provided
-      const mc = new MediaConnection({_stream: 'exists', _payload: {}});
+      const mc = new MediaConnection('remoteId', {_stream: 'exists', _payload: {}});
       assert.equal(mc.localStream, 'exists');
       mc.answer('foobar');
       assert.equal(mc.localStream, 'exists');
@@ -135,7 +208,7 @@ describe('MediaConnection', () => {
     });
 
     it('should call negotiator\'s startConnection method upon answering', () => {
-      const mc = new MediaConnection({_payload: {}});
+      const mc = new MediaConnection('remoteId', {_payload: {}});
       assert(startSpy.called === false);
       mc.answer('foobar');
       assert(startSpy.calledOnce === true);
@@ -144,7 +217,7 @@ describe('MediaConnection', () => {
     it('should process any queued messages after PeerConnection object is created', () => {
       const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message'}];
 
-      const mc = new MediaConnection({_payload: {}, _queuedMessages: messages});
+      const mc = new MediaConnection('remoteId', {_payload: {}, _queuedMessages: messages});
 
       let spy = sinon.spy(mc, 'handleAnswer');
 
@@ -160,7 +233,7 @@ describe('MediaConnection', () => {
     it('should not process any invalid queued messages', () => {
       const messages = [{type: 'WRONG', payload: 'message'}];
 
-      const mc = new MediaConnection({_payload: {}, _queuedMessages: messages});
+      const mc = new MediaConnection('remoteId', {_payload: {}, _queuedMessages: messages});
 
       let spy1 = sinon.spy(mc, 'handleAnswer');
       let spy2 = sinon.spy(mc, 'handleCandidate');
@@ -183,7 +256,7 @@ describe('MediaConnection', () => {
       const message2 = {type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message2'};
       const messages = [message1];
 
-      const mc = new MediaConnection({_payload: {}, _queuedMessages: messages});
+      const mc = new MediaConnection('remoteId', {_payload: {}, _queuedMessages: messages});
 
       assert.equal(mc._pcAvailable, false);
       mc.handleAnswer(message2.payload);
@@ -196,7 +269,7 @@ describe('MediaConnection', () => {
 
   describe('Cleanup', () => {
     it('should close the socket and call the negotiator to cleanup on close()', () => {
-      const mc = new MediaConnection({_stream: {}});
+      const mc = new MediaConnection('remoteId', {_stream: {}});
 
       // Force to be open
       mc.open = true;
