@@ -439,7 +439,7 @@ describe('Peer', () => {
       });
 
       const offerMsg = {
-        type:         'media',
+        connectionType:         'media',
         connectionId: connectionId,
         src:          peerId,
         metadata:     {}
@@ -461,7 +461,7 @@ describe('Peer', () => {
       });
 
       const offerMsg = {
-        type:         'data',
+        connectionType:         'data',
         connectionId: connectionId,
         src:          peerId,
         metadata:     {}
