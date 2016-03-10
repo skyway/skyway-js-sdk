@@ -202,7 +202,7 @@ describe('Negotiator', () => {
       describe('when pc listen \'addstream\'', () => {
         it('should emit \'addStream\' with remote stream', done => {
           ev.stream = 'stream';
-          negotiator.on('addStream', stream => {
+          negotiator.on(Negotiator.EVENTS.addStream.name, stream => {
             assert.equal(stream, ev.stream);
             done();
           });
@@ -214,7 +214,7 @@ describe('Negotiator', () => {
       describe('when pc listen \'datachannel\'', () => {
         it('should emit \'dcReady\' with datachannel', done => {
           ev.channel = 'dc';
-          negotiator.on('dcReady', dc => {
+          negotiator.on(Negotiator.EVENTS.dcReady.name, dc => {
             assert(dc, ev.channel);
             done();
           });
@@ -226,7 +226,7 @@ describe('Negotiator', () => {
       describe('when pc listen \'icecandidate\'', () => {
         it('should emit \'iceCandidate\' with ice candidate', done => {
           ev.candidate = 'candidate';
-          negotiator.on('iceCandidate', candidate => {
+          negotiator.on(Negotiator.EVENTS.iceCandidate.name, candidate => {
             assert(candidate, ev.candidate);
             done();
           });
@@ -257,7 +257,8 @@ describe('Negotiator', () => {
 
         describe('when pc.iceConnectionState is \'disconnected\'', () => {
           it('should emit \'iceConnectionDisconnected\'', done => {
-            negotiator.on('iceConnectionDisconnected', () => {
+            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.name,
+            () => {
               done();
             });
             pc.iceConnectionState = 'disconnected';
@@ -268,7 +269,8 @@ describe('Negotiator', () => {
 
         describe('when pc.iceConnectionState is \'failed\'', () => {
           it('should emit \'iceConnectionDisconnected\'', done => {
-            negotiator.on('iceConnectionDisconnected', () => {
+            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.name,
+            () => {
               done();
             });
             pc.iceConnectionState = 'failed';
@@ -284,7 +286,7 @@ describe('Negotiator', () => {
 
             pc.oniceconnectionstatechange();
             assert(typeof pc.onicecandidate === 'function');
-            console.log(pc.onicecandidate.toString())
+            assert(typeof pc.onicecandidate.toString === 'function');
           });
         });
       });
