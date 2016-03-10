@@ -1,5 +1,6 @@
 'use strict';
 
+const Connection      = require('./connection');
 const DataConnection  = require('./dataConnection');
 const MediaConnection = require('./mediaConnection');
 const Socket          = require('./socket');
@@ -343,6 +344,20 @@ class Peer extends EventEmitter {
       this.connections[peerId] = [];
     }
     this.connections[peerId].push(connection);
+
+    this._setupConnectionMessageHanders(connection);
+  }
+
+  _setupConnectionMessageHanders(connection) {
+    connection.on(Connection.EVENTS.candidate.name, candidateMessage => {
+      this.socket.send(util.MESSAGE_TYPES.CANDIDATE.name, candidateMessage);
+    });
+    connection.on(Connection.EVENTS.answer.name, answerMessage => {
+      this.socket.send(util.MESSAGE_TYPES.ANSWER.name, answerMessage);
+    });
+    connection.on(Connection.EVENTS.offer.name, offerMessage => {
+      this.socket.send(util.MESSAGE_TYPES.OFFER.name, offerMessage);
+    });
   }
 
   _storeMessage(type, message) {
