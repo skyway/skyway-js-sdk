@@ -318,7 +318,7 @@ describe('Peer', () => {
 
     it('should get a connection if peerId and connId match', () => {
       const peerId = 'testId';
-      const connection = {id: 'connId'};
+      const connection = new DataConnection(peerId, {});
 
       peer._addConnection(peerId, connection);
 
@@ -327,7 +327,7 @@ describe('Peer', () => {
 
     it('should return null if connection doesn\'t exist', () => {
       const peerId = 'testId';
-      const connection = {id: 'connId'};
+      const connection = new DataConnection(peerId, {});
 
       assert(peer.getConnection(peerId, connection.id) === null);
     });
