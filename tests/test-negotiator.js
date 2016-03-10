@@ -498,7 +498,14 @@ describe('Negotiator', () => {
 
           setTimeout(() => {
             assert(emitSpy.callCount === 1);
-            assert(emitSpy.calledWith(Negotiator.EVENTS.answerCreated.name, offerObject));
+
+            const eventName = emitSpy.args[0][0];
+            const answer = emitSpy.args[0][1];
+
+            assert(eventName, Negotiator.EVENTS.answerCreated.name);
+            assert.equal(answer.type, 'answer');
+            assert.equal(answer.constructor.name, 'RTCSessionDescription');
+
             done();
           }, waitForAsync);
         });
