@@ -18,6 +18,7 @@ NegotiatorEvents.initEnum([
   'offerCreated',
   'answerCreated',
   'iceCandidate',
+  'iceConnectionDisconnected',
   'error'
 ]);
 
@@ -54,13 +55,13 @@ class Negotiator extends EventEmitter {
     pc.onaddstream = evt => {
       util.log('Received remote media stream');
       const stream = evt.stream;
-      this.emit('addStream', stream);
+      this.emit(Negotiator.EVENTS.addStream.name, stream);
     };
 
     pc.ondatachannel = evt => {
       util.log('Received data channel');
       const dc = evt.channel;
-      this.emit('dcReady', dc);
+      this.emit(Negotiator.EVENTS.dcReady.name, dc);
     };
 
     pc.onicecandidate = evt => {
@@ -92,11 +93,11 @@ class Negotiator extends EventEmitter {
           break;
         case 'failed':
           util.log('iceConnectionState is failed, closing connection');
-          this.emit('iceConnectionDisconnected');
+          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.name);
           break;
         case 'disconnected':
           util.log('iceConnectionState is disconnected, closing connection');
-          this.emit('iceConnectionDisconnected');
+          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.name);
           break;
         case 'closed':
           util.log('iceConnectionState is closed');

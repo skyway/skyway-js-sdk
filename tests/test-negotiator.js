@@ -199,11 +199,11 @@ describe('Negotiator', () => {
         ev = {};
       });
 
-      describe('when pc listen \'addstream\'', () => {
+      describe('onaddstream', () => {
         it('should emit \'addStream\' with remote stream', done => {
           ev.stream = 'stream';
-          negotiator.on('addStream', stream => {
-            assert(stream, ev.stream);
+          negotiator.on(Negotiator.EVENTS.addStream.name, stream => {
+            assert.equal(stream, ev.stream);
             done();
           });
 
@@ -211,10 +211,10 @@ describe('Negotiator', () => {
         });
       });
 
-      describe('when pc listen \'datachannel\'', () => {
+      describe('ondatachannel', () => {
         it('should emit \'dcReady\' with datachannel', done => {
           ev.channel = 'dc';
-          negotiator.on('dcReady', dc => {
+          negotiator.on(Negotiator.EVENTS.dcReady.name, dc => {
             assert(dc, ev.channel);
             done();
           });
@@ -223,10 +223,10 @@ describe('Negotiator', () => {
         });
       });
 
-      describe('when pc listen \'icecandidate\'', () => {
+      describe('onicecandidate', () => {
         it('should emit \'iceCandidate\' with ice candidate', done => {
           ev.candidate = 'candidate';
-          negotiator.on('iceCandidate', candidate => {
+          negotiator.on(Negotiator.EVENTS.iceCandidate.name, candidate => {
             assert(candidate, ev.candidate);
             done();
           });
@@ -235,7 +235,7 @@ describe('Negotiator', () => {
         });
       });
 
-      describe('when pc listen \'iceconnectionstatechange\'', () => {
+      describe('oniceconnectionstatechange', () => {
         let pcStub;
         let negotiator;
         let pc;
@@ -257,7 +257,8 @@ describe('Negotiator', () => {
 
         describe('when pc.iceConnectionState is \'disconnected\'', () => {
           it('should emit \'iceConnectionDisconnected\'', done => {
-            negotiator.on('iceConnectionDisconnected', () => {
+            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.name,
+            () => {
               done();
             });
             pc.iceConnectionState = 'disconnected';
@@ -268,7 +269,8 @@ describe('Negotiator', () => {
 
         describe('when pc.iceConnectionState is \'failed\'', () => {
           it('should emit \'iceConnectionDisconnected\'', done => {
-            negotiator.on('iceConnectionDisconnected', () => {
+            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.name,
+            () => {
               done();
             });
             pc.iceConnectionState = 'failed';
@@ -284,11 +286,12 @@ describe('Negotiator', () => {
 
             pc.oniceconnectionstatechange();
             assert(typeof pc.onicecandidate === 'function');
+            assert(pc.onicecandidate.toString() === 'function () {}');
           });
         });
       });
 
-      describe('when pc listen \'negotiationneeded\'', () => {
+      describe('onnegotiationneeded', () => {
         it('should call _makeOfferSdp', () => {
           const spy = sinon.spy(negotiator, '_makeOfferSdp');
 
@@ -361,7 +364,7 @@ describe('Negotiator', () => {
       })
       .catch(error => {
         assert(error);
-        assert(error, fakeError);
+        assert.equal(error, fakeError);
       });
 
       assert(promiseStub.callCount === 1);
