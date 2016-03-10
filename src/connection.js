@@ -49,6 +49,7 @@ class Connection extends EventEmitter {
       this._negotiator.handleAnswer(answerMessage.answer);
       this.open = true;
     } else {
+      util.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
       this._queuedMessages.push({type: util.MESSAGE_TYPES.ANSWER.name, payload: answerMessage});
     }
   }
@@ -57,6 +58,7 @@ class Connection extends EventEmitter {
     if (this._pcAvailable) {
       this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
+      util.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
       this._queuedMessages.push({type: util.MESSAGE_TYPES.CANDIDATE.name, payload: candidateMessage});
     }
   }

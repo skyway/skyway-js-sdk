@@ -26,6 +26,7 @@ class MediaConnection extends Connection {
         }
       );
       this._pcAvailable = true;
+      this._handleQueuedMessages();
     }
 
     this._negotiator.on(Negotiator.EVENTS.addStream.name, remoteStream => {
