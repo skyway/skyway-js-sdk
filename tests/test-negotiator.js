@@ -203,7 +203,7 @@ describe('Negotiator', () => {
         it('should emit \'addStream\' with remote stream', done => {
           ev.stream = 'stream';
           negotiator.on('addStream', stream => {
-            assert(stream, ev.stream);
+            assert.equal(stream, ev.stream);
             done();
           });
 
@@ -284,6 +284,7 @@ describe('Negotiator', () => {
 
             pc.oniceconnectionstatechange();
             assert(typeof pc.onicecandidate === 'function');
+            console.log(pc.onicecandidate.toString())
           });
         });
       });
