@@ -57,22 +57,6 @@ describe('Peer', () => {
       assert(peer.options.turn === true);
     });
 
-    // TODO: run after socket is implemented.
-    // Can't stub as socket.start is run in constructor
-    it('should create a Peer object with ID', done => {
-      const peerId = 'myID';
-      const peer = new Peer(peerId, {
-        key: apiKey
-      });
-
-      peer.on('open', id => {
-        assert(id === peerId);
-        assert(peer.id === peerId);
-
-        done();
-      });
-    });
-
     it('should not create a Peer object with invalid ID', done => {
       let peer;
       try {
