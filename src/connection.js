@@ -63,10 +63,6 @@ class Connection extends EventEmitter {
     }
   }
 
-  updateOffer(offerMessage) {
-    this._negotiator.handleOffer(offerMessage.offer);
-  }
-
   _handleQueuedMessages() {
     // Process messages queued because PeerConnection not set up.
     for (let message of this._queuedMessages) {
