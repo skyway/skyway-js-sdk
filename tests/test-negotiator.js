@@ -286,7 +286,7 @@ describe('Negotiator', () => {
 
             pc.oniceconnectionstatechange();
             assert(typeof pc.onicecandidate === 'function');
-            assert(typeof pc.onicecandidate.toString === 'function');
+            assert(pc.onicecandidate.toString() === 'function () {}');
           });
         });
       });
@@ -364,7 +364,7 @@ describe('Negotiator', () => {
       })
       .catch(error => {
         assert(error);
-        assert(error, fakeError);
+        assert.equal(error, fakeError);
       });
 
       assert(promiseStub.callCount === 1);
