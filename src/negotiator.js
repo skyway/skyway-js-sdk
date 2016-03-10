@@ -67,8 +67,6 @@ class Negotiator extends EventEmitter {
     pc.onicecandidate = evt => {
       const candidate = evt.candidate;
       if (candidate) {
-        util.log('ICE canddidates gathering complete');
-
         util.log('Generated ICE candidate for:', candidate);
         this.emit(Negotiator.EVENTS.iceCandidate.name, candidate);
       } else {
@@ -199,7 +197,7 @@ class Negotiator extends EventEmitter {
   }
 
   _setRemoteDescription(sdp) {
-    util.log(`Setting remote description ${sdp}`);
+    util.log(`Setting remote description ${JSON.stringify(sdp)}`);
     return this._pc.setRemoteDescription(new RTCSessionDescription(sdp))
       .then(() => {
         util.log('Set remoteDescription:', sdp.type);
