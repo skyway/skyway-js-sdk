@@ -199,7 +199,7 @@ describe('Negotiator', () => {
         ev = {};
       });
 
-      describe('when pc listen \'addstream\'', () => {
+      describe('onaddstream', () => {
         it('should emit \'addStream\' with remote stream', done => {
           ev.stream = 'stream';
           negotiator.on(Negotiator.EVENTS.addStream.name, stream => {
@@ -211,7 +211,7 @@ describe('Negotiator', () => {
         });
       });
 
-      describe('when pc listen \'datachannel\'', () => {
+      describe('ondatachannel', () => {
         it('should emit \'dcReady\' with datachannel', done => {
           ev.channel = 'dc';
           negotiator.on(Negotiator.EVENTS.dcReady.name, dc => {
@@ -223,7 +223,7 @@ describe('Negotiator', () => {
         });
       });
 
-      describe('when pc listen \'icecandidate\'', () => {
+      describe('onicecandidate', () => {
         it('should emit \'iceCandidate\' with ice candidate', done => {
           ev.candidate = 'candidate';
           negotiator.on(Negotiator.EVENTS.iceCandidate.name, candidate => {
@@ -235,7 +235,7 @@ describe('Negotiator', () => {
         });
       });
 
-      describe('when pc listen \'iceconnectionstatechange\'', () => {
+      describe('oniceconnectionstatechange', () => {
         let pcStub;
         let negotiator;
         let pc;
@@ -291,7 +291,7 @@ describe('Negotiator', () => {
         });
       });
 
-      describe('when pc listen \'negotiationneeded\'', () => {
+      describe('onnegotiationneeded', () => {
         it('should call _makeOfferSdp', () => {
           const spy = sinon.spy(negotiator, '_makeOfferSdp');
 
