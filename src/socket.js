@@ -36,24 +36,7 @@ class Socket extends EventEmitter {
       'query':                query
     });
 
-    for (let type of util.MESSAGE_TYPES) {
-      if (type.name === util.MESSAGE_TYPES.OPEN.name) {
-        this._io.on(type.name, peerId => {
-          if (peerId) {
-            this._isOpen = true;
-          }
-
-          this._sendQueuedMessages();
-
-          // To inform the peer that the socket successfully connected
-          this.emit(type.name, peerId);
-        });
-      } else {
-        this._io.on(type.name, message => {
-          this._io.emit(type.name, message);
-        });
-      }
-    }
+    this._setupMessageHandlers();
   }
 
   send(type, message) {
@@ -68,9 +51,8 @@ class Socket extends EventEmitter {
       return;
     }
 
-    let messageString = JSON.stringify(message);
     if (this._io.connected === true) {
-      this._io.emit(type, messageString);
+      this._io.emit(type, message);
     }
   }
 
@@ -78,6 +60,27 @@ class Socket extends EventEmitter {
     if (!this.disconnected) {
       this._io.disconnect();
       this._isOpen = false;
+    }
+  }
+
+  _setupMessageHandlers() {
+    for (let type of util.MESSAGE_TYPES) {
+      if (type.name === util.MESSAGE_TYPES.OPEN.name) {
+        this._io.on(type.name, peerId => {
+          if (peerId) {
+            this._isOpen = true;
+          }
+
+          this._sendQueuedMessages();
+
+          // To inform the peer that the socket successfully connected
+          this.emit(type.name, peerId);
+        });
+      } else {
+        this._io.on(type.name, message => {
+          this.emit(type.name, message);
+        });
+      }
     }
   }
 

@@ -1,6 +1,7 @@
 'use strict';
 
 const Connection = require('./connection');
+const Negotiator = require('./negotiator');
 const util = require('./util');
 
 class MediaConnection extends Connection {
@@ -25,15 +26,16 @@ class MediaConnection extends Connection {
         }
       );
       this._pcAvailable = true;
+      this._handleQueuedMessages();
     }
-  }
 
-  addStream(remoteStream) {
-    util.log('Receiving stream', remoteStream);
+    this._negotiator.on(Negotiator.EVENTS.addStream.name, remoteStream => {
+      util.log('Receiving stream', remoteStream);
 
-    this.remoteStream = remoteStream;
-    // Is 'stream' an appropriate emit message? PeerJS contemplated using 'open' instead
-    this.emit('stream', remoteStream);
+      this.remoteStream = remoteStream;
+      // Is 'stream' an appropriate emit message? PeerJS contemplated using 'open' instead
+      this.emit('stream', remoteStream);
+    });
   }
 
   // This is only called by the callee
@@ -47,8 +49,12 @@ class MediaConnection extends Connection {
 
     this.localStream = stream;
     this._negotiator.startConnection(
-      this,
-      this.options._payload
+      {
+        type:       'media',
+        _stream:    this.localStream,
+        originator: false,
+        offer:      this.options._payload.offer
+      }
     );
     this._pcAvailable = true;
 

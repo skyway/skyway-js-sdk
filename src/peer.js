@@ -1,5 +1,6 @@
 'use strict';
 
+const Connection      = require('./connection');
 const DataConnection  = require('./dataConnection');
 const MediaConnection = require('./mediaConnection');
 const Socket          = require('./socket');
@@ -274,12 +275,12 @@ class Peer extends EventEmitter {
         return;
       }
 
-      if (offerMessage.type === 'media') {
+      if (offerMessage.connectionType === 'media') {
         connection = new MediaConnection(
           offerMessage.src,
           {
             connectionId:    connectionId,
-            payload:         offerMessage,
+            _payload:        offerMessage,
             metadata:        offerMessage.metadata,
             _queuedMessages: this._queuedMessages[connectionId]
           }
@@ -288,7 +289,7 @@ class Peer extends EventEmitter {
         util.log('MediaConnection created in OFFER');
         this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.call.name, connection);
-      } else if (offerMessage.type === 'data') {
+      } else if (offerMessage.connectionType === 'data') {
         connection = new DataConnection(
           offerMessage.src,
           {
@@ -305,7 +306,7 @@ class Peer extends EventEmitter {
         this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.connection.name, connection);
       } else {
-        util.warn('Received malformed connection type: ', offerMessage.type);
+        util.warn('Received malformed connection type: ', offerMessage.connectionType);
       }
 
       delete this._queuedMessages[connectionId];
@@ -343,6 +344,20 @@ class Peer extends EventEmitter {
       this.connections[peerId] = [];
     }
     this.connections[peerId].push(connection);
+
+    this._setupConnectionMessageHanders(connection);
+  }
+
+  _setupConnectionMessageHanders(connection) {
+    connection.on(Connection.EVENTS.candidate.name, candidateMessage => {
+      this.socket.send(util.MESSAGE_TYPES.CANDIDATE.name, candidateMessage);
+    });
+    connection.on(Connection.EVENTS.answer.name, answerMessage => {
+      this.socket.send(util.MESSAGE_TYPES.ANSWER.name, answerMessage);
+    });
+    connection.on(Connection.EVENTS.offer.name, offerMessage => {
+      this.socket.send(util.MESSAGE_TYPES.OFFER.name, offerMessage);
+    });
   }
 
   _storeMessage(type, message) {

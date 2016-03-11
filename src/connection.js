@@ -44,20 +44,22 @@ class Connection extends EventEmitter {
     return this.options.connectionId || this._idPrefix + this._randomIdSuffix;
   }
 
-  handleAnswer(answer) {
+  handleAnswer(answerMessage) {
     if (this._pcAvailable) {
-      this._negotiator.handleAnswer(answer);
+      this._negotiator.handleAnswer(answerMessage.answer);
       this.open = true;
     } else {
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.ANSWER.name, payload: answer});
+      util.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
+      this._queuedMessages.push({type: util.MESSAGE_TYPES.ANSWER.name, payload: answerMessage});
     }
   }
 
-  handleCandidate(candidate) {
+  handleCandidate(candidateMessage) {
     if (this._pcAvailable) {
-      this._negotiator.handleCandidate(candidate);
+      this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.CANDIDATE.name, payload: candidate});
+      util.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
+      this._queuedMessages.push({type: util.MESSAGE_TYPES.CANDIDATE.name, payload: candidateMessage});
     }
   }
 
@@ -72,7 +74,7 @@ class Connection extends EventEmitter {
           this.handleCandidate(message.payload);
           break;
         default:
-          util.warn('Unrecognized message type:', message.type, 'from peer:', this.peer);
+          util.warn('Unrecognized message type:', message.type, 'from peer:', this.remoteId);
           break;
       }
     }

@@ -3,8 +3,9 @@
 const assert      = require('power-assert');
 const proxyquire  = require('proxyquire');
 const SocketIO    = require('socket.io-client');
+const sinon       = require('sinon');
 
-const sinon  = require('sinon');
+const util = require('../src/util');
 
 describe('Socket', () => {
   const serverPort = 5080;
@@ -18,8 +19,13 @@ describe('Socket', () => {
 
     stub.returns(
       {
+        // socket.io is not standard eventEmitter API
+        // fake messages by calling io._fakeMessage[messagetype](data)
         on: function(event, callback) {
-          this[event.toLowerCase()] = callback;
+          if (!this._fakeMessage) {
+            this._fakeMessage = {};
+          }
+          this._fakeMessage[event] = callback;
         },
         emit:       spy,
         disconnect: spy,
@@ -44,7 +50,7 @@ describe('Socket', () => {
       socket.start(undefined, token);
 
       assert(stub.called);
-      socket._io.open('peerId');
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.name]('peerId');
 
       assert.equal(socket.disconnected, false);
 
@@ -61,7 +67,7 @@ describe('Socket', () => {
       socket.start(peerId, token);
 
       assert(stub.called);
-      socket._io.open('peerId');
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.name]('peerId');
 
       assert.equal(socket.disconnected, false);
 
@@ -78,7 +84,7 @@ describe('Socket', () => {
       socket.start(peerId, token);
       assert.equal(socket.disconnected, true);
 
-      socket._io.open(peerId);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.name](peerId);
       assert.equal(socket.disconnected, false);
 
       socket.close();
@@ -96,9 +102,9 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket._io.open(peerId);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.name](peerId);
       socket.send(data.type, data.message);
-      assert(spy.calledWith(data.type, JSON.stringify(data.message)));
+      assert(spy.calledWith(data.type, data.message));
       socket.close();
     });
 
@@ -111,7 +117,7 @@ describe('Socket', () => {
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket._io.open(peerId);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.name](peerId);
       socket.send(undefined, data.message);
       assert.deepEqual(spy.args[0], ['error', 'Invalid message']);
 
@@ -137,16 +143,60 @@ describe('Socket', () => {
       assert.deepEqual(receivedData, undefined);
 
       // Second pass - peerID set, queued messages sent
-      socket._io.open(peerId);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.name](peerId);
       assert.deepEqual(socket._queue, []);
-      assert.deepEqual(spy.args[0], ['MSG', JSON.stringify(data1.message)]);
+      assert.deepEqual(spy.args[0], ['MSG', data1.message]);
 
       // Third pass - additional send() invocation
       socket.send(data2.type, data2.message);
       assert.deepEqual(socket._queue, []);
-      assert.deepEqual(spy.args[1], ['MSG', JSON.stringify(data2.message)]);
+      assert.deepEqual(spy.args[1], ['MSG', data2.message]);
 
       socket.close();
+    });
+  });
+
+  describe('_setupMessageHandlers', () => {
+    let socket;
+    beforeEach(() => {
+      let apiKey = 'apiKey';
+      let peerId = 'peerId';
+      let token = 'token';
+      socket = new Socket(false, 'localhost', serverPort, apiKey);
+      socket.start(peerId, token);
+    });
+
+    it('should set _isOpen and emit peerId on _io \'OPEN\' messages', () => {
+      let peerId = 'peerId';
+
+      const spy = sinon.spy(socket, 'emit');
+
+      assert.equal(spy.callCount, 0);
+
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.name](peerId);
+
+      assert(socket._isOpen);
+      assert.equal(spy.callCount, 1);
+      assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.name, peerId));
+    });
+
+    it('should emit all non-OPEN message types on socket', () => {
+      const spy = sinon.spy(socket, 'emit');
+
+      assert.equal(spy.callCount, 0);
+
+      for (let type of util.MESSAGE_TYPES.enumValues) {
+        if (type.name === util.MESSAGE_TYPES.OPEN.name) {
+          return;
+        }
+
+        const message = Symbol();
+        socket._io._fakeMessage[type.name](message);
+
+        assert(spy.calledWith(type.name, message));
+      }
+
+      assert.equal(spy.callCount, util.MESSAGE_TYPES.enumValues.length - 1);
     });
   });
 });

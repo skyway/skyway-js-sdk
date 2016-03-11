@@ -71,7 +71,7 @@ describe('Negotiator', () => {
         it('should call pc.addStream', () => {
           const options = {
             type:       'media',
-            stream:     {},
+            _stream:    {},
             originator: true
           };
           const pcConfig = {};
@@ -90,7 +90,7 @@ describe('Negotiator', () => {
         it('should call pc.addStream and handleOffer', () => {
           const options = {
             type:       'media',
-            stream:     {},
+            _stream:    {},
             originator: false
           };
           const pcConfig = {};
@@ -172,7 +172,7 @@ describe('Negotiator', () => {
   describe('_setupPCListeners', () => {
     it('should set up PeerConnection listeners', () => {
       const negotiator = new Negotiator();
-      const pc = negotiator._createPeerConnection('media');
+      const pc = negotiator._pc = negotiator._createPeerConnection('media');
 
       negotiator._setupPCListeners(pc);
       assert(pc.onaddstream);
@@ -191,7 +191,7 @@ describe('Negotiator', () => {
 
       before(() => {
         negotiator = new Negotiator();
-        pc = negotiator._createPeerConnection('media');
+        pc = negotiator._pc = negotiator._createPeerConnection('media');
         negotiator._setupPCListeners(pc);
       });
 
@@ -251,7 +251,7 @@ describe('Negotiator', () => {
             }
           });
           negotiator = new Negotiator();
-          pc = negotiator._createPeerConnection('media');
+          pc = negotiator._pc = negotiator._createPeerConnection('media');
           negotiator._setupPCListeners(pc);
         });
 
@@ -310,7 +310,7 @@ describe('Negotiator', () => {
             done();
           });
 
-          negotiator._makeOfferSdp(pc);
+          negotiator._makeOfferSdp();
         });
       });
     });
@@ -323,7 +323,7 @@ describe('Negotiator', () => {
 
     beforeEach(() => {
       negotiator = new Negotiator();
-      pc = negotiator._createPeerConnection('media');
+      pc = negotiator._pc = negotiator._createPeerConnection('media');
       negotiator._setupPCListeners(pc);
       promiseStub = sinon.stub().returnsPromise();
     });
@@ -333,12 +333,12 @@ describe('Negotiator', () => {
       pc.createOffer = promiseStub.resolves(offer);
 
       assert(promiseStub.callCount === 0);
-      negotiator._makeOfferSdp(pc);
+      negotiator._makeOfferSdp();
       assert(promiseStub.callCount === 1);
     });
 
     it('should return offer when createOffer resolved', done => {
-      negotiator._makeOfferSdp(pc)
+      negotiator._makeOfferSdp()
       .then(offer => {
         assert(offer);
         assert(offer instanceof RTCSessionDescription);
@@ -358,7 +358,7 @@ describe('Negotiator', () => {
         done();
       });
 
-      negotiator._makeOfferSdp(pc)
+      negotiator._makeOfferSdp()
       .then(() => {
         assert.fail();
       })
@@ -378,8 +378,8 @@ describe('Negotiator', () => {
 
     before(() => {
       negotiator = new Negotiator();
-      pc = negotiator._createPeerConnection('media');
-      negotiator._setupPCListeners(pc);
+      pc = negotiator._pc = negotiator._createPeerConnection('media');
+      negotiator._setupPCListeners();
       promiseStub = sinon.stub().returnsPromise();
     });
 
@@ -388,7 +388,7 @@ describe('Negotiator', () => {
       pc.setLocalDescription = promiseStub.resolves(offer);
 
       assert(promiseStub.callCount === 0);
-      negotiator._setLocalDescription(pc, offer);
+      negotiator._setLocalDescription(offer);
       assert(promiseStub.callCount === 1);
     });
 
@@ -402,7 +402,7 @@ describe('Negotiator', () => {
           done();
         });
 
-        negotiator._setLocalDescription(pc, offer);
+        negotiator._setLocalDescription(offer);
       });
     });
 
@@ -418,7 +418,7 @@ describe('Negotiator', () => {
           done();
         });
 
-        negotiator._setLocalDescription(pc, offer);
+        negotiator._setLocalDescription(offer);
 
         assert(promiseStub.callCount === 1);
       });
@@ -501,7 +501,14 @@ describe('Negotiator', () => {
 
           setTimeout(() => {
             assert(emitSpy.callCount === 1);
-            assert(emitSpy.calledWith(Negotiator.EVENTS.answerCreated.name));
+
+            const eventName = emitSpy.args[0][0];
+            const answer = emitSpy.args[0][1];
+
+            assert(eventName, Negotiator.EVENTS.answerCreated.name);
+            assert.equal(answer.type, 'answer');
+            assert.equal(answer.constructor.name, 'RTCSessionDescription');
+
             done();
           }, waitForAsync);
         });

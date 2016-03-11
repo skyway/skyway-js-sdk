@@ -9,6 +9,8 @@ const util            = require('../src/util');
 const assert = require('power-assert');
 const sinon  = require('sinon');
 
+const MediaStream = window.MediaStream || window.webkitMediaStream;
+
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
   const timeForAsync = 10;
@@ -53,22 +55,6 @@ describe('Peer', () => {
       assert(peer.options.token);
       assert(typeof peer.options.token === 'string');
       assert(peer.options.turn === true);
-    });
-
-    // TODO: run after socket is implemented.
-    // Can't stub as socket.start is run in constructor
-    it.skip('should create a Peer object with ID', done => {
-      const peerId = 'myID';
-      const peer = new Peer(peerId, {
-        key: apiKey
-      });
-
-      peer.on('open', id => {
-        assert(id === peerId);
-        assert(peer.id === peerId);
-
-        done();
-      });
     });
 
     it('should not create a Peer object with invalid ID', done => {
@@ -316,7 +302,7 @@ describe('Peer', () => {
 
     it('should get a connection if peerId and connId match', () => {
       const peerId = 'testId';
-      const connection = {id: 'connId'};
+      const connection = new DataConnection(peerId, {});
 
       peer._addConnection(peerId, connection);
 
@@ -325,7 +311,7 @@ describe('Peer', () => {
 
     it('should return null if connection doesn\'t exist', () => {
       const peerId = 'testId';
-      const connection = {id: 'connId'};
+      const connection = new DataConnection(peerId, {});
 
       assert(peer.getConnection(peerId, connection.id) === null);
     });
@@ -437,10 +423,10 @@ describe('Peer', () => {
       });
 
       const offerMsg = {
-        type:         'media',
-        connectionId: connectionId,
-        src:          peerId,
-        metadata:     {}
+        connectionType: 'media',
+        connectionId:   connectionId,
+        src:            peerId,
+        metadata:       {}
       };
       peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
     });
@@ -459,10 +445,10 @@ describe('Peer', () => {
       });
 
       const offerMsg = {
-        type:         'data',
-        connectionId: connectionId,
-        src:          peerId,
-        metadata:     {}
+        connectionType: 'data',
+        connectionId:   connectionId,
+        src:            peerId,
+        metadata:       {}
       };
       peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
     });
@@ -587,7 +573,7 @@ describe('Peer', () => {
 
       const peerId = 'testId';
 
-      const conn = peer.call(peerId, {});
+      const conn = peer.call(peerId, new MediaStream());
 
       assert(conn instanceof MediaConnection);
       assert(spy.calledOnce === true);

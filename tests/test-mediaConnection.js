@@ -137,26 +137,19 @@ describe('MediaConnection', () => {
   });
 
   describe('Add Stream', () => {
-    it('should set remoteStream upon addStream being invoked', () => {
+    it('should set remoteStream upon addStream being emitted', () => {
       const mc = new MediaConnection('remoteId', {_stream: {}});
+      mc._negotiator.emit(Negotiator.EVENTS.addStream.name, 'fakeStream');
 
-      let spy = sinon.spy(mc, 'addStream');
-
-      mc.addStream('fakeStream');
-
-      assert(mc);
-      assert(spy.calledOnce);
       assert.equal(mc.remoteStream, 'fakeStream');
-
-      spy.restore();
     });
 
-    it('should emit a \'stream\' event upon addStream being invoked', () => {
+    it('should emit a \'stream\' event upon addStream being emitted', () => {
       const mc = new MediaConnection('remoteId', {_stream: {}});
 
       let spy = sinon.spy(mc, 'emit');
 
-      mc.addStream('fakeStream');
+      mc._negotiator.emit(Negotiator.EVENTS.addStream.name, 'fakeStream');
 
       assert(mc);
       assert(spy.calledOnce);

@@ -42,9 +42,10 @@ class DataConnection extends Connection {
     });
 
     this._negotiator.startConnection(
-      this,
       this.options._payload || {
-        originator: true
+        originator: true,
+        type:       'data',
+        label:      this.label
       }
     );
     this._pcAvailable = true;
