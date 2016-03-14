@@ -84,6 +84,7 @@ describe('DataConnection', () => {
       const dc = new DataConnection(id, options);
       assert.equal(dc.type, 'data');
       assert.equal(dc.remoteId, id);
+      assert.equal(dc.peer, id);
       assert.equal(dc.label, label);
       assert.equal(dc.serialization, serialization);
       assert.equal(dc.metadata, metadata);
