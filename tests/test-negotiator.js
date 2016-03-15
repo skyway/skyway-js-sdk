@@ -3,7 +3,7 @@
 const assert           = require('power-assert');
 const sinon            = require('sinon');
 const sinonStubPromise = require('sinon-stub-promise');
-const proxyquire       = require('proxyquire');
+const proxyquire       = require('proxyquireify')(require);
 
 const Negotiator       = require('../src/negotiator');
 
@@ -286,7 +286,6 @@ describe('Negotiator', () => {
 
             pc.oniceconnectionstatechange();
             assert(typeof pc.onicecandidate === 'function');
-            assert(pc.onicecandidate.toString() === 'function () {}');
           });
         });
       });
