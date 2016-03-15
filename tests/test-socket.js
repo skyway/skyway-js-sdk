@@ -181,7 +181,7 @@ describe('Socket', () => {
       assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.name, peerId));
     });
 
-    it.only('should set update the _io query on \'OPEN\' messages', () => {
+    it('should update the _io query on \'OPEN\' messages', () => {
       let peerId = 'peerId';
       socket.start(undefined, token);
 
