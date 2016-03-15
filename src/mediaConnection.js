@@ -29,7 +29,7 @@ class MediaConnection extends Connection {
       this._handleQueuedMessages();
     }
 
-    this._negotiator.on(Negotiator.EVENTS.addStream.name, remoteStream => {
+    this._negotiator.on(Negotiator.EVENTS.addStream.key, remoteStream => {
       util.log('Receiving stream', remoteStream);
 
       this.remoteStream = remoteStream;

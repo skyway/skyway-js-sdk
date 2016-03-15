@@ -1,14 +1,12 @@
 'use strict';
 
-const util = require('./util');
+const util       = require('./util');
 const Negotiator = require('./negotiator');
 
 const EventEmitter = require('events');
+const Enum         = require('enum');
 
-// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
-import {Enum} from 'enumify';
-class ConnectionEvents extends Enum {}
-ConnectionEvents.initEnum([
+const ConnectionEvents = new Enum([
   'candidate',
   'offer',
   'answer'
@@ -50,7 +48,7 @@ class Connection extends EventEmitter {
       this.open = true;
     } else {
       util.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.ANSWER.name, payload: answerMessage});
+      this._queuedMessages.push({type: util.MESSAGE_TYPES.ANSWER.key, payload: answerMessage});
     }
   }
 
@@ -59,7 +57,7 @@ class Connection extends EventEmitter {
       this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
       util.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.CANDIDATE.name, payload: candidateMessage});
+      this._queuedMessages.push({type: util.MESSAGE_TYPES.CANDIDATE.key, payload: candidateMessage});
     }
   }
 
@@ -67,10 +65,10 @@ class Connection extends EventEmitter {
     // Process messages queued because PeerConnection not set up.
     for (let message of this._queuedMessages) {
       switch (message.type) {
-        case util.MESSAGE_TYPES.ANSWER.name:
+        case util.MESSAGE_TYPES.ANSWER.key:
           this.handleAnswer(message.payload);
           break;
-        case util.MESSAGE_TYPES.CANDIDATE.name:
+        case util.MESSAGE_TYPES.CANDIDATE.key:
           this.handleCandidate(message.payload);
           break;
         default:
@@ -91,17 +89,17 @@ class Connection extends EventEmitter {
   }
 
   _setupNegotiatorMessageHandlers() {
-    this._negotiator.on(Negotiator.EVENTS.answerCreated.name, answer => {
+    this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
       const connectionAnswer = {
         answer:         answer,
         dst:            this.remoteId,
         connectionId:   this.id,
         connectionType: this.type
       };
-      this.emit(Connection.EVENTS.answer.name, connectionAnswer);
+      this.emit(Connection.EVENTS.answer.key, connectionAnswer);
     });
 
-    this._negotiator.on(Negotiator.EVENTS.offerCreated.name, offer => {
+    this._negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
       const connectionOffer = {
         offer:          offer,
         dst:            this.remoteId,
@@ -115,17 +113,17 @@ class Connection extends EventEmitter {
       if (this.label) {
         connectionOffer.label = this.label;
       }
-      this.emit(Connection.EVENTS.offer.name, connectionOffer);
+      this.emit(Connection.EVENTS.offer.key, connectionOffer);
     });
 
-    this._negotiator.on(Negotiator.EVENTS.iceCandidate.name, candidate => {
+    this._negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
       const connectionCandidate = {
         candidate:      candidate,
         dst:            this.remoteId,
         connectionId:   this.id,
         connectionType: this.type
       };
-      this.emit(Connection.EVENTS.candidate.name, connectionCandidate);
+      this.emit(Connection.EVENTS.candidate.key, connectionCandidate);
     });
   }
 

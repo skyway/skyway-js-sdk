@@ -7,11 +7,9 @@ const Socket          = require('./socket');
 const util            = require('./util');
 
 const EventEmitter = require('events');
+const Enum         = require('enum');
 
-// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
-import {Enum} from 'enumify';
-class PeerEvents extends Enum {}
-PeerEvents.initEnum([
+const PeerEvents = new Enum([
   'open',
   'error',
   'call',
@@ -138,7 +136,7 @@ class Peer extends EventEmitter {
     }
 
     err.type = type;
-    this.emit(Peer.EVENTS.error.name, err);
+    this.emit(Peer.EVENTS.error.key, err);
   }
 
   destroy() {
@@ -159,7 +157,7 @@ class Peer extends EventEmitter {
           this.socket.close();
         }
 
-        this.emit(Peer.EVENTS.disconnected.name, this.id);
+        this.emit(Peer.EVENTS.disconnected.key, this.id);
         this._lastPeerId = this.id;
         this.id = null;
       }
@@ -244,29 +242,29 @@ class Peer extends EventEmitter {
   }
 
   _setupMessageHandlers() {
-    this.socket.on(util.MESSAGE_TYPES.OPEN.name, id => {
+    this.socket.on(util.MESSAGE_TYPES.OPEN.key, id => {
       this.id = id;
       this.open = true;
-      this.emit(Peer.EVENTS.open.name, id);
+      this.emit(Peer.EVENTS.open.key, id);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.ERROR.name, error => {
+    this.socket.on(util.MESSAGE_TYPES.ERROR.key, error => {
       this._abort('server-error', error);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.LEAVE.name, peerId => {
+    this.socket.on(util.MESSAGE_TYPES.LEAVE.key, peerId => {
       util.log(`Received leave message from ${peerId}`);
       this._cleanupPeer(peerId);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.EXPIRE.name, peerId => {
+    this.socket.on(util.MESSAGE_TYPES.EXPIRE.key, peerId => {
       this.emitError(
         'peer-unavailable',
         `Could not connect to peer ${peerId}`
       );
     });
 
-    this.socket.on(util.MESSAGE_TYPES.OFFER.name, offerMessage => {
+    this.socket.on(util.MESSAGE_TYPES.OFFER.key, offerMessage => {
       const connectionId = offerMessage.connectionId;
       let connection = this.getConnection(offerMessage.src, connectionId);
 
@@ -288,7 +286,7 @@ class Peer extends EventEmitter {
 
         util.log('MediaConnection created in OFFER');
         this._addConnection(offerMessage.src, connection);
-        this.emit(Peer.EVENTS.call.name, connection);
+        this.emit(Peer.EVENTS.call.key, connection);
       } else if (offerMessage.connectionType === 'data') {
         connection = new DataConnection(
           offerMessage.src,
@@ -304,7 +302,7 @@ class Peer extends EventEmitter {
 
         util.log('DataConnection created in OFFER');
         this._addConnection(offerMessage.src, connection);
-        this.emit(Peer.EVENTS.connection.name, connection);
+        this.emit(Peer.EVENTS.connection.key, connection);
       } else {
         util.warn('Received malformed connection type: ', offerMessage.connectionType);
       }
@@ -312,7 +310,7 @@ class Peer extends EventEmitter {
       delete this._queuedMessages[connectionId];
     });
 
-    this.socket.on(util.MESSAGE_TYPES.ANSWER.name, answerMessage => {
+    this.socket.on(util.MESSAGE_TYPES.ANSWER.key, answerMessage => {
       const connection = this.getConnection(
                             answerMessage.src,
                             answerMessage.connectionId
@@ -321,11 +319,11 @@ class Peer extends EventEmitter {
       if (connection) {
         connection.handleAnswer(answerMessage);
       } else {
-        this._storeMessage(util.MESSAGE_TYPES.ANSWER.name, answerMessage);
+        this._storeMessage(util.MESSAGE_TYPES.ANSWER.key, answerMessage);
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.CANDIDATE.name, candidateMessage => {
+    this.socket.on(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage => {
       const connection = this.getConnection(
                             candidateMessage.src,
                             candidateMessage.connectionId
@@ -334,7 +332,7 @@ class Peer extends EventEmitter {
       if (connection) {
         connection.handleCandidate(candidateMessage);
       } else {
-        this._storeMessage(util.MESSAGE_TYPES.CANDIDATE.name, candidateMessage);
+        this._storeMessage(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
       }
     });
   }
@@ -349,14 +347,14 @@ class Peer extends EventEmitter {
   }
 
   _setupConnectionMessageHanders(connection) {
-    connection.on(Connection.EVENTS.candidate.name, candidateMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CANDIDATE.name, candidateMessage);
+    connection.on(Connection.EVENTS.candidate.key, candidateMessage => {
+      this.socket.send(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
     });
-    connection.on(Connection.EVENTS.answer.name, answerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.ANSWER.name, answerMessage);
+    connection.on(Connection.EVENTS.answer.key, answerMessage => {
+      this.socket.send(util.MESSAGE_TYPES.ANSWER.key, answerMessage);
     });
-    connection.on(Connection.EVENTS.offer.name, offerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.OFFER.name, offerMessage);
+    connection.on(Connection.EVENTS.offer.key, offerMessage => {
+      this.socket.send(util.MESSAGE_TYPES.OFFER.key, offerMessage);
     });
   }
 
@@ -374,7 +372,7 @@ class Peer extends EventEmitter {
         this._cleanupPeer(peer);
       }
     }
-    this.emit(Peer.EVENTS.close.name);
+    this.emit(Peer.EVENTS.close.key);
   }
 
   _cleanupPeer(peer) {

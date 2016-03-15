@@ -1,12 +1,10 @@
 'use strict';
 
 const Connection = require('./connection');
-const util = require('./util');
+const util       = require('./util');
+const Enum       = require('enum');
 
-// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
-import {Enum} from 'enumify';
-class DCEvents extends Enum {}
-DCEvents.initEnum([
+const DCEvents = new Enum([
   'open',
   'data',
   'error'
@@ -57,7 +55,7 @@ class DataConnection extends Connection {
     this._dc.onopen = () => {
       util.log('Data channel connection success');
       this.open = true;
-      this.emit(DataConnection.EVENTS.open.name);
+      this.emit(DataConnection.EVENTS.open.key);
     };
 
     // We no longer need the reliable shim here
@@ -80,7 +78,7 @@ class DataConnection extends Connection {
         // Convert to ArrayBuffer if datatype is Blob
         util.blobToArrayBuffer(data, ab => {
           data = util.unpack(ab);
-          this.emit(DataConnection.EVENTS.data.name, data);
+          this.emit(DataConnection.EVENTS.data.key, data);
         });
         return;
       } else if (datatype === ArrayBuffer) {
@@ -118,12 +116,12 @@ class DataConnection extends Connection {
       return;
     }
 
-    this.emit(DataConnection.EVENTS.data.name, data);
+    this.emit(DataConnection.EVENTS.data.key, data);
   }
 
   send(data, chunked) {
     if (!this.open) {
-      this.emit(DataConnection.EVENTS.error.name, new Error('Connection is not open.' +
+      this.emit(DataConnection.EVENTS.error.key, new Error('Connection is not open.' +
         ' You should listen for the `open` event before sending messages.'));
     }
 
@@ -213,6 +211,7 @@ class DataConnection extends Connection {
   static get EVENTS() {
     return DCEvents;
   }
+
 }
 
 module.exports = DataConnection;

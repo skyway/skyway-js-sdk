@@ -99,13 +99,13 @@ describe('Peer', () => {
 
       assert(peer);
       assert(spy.called === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.name) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.ERROR.name) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.LEAVE.name) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.EXPIRE.name) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.OFFER.name) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.ANSWER.name) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.CANDIDATE.name) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.key) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.ERROR.key) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.LEAVE.key) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.EXPIRE.key) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.OFFER.key) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.ANSWER.key) === true);
+      assert(spy.calledWith(util.MESSAGE_TYPES.CANDIDATE.key) === true);
       spy.restore();
     });
 
@@ -367,7 +367,7 @@ describe('Peer', () => {
       assert(peer.id === undefined);
 
       const peerId = 'testId';
-      peer.socket.emit(util.MESSAGE_TYPES.OPEN.name, peerId);
+      peer.socket.emit(util.MESSAGE_TYPES.OPEN.key, peerId);
 
       assert(peer.id === peerId);
     });
@@ -375,7 +375,7 @@ describe('Peer', () => {
     it('should abort with server-error on ERROR events', () => {
       const errMsg = 'Error message';
       try {
-        peer.socket.emit(util.MESSAGE_TYPES.ERROR.name, errMsg);
+        peer.socket.emit(util.MESSAGE_TYPES.ERROR.key, errMsg);
       } catch (e) {
         assert(e.type === 'server-error');
         assert(e.message === errMsg);
@@ -391,7 +391,7 @@ describe('Peer', () => {
 
       const spy = sinon.spy(util, 'log');
 
-      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.name, peerId);
+      peer.socket.emit(util.MESSAGE_TYPES.LEAVE.key, peerId);
 
       assert(spy.calledOnce === true);
       assert(spy.calledWith(`Received leave message from ${peerId}`) === true);
@@ -401,19 +401,19 @@ describe('Peer', () => {
 
     it('should emit a peer-unavailable error on EXPIRE events', done => {
       const peerId = 'testId';
-      peer.on(Peer.EVENTS.error.name, e => {
+      peer.on(Peer.EVENTS.error.key, e => {
         assert(e.type === 'peer-unavailable');
         assert(e.message === `Could not connect to peer ${peerId}`);
         done();
       });
 
-      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.name, peerId);
+      peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.key, peerId);
     });
 
     it('should create MediaConnection on media OFFER events', done => {
       const peerId = 'testId';
       const connectionId = util.randomToken();
-      peer.on(Peer.EVENTS.call.name, connection => {
+      peer.on(Peer.EVENTS.call.key, connection => {
         assert(connection);
         assert(connection.constructor.name === 'MediaConnection');
         assert(connection.options.connectionId === connectionId);
@@ -428,13 +428,13 @@ describe('Peer', () => {
         src:            peerId,
         metadata:       {}
       };
-      peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
+      peer.socket.emit(util.MESSAGE_TYPES.OFFER.key, offerMsg);
     });
 
     it('should create DataConnection on data OFFER events', done => {
       const peerId = 'testId';
       const connectionId = util.randomToken();
-      peer.on(Peer.EVENTS.connection.name, connection => {
+      peer.on(Peer.EVENTS.connection.key, connection => {
         assert(connection);
         assert(connection.constructor.name === 'DataConnection');
         assert(connection.options.connectionId === connectionId);
@@ -450,7 +450,7 @@ describe('Peer', () => {
         src:            peerId,
         metadata:       {}
       };
-      peer.socket.emit(util.MESSAGE_TYPES.OFFER.name, offerMsg);
+      peer.socket.emit(util.MESSAGE_TYPES.OFFER.key, offerMsg);
     });
 
     it('should queue ANSWER/CANDIDATEs if connection doesn\'t exist', () => {
@@ -486,30 +486,30 @@ describe('Peer', () => {
       };
 
       peer.socket.emit(
-        util.MESSAGE_TYPES.ANSWER.name,
+        util.MESSAGE_TYPES.ANSWER.key,
         mediaAnswerMessage);
       peer.socket.emit(
-        util.MESSAGE_TYPES.CANDIDATE.name,
+        util.MESSAGE_TYPES.CANDIDATE.key,
         mediaCandidateMessage);
       peer.socket.emit(
-        util.MESSAGE_TYPES.ANSWER.name,
+        util.MESSAGE_TYPES.ANSWER.key,
         dataAnswerMessage);
       peer.socket.emit(
-        util.MESSAGE_TYPES.CANDIDATE.name,
+        util.MESSAGE_TYPES.CANDIDATE.key,
         dataCandidateMessage);
 
       const messages1 = peer._queuedMessages[connId1];
 
-      assert(messages1[0].type === util.MESSAGE_TYPES.ANSWER.name);
+      assert(messages1[0].type === util.MESSAGE_TYPES.ANSWER.key);
       assert(messages1[0].payload === mediaAnswerMessage);
-      assert(messages1[1].type === util.MESSAGE_TYPES.CANDIDATE.name);
+      assert(messages1[1].type === util.MESSAGE_TYPES.CANDIDATE.key);
       assert(messages1[1].payload === mediaCandidateMessage);
 
       const messages2 = peer._queuedMessages[connId2];
 
-      assert(messages2[0].type === util.MESSAGE_TYPES.ANSWER.name);
+      assert(messages2[0].type === util.MESSAGE_TYPES.ANSWER.key);
       assert(messages2[0].payload === dataAnswerMessage);
-      assert(messages2[1].type === util.MESSAGE_TYPES.CANDIDATE.name);
+      assert(messages2[1].type === util.MESSAGE_TYPES.CANDIDATE.key);
       assert(messages2[1].payload === dataCandidateMessage);
     });
 
@@ -529,7 +529,7 @@ describe('Peer', () => {
 
       peer._addConnection(srcId, mediaConnection);
 
-      peer.socket.emit(util.MESSAGE_TYPES.ANSWER.name, mediaAnswerMessage);
+      peer.socket.emit(util.MESSAGE_TYPES.ANSWER.key, mediaAnswerMessage);
       assert(stub.calledOnce);
       assert(stub.calledWith(mediaAnswerMessage));
     });
@@ -550,7 +550,7 @@ describe('Peer', () => {
 
       peer._addConnection(srcId, dataConnection);
 
-      peer.socket.emit(util.MESSAGE_TYPES.CANDIDATE.name, dataCandidateMessage);
+      peer.socket.emit(util.MESSAGE_TYPES.CANDIDATE.key, dataCandidateMessage);
       assert(stub.calledOnce);
       assert(stub.calledWith(dataCandidateMessage));
     });

@@ -115,7 +115,7 @@ describe('Negotiator', () => {
           };
           const pcConfig = {};
 
-          negotiator.on(Negotiator.EVENTS.dcReady.name, () => {
+          negotiator.on(Negotiator.EVENTS.dcReady.key, () => {
             done();
           });
 
@@ -202,7 +202,7 @@ describe('Negotiator', () => {
       describe('onaddstream', () => {
         it('should emit \'addStream\' with remote stream', done => {
           ev.stream = 'stream';
-          negotiator.on(Negotiator.EVENTS.addStream.name, stream => {
+          negotiator.on(Negotiator.EVENTS.addStream.key, stream => {
             assert.equal(stream, ev.stream);
             done();
           });
@@ -214,7 +214,7 @@ describe('Negotiator', () => {
       describe('ondatachannel', () => {
         it('should emit \'dcReady\' with datachannel', done => {
           ev.channel = 'dc';
-          negotiator.on(Negotiator.EVENTS.dcReady.name, dc => {
+          negotiator.on(Negotiator.EVENTS.dcReady.key, dc => {
             assert(dc, ev.channel);
             done();
           });
@@ -226,7 +226,7 @@ describe('Negotiator', () => {
       describe('onicecandidate', () => {
         it('should emit \'iceCandidate\' with ice candidate', done => {
           ev.candidate = 'candidate';
-          negotiator.on(Negotiator.EVENTS.iceCandidate.name, candidate => {
+          negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
             assert(candidate, ev.candidate);
             done();
           });
@@ -257,7 +257,7 @@ describe('Negotiator', () => {
 
         describe('when pc.iceConnectionState is \'disconnected\'', () => {
           it('should emit \'iceConnectionDisconnected\'', done => {
-            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.name,
+            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key,
             () => {
               done();
             });
@@ -269,7 +269,7 @@ describe('Negotiator', () => {
 
         describe('when pc.iceConnectionState is \'failed\'', () => {
           it('should emit \'iceConnectionDisconnected\'', done => {
-            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.name,
+            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key,
             () => {
               done();
             });
@@ -305,7 +305,7 @@ describe('Negotiator', () => {
           const offer = 'offer';
           pc.setLocalDescription = promiseStub.resolves(offer);
 
-          negotiator.on(Negotiator.EVENTS.offerCreated.name, offer => {
+          negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
             assert(offer);
             done();
           });
@@ -352,7 +352,7 @@ describe('Negotiator', () => {
       const fakeError = 'fakeError';
       pc.createOffer = promiseStub.rejects(fakeError);
 
-      negotiator.on(Negotiator.EVENTS.error.name, err => {
+      negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
         assert.equal(err.type, 'webrtc');
         done();
@@ -397,7 +397,7 @@ describe('Negotiator', () => {
         const offer = 'offer';
         pc.setLocalDescription = promiseStub.resolves(offer);
 
-        negotiator.on(Negotiator.EVENTS.offerCreated.name, offer => {
+        negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
           assert(offer);
           done();
         });
@@ -412,7 +412,7 @@ describe('Negotiator', () => {
         const fakeError = 'fakeError';
         pc.setLocalDescription = promiseStub.rejects(fakeError);
 
-        negotiator.on(Negotiator.EVENTS.error.name, err => {
+        negotiator.on(Negotiator.EVENTS.error.key, err => {
           assert(err instanceof Error);
           assert.equal(err.type, 'webrtc');
           done();
@@ -505,7 +505,7 @@ describe('Negotiator', () => {
             const eventName = emitSpy.args[0][0];
             const answer = emitSpy.args[0][1];
 
-            assert(eventName, Negotiator.EVENTS.answerCreated.name);
+            assert(eventName, Negotiator.EVENTS.answerCreated.key);
             assert.equal(answer.type, 'answer');
             assert.equal(answer.constructor.name, 'RTCSessionDescription');
 
