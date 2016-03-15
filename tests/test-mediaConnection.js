@@ -80,6 +80,7 @@ describe('MediaConnection', () => {
       const mc = new MediaConnection(id, options);
       assert.equal(mc.type, 'media');
       assert.equal(mc.remoteId, id);
+      assert.equal(mc.peer, id);
       assert.equal(mc.localStream, stream);
       assert.equal(mc.metadata, metadata);
       assert.equal(mc.options, options);
