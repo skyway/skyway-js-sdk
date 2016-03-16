@@ -107,7 +107,7 @@ describe('DataConnection', () => {
     });
 
     it('should process any queued messages after PeerConnection object is created', () => {
-      const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message'}];
+      const messages = [{type: util.MESSAGE_TYPES.ANSWER.key, payload: 'message'}];
 
       let spy = sinon.spy();
       sinon.stub(DataConnection.prototype, 'handleAnswer', spy);
@@ -120,8 +120,8 @@ describe('DataConnection', () => {
     });
 
     it('should correctly handle ALL of multiple queued messages', () => {
-      const messages = [{type: util.MESSAGE_TYPES.ANSWER.name, payload: 'message1'},
-                        {type: util.MESSAGE_TYPES.CANDIDATE.name, payload: 'message2'}];
+      const messages = [{type: util.MESSAGE_TYPES.ANSWER.key, payload: 'message1'},
+                        {type: util.MESSAGE_TYPES.CANDIDATE.key, payload: 'message2'}];
 
       let spy1 = sinon.spy();
       let spy2 = sinon.spy();
@@ -206,7 +206,7 @@ describe('DataConnection', () => {
 
     it('should emit \'candidate\' on negotiator \'iceCandidate\' event', done => {
       const candidate = Symbol();
-      dc.on(Connection.EVENTS.candidate.name, connectionCandidate => {
+      dc.on(Connection.EVENTS.candidate.key, connectionCandidate => {
         assert(connectionCandidate);
         assert.equal(connectionCandidate.candidate, candidate);
         assert.equal(connectionCandidate.dst, dc.remoteId);
@@ -215,12 +215,12 @@ describe('DataConnection', () => {
         done();
       });
 
-      dc._negotiator.emit(Negotiator.EVENTS.iceCandidate.name, candidate);
+      dc._negotiator.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
     });
 
     it('should emit \'answer\' on negotiator \'answerCreated\' event', done => {
       const answer = Symbol();
-      dc.on(Connection.EVENTS.answer.name, connectionCandidate => {
+      dc.on(Connection.EVENTS.answer.key, connectionCandidate => {
         assert(connectionCandidate);
         assert.equal(connectionCandidate.answer, answer);
         assert.equal(connectionCandidate.dst, dc.remoteId);
@@ -229,12 +229,12 @@ describe('DataConnection', () => {
         done();
       });
 
-      dc._negotiator.emit(Negotiator.EVENTS.answerCreated.name, answer);
+      dc._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
     });
 
     it('should emit \'offer\' on negotiator \'offerCreated\' event', done => {
       const offer = Symbol();
-      dc.on(Connection.EVENTS.offer.name, connectionOffer => {
+      dc.on(Connection.EVENTS.offer.key, connectionOffer => {
         assert(connectionOffer);
         assert.equal(connectionOffer.offer, offer);
         assert.equal(connectionOffer.dst, dc.remoteId);
@@ -246,7 +246,7 @@ describe('DataConnection', () => {
         done();
       });
 
-      dc._negotiator.emit(Negotiator.EVENTS.offerCreated.name, offer);
+      dc._negotiator.emit(Negotiator.EVENTS.offerCreated.key, offer);
     });
   });
 
