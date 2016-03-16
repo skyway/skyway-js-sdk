@@ -1,18 +1,21 @@
 'use strict';
 
 const BinaryPack = require('js-binarypack');
+const Enum       = require('enum');
 
 const adapter = require('webrtc-adapter-test');
 const RTCPeerConnection     = adapter.RTCPeerConnection;
 
-// Log ENUM setup. 'enumify' is only used with `import`, not 'require'.
-import {Enum} from 'enumify';
-class LogLevel extends Enum {}
-LogLevel.initEnum(['NONE', 'ERROR', 'WARN', 'FULL']);
 const LOG_PREFIX      = 'SkyWayJS: ';
 
-class MessageTypes extends Enum {}
-MessageTypes.initEnum([
+const LogLevel = new Enum({
+  NONE:  0,
+  ERROR: 1,
+  WARN:  2,
+  FULL:  3
+});
+
+const MessageTypes = new Enum([
   'OPEN',
   'ERROR',
   'OFFER',
@@ -106,12 +109,12 @@ class Util {
       };
     })();
 
-    this._logLevel = LogLevel.NONE.ordinal;
+    this._logLevel = LogLevel.NONE.value;
   }
 
   setLogLevel(level) {
-    if (level instanceof LogLevel) {
-      level = level.ordinal;
+    if (level.value) {
+      level = level.value;
     }
 
     const decimalRadix = 10;
@@ -119,25 +122,25 @@ class Util {
 
     switch (debugLevel) {
       case 0:
-        this._logLevel = LogLevel.NONE.ordinal;
+        this._logLevel = LogLevel.NONE.value;
         break;
       case 1:
-        this._logLevel = LogLevel.ERROR.ordinal;
+        this._logLevel = LogLevel.ERROR.value;
         break;
       case 2:
-        this._logLevel = LogLevel.WARN.ordinal;
+        this._logLevel = LogLevel.WARN.value;
         break;
       case 3:
-        this._logLevel = LogLevel.FULL.ordinal;
+        this._logLevel = LogLevel.FULL.value;
         break;
       default:
-        this._logLevel = LogLevel.NONE.ordinal;
+        this._logLevel = LogLevel.NONE.value;
         break;
     }
   }
 
   warn() {
-    if (this._logLevel >= LogLevel.WARN.ordinal) {
+    if (this._logLevel >= LogLevel.WARN.value) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
       console.warn.apply(console, copy);
@@ -145,7 +148,7 @@ class Util {
   }
 
   error() {
-    if (this._logLevel >= LogLevel.ERROR.ordinal) {
+    if (this._logLevel >= LogLevel.ERROR.value) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
       console.error.apply(console, copy);
@@ -153,7 +156,7 @@ class Util {
   }
 
   log() {
-    if (this._logLevel >= LogLevel.FULL.ordinal) {
+    if (this._logLevel >= LogLevel.FULL.value) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
       console.log.apply(console, copy);

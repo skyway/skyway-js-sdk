@@ -2,6 +2,7 @@
 
 const EventEmitter = require('events');
 const adapter      = require('webrtc-adapter-test');
+const Enum         = require('enum');
 
 const RTCPeerConnection     = adapter.RTCPeerConnection;
 const RTCIceCandidate       = adapter.RTCIceCandidate;
@@ -9,10 +10,7 @@ const RTCSessionDescription = adapter.RTCSessionDescription;
 
 const util = require('./util');
 
-// Negotiator ENUM setup. 'enumify' is only used with `import`, not 'require'.
-import {Enum} from 'enumify';
-class NegotiatorEvents extends Enum {}
-NegotiatorEvents.initEnum([
+const NegotiatorEvents = new Enum([
   'addStream',
   'dcReady',
   'offerCreated',
@@ -35,7 +33,7 @@ class Negotiator extends EventEmitter {
       if (options.type === 'data') {
         const label = options.label || '';
         const dc = this._pc.createDataChannel(label);
-        this.emit(Negotiator.EVENTS.dcReady.name, dc);
+        this.emit(Negotiator.EVENTS.dcReady.key, dc);
       }
     } else {
       this.handleOffer(options.offer);
@@ -55,20 +53,20 @@ class Negotiator extends EventEmitter {
     this._pc.onaddstream = evt => {
       util.log('Received remote media stream');
       const stream = evt.stream;
-      this.emit(Negotiator.EVENTS.addStream.name, stream);
+      this.emit(Negotiator.EVENTS.addStream.key, stream);
     };
 
     this._pc.ondatachannel = evt => {
       util.log('Received data channel');
       const dc = evt.channel;
-      this.emit(Negotiator.EVENTS.dcReady.name, dc);
+      this.emit(Negotiator.EVENTS.dcReady.key, dc);
     };
 
     this._pc.onicecandidate = evt => {
       const candidate = evt.candidate;
       if (candidate) {
         util.log('Generated ICE candidate for:', candidate);
-        this.emit(Negotiator.EVENTS.iceCandidate.name, candidate);
+        this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
       } else {
         util.log('ICE canddidates gathering complete');
       }
@@ -91,11 +89,11 @@ class Negotiator extends EventEmitter {
           break;
         case 'failed':
           util.log('iceConnectionState is failed, closing connection');
-          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.name);
+          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
           break;
         case 'disconnected':
           util.log('iceConnectionState is disconnected, closing connection');
-          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.name);
+          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
           break;
         case 'closed':
           util.log('iceConnectionState is closed');
@@ -165,7 +163,7 @@ class Negotiator extends EventEmitter {
     return this._pc.setLocalDescription(offer)
       .then(() => {
         util.log('Set localDescription: offer');
-        this.emit(Negotiator.EVENTS.offerCreated.name, offer);
+        this.emit(Negotiator.EVENTS.offerCreated.key, offer);
       }, error => {
         this.emitError('webrtc', error);
         util.log('Failed to setLocalDescription, ', error);
@@ -186,7 +184,7 @@ class Negotiator extends EventEmitter {
       .then(() => {
         return this._makeAnswerSdp();
       }).then(answer => {
-        this.emit(Negotiator.EVENTS.answerCreated.name, answer);
+        this.emit(Negotiator.EVENTS.answerCreated.key, answer);
       });
   }
 
@@ -237,7 +235,7 @@ class Negotiator extends EventEmitter {
     }
 
     err.type = type;
-    this.emit(Negotiator.EVENTS.error.name, err);
+    this.emit(Negotiator.EVENTS.error.key, err);
   }
 
   static get EVENTS() {

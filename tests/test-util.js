@@ -78,11 +78,6 @@ describe('Util', () => {
     let currentLogLevel;
 
     beforeEach(() => {
-      currentLogLevel = util._logLevel;
-
-      const LOG_LEVEL_FULL = 3;
-      util.setLogLevel(LOG_LEVEL_FULL);
-
       stubError = sinon.stub(console, 'error');
       stubWarn = sinon.stub(console, 'warn');
       stubLog = sinon.stub(console, 'log');
