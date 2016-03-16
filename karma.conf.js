@@ -13,7 +13,7 @@ module.exports =  {
         instrumenter:       require('isparta'),
         instrumenterConfig: {babel: {presets: ['es2015']}}
       }],
-      ['babelify', {presets: ['es2015'], 
+      ['babelify', {presets: ['es2015'],
         plugins: ['babel-plugin-espower']}
       ]
     ],
