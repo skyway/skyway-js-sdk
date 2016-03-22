@@ -168,17 +168,15 @@ describe('DataConnection', () => {
       spy.reset();
     });
 
-    it.only('should handle a message upon _dc.onmessage()', () => {
+    it('should handle a message upon _dc.onmessage()', () => {
       const message = 'foobar';
       const data = {
-        //size: message.size,
-        //type: message.type,
         id: 'test',
         index: 1,
         totalParts: 1,
         data: message
       };
-      const packedData = util.pack(message);
+      const packedData = util.pack(data);
 
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
@@ -259,18 +257,27 @@ describe('DataConnection', () => {
   });
 
   describe('Handle Message', () => {
-    it('should emit a \'data\' event when handling a data message', done => {
-      const message = {data: 'foobar'};
+    it.only('should emit a \'data\' event when handling a complete data message', done => {
+      const message = 'foobar';
+      const data = {
+        id: 'test',
+        index: 0,
+        totalParts: 1,
+        data: message,
+        type: typeof message
+      };
 
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
-        assert.equal(data, message.data);
+        assert.equal(data, message);
         done();
       });
 
-      dc._handleDataMessage(message);
+      util.blobToArrayBuffer(util.pack(data), ab => {
+        dc._handleDataMessage(ab);
+      });
     });
 
     it('should unpack an ArrayBuffer message', done => {

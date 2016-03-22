@@ -76,8 +76,8 @@ class DataConnection extends Connection {
 
   _handleDataMessage(msg) {
     const dataMeta = util.unpack(msg);
+    console.log(dataMeta.type);
 
-    console.log('Data ID: ' + dataMeta.id);
     let currData = this.receivedData[dataMeta.id];
     if (!currData) {
       currData = this.receivedData[dataMeta.id] = {
@@ -92,8 +92,15 @@ class DataConnection extends Connection {
     currData.parts[dataMeta.index] = dataMeta.data;
 
     if (currData.receivedParts === currData.totalParts) {
-      const blob = new Blob(currData.parts);
-      this.emit(DataConnection.EVENTS.data.key, blob);
+      let blob = new Blob(currData.parts);
+
+      if (currData.type === 'string') {
+        util.blobToBinaryString(blob, str => {
+          this.emit(DataConnection.EVENTS.data.key, str);
+        });
+      } else {
+        this.emit(DataConnection.EVENTS.data.key, blob);
+      }
     }
   }
 
