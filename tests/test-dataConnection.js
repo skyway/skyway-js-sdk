@@ -171,10 +171,10 @@ describe('DataConnection', () => {
     it('should handle a message upon _dc.onmessage()', () => {
       const message = 'foobar';
       const data = {
-        id: 'test',
-        index: 1,
+        id:         'test',
+        index:      0,
         totalParts: 1,
-        data: message
+        data:       message
       };
       const packedData = util.pack(data);
 
@@ -257,7 +257,7 @@ describe('DataConnection', () => {
   });
 
   describe('Handle Message', () => {
-    it('should emit a \'data\' event when handling a complete data message', done => {
+    it('should recorrect unpack a string message', done => {
       const message = 'foobar';
       const dataMeta = {
         id:         'test',
@@ -280,7 +280,7 @@ describe('DataConnection', () => {
       });
     });
 
-    it.only('should correctly reconstruct an incoming file', done => {
+    it('should correctly reconstruct an incoming file', done => {
       const fileType = 'text/plain;charset=utf-8;';
       const file = new File(['foobar'], 'testfile', {
         type: fileType
@@ -294,9 +294,9 @@ describe('DataConnection', () => {
         index:      0,
         totalParts: 1,
         data:       file,
+        name:       file.name,
         type:       file.type
       };
-      const packedData = util.pack(dataMeta);
 
       dc.on('data', data => {
         assert.deepEqual(data, file);
@@ -308,81 +308,45 @@ describe('DataConnection', () => {
       });
     });
 
-    it('should convert and unpack a String message', done => {
-      const string = 'foobar';
-      const arrayBuffer = util.binaryStringToArrayBuffer(string);
-      const unpacked = util.unpack(arrayBuffer);
-      const message = {data: string};
-
-      const dc = new DataConnection('remoteId', {serialization: 'binary'});
-      dc._negotiator.emit('dcReady', {});
-
-      dc.on('data', data => {
-        assert.equal(data, unpacked);
-        done();
-      });
-
-      dc._handleDataMessage(message);
-    });
-
-    it('should convert a blob type to an array buffer', done => {
-      const string = 'foobar';
-      const arrayBuffer = util.pack(string);
-      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
-      const message = {data: blob};
-
-      const dc = new DataConnection('remoteId', {serialization: 'binary'});
-      dc._negotiator.emit('dcReady', {});
-
-      dc.on('data', data => {
-        assert.equal(data, string);
-        done();
-      });
-
-      dc._handleDataMessage(message);
-    });
-
-    it('should parse JSON messages', done => {
-      const obj = {name: 'foobar'};
-      const json = JSON.stringify(obj);
-      const message = {data: json};
-
-      const dc = new DataConnection('remoteId', {serialization: 'json'});
-      dc._negotiator.emit('dcReady', {});
-
-      dc.on('data', data => {
-        assert.deepEqual(data, obj);
-        done();
-      });
-
-      dc._handleDataMessage(message);
-    });
-
-    it('should be able to recombine chunked blobs', done => {
+    it('should be able to recombine chunked messages', done => {
       // Chunk size is 16300
       // Each char is 2 bytes
-      const len = 16300 * 3;
+      const len = 20000;
       const string = new Array(len + 1).join('a');
-      const arrayBuffer = util.pack(string);
-      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
 
-      let chunks = util.chunk(blob);
-      console.log('Blob size: ' + blob.size);
-      console.log('Chunks: ' + chunks.length);
+      const slice1 = string.slice(0, util.maxChunkSize);
+      const slice2 = string.slice(util.maxChunkSize, util.maxChunkSize * 2);
+
+      const dataMeta1 = {
+        id:         'test',
+        index:      0,
+        totalParts: 2,
+        data:       slice1,
+        type:       typeof slice1
+      };
+      const dataMeta2 = {
+        id:         'test',
+        index:      1,
+        totalParts: 2,
+        data:       slice2,
+        type:       typeof slice2
+      };
 
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
-        // Receives the reconstructed blob after all chunks have been handled
-        assert.deepEqual(data, blob);
+        // Receives the reconstructed string after all chunks have been handled
+        assert.deepEqual(data, string);
         done();
       });
 
-      for (let chunk of chunks) {
-        let message = {data: chunk};
-        dc._handleDataMessage(message);
-      }
+      util.blobToArrayBuffer(util.pack(dataMeta1), ab1 => {
+        util.blobToArrayBuffer(util.pack(dataMeta2), ab2 => {
+          dc._handleDataMessage(ab1);
+          dc._handleDataMessage(ab2);
+        });
+      });
     });
   });
 
