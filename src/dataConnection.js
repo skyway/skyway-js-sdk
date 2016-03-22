@@ -152,6 +152,15 @@ class DataConnection extends Connection {
   startSendLoop() {
     if(!sendInterval) {
       // Define send interval
+      // Try sending a new chunk every millisecond
+      sendInterval = setInterval(() => {
+        if (sendBuffer.length === 0) {
+          clearInterval(sendInterval);
+          sendInterval = undefined;
+        }
+        // Should this be an else statement?
+        this._dc.send(sendBuffer.shift(1));
+      }, 1)
     }
   }
 
