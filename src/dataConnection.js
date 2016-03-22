@@ -19,6 +19,9 @@ class DataConnection extends Connection {
     this.label = this.options.label || this.id;
     this.serialization = this.options.serialization;
 
+    // New send code properties
+    this.sendBuffer = [];
+
     // Data channel buffering.
     this._buffer = [];
     this._isBuffering = false;
@@ -127,131 +130,133 @@ class DataConnection extends Connection {
         ' You should listen for the `open` event before sending messages.'));
     }
 
-    const numSlices = Math.ceil(data.size/util.chunkedMTU);
+    const numSlices = Math.ceil(data.size / util.maxChunkSize);
     const dataMeta = {
-      //name: data.name,
-      size: data.size,
-      type: file.type,
+      id:         self.generateDataId(),
+      size:       data.size,
+      type:       data.type,
       totalParts: numSlices
+    };
+
+    // Perform any required slicing
+    for (let sliceIndex = 0; sliceIndex < numSlices; sliceIndex++) {
+      const slice = data.slice(sliceIndex * util.maxChunkSize, (sliceIndex + 1) * util.maxChunkSize);
+      dataMeta.index = sliceIndex;
+      dataMeta.data = slice;
+
+      // Add all chunks to our buffer and start the send loop (if we haven't already)
+      this.sendBuffer.push(util.pack(dataMeta));
+      self.startSendLoop();
     }
-
-    if (numSlices > 1) {
-      // Needs chunking
-      for (let sliceIndex = 0; sliceIndex < numSlices; sliceIndex++) {
-        const slice = data.slice(sliceIndex * sliceSize, (sliceIndex + 1) * sliceSize);
-        dataMeta.index = sliceIndex;
-        dataMeta.data = slice;
-
-        // Send chunks
-      }
-    }
-
-    // Else normal send
   }
 
   startSendLoop() {
-    if(!sendInterval) {
+    if (!self.sendInterval) {
       // Define send interval
       // Try sending a new chunk every millisecond
-      sendInterval = setInterval(() => {
-        if (sendBuffer.length === 0) {
-          clearInterval(sendInterval);
-          sendInterval = undefined;
+      self.sendInterval = setInterval(() => {
+        if (self.sendBuffer.length === 0) {
+          clearInterval(self.sendInterval);
+          self.sendInterval = undefined;
         }
         // Should this be an else statement?
-        this._dc.send(sendBuffer.shift(1));
-      }, 1)
+        this._dc.send(this.sendBuffer.shift(1));
+      }, 1);
     }
   }
 
-  send(data, chunked) {
-    if (!this.open) {
-      this.emit(DataConnection.EVENTS.error.key, new Error('Connection is not open.' +
-        ' You should listen for the `open` event before sending messages.'));
-    }
-
-    if (this.serialization === 'json') {
-      this._bufferedSend(JSON.stringify(data));
-    } else if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
-      const blob = util.pack(data);
-
-      // For Chrome-Firefox interoperability, we need to make Firefox "chunk" the data it sends out
-      const needsChunking = util.chunkedBrowsers[this._peerBrowser] || util.chunkedBrowsers[util.browser];
-      if (needsChunking && !chunked && blob.size > util.chunkedMTU) {
-        this._sendChunks(blob);
-        return;
-      }
-
-      if (util.supports && !util.supports.binaryBlob) {
-        // We only do this if we really need to (e.g. blobs are not supported),
-        // because this conversion is costly
-        util.blobToArrayBuffer(blob, arrayBuffer => {
-          this._bufferedSend(arrayBuffer);
-        });
-      } else {
-        this._bufferedSend(blob);
-      }
-    } else {
-      this._bufferedSend(data);
-    }
+  generateDataId() {
+    return Math.random().toString(36).substr(16);
   }
 
-  // Called from send()
-  //
-  // If we are buffering, message is added to the buffer
-  // Otherwise try sending, and start buffering if it fails
-  _bufferedSend(msg) {
-    if (this._isBuffering || !this._trySend(msg)) {
-      this._buffer.push(msg);
-    }
-  }
+  // oldSend(data, chunked) {
+  //   if (!this.open) {
+  //     this.emit(DataConnection.EVENTS.error.key, new Error('Connection is not open.' +
+  //       ' You should listen for the `open` event before sending messages.'));
+  //   }
 
-  // Called from _bufferedSend()
-  //
-  // Try sending data over the dataChannel
-  // If an error occurs, wait and try sending using a buffer
-  _trySend(msg) {
-    try {
-      this._dc.send(msg);
-    } catch (error) {
-      this._isBuffering = true;
+  //   if (this.serialization === 'json') {
+  //     this._bufferedSend(JSON.stringify(data));
+  //   } else if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
+  //     const blob = util.pack(data);
 
-      setTimeout(() => {
-        // Try again
-        this._isBuffering = false;
-        this._tryBuffer();
-      }, 100);
-      return false;
-    }
-    return true;
-  }
+  //     // For Chrome-Firefox interoperability, we need to make Firefox "chunk" the data it sends out
+  //     const needsChunking = util.chunkedBrowsers[this._peerBrowser] || util.chunkedBrowsers[util.browser];
+  //     if (needsChunking && !chunked && blob.size > util.chunkedMTU) {
+  //       this._sendChunks(blob);
+  //       return;
+  //     }
 
-  // Called from _trySend() when buffering
-  //
-  // Recursively tries to send all messages in the buffer, until the buffer is empty
-  _tryBuffer() {
-    if (this._buffer.length === 0) {
-      return;
-    }
+  //     if (util.supports && !util.supports.binaryBlob) {
+  //       // We only do this if we really need to (e.g. blobs are not supported),
+  //       // because this conversion is costly
+  //       util.blobToArrayBuffer(blob, arrayBuffer => {
+  //         this._bufferedSend(arrayBuffer);
+  //       });
+  //     } else {
+  //       this._bufferedSend(blob);
+  //     }
+  //   } else {
+  //     this._bufferedSend(data);
+  //   }
+  // }
 
-    const msg = this._buffer[0];
+  // // Called from send()
+  // //
+  // // If we are buffering, message is added to the buffer
+  // // Otherwise try sending, and start buffering if it fails
+  // _bufferedSend(msg) {
+  //   if (this._isBuffering || !this._trySend(msg)) {
+  //     this._buffer.push(msg);
+  //   }
+  // }
 
-    if (this._trySend(msg)) {
-      this._buffer.shift();
-      this._tryBuffer();
-    }
-  }
+  // // Called from _bufferedSend()
+  // //
+  // // Try sending data over the dataChannel
+  // // If an error occurs, wait and try sending using a buffer
+  // _trySend(msg) {
+  //   try {
+  //     this._dc.send(msg);
+  //   } catch (error) {
+  //     this._isBuffering = true;
 
-  // Called from send()
-  //
-  // Chunks a blob, then re-calls send() with each chunk in turn
-  _sendChunks(blob) {
-    const blobs = util.chunk(blob);
-    for (let i = 0; i < blobs.length; i++) {
-      let blob = blobs[i];
-      this.send(blob, true);
-    }
-  }
+  //     setTimeout(() => {
+  //       // Try again
+  //       this._isBuffering = false;
+  //       this._tryBuffer();
+  //     }, 100);
+  //     return false;
+  //   }
+  //   return true;
+  // }
+
+  // // Called from _trySend() when buffering
+  // //
+  // // Recursively tries to send all messages in the buffer, until the buffer is empty
+  // _tryBuffer() {
+  //   if (this._buffer.length === 0) {
+  //     return;
+  //   }
+
+  //   const msg = this._buffer[0];
+
+  //   if (this._trySend(msg)) {
+  //     this._buffer.shift();
+  //     this._tryBuffer();
+  //   }
+  // }
+
+  // // Called from send()
+  // //
+  // // Chunks a blob, then re-calls send() with each chunk in turn
+  // _sendChunks(blob) {
+  //   const blobs = util.chunk(blob);
+  //   for (let i = 0; i < blobs.length; i++) {
+  //     let blob = blobs[i];
+  //     this.send(blob, true);
+  //   }
+  // }
 
   static get EVENTS() {
     return DCEvents;
