@@ -75,13 +75,12 @@ class DataConnection extends Connection {
   }
 
   _handleDataMessage(msg) {
-    const data = msg.data;
-    const dataMeta = util.unpack(data);
+    const dataMeta = util.unpack(msg);
 
     console.log('Data ID: ' + dataMeta.id);
-    let currData = self.receivedData[dataMeta.id];
+    let currData = this.receivedData[dataMeta.id];
     if (!currData) {
-      this.receivedData[dataMeta.id] = {
+      currData = this.receivedData[dataMeta.id] = {
         size:          dataMeta.size,
         type:          dataMeta.type,
         totalParts:    dataMeta.totalParts,
@@ -157,7 +156,7 @@ class DataConnection extends Connection {
 
     const numSlices = Math.ceil(data.size / util.maxChunkSize);
     const dataMeta = {
-      id:         self.generateDataId(),
+      id:         util.generateDataId(),
       size:       data.size,
       type:       data.type,
       totalParts: numSlices
@@ -171,27 +170,23 @@ class DataConnection extends Connection {
 
       // Add all chunks to our buffer and start the send loop (if we haven't already)
       this.sendBuffer.push(util.pack(dataMeta));
-      self.startSendLoop();
+      this.startSendLoop();
     }
   }
 
   startSendLoop() {
-    if (!self.sendInterval) {
+    if (!this.sendInterval) {
       // Define send interval
       // Try sending a new chunk every millisecond
-      self.sendInterval = setInterval(() => {
-        if (self.sendBuffer.length === 0) {
-          clearInterval(self.sendInterval);
-          self.sendInterval = undefined;
+      this.sendInterval = setInterval(() => {
+        if (this.sendBuffer.length === 0) {
+          clearInterval(this.sendInterval);
+          this.sendInterval = undefined;
         }
         // Should this be an else statement?
         this._dc.send(this.sendBuffer.shift(1));
       }, 1);
     }
-  }
-
-  generateDataId() {
-    return Math.random().toString(36).substr(16);
   }
 
   // oldSend(data, chunked) {

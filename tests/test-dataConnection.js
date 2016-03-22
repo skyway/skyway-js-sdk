@@ -168,18 +168,26 @@ describe('DataConnection', () => {
       spy.reset();
     });
 
-    it('should handle a message upon _dc.onmessage()', () => {
-      const message = {data: {constructor: 'foobar'}};
-      let spy;
+    it.only('should handle a message upon _dc.onmessage()', () => {
+      const message = 'foobar';
+      const data = {
+        //size: message.size,
+        //type: message.type,
+        id: 'test',
+        index: 1,
+        totalParts: 1,
+        data: message
+      };
+      const packedData = util.pack(message);
 
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
 
-      spy = sinon.spy(dc, '_handleDataMessage');
+      let spy = sinon.spy(dc, '_handleDataMessage');
 
       dc._dc.onmessage(message);
       assert(spy.calledOnce);
-      assert(spy.calledWith, message);
+      assert(spy.calledWith, packedData);
 
       spy.reset();
     });

@@ -225,6 +225,10 @@ class Util {
     return byteArray.buffer;
   }
 
+  generateDataId() {
+    return Math.random().toString(36).substr(16);
+  }
+
   isSecure() {
     return location.protocol === 'https:';
   }
