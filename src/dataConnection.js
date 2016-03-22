@@ -82,12 +82,12 @@ class DataConnection extends Connection {
     let currData = self.receivedData[dataMeta.id];
     if (!currData) {
       this.receivedData[dataMeta.id] = {
-        size: dataMeta.size,
-        type: dataMeta.type,
-        totalParts: dataMeta.totalParts,
-        parts: new Array(dataMeta.totalParts),
+        size:          dataMeta.size,
+        type:          dataMeta.type,
+        totalParts:    dataMeta.totalParts,
+        parts:         new Array(dataMeta.totalParts),
         receivedParts: 0
-      }
+      };
     }
     currData.receivedParts++;
     currData.parts[dataMeta.index] = dataMeta.data;
@@ -97,7 +97,6 @@ class DataConnection extends Connection {
       this.emit(DataConnection.EVENTS.data.key, blob);
     }
   }
-
 
   // Handles a DataChannel message (i.e. every time we get data from _dc.onmessage)
   // _oldHandleDataMessage(msg) {
