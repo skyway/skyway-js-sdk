@@ -36,6 +36,7 @@ class DataConnection extends Connection {
     // This replaces the PeerJS 'initialize' method
     this._negotiator.on('dcReady', dc => {
       this._dc = dc;
+      this._dc.binaryType = 'arraybuffer';
       this._setupMessageHandlers();
     });
 
@@ -117,6 +118,41 @@ class DataConnection extends Connection {
     }
 
     this.emit(DataConnection.EVENTS.data.key, data);
+  }
+
+  // New send method
+  send(data) {
+    if (!this.open) {
+      this.emit(DataConnection.EVENTS.error.key, new Error('Connection is not open.' +
+        ' You should listen for the `open` event before sending messages.'));
+    }
+
+    const numSlices = Math.ceil(data.size/util.chunkedMTU);
+    const dataMeta = {
+      //name: data.name,
+      size: data.size,
+      type: file.type,
+      totalParts: numSlices
+    }
+
+    if (numSlices > 1) {
+      // Needs chunking
+      for (let sliceIndex = 0; sliceIndex < numSlices; sliceIndex++) {
+        const slice = data.slice(sliceIndex * sliceSize, (sliceIndex + 1) * sliceSize);
+        dataMeta.index = sliceIndex;
+        dataMeta.data = slice;
+
+        // Send chunks
+      }
+    }
+
+    // Else normal send
+  }
+
+  startSendLoop() {
+    if(!sendInterval) {
+      // Define send interval
+    }
   }
 
   send(data, chunked) {
