@@ -98,8 +98,12 @@ class DataConnection extends Connection {
         util.blobToBinaryString(blob, str => {
           this.emit(DataConnection.EVENTS.data.key, str);
         });
-      } else {
+      } else if (currData.type === 'blob') {
+        blob = new Blob(blob, {type: currData.type});
         this.emit(DataConnection.EVENTS.data.key, blob);
+      } else {
+        const file = new File([blob], currData.name, {type: currData.type});
+        this.emit(DataConnection.EVENTS.data.key, file);
       }
     }
   }
@@ -165,9 +169,17 @@ class DataConnection extends Connection {
     const dataMeta = {
       id:         util.generateDataId(),
       size:       data.size,
-      type:       data.type,
       totalParts: numSlices
     };
+
+    if (typeof data === 'string') {
+      dataMeta.type = 'string';
+    } else if (data instanceof File) {
+      dataMeta.name = data.name;
+      dataMeta.type = data.type;
+    } else if (data instanceof Blob) {
+      dataMeta.type = 'blob';
+    }
 
     // Perform any required slicing
     for (let sliceIndex = 0; sliceIndex < numSlices; sliceIndex++) {

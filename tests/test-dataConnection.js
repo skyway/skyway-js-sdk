@@ -257,14 +257,14 @@ describe('DataConnection', () => {
   });
 
   describe('Handle Message', () => {
-    it.only('should emit a \'data\' event when handling a complete data message', done => {
+    it('should emit a \'data\' event when handling a complete data message', done => {
       const message = 'foobar';
-      const data = {
-        id: 'test',
-        index: 0,
+      const dataMeta = {
+        id:         'test',
+        index:      0,
         totalParts: 1,
-        data: message,
-        type: typeof message
+        data:       message,
+        type:       typeof message
       };
 
       const dc = new DataConnection('remoteId', {});
@@ -275,25 +275,37 @@ describe('DataConnection', () => {
         done();
       });
 
-      util.blobToArrayBuffer(util.pack(data), ab => {
+      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
         dc._handleDataMessage(ab);
       });
     });
 
-    it('should unpack an ArrayBuffer message', done => {
-      const string = 'foobar';
-      const arrayBuffer = util.pack(string);
-      const message = {data: arrayBuffer};
+    it.only('should correctly reconstruct an incoming file', done => {
+      const fileType = 'text/plain;charset=utf-8;';
+      const file = new File(['foobar'], 'testfile', {
+        type: fileType
+      });
 
       const dc = new DataConnection('remoteId', {serialization: 'binary'});
       dc._negotiator.emit('dcReady', {});
 
+      const dataMeta = {
+        id:         'test',
+        index:      0,
+        totalParts: 1,
+        data:       file,
+        type:       file.type
+      };
+      const packedData = util.pack(dataMeta);
+
       dc.on('data', data => {
-        assert.equal(data, string);
+        assert.deepEqual(data, file);
         done();
       });
 
-      dc._handleDataMessage(message);
+      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        dc._handleDataMessage(ab);
+      });
     });
 
     it('should convert and unpack a String message', done => {
