@@ -1,7 +1,7 @@
 'use strict';
 
 const assert     = require('power-assert');
-const proxyquire = require('proxyquire');
+const proxyquire = require('proxyquireify')(require);
 const sinon      = require('sinon');
 
 const util       = require('../src/util');

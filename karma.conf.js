@@ -1,51 +1,41 @@
-module.exports = function(config) {
-  config.set({
-    singleRun: true,
+module.exports =  {
+  singleRun: true,
 
-    frameworks: ['browserify', 'mocha'],
+  frameworks: ['mocha', 'browserify'],
 
-    files: [
-      {
-        pattern:  'src/**/*.js',
-        watched:  false,
-        served:   true,
-        included: true
-      },
-      {
-        pattern:  'tests/**/test-*.js',
-        watched:  false,
-        served:   true,
-        included: true
-      }
+  exclude: [
+  ],
+
+  browserify: {
+    debug:     true,
+    transform: [
+      ['browserify-istanbul', {
+        instrumenter:       require('isparta'),
+        instrumenterConfig: {babel: {presets: ['es2015']}}
+      }],
+      ['babelify', {presets: ['es2015'],
+        plugins: ['babel-plugin-espower']}
+      ]
     ],
+    plugin: ['proxyquireify/plugin']
+  },
 
-    exclude: [
-    ],
+  preprocessors: {
+    'tests/**/test-*.js': 'browserify',
+    'src/**/*.js':        ['browserify']
+  },
 
-    preprocessors: {
-      'tests/**/test-*.js': 'browserify',
-      'src/**/*.js':        'browserify'
-    },
-    browserify: {
-      debug: true,
+  reporters: [
+    'mocha',
+    'coverage'
+  ],
 
-      configure: function(bundle) {
-        bundle.once('prebundle', function() {
-          bundle.transform(
-            'babelify', {
-              presets: ['es2015'],
-              plugins: ['babel-plugin-espower']
-            }
-          ).plugin('proxyquire-universal');
-        });
-      }
-    },
+  browsers: ['Chrome'],
 
+  coverageReporter: {
     reporters: [
-      'mocha'
-    ],
-
-    // define reporters, port, logLevel, browsers etc.
-    browsers: ['Chrome']
-  });
+      {type: 'html', dir: 'coverage/'},
+      {type: 'text'}
+    ]
+  }
 };
