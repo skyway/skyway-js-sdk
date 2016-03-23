@@ -480,7 +480,7 @@ describe('DataConnection', () => {
       dc.send(jsonObj);
     });
 
-    it.only('should correctly send ArrayBuffer data', done => {
+    it('should correctly send ArrayBuffer data', done => {
       const message = 'foobar';
       const abMessage = util.binaryStringToArrayBuffer(message);
       let sendSpy = sinon.spy();
@@ -498,6 +498,26 @@ describe('DataConnection', () => {
       }, 100);
 
       dc.send(abMessage);
+    });
+
+    it.only('should correctly send Blob data', done => {
+      const message = 'foobar';
+      const blob = new Blob([message], {type: 'text/plain'});
+      let sendSpy = sinon.spy();
+
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit('dcReady', {send: sendSpy});
+      dc._dc.onopen();
+
+      setTimeout(() => {
+        assert(sendSpy.calledOnce);
+
+        const unpacked = util.unpack(sendSpy.args[0][0]);
+        assert.deepEqual(unpacked.data, blob);
+        done();
+      }, 100);
+
+      dc.send(blob);
     });
 
     it('should send data as a Blob if serialization is binary', () => {

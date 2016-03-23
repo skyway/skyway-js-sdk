@@ -136,12 +136,14 @@ class DataConnection extends Connection {
       dataMeta.size = this.getBinarySize(data);
     } else if (data instanceof ArrayBuffer) {
       dataMeta.type = 'arraybuffer';
-      console.log('type arraybuffer');
       dataMeta.size = data.byteLength;
+      console.log('type arraybuffer');
     } else if (data instanceof Blob) {
       // Should be a Blob or File
       dataMeta.type = data.type;
       dataMeta.name = data.name;
+      dataMeta.size = data.size;
+      console.log('type blob');
     } else if (typeof data === 'object') {
       dataMeta.type = 'json';
       data = util.pack(data);
