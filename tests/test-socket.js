@@ -29,7 +29,8 @@ describe('Socket', () => {
         },
         emit:       spy,
         disconnect: spy,
-        connected:  true
+        connected:  true,
+        io:         {opts: {query: ''}}
       }
     );
     Socket = proxyquire('../src/socket', {'socket.io-client': stub});
@@ -158,16 +159,16 @@ describe('Socket', () => {
 
   describe('_setupMessageHandlers', () => {
     let socket;
+    let peerId = 'peerId';
+    let token = 'token';
+
     beforeEach(() => {
       let apiKey = 'apiKey';
-      let peerId = 'peerId';
-      let token = 'token';
       socket = new Socket(false, 'localhost', serverPort, apiKey);
-      socket.start(peerId, token);
     });
 
     it('should set _isOpen and emit peerId on _io \'OPEN\' messages', () => {
-      let peerId = 'peerId';
+      socket.start(peerId, token);
 
       const spy = sinon.spy(socket, 'emit');
 
@@ -180,7 +181,26 @@ describe('Socket', () => {
       assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.key, peerId));
     });
 
+    it('should update the _io query on \'OPEN\' messages', () => {
+      let peerId = 'peerId';
+      socket.start(undefined, token);
+
+      const peerIdRegex = new RegExp(`&peerId=${peerId}`);
+
+      let query = socket._io.io.opts.query;
+      assert.equal(socket._isPeerIdSet, false);
+      assert.equal(peerIdRegex.test(query), false);
+
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](peerId);
+
+      query = socket._io.io.opts.query;
+      assert(socket._isPeerIdSet);
+      assert(peerIdRegex.test(query));
+    });
+
     it('should emit all non-OPEN message types on socket', () => {
+      socket.start(peerId, token);
+
       const spy = sinon.spy(socket, 'emit');
 
       assert.equal(spy.callCount, 0);

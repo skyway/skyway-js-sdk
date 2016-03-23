@@ -10,6 +10,7 @@ class Socket extends EventEmitter {
     super();
 
     this._isOpen = false;
+    this._isPeerIdSet = false;
     this._queue = [];
 
     this._io  = null;
@@ -27,6 +28,7 @@ class Socket extends EventEmitter {
     let query;
     if (id) {
       query = `apiKey=${this._key}&token=${token}&peerId=${id}`;
+      this._isPeerIdSet = true;
     } else {
       query = `apiKey=${this._key}&token=${token}`;
     }
@@ -67,8 +69,15 @@ class Socket extends EventEmitter {
     util.MESSAGE_TYPES.enums.forEach(type => {
       if (type.key === util.MESSAGE_TYPES.OPEN.key) {
         this._io.on(type.key, peerId => {
-          if (peerId) {
-            this._isOpen = true;
+          if (!peerId) {
+            return;
+          }
+
+          this._isOpen = true;
+          if (!this._isPeerIdSet) {
+            // set peerId for when reconnecting to the server
+            this._io.io.opts.query += `&peerId=${peerId}`;
+            this._isPeerIdSet = true;
           }
 
           this._sendQueuedMessages();
