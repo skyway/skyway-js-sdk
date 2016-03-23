@@ -105,9 +105,10 @@ class DataConnection extends Connection {
           this.emit(DataConnection.EVENTS.data.key, str);
         });
       } else if (currData.type === 'json') {
-        util.blobToBinaryString(blob, str => {
-          this.emit(DataConnection.EVENTS.data.key, JSON.parse(str));
-        });
+        this.emit(DataConnection.EVENTS.data.key, util.unpacK(blob));
+        //util.blobToBinaryString(blob, str => {
+        //  this.emit(DataConnection.EVENTS.data.key, JSON.parse(str));
+        //});
       } else if (currData.type === 'blob') {
         blob = new Blob(blob, {type: currData.type});
         this.emit(DataConnection.EVENTS.data.key, blob);

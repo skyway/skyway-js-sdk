@@ -283,12 +283,13 @@ describe('DataConnection', () => {
     it.only('should correctly unpack JSON data', done => {
       const jsonObj = {'name': 'testObject'};
       const jsonStr = JSON.stringify(jsonObj);
+      const packedJson = util.pack(jsonObj);
 
       const dataMeta = {
         id:         'test',
         index:      0,
         totalParts: 1,
-        data:       jsonStr,
+        data:       packedJson,
         type:       'json'
       };
 
