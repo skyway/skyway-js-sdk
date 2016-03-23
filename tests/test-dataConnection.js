@@ -281,7 +281,7 @@ describe('DataConnection', () => {
     });
 
     it('should correctly unpack JSON messages', done => {
-      const jsonObj = {'name': 'testObject'};
+      const jsonObj = {name: 'testObject'};
       // JSON data is binary packed for compression purposes
       const packedJson = util.pack(jsonObj);
 
@@ -461,7 +461,7 @@ describe('DataConnection', () => {
     });
 
     it('should correctly pack and send JSON data', done => {
-      const jsonObj = {'name': 'testObject'};
+      const jsonObj = {name: 'testObject'};
       let sendSpy = sinon.spy();
 
       const dc = new DataConnection('remoteId', {});

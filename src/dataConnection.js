@@ -126,33 +126,37 @@ class DataConnection extends Connection {
         ' You should listen for the `open` event before sending messages.'));
     }
 
-    const dataMeta = {
-      id:   util.generateDataId(),
-      size: data.size
-    };
+    let type;
+    let size;
+    let name;
 
-    if (typeof data === 'string') {
-      dataMeta.type = 'string';
-      dataMeta.size = this.getBinarySize(data);
-    } else if (data instanceof ArrayBuffer) {
-      dataMeta.type = 'arraybuffer';
-      dataMeta.size = data.byteLength;
-      console.log('type arraybuffer');
-    } else if (data instanceof Blob) {
+    if (data instanceof Blob) {
       // Should be a Blob or File
-      dataMeta.type = data.type;
-      dataMeta.name = data.name;
-      dataMeta.size = data.size;
-      console.log('type blob');
+      type = data.type;
+      size = data.size;
+      name = data.name;
+    } else if (data instanceof ArrayBuffer) {
+      type = 'arraybuffer';
+      size = data.byteLength;
+    } else if (typeof data === 'string') {
+      type = 'string';
+      size = this.getBinarySize(data);
     } else if (typeof data === 'object') {
-      dataMeta.type = 'json';
+      type = 'json';
+      // JSON undergoes an extra BinaryPack step for compression
       data = util.pack(data);
-      dataMeta.size = data.size;
-      console.log('type json');
+      size = data.size;
     }
 
-    const numSlices = Math.ceil(dataMeta.size / util.maxChunkSize);
-    dataMeta.totalParts = numSlices;
+    const numSlices = Math.ceil(size / util.maxChunkSize);
+    const dataMeta = {
+      id:         util.generateDataId(),
+      type:       type,
+      size:       size,
+      name:       name,
+      totalParts: numSlices
+    };
+
     console.log('num slices: ' + numSlices);
 
     // Perform any required slicing
