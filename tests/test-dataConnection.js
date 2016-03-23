@@ -520,6 +520,29 @@ describe('DataConnection', () => {
       dc.send(blob);
     });
 
+    it.only('should correctly send a File', done => {
+      const fileType = 'text/plain;charset=utf-8;';
+      const file = new File(['foobar'], 'testfile', {
+        type: fileType
+      });
+
+      let sendSpy = sinon.spy();
+
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit('dcReady', {send: sendSpy});
+      dc._dc.onopen();
+
+      setTimeout(() => {
+        assert(sendSpy.calledOnce);
+
+        const unpacked = util.unpack(sendSpy.args[0][0]);
+        assert.deepEqual(unpacked.data, file);
+        done();
+      }, 100);
+
+      dc.send(file);
+    });
+
     it('should send data as a Blob if serialization is binary', () => {
       const message = 'foobar';
 
