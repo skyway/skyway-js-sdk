@@ -111,10 +111,8 @@ class DataConnection extends Connection {
         });
       } else if (currData.type === 'arraybuffer') {
         this.emit(DataConnection.EVENTS.data.key, blob);
-      } else if (currData.type === 'blob') {
-        blob = new Blob(blob, {type: currData.type});
-        this.emit(DataConnection.EVENTS.data.key, blob);
       } else {
+        // Blob or File
         const file = new File([blob], currData.name, {type: currData.type});
         this.emit(DataConnection.EVENTS.data.key, file);
       }

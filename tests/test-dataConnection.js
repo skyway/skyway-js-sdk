@@ -256,7 +256,7 @@ describe('DataConnection', () => {
     });
   });
 
-  describe('Handle Message', () => {
+  describe.only('Handle Message', () => {
     it('should recorrect unpack a string message', done => {
       const message = 'foobar';
       const dataMeta = {
@@ -280,7 +280,7 @@ describe('DataConnection', () => {
       });
     });
 
-    it.only('should correctly unpack JSON messages', done => {
+    it('should correctly unpack JSON messages', done => {
       const jsonObj = {'name': 'testObject'};
       // JSON data is binary packed for compression purposes
       const packedJson = util.pack(jsonObj);
@@ -306,7 +306,7 @@ describe('DataConnection', () => {
       });
     });
 
-    it.only('should correctly handle ArrayBuffer messages', done => {
+    it('should correctly handle ArrayBuffer messages', done => {
       const message = 'foobar';
       const abMessage = util.binaryStringToArrayBuffer(message);
 
@@ -324,6 +324,32 @@ describe('DataConnection', () => {
       dc.on('data', data => {
         // We want to check that the received data is an ArrayBuffer
         assert.deepEqual(data, abMessage);
+        done();
+      });
+
+      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        dc._handleDataMessage(ab);
+      });
+    });
+
+    it('should correctly handle Blob messages', done => {
+      const message = 'foobar';
+      const blob = new Blob([message], {type: 'text/plain'});
+
+      const dataMeta = {
+        id:         'test',
+        index:      0,
+        totalParts: 1,
+        data:       blob,
+        type:       blob.type
+      };
+
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit('dcReady', {});
+
+      dc.on('data', data => {
+        // We want to check that the received data is an ArrayBuffer
+        assert.deepEqual(data, blob);
         done();
       });
 
