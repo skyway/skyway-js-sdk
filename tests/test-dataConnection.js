@@ -280,9 +280,9 @@ describe('DataConnection', () => {
       });
     });
 
-    it.only('should correctly unpack JSON data', done => {
+    it.only('should correctly unpack JSON messages', done => {
       const jsonObj = {'name': 'testObject'};
-      const jsonStr = JSON.stringify(jsonObj);
+      // JSON data is binary packed for compression purposes
       const packedJson = util.pack(jsonObj);
 
       const dataMeta = {
@@ -306,7 +306,33 @@ describe('DataConnection', () => {
       });
     });
 
-    it('should correctly reconstruct an incoming file', done => {
+    it.only('should correctly handle ArrayBuffer messages', done => {
+      const message = 'foobar';
+      const abMessage = util.binaryStringToArrayBuffer(message);
+
+      const dataMeta = {
+        id:         'test',
+        index:      0,
+        totalParts: 1,
+        data:       abMessage,
+        type:       'arraybuffer'
+      };
+
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit('dcReady', {});
+
+      dc.on('data', data => {
+        // We want to check that the received data is an ArrayBuffer
+        assert.deepEqual(data, abMessage);
+        done();
+      });
+
+      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        dc._handleDataMessage(ab);
+      });
+    });
+
+    it('should correctly reconstruct a sent file', done => {
       const fileType = 'text/plain;charset=utf-8;';
       const file = new File(['foobar'], 'testfile', {
         type: fileType

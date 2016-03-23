@@ -105,10 +105,12 @@ class DataConnection extends Connection {
           this.emit(DataConnection.EVENTS.data.key, str);
         });
       } else if (currData.type === 'json') {
-        this.emit(DataConnection.EVENTS.data.key, util.unpacK(blob));
-        //util.blobToBinaryString(blob, str => {
-        //  this.emit(DataConnection.EVENTS.data.key, JSON.parse(str));
-        //});
+        // NOTE: To convert back from Blob type, convert to AB and unpack!
+        util.blobToArrayBuffer(blob, ab => {
+          this.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
+        });
+      } else if (currData.type === 'arraybuffer') {
+        this.emit(DataConnection.EVENTS.data.key, blob);
       } else if (currData.type === 'blob') {
         blob = new Blob(blob, {type: currData.type});
         this.emit(DataConnection.EVENTS.data.key, blob);
