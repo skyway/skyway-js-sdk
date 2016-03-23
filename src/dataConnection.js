@@ -127,18 +127,18 @@ class DataConnection extends Connection {
     }
 
     const dataMeta = {
-      id:         util.generateDataId(),
-      size:       data.size,
-      totalParts: numSlices
+      id:   util.generateDataId(),
+      size: data.size
     };
 
     if (typeof data === 'string') {
       dataMeta.type = 'string';
       dataMeta.size = this.getBinarySize(data);
-      console.log('type string');
-    } else if (typeof data === 'json') {
+    } else if (typeof data === 'object') {
       dataMeta.type = 'json';
       data = util.pack(data);
+      dataMeta.size = data.size;
+      console.log('type json');
     } else if (data instanceof ArrayBuffer) {
       dataMeta.type = 'arraybuffer';
     } else if (data instanceof File) {
@@ -150,6 +150,7 @@ class DataConnection extends Connection {
     }
 
     const numSlices = Math.ceil(dataMeta.size / util.maxChunkSize);
+    dataMeta.totalParts = numSlices;
     console.log('num slices: ' + numSlices);
 
     // Perform any required slicing
@@ -178,7 +179,7 @@ class DataConnection extends Connection {
           console.log('Executing?');
           this._dc.send(currMsg);
         } catch (error) {
-          this.sendBuffer.push(currMsg);  
+          this.sendBuffer.push(currMsg);
         }
 
         if (this.sendBuffer.length === 0) {

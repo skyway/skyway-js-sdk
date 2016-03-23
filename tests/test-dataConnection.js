@@ -441,9 +441,8 @@ describe('DataConnection', () => {
       dc.send('foobar', false);
     });
 
-    it.only('should correctly send string messages', done => {
+    it('should correctly send string messages', done => {
       const message = 'foobar';
-
       let sendSpy = sinon.spy();
 
       const dc = new DataConnection('remoteId', {});
@@ -459,6 +458,26 @@ describe('DataConnection', () => {
       }, 100);
 
       dc.send(message);
+    });
+
+    it.only('should correctly pack and send JSON data', done => {
+      const jsonObj = {'name': 'testObject'};
+      let sendSpy = sinon.spy();
+
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit('dcReady', {send: sendSpy});
+      dc._dc.onopen();
+
+      setTimeout(() => {
+        assert(sendSpy.calledOnce);
+
+        const unpacked = util.unpack(sendSpy.args[0][0]);
+        const data = util.unpack(unpacked.data);
+        assert.deepEqual(data, jsonObj);
+        done();
+      }, 100);
+
+      dc.send(jsonObj);
     });
 
     it('should stringify JSON data and call _bufferedSend', () => {
