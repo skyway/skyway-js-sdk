@@ -178,7 +178,6 @@ class DataConnection extends Connection {
         // Might need more extensive buffering than this:
         let currMsg = this.sendBuffer.shift(1);
         try {
-          console.log('Executing?');
           this._dc.send(currMsg);
         } catch (error) {
           this.sendBuffer.push(currMsg);

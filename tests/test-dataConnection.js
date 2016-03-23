@@ -500,7 +500,7 @@ describe('DataConnection', () => {
       dc.send(abMessage);
     });
 
-    it.only('should correctly send Blob data', done => {
+    it('should correctly send Blob data', done => {
       const message = 'foobar';
       const blob = new Blob([message], {type: 'text/plain'});
       let sendSpy = sinon.spy();
@@ -570,94 +570,6 @@ describe('DataConnection', () => {
         spy.reset();
         done();
       }, 100);
-    });
-
-    describe('Helper Methods', () => {
-      it('should push a message onto the buffer if we are buffering', () => {
-        const message = 'foobar';
-
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {});
-        dc._dc.onopen();
-
-        dc._isBuffering = true;
-        dc._bufferedSend(message);
-
-        assert.deepEqual(dc._buffer, [message]);
-        assert.equal(dc._buffer.length, 1);
-      });
-
-      it('should return `true` to _trySend if the DataChannel send succeeds', () => {
-        const message = 'foobar';
-
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {});
-        dc._dc.send = () => {
-          return true;
-        };
-        dc._dc.onopen();
-
-        const result = dc._trySend(message);
-        assert.equal(result, true);
-      });
-
-      it('should return `false` to _trySend and start buffering if the DataChannel send fails', done => {
-        const message = 'foobar';
-
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {});
-        dc._dc.send = () => {
-          const error = new Error();
-          throw error;
-        };
-        dc._dc.onopen();
-
-        let spy = sinon.spy(dc, '_tryBuffer');
-
-        const result = dc._trySend(message);
-        assert.equal(result, false);
-        assert.equal(dc._isBuffering, true);
-
-        setTimeout(() => {
-          assert(spy.calledOnce);
-
-          spy.reset();
-          done();
-        }, 100);
-      });
-
-      it('should not try to call _trySend if buffer is empty when _tryBuffer is called', () => {
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {});
-        dc._dc.onopen();
-
-        let spy = sinon.spy(dc, '_trySend');
-
-        dc._buffer = [];
-        dc._tryBuffer();
-        assert.equal(spy.called, false);
-      });
-
-      it('should try and send the first message in buffer when _tryBuffer is called', () => {
-        const message = 'foobar';
-
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {});
-        dc._dc.send = () => {
-          return true;
-        };
-        dc._dc.onopen();
-
-        let spy = sinon.spy(dc, '_trySend');
-
-        dc._buffer = [message];
-        dc._tryBuffer();
-
-        assert(spy.calledOnce);
-        assert(spy.calledWith(message));
-        assert.deepEqual(dc._buffer, []);
-        assert.equal(dc._buffer.length, 0);
-      });
     });
   });
 
