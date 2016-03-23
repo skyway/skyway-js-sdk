@@ -66,9 +66,9 @@ class Socket extends EventEmitter {
   }
 
   _setupMessageHandlers() {
-    for (let type of util.MESSAGE_TYPES) {
-      if (type.name === util.MESSAGE_TYPES.OPEN.name) {
-        this._io.on(type.name, peerId => {
+    util.MESSAGE_TYPES.enums.forEach(type => {
+      if (type.key === util.MESSAGE_TYPES.OPEN.key) {
+        this._io.on(type.key, peerId => {
           if (!peerId) {
             return;
           }
@@ -83,14 +83,14 @@ class Socket extends EventEmitter {
           this._sendQueuedMessages();
 
           // To inform the peer that the socket successfully connected
-          this.emit(type.name, peerId);
+          this.emit(type.key, peerId);
         });
       } else {
-        this._io.on(type.name, message => {
-          this.emit(type.name, message);
+        this._io.on(type.key, message => {
+          this.emit(type.key, message);
         });
       }
-    }
+    });
   }
 
   _sendQueuedMessages() {
