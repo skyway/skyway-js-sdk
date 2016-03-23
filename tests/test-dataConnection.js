@@ -452,15 +452,15 @@ describe('DataConnection', () => {
       setTimeout(() => {
         assert(sendSpy.calledOnce);
 
-        const unpackedData = util.unpack(sendSpy.args[0][0]);
-        assert.equal(unpackedData.data, message);
+        const unpacked = util.unpack(sendSpy.args[0][0]);
+        assert.equal(unpacked.data, message);
         done();
       }, 100);
 
       dc.send(message);
     });
 
-    it.only('should correctly pack and send JSON data', done => {
+    it('should correctly pack and send JSON data', done => {
       const jsonObj = {'name': 'testObject'};
       let sendSpy = sinon.spy();
 
@@ -480,38 +480,24 @@ describe('DataConnection', () => {
       dc.send(jsonObj);
     });
 
-    it('should stringify JSON data and call _bufferedSend', () => {
-      const obj = {name: 'foobar'};
-
-      const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {});
-      dc._dc.onopen();
-      dc.serialization = 'json';
-
-      let spy = sinon.spy(dc, '_bufferedSend');
-
-      dc.send(obj, false);
-      assert(spy.calledOnce);
-      assert(spy.calledWith(JSON.stringify(obj)));
-
-      spy.reset();
-    });
-
-    it('should call _bufferedSend on data with non-regular types of serialization', () => {
+    it.only('should correctly send ArrayBuffer data', done => {
       const message = 'foobar';
+      const abMessage = util.binaryStringToArrayBuffer(message);
+      let sendSpy = sinon.spy();
 
       const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {});
+      dc._negotiator.emit('dcReady', {send: sendSpy});
       dc._dc.onopen();
-      dc.serialization = 'test';
 
-      let spy = sinon.spy(dc, '_bufferedSend');
+      setTimeout(() => {
+        assert(sendSpy.calledOnce);
 
-      dc.send(message, false);
-      assert(spy.calledOnce);
-      assert(spy.calledWith(message));
+        const unpacked = util.unpack(sendSpy.args[0][0]);
+        assert.deepEqual(unpacked.data, abMessage);
+        done();
+      }, 100);
 
-      spy.reset();
+      dc.send(abMessage);
     });
 
     it('should send data as a Blob if serialization is binary', () => {

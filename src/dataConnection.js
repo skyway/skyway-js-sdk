@@ -134,19 +134,19 @@ class DataConnection extends Connection {
     if (typeof data === 'string') {
       dataMeta.type = 'string';
       dataMeta.size = this.getBinarySize(data);
+    } else if (data instanceof ArrayBuffer) {
+      dataMeta.type = 'arraybuffer';
+      console.log('type arraybuffer');
+      dataMeta.size = data.byteLength;
+    } else if (data instanceof Blob) {
+      // Should be a Blob or File
+      dataMeta.type = data.type;
+      dataMeta.name = data.name;
     } else if (typeof data === 'object') {
       dataMeta.type = 'json';
       data = util.pack(data);
       dataMeta.size = data.size;
       console.log('type json');
-    } else if (data instanceof ArrayBuffer) {
-      dataMeta.type = 'arraybuffer';
-    } else if (data instanceof File) {
-      dataMeta.name = data.name;
-      dataMeta.type = data.type;
-    } else {
-      // Should be a Blob
-      dataMeta.type = data.type;
     }
 
     const numSlices = Math.ceil(dataMeta.size / util.maxChunkSize);
