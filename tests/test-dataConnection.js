@@ -428,7 +428,7 @@ describe('DataConnection', () => {
     });
   });
 
-  describe.only('Send', () => {
+  describe('Send', () => {
     it('should emit an error if send() is called while DC is not open', done => {
       const dc = new DataConnection('remoteId', {});
       assert.equal(dc.open, false);
@@ -439,6 +439,26 @@ describe('DataConnection', () => {
       });
 
       dc.send('foobar', false);
+    });
+
+    it.only('should correctly send string messages', done => {
+      const message = 'foobar';
+
+      let sendSpy = sinon.spy();
+
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit('dcReady', {send: sendSpy});
+      dc._dc.onopen();
+
+      setTimeout(() => {
+        assert(sendSpy.calledOnce);
+
+        const unpackedData = util.unpack(sendSpy.args[0][0]);
+        assert.equal(unpackedData.data, message);
+        done();
+      }, 100);
+
+      dc.send(message);
     });
 
     it('should stringify JSON data and call _bufferedSend', () => {
@@ -612,78 +632,6 @@ describe('DataConnection', () => {
         assert(spy.calledWith(message));
         assert.deepEqual(dc._buffer, []);
         assert.equal(dc._buffer.length, 0);
-      });
-    });
-
-    describe('Chunking', () => {
-      it('should try to chunk our message ONCE if our browser needs it (i.e. Chrome)', () => {
-        util.browser = 'Chrome';
-        const chunked = false;
-
-        // Ensure that our message is long enough to require chunking
-        const len = util.chunkedMTU + 1;
-        const message = new Array(len + 1).join('a');
-
-        DataConnection = proxyquire(
-          '../src/dataConnection',
-          {'./connection': Connection,
-           './util':       util}
-        );
-
-        const dc = new DataConnection('remoteId', {serialization: 'binary'});
-        dc._negotiator.emit('dcReady', {});
-        dc._dc.onopen();
-
-        let spy = sinon.spy(dc, '_sendChunks');
-
-        dc.send(message, chunked);
-        assert.equal(spy.calledOnce, true);
-      });
-
-      it('should NOT try to chunk our message if we indicate that we\'ve already chunked', () => {
-        util.browser = 'Chrome';
-        const chunked = true;
-
-        // Ensure that our message is long enough to require chunking
-        const len = util.chunkedMTU + 1;
-        const message = new Array(len + 1).join('a');
-
-        DataConnection = proxyquire(
-          '../src/dataConnection',
-          {'./connection': Connection,
-           './util':       util}
-        );
-
-        const dc = new DataConnection('remoteId', {serialization: 'binary'});
-        dc._negotiator.emit('dcReady', {});
-        dc._dc.onopen();
-
-        let spy = sinon.spy(dc, '_sendChunks');
-
-        dc.send(message, chunked);
-        assert.equal(spy.calledOnce, false);
-      });
-
-      it('should NOT try to chunk our message if our message is too short to require it', () => {
-        util.browser = 'Chrome';
-        const chunked = false;
-
-        const message = 'foobar';
-
-        DataConnection = proxyquire(
-          '../src/dataConnection',
-          {'./connection': Connection,
-           './util':       util}
-        );
-
-        const dc = new DataConnection('remoteId', {serialization: 'binary'});
-        dc._negotiator.emit('dcReady', {});
-        dc._dc.onopen();
-
-        let spy = sinon.spy(dc, '_sendChunks');
-
-        dc.send(message, chunked);
-        assert.equal(spy.calledOnce, false);
       });
     });
   });
