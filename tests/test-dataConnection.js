@@ -183,7 +183,7 @@ describe('DataConnection', () => {
 
       let spy = sinon.spy(dc, '_handleDataMessage');
 
-      dc._dc.onmessage(message);
+      dc._dc.onmessage({data: message});
       assert(spy.calledOnce);
       assert(spy.calledWith, packedData);
 
@@ -257,7 +257,7 @@ describe('DataConnection', () => {
   });
 
   describe('Handle Message', () => {
-    it('should recorrect unpack a string message', done => {
+    it('should correctly unpack a string message', done => {
       const message = 'foobar';
       const dataMeta = {
         id:         'test',
@@ -276,7 +276,7 @@ describe('DataConnection', () => {
       });
 
       util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        dc._handleDataMessage(ab);
+        dc._handleDataMessage({data: ab});
       });
     });
 
@@ -302,7 +302,7 @@ describe('DataConnection', () => {
       });
 
       util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        dc._handleDataMessage(ab);
+        dc._handleDataMessage({data: ab});
       });
     });
 
@@ -328,7 +328,7 @@ describe('DataConnection', () => {
       });
 
       util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        dc._handleDataMessage(ab);
+        dc._handleDataMessage({data: ab});
       });
     });
 
@@ -354,7 +354,7 @@ describe('DataConnection', () => {
       });
 
       util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        dc._handleDataMessage(ab);
+        dc._handleDataMessage({data: ab});
       });
     });
 
@@ -382,7 +382,7 @@ describe('DataConnection', () => {
       });
 
       util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        dc._handleDataMessage(ab);
+        dc._handleDataMessage({data: ab});
       });
     });
 
@@ -421,8 +421,8 @@ describe('DataConnection', () => {
 
       util.blobToArrayBuffer(util.pack(dataMeta1), ab1 => {
         util.blobToArrayBuffer(util.pack(dataMeta2), ab2 => {
-          dc._handleDataMessage(ab1);
-          dc._handleDataMessage(ab2);
+          dc._handleDataMessage({data: ab1});
+          dc._handleDataMessage({data: ab2});
         });
       });
     });
