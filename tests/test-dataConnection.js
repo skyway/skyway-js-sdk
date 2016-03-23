@@ -389,7 +389,7 @@ describe('DataConnection', () => {
     it('should be able to recombine chunked messages', done => {
       // Chunk size is 16300
       // Each char is 2 bytes
-      const len = 20000;
+      const len = util.maxChunkSize + 1000;
       const string = new Array(len + 1).join('a');
 
       const slice1 = string.slice(0, util.maxChunkSize);
@@ -520,7 +520,7 @@ describe('DataConnection', () => {
       dc.send(blob);
     });
 
-    it.only('should correctly send a File', done => {
+    it('should correctly send a File', done => {
       const fileType = 'text/plain;charset=utf-8;';
       const file = new File(['foobar'], 'testfile', {
         type: fileType
@@ -543,56 +543,30 @@ describe('DataConnection', () => {
       dc.send(file);
     });
 
-    it('should send data as a Blob if serialization is binary', () => {
-      const message = 'foobar';
+    it('should correctly chunk and send a large message', done => {
+      const len = util.maxChunkSize + 1000;
+      const string = new Array(len + 1).join('a');
 
-      util.supports = {binaryBlob: true};
-      DataConnection = proxyquire(
-        '../src/dataConnection',
-        {'./connection': Connection,
-         './util':       util}
-      );
+      let sendSpy = sinon.spy();
 
       const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {});
+      dc._negotiator.emit('dcReady', {send: sendSpy});
       dc._dc.onopen();
-      dc.serialization = 'binary';
-
-      let spy = sinon.spy(dc, '_bufferedSend');
-
-      dc.send(message, false);
-      assert(spy.calledOnce);
-      assert(spy.args[0][0] instanceof Blob);
-
-      spy.reset();
-    });
-
-    it('should convert a Blob to an ArrayBuffer if Blobs are not supported', done => {
-      util.supports = {binaryBlob: false};
-
-      DataConnection = proxyquire(
-        '../src/dataConnection',
-        {'./connection': Connection,
-         './util':       util}
-      );
-      const message = 'foobar';
-
-      const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {});
-      dc._dc.onopen();
-      dc.serialization = 'binary';
-
-      let spy = sinon.spy(dc, '_bufferedSend');
-
-      dc.send(message, false);
 
       setTimeout(() => {
-        assert(spy.calledOnce);
-        assert(spy.args[0][0] instanceof ArrayBuffer);
+        assert(sendSpy.calledTwice);
 
-        spy.reset();
-        done();
+        const unpacked1 = util.unpack(sendSpy.args[0][0]);
+        const unpacked2 = util.unpack(sendSpy.args[1][0]);
+
+        const blob = new Blob([unpacked1.data, unpacked2.data]);
+        util.blobToBinaryString(blob, data => {
+          assert.deepEqual(data, string);
+          done();
+        });
       }, 100);
+
+      dc.send(string);
     });
   });
 

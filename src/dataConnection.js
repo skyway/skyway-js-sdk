@@ -160,7 +160,6 @@ class DataConnection extends Connection {
       const slice = data.slice(sliceIndex * util.maxChunkSize, (sliceIndex + 1) * util.maxChunkSize);
       dataMeta.index = sliceIndex;
       dataMeta.data = slice;
-      console.log('sliced up');
 
       // Add all chunks to our buffer and start the send loop (if we haven't already)
       util.blobToArrayBuffer(util.pack(dataMeta), ab => {
