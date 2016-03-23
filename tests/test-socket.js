@@ -185,17 +185,17 @@ describe('Socket', () => {
       let peerId = 'peerId';
       socket.start(undefined, token);
 
-      const regex = new RegExp(`&peerId=${peerId}`);
+      const peerIdRegex = new RegExp(`&peerId=${peerId}`);
 
       let query = socket._io.io.opts.query;
       assert.equal(socket._isPeerIdSet, false);
-      assert.equal(regex.test(query), false);
+      assert.equal(peerIdRegex.test(query), false);
 
       socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.name](peerId);
 
       query = socket._io.io.opts.query;
       assert(socket._isPeerIdSet);
-      assert(regex.test(query));
+      assert(peerIdRegex.test(query));
     });
 
     it('should emit all non-OPEN message types on socket', () => {
