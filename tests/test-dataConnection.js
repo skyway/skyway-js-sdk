@@ -256,7 +256,7 @@ describe('DataConnection', () => {
     });
   });
 
-  describe.only('Handle Message', () => {
+  describe('Handle Message', () => {
     it('should recorrect unpack a string message', done => {
       const message = 'foobar';
       const dataMeta = {
@@ -428,7 +428,7 @@ describe('DataConnection', () => {
     });
   });
 
-  describe('Send', () => {
+  describe.only('Send', () => {
     it('should emit an error if send() is called while DC is not open', done => {
       const dc = new DataConnection('remoteId', {});
       assert.equal(dc.open, false);

@@ -185,11 +185,17 @@ class DataConnection extends Connection {
 
     if (typeof data === 'string') {
       dataMeta.type = 'string';
+    } else if (typeof data === 'json') {
+      dataMeta.type = 'json';
+      data = util.pack(data);
+    } else if (data instanceof ArrayBuffer) {
+      dataMeta.type = 'arraybuffer');
     } else if (data instanceof File) {
       dataMeta.name = data.name;
       dataMeta.type = data.type;
-    } else if (data instanceof Blob) {
-      dataMeta.type = 'blob';
+    } else {
+      // Should be a Blob
+      dataMeta.type = data.type;
     }
 
     // Perform any required slicing
