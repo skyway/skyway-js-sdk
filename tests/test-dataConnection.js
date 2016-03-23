@@ -280,6 +280,31 @@ describe('DataConnection', () => {
       });
     });
 
+    it.only('should correctly unpack JSON data', done => {
+      const jsonObj = {'name': 'testObject'};
+      const jsonStr = JSON.stringify(jsonObj);
+
+      const dataMeta = {
+        id:         'test',
+        index:      0,
+        totalParts: 1,
+        data:       jsonStr,
+        type:       'json'
+      };
+
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit('dcReady', {});
+
+      dc.on('data', data => {
+        assert.deepEqual(data, jsonObj);
+        done();
+      });
+
+      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        dc._handleDataMessage(ab);
+      });
+    });
+
     it('should correctly reconstruct an incoming file', done => {
       const fileType = 'text/plain;charset=utf-8;';
       const file = new File(['foobar'], 'testfile', {

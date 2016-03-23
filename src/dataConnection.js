@@ -91,12 +91,22 @@ class DataConnection extends Connection {
     currData.receivedParts++;
     currData.parts[dataMeta.index] = dataMeta.data;
 
+    // Expected data types:
+    // - String
+    // - JSON
+    // - Blob (File)
+    // - ArrayBuffer
+
     if (currData.receivedParts === currData.totalParts) {
       let blob = new Blob(currData.parts);
 
       if (currData.type === 'string') {
         util.blobToBinaryString(blob, str => {
           this.emit(DataConnection.EVENTS.data.key, str);
+        });
+      } else if (currData.type === 'json') {
+        util.blobToBinaryString(blob, str => {
+          this.emit(DataConnection.EVENTS.data.key, JSON.parse(str));
         });
       } else if (currData.type === 'blob') {
         blob = new Blob(blob, {type: currData.type});
@@ -188,8 +198,10 @@ class DataConnection extends Connection {
       dataMeta.data = slice;
 
       // Add all chunks to our buffer and start the send loop (if we haven't already)
-      this.sendBuffer.push(util.pack(dataMeta));
-      this.startSendLoop();
+      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        this.sendBuffer.push(ab);
+        this.startSendLoop();
+      });
     }
   }
 
