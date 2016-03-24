@@ -82,6 +82,7 @@ class DataConnection extends Connection {
         size:          dataMeta.size,
         type:          dataMeta.type,
         name:          dataMeta.name,
+        fileType:      dataMeta.fileType,
         totalParts:    dataMeta.totalParts,
         parts:         new Array(dataMeta.totalParts),
         receivedParts: 0
@@ -99,9 +100,9 @@ class DataConnection extends Connection {
     if (currData.receivedParts === currData.totalParts) {
       let blob;
       if (currData.name) {
-        blob = new File(currData.parts, currData.name, {type: currData.type});
+        blob = new File(currData.parts, currData.name, {type: currData.fileType});
       } else {
-        blob = new Blob(currData.parts, {type: currData.type});
+        blob = new Blob(currData.parts, {type: currData.fileType});
       }
 
       if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
@@ -146,6 +147,7 @@ class DataConnection extends Connection {
     let type;
     let size;
     let name;
+    let fileType;
 
     if (this.serialization === 'json') {
       type = 'json';
@@ -156,9 +158,10 @@ class DataConnection extends Connection {
 
     if (data instanceof Blob) {
       // Should be a Blob or File
-      type = data.type;
+      type = 'blob';
       size = data.size;
       name = data.name;
+      fileType = data.type;
     } else if (data instanceof ArrayBuffer) {
       type = 'arraybuffer';
       size = data.byteLength;
@@ -173,6 +176,7 @@ class DataConnection extends Connection {
       type:       type,
       size:       size,
       name:       name,
+      fileType:   fileType,
       totalParts: numSlices
     };
 
