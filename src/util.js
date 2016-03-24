@@ -225,8 +225,13 @@ class Util {
     return byteArray.buffer;
   }
 
-  generateDataId() {
-    return Math.random().toString(36).substr(16);
+  randomId() {
+    const keyLength = 16;
+    // '36' means that we want to convert the number to a string using chars in
+    // the range of '0-9a-z'. The concatenated 0's are for padding the key,
+    // as Math.random() may produce a key shorter than 16 chars in length
+    const randString = Math.random().toString(36) + '0000000000000000000';
+    return randString.substr(2, keyLength);
   }
 
   isSecure() {

@@ -173,7 +173,7 @@ class DataConnection extends Connection {
 
     const numSlices = Math.ceil(size / util.maxChunkSize);
     const dataMeta = {
-      id:         util.generateDataId(),
+      id:         util.randomId(),
       type:       type,
       size:       size,
       name:       name,
