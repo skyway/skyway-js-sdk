@@ -147,8 +147,6 @@ class DataConnection extends Connection {
 
     let type;
     let size;
-    let name;
-    let fileType;
 
     if (this.serialization === 'json') {
       type = 'json';
@@ -160,12 +158,9 @@ class DataConnection extends Connection {
     if (data instanceof File) {
       type = 'file';
       size = data.size;
-      name = data.name;
-      fileType = data.type;
     } else if (data instanceof Blob) {
       type = 'blob';
       size = data.size;
-      fileType = data.type;
     } else if (data instanceof ArrayBuffer) {
       type = 'arraybuffer';
       size = data.byteLength;
@@ -179,10 +174,15 @@ class DataConnection extends Connection {
       id:         util.randomId(),
       type:       type,
       size:       size,
-      name:       name,
-      fileType:   fileType,
       totalParts: numSlices
     };
+
+    if (type === 'file') {
+      dataMeta.name = data.name;
+    }
+    if (data instanceof Blob) {
+      dataMeta.fileType = data.type;
+    }
 
     // Perform any required slicing
     for (let sliceIndex = 0; sliceIndex < numSlices; sliceIndex++) {
