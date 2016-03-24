@@ -76,6 +76,8 @@ class DataConnection extends Connection {
   _handleDataMessage(msg) {
     const dataMeta = util.unpack(msg.data);
 
+    // If we haven't started receiving pieces of data with a given id, this will be undefined
+    // In that case, we need to initialise receivedData[id] to hold incoming file chunks
     let currData = this.receivedData[dataMeta.id];
     if (!currData) {
       currData = this.receivedData[dataMeta.id] = {
@@ -137,7 +139,6 @@ class DataConnection extends Connection {
     }
   }
 
-  // New send method
   send(data) {
     if (!this.open) {
       this.emit(DataConnection.EVENTS.error.key, new Error('Connection is not open.' +
