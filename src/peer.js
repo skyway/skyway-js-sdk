@@ -165,10 +165,11 @@ class Peer extends EventEmitter {
   }
 
   joinRoom(roomName, roomOptions) {
-    let data = {
-      roomName: roomName
-    }
-    this.socket.send(util.MESSAGE_TYPES.JOIN.key, data);
+    const data = {
+      roomName:    roomName,
+      roomOptions: roomOptions
+    };
+    this.socket.send(util.MESSAGE_TYPES.ROOM_JOIN.key, data);
   }
 
   reconnect() {
@@ -239,9 +240,6 @@ class Peer extends EventEmitter {
         this.disconnect();
         this.emitError('socket-error', 'Lost connection to server.');
       }
-    });
-
-    this.socket.on('joined', () => {
     });
 
     this.socket.start(id, this.options.token);
@@ -344,6 +342,11 @@ class Peer extends EventEmitter {
       } else {
         this._storeMessage(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
       }
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.ROOM_USER_JOINED.key, roomUserJoinedMessage => {
+      // TODO: remove console.log
+      console.log(roomUserJoinedMessage);
     });
   }
 

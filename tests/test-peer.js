@@ -716,19 +716,19 @@ describe('Peer', () => {
     });
   });
 
-  describe('join', () => {
-    let peer1, peer2;
-    let requests = [];
-    let xhr;
+  describe.only('join', () => {
+    let peer1;
+    let peer2;
+
     beforeEach(() => {
       peer1 = new Peer({
-        key: apiKey,
+        key:  apiKey,
         host: 'localhost',
         port: 8080
       });
 
       peer2 = new Peer({
-        key: apiKey,
+        key:  apiKey,
         host: 'localhost',
         port: 8080
       });
@@ -739,25 +739,55 @@ describe('Peer', () => {
       peer2.destroy();
     });
 
-    it('should receive ack message when join a room', done => {
+    it('should correctly emit from Socket when attempting to join a room', done => {
+      const roomName = 'testRoom';
 
-      peer1.joinRoom('testRoom');
+      let spy = sinon.spy();
+      peer1.socket._io.emit = spy;
 
-      peer1.on('joined', () => {
-        console.log('joined')
+      peer1.joinRoom(roomName);
+
+      setTimeout(() => {
+        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
         done();
-      });
+      }, 200);
+    });
+
+    it('should receive an acknowledgement message when a room has been joined', done => {
+      const roomName = 'testRoom';
+
+      let spy = sinon.spy();
+      peer1.socket.emit = spy;
+
+      peer1.joinRoom(roomName);
+
+      setTimeout(() => {
+        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key));
+        done();
+      }, 200);
     });
 
     it('should receive message when other members joins a room', done => {
+      const roomName = 'testRoom';
 
-      peer1.joinRoom('testRoom');
-      peer2.joinRoom('testRoom');
+      let spy1 = sinon.spy();
+      let spy2 = sinon.spy();
+      peer1.socket.emit = spy1;
+      peer2.socket.emit = spy2;
 
-      peer1.on('joined', () => {
-      })
-      peer2.on('joined', () => {
-      })
+      peer1.joinRoom(roomName);
+      setTimeout(() => {
+        assert(spy1.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key));
+        spy1.reset();
+
+        peer2.joinRoom(roomName);
+
+        setTimeout(() => {
+          assert(spy2.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key));
+          assert(spy1.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key));
+          done();
+        }, 200);
+      }, 200);
     });
   });
 });
