@@ -97,8 +97,12 @@ class DataConnection extends Connection {
     // - ArrayBuffer
 
     if (currData.receivedParts === currData.totalParts) {
-      // Creating a File should simply work as a Blob with a filename
-      let blob = new File(currData.parts, currData.name, {type: currData.type});
+      let blob;
+      if (currData.name) {
+        blob = new File(currData.parts, currData.name, {type: currData.type});
+      } else {
+        blob = new Blob(currData.parts, {type: currData.type});
+      }
 
       if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
         // We want to convert any type of data to an ArrayBuffer
