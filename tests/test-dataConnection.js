@@ -153,12 +153,10 @@ describe('DataConnection', () => {
     });
 
     it('should open the DataConnection and emit upon _dc.onopen()', () => {
-      let spy;
-
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
 
-      spy = sinon.spy(dc, 'emit');
+      let spy = sinon.spy(dc, 'emit');
 
       assert.equal(dc.open, false);
       dc._dc.onopen();
@@ -170,13 +168,6 @@ describe('DataConnection', () => {
 
     it('should handle a message upon _dc.onmessage()', () => {
       const message = 'foobar';
-      const data = {
-        id:         'test',
-        index:      0,
-        totalParts: 1,
-        data:       message
-      };
-      const packedData = util.pack(data);
 
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
@@ -185,18 +176,16 @@ describe('DataConnection', () => {
 
       dc._dc.onmessage({data: message});
       assert(spy.calledOnce);
-      assert(spy.calledWith, packedData);
+      assert.deepEqual(spy.args[0][0], {data: message});
 
       spy.reset();
     });
 
     it('should close the DataConnection upon _dc.onclose()', () => {
-      let spy;
-
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit('dcReady', {});
 
-      spy = sinon.spy(dc, 'close');
+      let spy = sinon.spy(dc, 'close');
       dc._dc.onclose();
       assert(spy.calledOnce);
 
