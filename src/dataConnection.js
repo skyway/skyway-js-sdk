@@ -75,7 +75,6 @@ class DataConnection extends Connection {
 
   _handleDataMessage(msg) {
     const dataMeta = util.unpack(msg.data);
-    console.log(dataMeta.type);
 
     let currData = this.receivedData[dataMeta.id];
     if (!currData) {
