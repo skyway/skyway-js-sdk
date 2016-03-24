@@ -3,7 +3,7 @@
 const BinaryPack = require('js-binarypack');
 const Enum       = require('enum');
 
-const adapter = require('webrtc-adapter-test');
+const adapter = require('./webrtcShim');
 const RTCPeerConnection     = adapter.RTCPeerConnection;
 
 const LOG_PREFIX      = 'SkyWayJS: ';
