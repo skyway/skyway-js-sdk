@@ -28,14 +28,13 @@ class DataConnection extends Connection {
     // New send code properties
     this.sendBuffer = [];
     this.receivedData = {};
+    // Messages stored by peer because DC was not ready yet
+    this._queuedMessages = this.options._queuedMessages || [];
 
     // Maybe don't need this anymore
     if (this.options._payload) {
       this._peerBrowser = this.options._payload.browser;
     }
-
-    // Messages stored by peer because DC was not ready yet
-    this._queuedMessages = this.options._queuedMessages || [];
 
     // This replaces the PeerJS 'initialize' method
     this._negotiator.on('dcReady', dc => {
@@ -99,17 +98,16 @@ class DataConnection extends Connection {
     // - ArrayBuffer
 
     if (currData.receivedParts === currData.totalParts) {
-      // console.log('got all the parts');
+      // Creating a File should simply work as a Blob with a filename
       let blob = new File(currData.parts, currData.name, {type: currData.type});
 
       if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
-        console.log('binary serialisation');
+        // We want to convert any type of data to an ArrayBuffer
         util.blobToArrayBuffer(util.pack(blob), ab => {
-          // Should be valid for all types of data
           this.emit(DataConnection.EVENTS.data.key, ab);
         });
       } else if (this.serialization === 'json') {
-        // NOTE: To convert back from Blob type, convert to AB and unpack!
+        // To convert back to JSON from Blob type, we need to convert to AB and unpack
         util.blobToArrayBuffer(blob, ab => {
           this.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
         });
@@ -125,9 +123,7 @@ class DataConnection extends Connection {
           });
         } else {
           // Blob or File
-          console.log('Should be a file!');
           this.emit(DataConnection.EVENTS.data.key, blob);
-          console.log('finished emitting');
           delete this.receivedData[dataMeta.id];
         }
       }
