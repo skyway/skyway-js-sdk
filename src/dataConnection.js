@@ -113,7 +113,7 @@ class DataConnection extends Connection {
         util.blobToArrayBuffer(blob, ab => {
           this.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
         });
-      } else {
+      } else if (this.serialization === 'none') {
         // No serialization
         if (currData.type === 'string') {
           util.blobToBinaryString(blob, str => {
@@ -162,7 +162,7 @@ class DataConnection extends Connection {
       size = data.byteLength;
     } else if (typeof data === 'string') {
       type = 'string';
-      size = this.getBinarySize(data);
+      size =  Buffer.byteLength(data, 'utf8');
     }
 
     const numSlices = Math.ceil(size / util.maxChunkSize);
@@ -209,14 +209,9 @@ class DataConnection extends Connection {
     }
   }
 
-  getBinarySize(string) {
-    return Buffer.byteLength(string, 'utf8');
-  }
-
   static get EVENTS() {
     return DCEvents;
   }
-
 }
 
 module.exports = DataConnection;
