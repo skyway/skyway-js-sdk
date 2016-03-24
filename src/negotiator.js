@@ -3,11 +3,11 @@
 const EventEmitter = require('events');
 const Enum         = require('enum');
 
-const adapter      = require('../src/webrtcShim');
+const shim         = require('../src/webrtcShim');
 
-const RTCPeerConnection     = adapter.RTCPeerConnection;
-const RTCIceCandidate       = adapter.RTCIceCandidate;
-const RTCSessionDescription = adapter.RTCSessionDescription;
+const RTCPeerConnection     = shim.RTCPeerConnection;
+const RTCIceCandidate       = shim.RTCIceCandidate;
+const RTCSessionDescription = shim.RTCSessionDescription;
 
 const util = require('./util');
 
