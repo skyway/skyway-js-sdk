@@ -201,10 +201,10 @@ class DataConnection extends Connection {
   startSendLoop() {
     if (!this.sendInterval) {
       // Define send interval
-      // Try sending a new chunk every millisecond
+      // Try sending a new chunk with every callback
       this.sendInterval = setInterval(() => {
         // Might need more extensive buffering than this:
-        let currMsg = this.sendBuffer.shift(1);
+        let currMsg = this.sendBuffer.shift();
         try {
           this._dc.send(currMsg);
         } catch (error) {
@@ -215,7 +215,7 @@ class DataConnection extends Connection {
           clearInterval(this.sendInterval);
           this.sendInterval = undefined;
         }
-      }, 1);
+      }, util.sendInterval);
     }
   }
 

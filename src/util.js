@@ -43,6 +43,9 @@ class Util {
     // https://tools.ietf.org/html/draft-ietf-rtcweb-data-channel-13
     this.maxChunkSize = 16300;
 
+    // Send loop interval in milliseconds
+    this.sendInterval = 1;
+
     this.defaultConfig = {
       iceServers: [{
         urls: 'stun:stun.skyway.io:3478',
