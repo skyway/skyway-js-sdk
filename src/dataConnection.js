@@ -104,10 +104,13 @@ class DataConnection extends Connection {
       if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
         // We want to convert any type of data to an ArrayBuffer
         util.blobToArrayBuffer(util.pack(blob), ab => {
-          this.emit(DataConnection.EVENTS.data.key, ab);
+          // It seems there is an additional BinaryPack step included somewhere
+          // if serialization is 'binary'...
+          this.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
         });
       } else if (this.serialization === 'json') {
         // To convert back to JSON from Blob type, we need to convert to AB and unpack
+        // This is identical to 'binary' serialization processing, but keeping it separate for now
         util.blobToArrayBuffer(blob, ab => {
           this.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
         });

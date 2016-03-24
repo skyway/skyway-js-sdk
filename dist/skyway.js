@@ -12408,8 +12408,6 @@ module.exports = Connection;
 (function (Buffer){
 'use strict';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -12435,27 +12433,24 @@ var DataConnection = function (_Connection) {
     _this._idPrefix = 'dc_';
     _this.type = 'data';
     _this.label = _this.options.label || _this.id;
+
     // Serialization is binary by default
-    _this.serialization = 'binary';
-    _this.serialization = _this.options.serialization;
+    if (_this.options.serialization) {
+      _this.serialization = _this.options.serialization;
+    } else {
+      _this.serialization = 'binary';
+    }
 
     // New send code properties
     _this.sendBuffer = [];
     _this.receivedData = {};
+    // Messages stored by peer because DC was not ready yet
+    _this._queuedMessages = _this.options._queuedMessages || [];
 
-    // Data channel buffering.
-    _this._buffer = [];
-    _this._isBuffering = false;
-
-    // For storing chunks of large messages
-    _this._chunkedData = {};
-
+    // Maybe don't need this anymore
     if (_this.options._payload) {
       _this._peerBrowser = _this.options._payload.browser;
     }
-
-    // Messages stored by peer because DC was not ready yet
-    _this._queuedMessages = _this.options._queuedMessages || [];
 
     // This replaces the PeerJS 'initialize' method
     _this._negotiator.on('dcReady', function (dc) {
@@ -12501,7 +12496,6 @@ var DataConnection = function (_Connection) {
     value: function _handleDataMessage(msg) {
       var _this3 = this;
 
-      console.log('Got a message: ' + msg.data);
       var dataMeta = util.unpack(msg.data);
       console.log(dataMeta.type);
 
@@ -12526,31 +12520,35 @@ var DataConnection = function (_Connection) {
       // - ArrayBuffer
 
       if (currData.receivedParts === currData.totalParts) {
-        (function () {
-          console.log('got all the parts');
-          var blob = new File(currData.parts, currData.name, { type: currData.type });
+        // Creating a File should simply work as a Blob with a filename
+        var blob = new File(currData.parts, currData.name, { type: currData.type });
 
+        if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
+          // We want to convert any type of data to an ArrayBuffer
+          util.blobToArrayBuffer(util.pack(blob), function (ab) {
+            _this3.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
+          });
+        } else if (this.serialization === 'json') {
+          // To convert back to JSON from Blob type, we need to convert to AB and unpack
+          util.blobToArrayBuffer(blob, function (ab) {
+            _this3.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
+          });
+        } else if (this.serialization === 'none') {
+          // No serialization
           if (currData.type === 'string') {
             util.blobToBinaryString(blob, function (str) {
               _this3.emit(DataConnection.EVENTS.data.key, str);
             });
-          } else if (currData.type === 'json') {
-            // NOTE: To convert back from Blob type, convert to AB and unpack!
-            util.blobToArrayBuffer(blob, function (ab) {
-              _this3.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
-            });
           } else if (currData.type === 'arraybuffer') {
-            _this3.emit(DataConnection.EVENTS.data.key, blob);
+            util.blobToArrayBuffer(blob, function (ab) {
+              _this3.emit(DataConnection.EVENTS.data.key, ab);
+            });
           } else {
             // Blob or File
-            console.log('Should be a file!');
-            util.blobToArrayBuffer(blob, function (ab) {
-              _this3.emit(DataConnection.EVENTS.data.key, blob);
-            });
-            console.log('finished emitting');
-            delete _this3.receivedData[dataMeta.id];
+            this.emit(DataConnection.EVENTS.data.key, blob);
+            delete this.receivedData[dataMeta.id];
           }
-        })();
+        }
       }
     }
 
@@ -12569,6 +12567,13 @@ var DataConnection = function (_Connection) {
       var size = undefined;
       var name = undefined;
 
+      if (this.serialization === 'json') {
+        type = 'json';
+        // JSON undergoes an extra BinaryPack step for compression
+        data = util.pack(data);
+        size = data.size;
+      }
+
       if (data instanceof Blob) {
         // Should be a Blob or File
         type = data.type;
@@ -12579,12 +12584,7 @@ var DataConnection = function (_Connection) {
         size = data.byteLength;
       } else if (typeof data === 'string') {
         type = 'string';
-        size = this.getBinarySize(data);
-      } else if ((typeof data === 'undefined' ? 'undefined' : _typeof(data)) === 'object') {
-        type = 'json';
-        // JSON undergoes an extra BinaryPack step for compression
-        data = util.pack(data);
-        size = data.size;
+        size = Buffer.byteLength(data, 'utf8');
       }
 
       var numSlices = Math.ceil(size / util.maxChunkSize);
@@ -12595,8 +12595,6 @@ var DataConnection = function (_Connection) {
         name: name,
         totalParts: numSlices
       };
-
-      console.log('num slices: ' + numSlices);
 
       // Perform any required slicing
       for (var sliceIndex = 0; sliceIndex < numSlices; sliceIndex++) {
@@ -12634,11 +12632,6 @@ var DataConnection = function (_Connection) {
           }
         }, 1);
       }
-    }
-  }, {
-    key: 'getBinarySize',
-    value: function getBinarySize(string) {
-      return Buffer.byteLength(string, 'utf8');
     }
   }], [{
     key: 'EVENTS',
