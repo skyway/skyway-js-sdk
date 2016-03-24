@@ -101,7 +101,7 @@ class DataConnection extends Connection {
 
     if (currData.receivedParts === currData.totalParts) {
       let blob;
-      if (currData.name) {
+      if (currData.type === 'file') {
         blob = new File(currData.parts, currData.name, {type: currData.fileType});
       } else {
         blob = new Blob(currData.parts, {type: currData.fileType});
@@ -157,11 +157,14 @@ class DataConnection extends Connection {
       size = data.size;
     }
 
-    if (data instanceof Blob) {
-      // Should be a Blob or File
-      type = 'blob';
+    if (data instanceof File) {
+      type = 'file';
       size = data.size;
       name = data.name;
+      fileType = data.type;
+    } else if (data instanceof Blob) {
+      type = 'blob';
+      size = data.size;
       fileType = data.type;
     } else if (data instanceof ArrayBuffer) {
       type = 'arraybuffer';
