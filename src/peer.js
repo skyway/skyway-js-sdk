@@ -164,6 +164,13 @@ class Peer extends EventEmitter {
     }, 0);
   }
 
+  joinRoom(roomName, roomOptions) {
+    let data = {
+      roomName: roomName
+    }
+    this.socket.send(util.MESSAGE_TYPES.JOIN.key, data);
+  }
+
   reconnect() {
   }
 
@@ -232,6 +239,9 @@ class Peer extends EventEmitter {
         this.disconnect();
         this.emitError('socket-error', 'Lost connection to server.');
       }
+    });
+
+    this.socket.on('joined', () => {
     });
 
     this.socket.start(id, this.options.token);

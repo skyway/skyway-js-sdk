@@ -715,4 +715,49 @@ describe('Peer', () => {
       assert(spy.withArgs([]).callCount === responseCodes.length);
     });
   });
+
+  describe('join', () => {
+    let peer1, peer2;
+    let requests = [];
+    let xhr;
+    beforeEach(() => {
+      peer1 = new Peer({
+        key: apiKey,
+        host: 'localhost',
+        port: 8080
+      });
+
+      peer2 = new Peer({
+        key: apiKey,
+        host: 'localhost',
+        port: 8080
+      });
+    });
+
+    afterEach(() => {
+      peer1.destroy();
+      peer2.destroy();
+    });
+
+    it('should receive ack message when join a room', done => {
+
+      peer1.join('testRoom');
+
+      peer1.on('joined', () => {
+        console.log('joined')
+        done();
+      });
+    });
+
+    it('should receive message when other members joins a room', done => {
+
+      peer1.join('testRoom');
+      peer2.join('testRoom');
+
+      peer1.on('joined', () => {
+      })
+      peer2.on('joined', () => {
+      })
+    });
+  });
 });

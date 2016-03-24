@@ -22,7 +22,8 @@ const MessageTypes = new Enum([
   'ANSWER',
   'LEAVE',
   'EXPIRE',
-  'CANDIDATE'
+  'CANDIDATE',
+  'JOIN'
 ]);
 
 class Util {
