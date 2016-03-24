@@ -12435,6 +12435,8 @@ var DataConnection = function (_Connection) {
     _this._idPrefix = 'dc_';
     _this.type = 'data';
     _this.label = _this.options.label || _this.id;
+    // Serialization is binary by default
+    _this.serialization = 'binary';
     _this.serialization = _this.options.serialization;
 
     // New send code properties
@@ -12508,6 +12510,7 @@ var DataConnection = function (_Connection) {
         currData = this.receivedData[dataMeta.id] = {
           size: dataMeta.size,
           type: dataMeta.type,
+          name: dataMeta.name,
           totalParts: dataMeta.totalParts,
           parts: new Array(dataMeta.totalParts),
           receivedParts: 0
@@ -12523,24 +12526,31 @@ var DataConnection = function (_Connection) {
       // - ArrayBuffer
 
       if (currData.receivedParts === currData.totalParts) {
-        var blob = new Blob(currData.parts);
+        (function () {
+          console.log('got all the parts');
+          var blob = new File(currData.parts, currData.name, { type: currData.type });
 
-        if (currData.type === 'string') {
-          util.blobToBinaryString(blob, function (str) {
-            _this3.emit(DataConnection.EVENTS.data.key, str);
-          });
-        } else if (currData.type === 'json') {
-          // NOTE: To convert back from Blob type, convert to AB and unpack!
-          util.blobToArrayBuffer(blob, function (ab) {
-            _this3.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
-          });
-        } else if (currData.type === 'arraybuffer') {
-          this.emit(DataConnection.EVENTS.data.key, blob);
-        } else {
-          // Blob or File
-          var file = new File([blob], currData.name, { type: currData.type });
-          this.emit(DataConnection.EVENTS.data.key, file);
-        }
+          if (currData.type === 'string') {
+            util.blobToBinaryString(blob, function (str) {
+              _this3.emit(DataConnection.EVENTS.data.key, str);
+            });
+          } else if (currData.type === 'json') {
+            // NOTE: To convert back from Blob type, convert to AB and unpack!
+            util.blobToArrayBuffer(blob, function (ab) {
+              _this3.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
+            });
+          } else if (currData.type === 'arraybuffer') {
+            _this3.emit(DataConnection.EVENTS.data.key, blob);
+          } else {
+            // Blob or File
+            console.log('Should be a file!');
+            util.blobToArrayBuffer(blob, function (ab) {
+              _this3.emit(DataConnection.EVENTS.data.key, blob);
+            });
+            console.log('finished emitting');
+            delete _this3.receivedData[dataMeta.id];
+          }
+        })();
       }
     }
 

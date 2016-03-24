@@ -267,7 +267,7 @@ describe('DataConnection', () => {
         type:       typeof message
       };
 
-      const dc = new DataConnection('remoteId', {});
+      const dc = new DataConnection('remoteId', {serialization: 'none'});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -293,7 +293,7 @@ describe('DataConnection', () => {
         type:       'json'
       };
 
-      const dc = new DataConnection('remoteId', {});
+      const dc = new DataConnection('remoteId', {serialization: 'json'});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -410,7 +410,7 @@ describe('DataConnection', () => {
         type:       typeof slice2
       };
 
-      const dc = new DataConnection('remoteId', {});
+      const dc = new DataConnection('remoteId', {serialization: 'none'});
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -464,7 +464,7 @@ describe('DataConnection', () => {
       const jsonObj = {name: 'testObject'};
       let sendSpy = sinon.spy();
 
-      const dc = new DataConnection('remoteId', {});
+      const dc = new DataConnection('remoteId', {serialization: 'json'});
       dc._negotiator.emit('dcReady', {send: sendSpy});
       dc._dc.onopen();
 

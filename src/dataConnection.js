@@ -17,19 +17,19 @@ class DataConnection extends Connection {
     this._idPrefix = 'dc_';
     this.type = 'data';
     this.label = this.options.label || this.id;
-    this.serialization = this.options.serialization;
+
+    // Serialization is binary by default
+    if (this.options.serialization) {
+      this.serialization = this.options.serialization;
+    } else {
+      this.serialization = 'binary';
+    }
 
     // New send code properties
     this.sendBuffer = [];
     this.receivedData = {};
 
-    // Data channel buffering.
-    this._buffer = [];
-    this._isBuffering = false;
-
-    // For storing chunks of large messages
-    this._chunkedData = {};
-
+    // Maybe don't need this anymore
     if (this.options._payload) {
       this._peerBrowser = this.options._payload.browser;
     }
@@ -75,7 +75,6 @@ class DataConnection extends Connection {
   }
 
   _handleDataMessage(msg) {
-    console.log('Got a message: ' + msg.data);
     const dataMeta = util.unpack(msg.data);
     console.log(dataMeta.type);
 
@@ -84,6 +83,7 @@ class DataConnection extends Connection {
       currData = this.receivedData[dataMeta.id] = {
         size:          dataMeta.size,
         type:          dataMeta.type,
+        name:          dataMeta.name,
         totalParts:    dataMeta.totalParts,
         parts:         new Array(dataMeta.totalParts),
         receivedParts: 0
@@ -99,23 +99,37 @@ class DataConnection extends Connection {
     // - ArrayBuffer
 
     if (currData.receivedParts === currData.totalParts) {
-      let blob = new Blob(currData.parts);
+      // console.log('got all the parts');
+      let blob = new File(currData.parts, currData.name, {type: currData.type});
 
-      if (currData.type === 'string') {
-        util.blobToBinaryString(blob, str => {
-          this.emit(DataConnection.EVENTS.data.key, str);
+      if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
+        console.log('binary serialisation');
+        util.blobToArrayBuffer(util.pack(blob), ab => {
+          // Should be valid for all types of data
+          this.emit(DataConnection.EVENTS.data.key, ab);
         });
-      } else if (currData.type === 'json') {
+      } else if (this.serialization === 'json') {
         // NOTE: To convert back from Blob type, convert to AB and unpack!
         util.blobToArrayBuffer(blob, ab => {
           this.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
         });
-      } else if (currData.type === 'arraybuffer') {
-        this.emit(DataConnection.EVENTS.data.key, blob);
       } else {
-        // Blob or File
-        const file = new File([blob], currData.name, {type: currData.type});
-        this.emit(DataConnection.EVENTS.data.key, file);
+        // No serialization
+        if (currData.type === 'string') {
+          util.blobToBinaryString(blob, str => {
+            this.emit(DataConnection.EVENTS.data.key, str);
+          });
+        } else if (currData.type === 'arraybuffer') {
+          util.blobToArrayBuffer(blob, ab => {
+            this.emit(DataConnection.EVENTS.data.key, ab);
+          });
+        } else {
+          // Blob or File
+          console.log('Should be a file!');
+          this.emit(DataConnection.EVENTS.data.key, blob);
+          console.log('finished emitting');
+          delete this.receivedData[dataMeta.id];
+        }
       }
     }
   }
@@ -131,6 +145,13 @@ class DataConnection extends Connection {
     let size;
     let name;
 
+    if (this.serialization === 'json') {
+      type = 'json';
+      // JSON undergoes an extra BinaryPack step for compression
+      data = util.pack(data);
+      size = data.size;
+    }
+
     if (data instanceof Blob) {
       // Should be a Blob or File
       type = data.type;
@@ -142,11 +163,6 @@ class DataConnection extends Connection {
     } else if (typeof data === 'string') {
       type = 'string';
       size = this.getBinarySize(data);
-    } else if (typeof data === 'object') {
-      type = 'json';
-      // JSON undergoes an extra BinaryPack step for compression
-      data = util.pack(data);
-      size = data.size;
     }
 
     const numSlices = Math.ceil(size / util.maxChunkSize);
@@ -157,8 +173,6 @@ class DataConnection extends Connection {
       name:       name,
       totalParts: numSlices
     };
-
-    console.log('num slices: ' + numSlices);
 
     // Perform any required slicing
     for (let sliceIndex = 0; sliceIndex < numSlices; sliceIndex++) {
