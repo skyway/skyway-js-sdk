@@ -741,7 +741,7 @@ describe('Peer', () => {
 
     it('should receive ack message when join a room', done => {
 
-      peer1.join('testRoom');
+      peer1.joinRoom('testRoom');
 
       peer1.on('joined', () => {
         console.log('joined')
@@ -751,8 +751,8 @@ describe('Peer', () => {
 
     it('should receive message when other members joins a room', done => {
 
-      peer1.join('testRoom');
-      peer2.join('testRoom');
+      peer1.joinRoom('testRoom');
+      peer2.joinRoom('testRoom');
 
       peer1.on('joined', () => {
       })
