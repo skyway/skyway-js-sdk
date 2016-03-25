@@ -84,7 +84,7 @@ class DataConnection extends Connection {
         size:          dataMeta.size,
         type:          dataMeta.type,
         name:          dataMeta.name,
-        fileType:      dataMeta.fileType,
+        mimeType:      dataMeta.fileType,
         totalParts:    dataMeta.totalParts,
         parts:         new Array(dataMeta.totalParts),
         receivedParts: 0
@@ -102,9 +102,9 @@ class DataConnection extends Connection {
     if (currData.receivedParts === currData.totalParts) {
       let blob;
       if (currData.type === 'file') {
-        blob = new File(currData.parts, currData.name, {type: currData.fileType});
+        blob = new File(currData.parts, currData.name, {type: currData.mimeType});
       } else {
-        blob = new Blob(currData.parts, {type: currData.fileType});
+        blob = new Blob(currData.parts, {type: currData.mimeType});
       }
 
       if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
@@ -181,7 +181,7 @@ class DataConnection extends Connection {
       dataMeta.name = data.name;
     }
     if (data instanceof Blob) {
-      dataMeta.fileType = data.type;
+      dataMeta.mimeType = data.type;
     }
 
     // Perform any required slicing

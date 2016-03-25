@@ -17,7 +17,7 @@ gulp.task('clean', () => {
 });
 
 gulp.task('lint', () => {
-  return gulp.src(['**/*.js', '!node_modules/**', '!dist/**'])
+  return gulp.src(['**/*.js', '!node_modules/**', '!dist/**', '!coverage/**'])
     .pipe(eslint('.eslintrc'))
     .pipe(eslint.format())
     .pipe(eslint.failAfterError());

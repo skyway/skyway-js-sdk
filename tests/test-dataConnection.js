@@ -348,9 +348,9 @@ describe('DataConnection', () => {
     });
 
     it('should correctly reconstruct a sent file', done => {
-      const fileType = 'text/plain;charset=utf-8;';
+      const mimeType = 'text/plain;charset=utf-8;';
       const file = new File(['foobar'], 'testfile', {
-        type: fileType
+        type: mimeType
       });
 
       const dc = new DataConnection('remoteId', {serialization: 'binary'});
@@ -510,9 +510,9 @@ describe('DataConnection', () => {
     });
 
     it('should correctly send a File', done => {
-      const fileType = 'text/plain;charset=utf-8;';
+      const mimeType = 'text/plain;charset=utf-8;';
       const file = new File(['foobar'], 'testfile', {
-        type: fileType
+        type: mimeType
       });
 
       let sendSpy = sinon.spy();
