@@ -242,10 +242,33 @@ class Peer extends EventEmitter {
   }
 
   _setupMessageHandlers() {
-    this.socket.on(util.MESSAGE_TYPES.OPEN.key, id => {
-      this.id = id;
+    this.socket.on(util.MESSAGE_TYPES.OPEN.key, openMessage => {
+      this.id = openMessage.peerId;
       this.open = true;
-      this.emit(Peer.EVENTS.open.key, id);
+
+      // Set up turn credentials
+      const credential = openMessage.turnCredential;
+      if(this.options.turn === true && credential){
+        this.options.config.iceServers.push({
+          urls: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=tcp`,
+          url: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=tcp`,
+          username: `${this.options.key}$${this.id}`,
+          credential: credential
+        });
+        this.options.config.iceServers.push({
+          urls: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=udp`,
+          url: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=udp`,
+          username: `${this.options.key}$${this.id}`,
+          credential: credential
+        });
+        this.options.config.iceTransports = 'all';
+
+        util.log('SkyWay TURN Server is available');
+      } else {
+        util.log('SkyWay TURN Server is unavailable');
+      }
+
+      this.emit(Peer.EVENTS.open.key, this.id);
     });
 
     this.socket.on(util.MESSAGE_TYPES.ERROR.key, error => {
