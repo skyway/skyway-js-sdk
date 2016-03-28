@@ -1,12 +1,13 @@
 'use strict';
 
 const EventEmitter = require('events');
-const adapter      = require('webrtc-adapter-test');
 const Enum         = require('enum');
 
-const RTCPeerConnection     = adapter.RTCPeerConnection;
-const RTCIceCandidate       = adapter.RTCIceCandidate;
-const RTCSessionDescription = adapter.RTCSessionDescription;
+const shim         = require('../src/webrtcShim');
+
+const RTCPeerConnection     = shim.RTCPeerConnection;
+const RTCIceCandidate       = shim.RTCIceCandidate;
+const RTCSessionDescription = shim.RTCSessionDescription;
 
 const util = require('./util');
 
@@ -148,26 +149,30 @@ class Negotiator extends EventEmitter {
   }
 
   _makeOfferSdp() {
-    return this._pc.createOffer()
-      .then(offer => {
+    return new Promise((resolve, reject) => {
+      this._pc.createOffer(offer => {
         util.log('Created offer.');
-        return Promise.resolve(offer);
+        resolve(offer);
       }, error => {
         this.emitError('webrtc', error);
         util.log('Failed to createOffer, ', error);
-        return Promise.reject(error);
+        reject(error);
       });
+    });
   }
 
   _setLocalDescription(offer) {
-    return this._pc.setLocalDescription(offer)
-      .then(() => {
+    return new Promise((resolve, reject) => {
+      this._pc.setLocalDescription(offer, () => {
         util.log('Set localDescription: offer');
         this.emit(Negotiator.EVENTS.offerCreated.key, offer);
+        resolve(offer);
       }, error => {
         this.emitError('webrtc', error);
         util.log('Failed to setLocalDescription, ', error);
+        reject(error);
       });
+    });
   }
 
   cleanup() {
@@ -199,33 +204,34 @@ class Negotiator extends EventEmitter {
 
   _setRemoteDescription(sdp) {
     util.log(`Setting remote description ${JSON.stringify(sdp)}`);
-    return this._pc.setRemoteDescription(new RTCSessionDescription(sdp))
-      .then(() => {
+    return new Promise(resolve => {
+      this._pc.setRemoteDescription(new RTCSessionDescription(sdp), () => {
         util.log('Set remoteDescription:', sdp.type);
-      }).catch(err => {
+        resolve();
+      }, err => {
         this.emitError('webrtc', err);
         util.log('Failed to setRemoteDescription: ', err);
       });
+    });
   }
 
   _makeAnswerSdp() {
-    let answerSdp;
-    return this._pc.createAnswer()
-      .then(answer => {
+    return new Promise(resolve => {
+      this._pc.createAnswer(answer => {
         util.log('Created answer.');
 
-        answerSdp = answer;
-        return this._pc.setLocalDescription(answer);
+        this._pc.setLocalDescription(answer, () => {
+          util.log('Set localDescription: answer');
+          resolve(answer);
+        }, err => {
+          this.emitError('webrtc', err);
+          util.log('Failed to setLocalDescription, ', err);
+        });
       }, err => {
         this.emitError('webrtc', err);
         util.log('Failed to createAnswer, ', err);
-      }).then(() => {
-        util.log('Set localDescription: answer');
-        return answerSdp;
-      }, err => {
-        this.emitError('webrtc', err);
-        util.log('Failed to setLocalDescription, ', err);
       });
+    });
   }
 
   emitError(type, err) {
