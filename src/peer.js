@@ -248,17 +248,19 @@ class Peer extends EventEmitter {
 
       // Set up turn credentials
       const credential = openMessage.turnCredential;
-      if(this.options.turn === true && credential){
+      if (this.options.turn === true && credential) {
         this.options.config.iceServers.push({
           urls: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=tcp`,
-          url: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=tcp`,
-          username: `${this.options.key}$${this.id}`,
+          url:  `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=tcp`,
+
+          username:   `${this.options.key}$${this.id}`,
           credential: credential
         });
         this.options.config.iceServers.push({
           urls: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=udp`,
-          url: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=udp`,
-          username: `${this.options.key}$${this.id}`,
+          url:  `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=udp`,
+
+          username:   `${this.options.key}$${this.id}`,
           credential: credential
         });
         this.options.config.iceTransports = 'all';
