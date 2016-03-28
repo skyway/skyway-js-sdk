@@ -299,7 +299,7 @@ describe('Negotiator', () => {
           assert(spy.callCount === 1);
         });
 
-        it('should emit \'offerCreated\'', function(done) {
+        it('should emit \'offerCreated\'', done => {
           const offer = 'offer';
           const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
           cbStub.callsArgWith(1, offer);
