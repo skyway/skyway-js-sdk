@@ -719,118 +719,62 @@ describe('Peer', () => {
   });
 
   describe('Room API', () => {
+    const serverPort = 5080;
+    let peer;
+    let ioStub;
+    let ioSpy;
 
-    describe('Join', () => {
-      const serverPort = 5080;
-      let peer1;
-      let peer2;
-      let ioStub;
-      let ioSpy;
+    beforeEach(() => {
+      ioStub = sinon.stub(SocketIO, 'Socket');
+      ioSpy = sinon.spy();
 
-      beforeEach(() => {
-        ioStub = sinon.stub(SocketIO, 'Socket');
-        ioSpy = sinon.spy();
+      ioStub.returns(
+        {
+          // socket.io is not standard eventEmitter API
+          // fake messages by calling io._fakeMessage[messagetype](data)
+          on: function(event, callback) {
+            if (!this._fakeMessage) {
+              this._fakeMessage = {};
+            }
+            this._fakeMessage[event] = callback;
+          },
+          emit:       ioSpy,
+          disconnect: ioSpy,
+          connected:  true,
+          io:         {opts: {query: ''}}
+        }
+      );
+      Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+      Peer = proxyquire('../src/peer', {'./socket': Socket});
 
-        ioStub.returns(
-          {
-            // socket.io is not standard eventEmitter API
-            // fake messages by calling io._fakeMessage[messagetype](data)
-            on: function(event, callback) {
-              if (!this._fakeMessage) {
-                this._fakeMessage = {};
-              }
-              this._fakeMessage[event] = callback;
-            },
-            emit:       ioSpy,
-            disconnect: ioSpy,
-            connected:  true,
-            io:         {opts: {query: ''}}
-          }
-        );
-        Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
-        Peer = proxyquire('../src/peer', {'./socket': Socket});
-
-        peer1 = new Peer({
-          secure: false,
-          host:   'localhost',
-          port:   serverPort,
-          key:    apiKey
-        });
-
-        peer2 = new Peer({
-          secure: false,
-          host:   'localhost',
-          port:   serverPort,
-          key:    apiKey
-        });
+      peer = new Peer({
+        secure: false,
+        host:   'localhost',
+        port:   serverPort,
+        key:    apiKey
       });
+    });
 
-      afterEach(() => {
-        peer1.destroy();
-        peer2.destroy();
+    afterEach(() => {
+      peer.destroy();
 
-        ioStub.restore();
-        ioSpy.reset();
-      });
+      ioStub.restore();
+      ioSpy.reset();
+    });
 
-      it('should correctly emit from Socket when attempting to join a room', done => {
-        const roomName = 'testRoom';
+    it('should correctly emit from Socket when attempting to join a room', done => {
+      const roomName = 'testRoom';
 
-        let spy = sinon.spy();
-        peer1.socket._io.emit = spy;
-        peer1.socket._isOpen = true;
+      let spy = sinon.spy();
+      peer.socket._io.emit = spy;
+      peer.socket._isOpen = true;
 
-        peer1.joinRoom(roomName);
+      peer.joinRoom(roomName);
 
-        setTimeout(() => {
-          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
-          done();
-        }, 200);
-      });
-
-      // it('should receive an acknowledgement message when a room has been joined', done => {
-      //   const roomName = 'testRoom';
-      //   const data = {roomName: roomName};
-
-      //   let spy = sinon.spy();
-      //   peer1.socket.emit = spy;
-      //   peer1.socket._isOpen = true;
-
-      //   //peer1.joinRoom(roomName);
-
-      //   setTimeout(() => {
-      //     console.log(spy.callCount);
-      //     console.log(peer1.socket.emit.args[0]);
-      //     console.log(peer1.socket.on.args[0]);
-      //     assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key, data));
-      //     done();
-      //   }, 200);
-
-      //   peer1.socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_JOINED.key](data);
-      // });
-
-      // it('should receive message when other members joins a room', done => {
-      //   const roomName = 'testRoom';
-
-      //   let spy1 = sinon.spy();
-      //   let spy2 = sinon.spy();
-      //   peer1.socket.emit = spy1;
-      //   peer2.socket.emit = spy2;
-
-      //   peer1.joinRoom(roomName);
-      //   setTimeout(() => {
-      //     assert(spy1.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key));
-      //     spy1.reset();
-
-      //     peer2.joinRoom(roomName);
-
-      //     setTimeout(() => {
-      //       assert(spy2.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key));
-      //       assert(spy1.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key));
-      //       done();
-      //     }, 200);
-      //   }, 200);
-      // });
+      setTimeout(() => {
+        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
+        done();
+      }, 200);
     });
   });
 });

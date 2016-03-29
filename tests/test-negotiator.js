@@ -26,7 +26,7 @@ describe('Negotiator', () => {
     let negotiator;
     let handleOfferSpy;
 
-    before(() => {
+    beforeEach(() => {
       pcStub = sinon.stub();
       addStreamSpy = sinon.spy();
       createDCSpy = sinon.spy();
@@ -36,7 +36,7 @@ describe('Negotiator', () => {
         createDataChannel: createDCSpy
       });
       const Negotiator = proxyquire('../src/negotiator', {
-        'webrtc-adapter-test': {
+        '../src/webrtcShim': {
           RTCPeerConnection: pcStub
         }
       });
@@ -189,7 +189,7 @@ describe('Negotiator', () => {
       let pc;
       let ev;
 
-      before(() => {
+      beforeEach(() => {
         negotiator = new Negotiator();
         pc = negotiator._pc = negotiator._createPeerConnection('media');
         negotiator._setupPCListeners(pc);
@@ -240,13 +240,13 @@ describe('Negotiator', () => {
         let negotiator;
         let pc;
 
-        before(() => {
+        beforeEach(() => {
           pcStub = sinon.stub();
           pcStub.returns({
             iceConnectionState: 'disconnected'
           });
           const Negotiator = proxyquire('../src/negotiator', {
-            'webrtc-adapter-test': {
+            '../src/webrtcShim': {
               RTCPeerConnection: pcStub
             }
           });
@@ -300,16 +300,16 @@ describe('Negotiator', () => {
         });
 
         it('should emit \'offerCreated\'', done => {
-          const promiseStub = sinon.stub().returnsPromise();
           const offer = 'offer';
-          pc.setLocalDescription = promiseStub.resolves(offer);
+          const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
+          cbStub.callsArgWith(1, offer);
 
           negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
             assert(offer);
             done();
           });
 
-          negotiator._makeOfferSdp();
+          pc.onnegotiationneeded();
         });
       });
     });
@@ -349,7 +349,8 @@ describe('Negotiator', () => {
 
     it('should emit Error when createOffer rejected', done => {
       const fakeError = 'fakeError';
-      pc.createOffer = promiseStub.rejects(fakeError);
+      const stub = sinon.stub(pc, 'createOffer');
+      stub.callsArgWith(1, fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
@@ -366,24 +367,23 @@ describe('Negotiator', () => {
         assert.equal(error, fakeError);
       });
 
-      assert(promiseStub.callCount === 1);
+      assert(stub.callCount === 1);
     });
   });
 
   describe('_setLocalDescription', () => {
     let negotiator;
     let pc;
-    let promiseStub;
 
-    before(() => {
+    beforeEach(() => {
       negotiator = new Negotiator();
       pc = negotiator._pc = negotiator._createPeerConnection('media');
       negotiator._setupPCListeners();
-      promiseStub = sinon.stub().returnsPromise();
     });
 
     it('should call pc.setLocalDescription', () => {
       const offer = 'offer';
+      const promiseStub = sinon.stub().returnsPromise();
       pc.setLocalDescription = promiseStub.resolves(offer);
 
       assert(promiseStub.callCount === 0);
@@ -394,7 +394,8 @@ describe('Negotiator', () => {
     describe('when setLocalDescription resolved', () => {
       it('should emit \'offerCreated\'', done => {
         const offer = 'offer';
-        pc.setLocalDescription = promiseStub.resolves(offer);
+        const cbStub = sinon.stub(pc, 'setLocalDescription');
+        cbStub.callsArgWith(1, offer);
 
         negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
           assert(offer);
@@ -409,7 +410,8 @@ describe('Negotiator', () => {
       it('should emit Error', done => {
         const offer = 'offer';
         const fakeError = 'fakeError';
-        pc.setLocalDescription = promiseStub.rejects(fakeError);
+        const cbStub = sinon.stub(pc, 'setLocalDescription');
+        cbStub.callsArgWith(2, fakeError);
 
         negotiator.on(Negotiator.EVENTS.error.key, err => {
           assert(err instanceof Error);
@@ -419,7 +421,7 @@ describe('Negotiator', () => {
 
         negotiator._setLocalDescription(offer);
 
-        assert(promiseStub.callCount === 1);
+        assert(cbStub.callCount === 1);
       });
     });
   });
@@ -464,21 +466,20 @@ describe('Negotiator', () => {
 
       const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
 
-      negotiator._pc.createOffer()
-        .then(offer => {
-          const offerObject = {
-            sdp:  offer.sdp,
-            type: offer.type
-          };
+      negotiator._pc.createOffer(offer => {
+        const offerObject = {
+          sdp:  offer.sdp,
+          type: offer.type
+        };
 
-          negotiator.handleOffer(offerObject);
+        negotiator.handleOffer(offerObject);
 
-          setTimeout(() => {
-            assert(setRemoteSpy.callCount === 1);
-            assert(setRemoteSpy.calledWith(offer));
-            done();
-          }, waitForAsync);
-        });
+        setTimeout(() => {
+          assert(setRemoteSpy.callCount === 1);
+          assert(setRemoteSpy.calledWith(offer));
+          done();
+        }, waitForAsync);
+      });
     });
 
     it('should emit answerCreated', done => {
@@ -487,30 +488,29 @@ describe('Negotiator', () => {
 
       const emitSpy = sinon.spy(negotiator, 'emit');
 
-      negotiator._pc.createOffer()
-        .then(offer => {
-          const offerObject = {
-            sdp:  offer.sdp,
-            type: offer.type
-          };
+      negotiator._pc.createOffer(offer => {
+        const offerObject = {
+          sdp:  offer.sdp,
+          type: offer.type
+        };
 
-          assert(emitSpy.callCount === 0);
+        assert(emitSpy.callCount === 0);
 
-          negotiator.handleOffer(offerObject);
+        negotiator.handleOffer(offerObject);
 
-          setTimeout(() => {
-            assert(emitSpy.callCount === 1);
+        setTimeout(() => {
+          assert(emitSpy.callCount === 1);
 
-            const eventName = emitSpy.args[0][0];
-            const answer = emitSpy.args[0][1];
+          const eventName = emitSpy.args[0][0];
+          const answer = emitSpy.args[0][1];
 
-            assert(eventName, Negotiator.EVENTS.answerCreated.key);
-            assert.equal(answer.type, 'answer');
-            assert.equal(answer.constructor.name, 'RTCSessionDescription');
+          assert(eventName, Negotiator.EVENTS.answerCreated.key);
+          assert.equal(answer.type, 'answer');
+          assert.equal(answer.constructor.name, 'RTCSessionDescription');
 
-            done();
-          }, waitForAsync);
-        });
+          done();
+        }, waitForAsync);
+      });
     });
   });
 
@@ -519,27 +519,27 @@ describe('Negotiator', () => {
     it('should setRemoteDescription', done => {
       const negotiator = new Negotiator();
       negotiator._pc = negotiator._createPeerConnection('data', {});
-      const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
-      negotiator._pc.createOffer()
-        .then(offer => {
-          // creating an answer is complicated so just use an offer
-          const answerObject = {
-            sdp:  offer.sdp,
-            type: 'answer'
-          };
+      const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription');
 
-          assert(setRemoteSpy.callCount === 0);
+      negotiator._pc.createOffer(offer => {
+        // creating an answer is complicated so just use an offer
+        const answerObject = {
+          sdp:  offer.sdp,
+          type: 'answer'
+        };
 
-          negotiator.handleAnswer(answerObject);
+        assert(setRemoteStub.callCount === 0);
 
-          setTimeout(() => {
-            assert(setRemoteSpy.callCount === 1);
-            assert(setRemoteSpy.calledWith(
-              new RTCSessionDescription(answerObject))
-            );
-            done();
-          }, waitForAsync);
-        });
+        negotiator.handleAnswer(answerObject);
+
+        setTimeout(() => {
+          assert(setRemoteStub.callCount === 1);
+          assert(setRemoteStub.calledWith(
+            new RTCSessionDescription(answerObject))
+          );
+          done();
+        }, waitForAsync);
+      });
     });
 
     describe('cleanup', () => {
