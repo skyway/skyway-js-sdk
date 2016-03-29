@@ -559,26 +559,6 @@ describe('DataConnection', () => {
     });
   });
 
-//   describe('Room API', () => {
-//     describe.only('Send', () => {
-//       it('should correctly emit from socket when peer sends to room', () => {
-//         const roomName = 'testRoom';
-// 
-//         let spy = sinon.spy();
-//         peer.socket._io.emit = spy;
-//         peer.socket._isOpen = true;
-// 
-//         peer.joinRoom(roomName);
-//         peer.sendRoom(roomName, 'foobar');
-// 
-//         setTimeout(() => {
-//           assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key));
-//           done();
-//         }, 200);
-//       });
-//     });
-//   });
-
   describe('Cleanup', () => {
     it('should close the socket and call the negotiator to cleanup on close()', () => {
       const dc = new DataConnection('remoteId', {});

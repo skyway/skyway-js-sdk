@@ -172,6 +172,14 @@ class Peer extends EventEmitter {
     this.socket.send(util.MESSAGE_TYPES.ROOM_JOIN.key, data);
   }
 
+  sendRoom(roomName, message) {
+    const data = {
+      roomName: roomName,
+      payload:  message
+    };
+    this.socket.send(util.MESSAGE_TYPES.ROOM_DATA.key, data);
+  }
+
   reconnect() {
   }
 

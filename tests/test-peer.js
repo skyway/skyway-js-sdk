@@ -719,62 +719,125 @@ describe('Peer', () => {
   });
 
   describe('Room API', () => {
-    const serverPort = 5080;
-    let peer;
-    let ioStub;
-    let ioSpy;
+    describe('Join', () => {
+      const serverPort = 5080;
+      let peer;
+      let ioStub;
+      let ioSpy;
 
-    beforeEach(() => {
-      ioStub = sinon.stub(SocketIO, 'Socket');
-      ioSpy = sinon.spy();
+      beforeEach(() => {
+        ioStub = sinon.stub(SocketIO, 'Socket');
+        ioSpy = sinon.spy();
 
-      ioStub.returns(
-        {
-          // socket.io is not standard eventEmitter API
-          // fake messages by calling io._fakeMessage[messagetype](data)
-          on: function(event, callback) {
-            if (!this._fakeMessage) {
-              this._fakeMessage = {};
-            }
-            this._fakeMessage[event] = callback;
-          },
-          emit:       ioSpy,
-          disconnect: ioSpy,
-          connected:  true,
-          io:         {opts: {query: ''}}
-        }
-      );
-      Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
-      Peer = proxyquire('../src/peer', {'./socket': Socket});
+        ioStub.returns(
+          {
+            // socket.io is not standard eventEmitter API
+            // fake messages by calling io._fakeMessage[messagetype](data)
+            on: function(event, callback) {
+              if (!this._fakeMessage) {
+                this._fakeMessage = {};
+              }
+              this._fakeMessage[event] = callback;
+            },
+            emit:       ioSpy,
+            disconnect: ioSpy,
+            connected:  true,
+            io:         {opts: {query: ''}}
+          }
+        );
+        Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+        Peer = proxyquire('../src/peer', {'./socket': Socket});
 
-      peer = new Peer({
-        secure: false,
-        host:   'localhost',
-        port:   serverPort,
-        key:    apiKey
+        peer = new Peer({
+          secure: false,
+          host:   'localhost',
+          port:   serverPort,
+          key:    apiKey
+        });
+      });
+
+      afterEach(() => {
+        peer.destroy();
+
+        ioStub.restore();
+        ioSpy.reset();
+      });
+
+      it('should correctly emit from Socket when attempting to join a room', done => {
+        const roomName = 'testRoom';
+
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+
+        peer.joinRoom(roomName);
+
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
+          done();
+        }, 200);
       });
     });
 
-    afterEach(() => {
-      peer.destroy();
+    describe.only('Send', () => {
+      const serverPort = 5080;
+      let peer;
+      let ioStub;
+      let ioSpy;
 
-      ioStub.restore();
-      ioSpy.reset();
-    });
+      beforeEach(() => {
+        ioStub = sinon.stub(SocketIO, 'Socket');
+        ioSpy = sinon.spy();
 
-    it('should correctly emit from Socket when attempting to join a room', done => {
-      const roomName = 'testRoom';
+        // ioStub.returns(
+        //   {
+        //     // socket.io is not standard eventEmitter API
+        //     // fake messages by calling io._fakeMessage[messagetype](data)
+        //     on: function(event, callback) {
+        //       if (!this._fakeMessage) {
+        //         this._fakeMessage = {};
+        //       }
+        //       this._fakeMessage[event] = callback;
+        //     },
+        //     emit:       ioSpy,
+        //     disconnect: ioSpy,
+        //     connected:  true,
+        //     io:         {opts: {query: ''}}
+        //   }
+        // );
+        // Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+        // Peer = proxyquire('../src/peer', {'./socket': Socket});
 
-      let spy = sinon.spy();
-      peer.socket._io.emit = spy;
-      peer.socket._isOpen = true;
+        peer = new Peer({
+          secure: false,
+          host:   'localhost',
+          port:   serverPort,
+          key:    apiKey
+        });
+      });
 
-      peer.joinRoom(roomName);
+      afterEach(() => {
+        peer.destroy();
 
-      setTimeout(() => {
-        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
-        done();
-      }, 200);
+        ioStub.restore();
+        ioSpy.reset();
+      });
+      it('should correctly emit from socket when peer sends to room', () => {
+        const roomName = 'testRoom';
+ 
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+ 
+        peer.joinRoom(roomName);
+        // Assuming data is sent from Peer rather than a Connection object
+        peer.sendRoom(roomName, 'foobar');
+ 
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key));
+          done();
+        }, 200);
+      });
     });
   });
 });
