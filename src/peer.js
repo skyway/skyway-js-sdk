@@ -172,7 +172,8 @@ class Peer extends EventEmitter {
     this.socket.send(util.MESSAGE_TYPES.ROOM_JOIN.key, data);
   }
 
-  sendRoom(roomName, message) {
+  // Send to room
+  broadcast(roomName, message) {
     const data = {
       roomName: roomName,
       payload:  message
@@ -355,7 +356,12 @@ class Peer extends EventEmitter {
 
     this.socket.on(util.MESSAGE_TYPES.ROOM_USER_JOINED.key, roomUserJoinedMessage => {
       // TODO: remove console.log
-      console.log('Peer is getting: ' + roomUserJoinedMessage);
+      console.log('Peer got ROOM_USER_JOINED acknowledgement: ' + roomUserJoinedMessage);
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.ROOM_DATA.key, roomData => {
+      // TODO: remove console.log
+      console.log('Peer got message in room ' + roomData.roomName + ': ' + roomData.payload);
     });
   }
 

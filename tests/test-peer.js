@@ -789,24 +789,24 @@ describe('Peer', () => {
         ioStub = sinon.stub(SocketIO, 'Socket');
         ioSpy = sinon.spy();
 
-        // ioStub.returns(
-        //   {
-        //     // socket.io is not standard eventEmitter API
-        //     // fake messages by calling io._fakeMessage[messagetype](data)
-        //     on: function(event, callback) {
-        //       if (!this._fakeMessage) {
-        //         this._fakeMessage = {};
-        //       }
-        //       this._fakeMessage[event] = callback;
-        //     },
-        //     emit:       ioSpy,
-        //     disconnect: ioSpy,
-        //     connected:  true,
-        //     io:         {opts: {query: ''}}
-        //   }
-        // );
-        // Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
-        // Peer = proxyquire('../src/peer', {'./socket': Socket});
+        ioStub.returns(
+          {
+            // socket.io is not standard eventEmitter API
+            // fake messages by calling io._fakeMessage[messagetype](data)
+            on: function(event, callback) {
+              if (!this._fakeMessage) {
+                this._fakeMessage = {};
+              }
+              this._fakeMessage[event] = callback;
+            },
+            emit:       ioSpy,
+            disconnect: ioSpy,
+            connected:  true,
+            io:         {opts: {query: ''}}
+          }
+        );
+        Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+        Peer = proxyquire('../src/peer', {'./socket': Socket});
 
         peer = new Peer({
           secure: false,
@@ -823,17 +823,16 @@ describe('Peer', () => {
         ioSpy.reset();
       });
 
-      it('should correctly emit from socket when peer sends to room', () => {
+      it('should correctly emit from socket when peer sends to room', done => {
         const roomName = 'testRoom';
- 
+
         let spy = sinon.spy();
         peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
- 
+
         peer.joinRoom(roomName);
-        // Assuming data is sent from Peer rather than a Connection object
-        peer.sendRoom(roomName, 'foobar');
- 
+        peer.broadcast(roomName, 'foobar');
+
         setTimeout(() => {
           assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key));
           done();
