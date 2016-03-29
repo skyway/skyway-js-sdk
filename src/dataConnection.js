@@ -84,7 +84,7 @@ class DataConnection extends Connection {
         size:          dataMeta.size,
         type:          dataMeta.type,
         name:          dataMeta.name,
-        mimeType:      dataMeta.fileType,
+        mimeType:      dataMeta.mimeType,
         totalParts:    dataMeta.totalParts,
         parts:         new Array(dataMeta.totalParts),
         receivedParts: 0
