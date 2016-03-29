@@ -41,9 +41,10 @@ class Util {
     this.chunkedBrowsers = {Chrome: 1};
     // Current recommended maximum chunksize is 16KB (DataChannel spec)
     // https://tools.ietf.org/html/draft-ietf-rtcweb-data-channel-13
-    this.chunkedMTU = 16300;
-    // Number of times DataChannel has chunked (in total)
-    this.chunkedCount = 1;
+    this.maxChunkSize = 16300;
+
+    // Send loop interval in milliseconds
+    this.sendInterval = 1;
 
     this.defaultConfig = {
       iceServers: [{
@@ -225,6 +226,15 @@ class Util {
       byteArray[i] = binary.charCodeAt(i) & 0xff;
     }
     return byteArray.buffer;
+  }
+
+  randomId() {
+    const keyLength = 16;
+    // '36' means that we want to convert the number to a string using chars in
+    // the range of '0-9a-z'. The concatenated 0's are for padding the key,
+    // as Math.random() may produce a key shorter than 16 chars in length
+    const randString = Math.random().toString(36) + '0000000000000000000';
+    return randString.substr(2, keyLength);
   }
 
   isSecure() {

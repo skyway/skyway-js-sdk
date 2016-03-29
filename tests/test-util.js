@@ -200,37 +200,6 @@ describe('Util', () => {
         done();
       });
     });
-
-    it('should correctly chunk a Blob', () => {
-      // Chunk size is 16300
-      // Each char is 2 bytes
-      const chunkSize = util.chunkedMTU;
-      const multiple = 3;
-      const len = chunkSize * multiple;
-
-      const string = new Array(len + 1).join('e');
-      const arrayBuffer = util.pack(string);
-      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
-
-      const chunks = util.chunk(blob);
-
-      // There are 3 overhead bytes, so actual size is actually 16300*X + 3
-      assert.equal(chunks.length, multiple + 1);
-
-      // parentMsgId increments with each chunking operation
-      // Since a DataConnection test has already chunked once, this will now be 2 for each of our chunks
-      // (Just checking all chunks have the same value since checking == 2 could break later)
-      const chunkedCount = chunks[0].parentMsgId;
-
-      for (let i = 0; i < chunks.length; i++) {
-        assert.equal(chunks[i].parentMsgId, chunkedCount);
-        assert.equal(chunks[i].chunkIndex, i);
-        assert.equal(chunks[i].totalChunks, chunks.length);
-      }
-
-      const reconstructed = new Blob(chunks);
-      assert.deepEqual(reconstructed, blob);
-    });
   });
 
   describe('isSecure', () => {

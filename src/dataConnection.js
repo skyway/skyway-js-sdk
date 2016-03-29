@@ -17,25 +17,29 @@ class DataConnection extends Connection {
     this._idPrefix = 'dc_';
     this.type = 'data';
     this.label = this.options.label || this.id;
-    this.serialization = this.options.serialization;
 
-    // Data channel buffering.
-    this._buffer = [];
-    this._isBuffering = false;
+    // Serialization is binary by default
+    if (this.options.serialization) {
+      this.serialization = this.options.serialization;
+    } else {
+      this.serialization = 'binary';
+    }
 
-    // For storing chunks of large messages
-    this._chunkedData = {};
+    // New send code properties
+    this.sendBuffer = [];
+    this.receivedData = {};
+    // Messages stored by peer because DC was not ready yet
+    this._queuedMessages = this.options._queuedMessages || [];
 
+    // Maybe don't need this anymore
     if (this.options._payload) {
       this._peerBrowser = this.options._payload.browser;
     }
 
-    // Messages stored by peer because DC was not ready yet
-    this._queuedMessages = this.options._queuedMessages || [];
-
     // This replaces the PeerJS 'initialize' method
     this._negotiator.on('dcReady', dc => {
       this._dc = dc;
+      this._dc.binaryType = 'arraybuffer';
       this._setupMessageHandlers();
     });
 
@@ -69,149 +73,155 @@ class DataConnection extends Connection {
     };
   }
 
-  // Handles a DataChannel message (i.e. every time we get data from _dc.onmessage)
   _handleDataMessage(msg) {
-    let data = msg.data;
-    let datatype = data.constructor;
-    if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
-      if (datatype === Blob) {
-        // Convert to ArrayBuffer if datatype is Blob
-        util.blobToArrayBuffer(data, ab => {
-          data = util.unpack(ab);
-          this.emit(DataConnection.EVENTS.data.key, data);
+    const dataMeta = util.unpack(msg.data);
+
+    // If we haven't started receiving pieces of data with a given id, this will be undefined
+    // In that case, we need to initialise receivedData[id] to hold incoming file chunks
+    let currData = this.receivedData[dataMeta.id];
+    if (!currData) {
+      currData = this.receivedData[dataMeta.id] = {
+        size:          dataMeta.size,
+        type:          dataMeta.type,
+        name:          dataMeta.name,
+        mimeType:      dataMeta.mimeType,
+        totalParts:    dataMeta.totalParts,
+        parts:         new Array(dataMeta.totalParts),
+        receivedParts: 0
+      };
+    }
+    currData.receivedParts++;
+    currData.parts[dataMeta.index] = dataMeta.data;
+
+    // Expected data types:
+    // - String
+    // - JSON
+    // - Blob (File)
+    // - ArrayBuffer
+
+    if (currData.receivedParts === currData.totalParts) {
+      let blob;
+      if (currData.type === 'file') {
+        blob = new File(currData.parts, currData.name, {type: currData.mimeType});
+      } else {
+        blob = new Blob(currData.parts, {type: currData.mimeType});
+      }
+
+      if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
+        // We want to convert any type of data to an ArrayBuffer
+        util.blobToArrayBuffer(util.pack(blob), ab => {
+          // It seems there is an additional BinaryPack step included somewhere
+          // if serialization is 'binary'...
+          this.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
         });
-        return;
-      } else if (datatype === ArrayBuffer) {
-        data = util.unpack(data);
-      } else if (datatype === String) {
-        // String fallback for binary data for browsers that don't support binary yet
-        let ab = util.binaryStringToArrayBuffer(data);
-        data = util.unpack(ab);
+      } else if (this.serialization === 'json') {
+        // To convert back to JSON from Blob type, we need to convert to AB and unpack
+        // This is identical to 'binary' serialization processing, but keeping it separate for now
+        util.blobToArrayBuffer(blob, ab => {
+          this.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
+        });
+      } else if (this.serialization === 'none') {
+        // No serialization
+        if (currData.type === 'string') {
+          util.blobToBinaryString(blob, str => {
+            this.emit(DataConnection.EVENTS.data.key, str);
+          });
+        } else if (currData.type === 'arraybuffer') {
+          util.blobToArrayBuffer(blob, ab => {
+            this.emit(DataConnection.EVENTS.data.key, ab);
+          });
+        } else {
+          // Blob or File
+          this.emit(DataConnection.EVENTS.data.key, blob);
+          delete this.receivedData[dataMeta.id];
+        }
       }
-    } else if (this.serialization === 'json') {
-      data = JSON.parse(data);
     }
-    // At this stage `data` is one type of: ArrayBuffer, String, JSON
-
-    // Check if we've chunked--if so, piece things back together.
-    // We're guaranteed that this isn't 0.
-    if (data.parentMsgId) {
-      let id = data.parentMsgId;
-      let chunkInfo = this._chunkedData[id] || {data: [], count: 0, total: data.totalChunks};
-
-      chunkInfo.data[data.chunkIndex] = data.chunkData;
-      chunkInfo.count++;
-
-      if (chunkInfo.total === chunkInfo.count) {
-        // Clean up before making the recursive call to `_handleDataMessage`.
-        delete this._chunkedData[id];
-
-        // We've received all the chunks--time to construct the complete data.
-        // Type is Blob - we need to convert to ArrayBuffer before emitting
-        data = new Blob(chunkInfo.data);
-        this._handleDataMessage({data: data});
-      }
-
-      this._chunkedData[id] = chunkInfo;
-      return;
-    }
-
-    this.emit(DataConnection.EVENTS.data.key, data);
   }
 
-  send(data, chunked) {
+  send(data) {
     if (!this.open) {
       this.emit(DataConnection.EVENTS.error.key, new Error('Connection is not open.' +
         ' You should listen for the `open` event before sending messages.'));
     }
 
+    let type;
+    let size;
+
     if (this.serialization === 'json') {
-      this._bufferedSend(JSON.stringify(data));
-    } else if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
-      const blob = util.pack(data);
+      type = 'json';
+      // JSON undergoes an extra BinaryPack step for compression
+      data = util.pack(data);
+      size = data.size;
+    }
 
-      // For Chrome-Firefox interoperability, we need to make Firefox "chunk" the data it sends out
-      const needsChunking = util.chunkedBrowsers[this._peerBrowser] || util.chunkedBrowsers[util.browser];
-      if (needsChunking && !chunked && blob.size > util.chunkedMTU) {
-        this._sendChunks(blob);
-        return;
-      }
+    if (data instanceof File) {
+      type = 'file';
+      size = data.size;
+    } else if (data instanceof Blob) {
+      type = 'blob';
+      size = data.size;
+    } else if (data instanceof ArrayBuffer) {
+      type = 'arraybuffer';
+      size = data.byteLength;
+    } else if (typeof data === 'string') {
+      type = 'string';
+      size =  Buffer.byteLength(data, 'utf8');
+    }
 
-      if (util.supports && !util.supports.binaryBlob) {
-        // We only do this if we really need to (e.g. blobs are not supported),
-        // because this conversion is costly
-        util.blobToArrayBuffer(blob, arrayBuffer => {
-          this._bufferedSend(arrayBuffer);
-        });
-      } else {
-        this._bufferedSend(blob);
-      }
-    } else {
-      this._bufferedSend(data);
+    const numSlices = Math.ceil(size / util.maxChunkSize);
+    const dataMeta = {
+      id:         util.randomId(),
+      type:       type,
+      size:       size,
+      totalParts: numSlices
+    };
+
+    if (type === 'file') {
+      dataMeta.name = data.name;
+    }
+    if (data instanceof Blob) {
+      dataMeta.mimeType = data.type;
+    }
+
+    // Perform any required slicing
+    for (let sliceIndex = 0; sliceIndex < numSlices; sliceIndex++) {
+      const slice = data.slice(sliceIndex * util.maxChunkSize, (sliceIndex + 1) * util.maxChunkSize);
+      dataMeta.index = sliceIndex;
+      dataMeta.data = slice;
+
+      // Add all chunks to our buffer and start the send loop (if we haven't already)
+      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        this.sendBuffer.push(ab);
+        this.startSendLoop();
+      });
     }
   }
 
-  // Called from send()
-  //
-  // If we are buffering, message is added to the buffer
-  // Otherwise try sending, and start buffering if it fails
-  _bufferedSend(msg) {
-    if (this._isBuffering || !this._trySend(msg)) {
-      this._buffer.push(msg);
-    }
-  }
+  startSendLoop() {
+    if (!this.sendInterval) {
+      // Define send interval
+      // Try sending a new chunk with every callback
+      this.sendInterval = setInterval(() => {
+        // Might need more extensive buffering than this:
+        let currMsg = this.sendBuffer.shift();
+        try {
+          this._dc.send(currMsg);
+        } catch (error) {
+          this.sendBuffer.push(currMsg);
+        }
 
-  // Called from _bufferedSend()
-  //
-  // Try sending data over the dataChannel
-  // If an error occurs, wait and try sending using a buffer
-  _trySend(msg) {
-    try {
-      this._dc.send(msg);
-    } catch (error) {
-      this._isBuffering = true;
-
-      setTimeout(() => {
-        // Try again
-        this._isBuffering = false;
-        this._tryBuffer();
-      }, 100);
-      return false;
-    }
-    return true;
-  }
-
-  // Called from _trySend() when buffering
-  //
-  // Recursively tries to send all messages in the buffer, until the buffer is empty
-  _tryBuffer() {
-    if (this._buffer.length === 0) {
-      return;
-    }
-
-    const msg = this._buffer[0];
-
-    if (this._trySend(msg)) {
-      this._buffer.shift();
-      this._tryBuffer();
-    }
-  }
-
-  // Called from send()
-  //
-  // Chunks a blob, then re-calls send() with each chunk in turn
-  _sendChunks(blob) {
-    const blobs = util.chunk(blob);
-    for (let i = 0; i < blobs.length; i++) {
-      let blob = blobs[i];
-      this.send(blob, true);
+        if (this.sendBuffer.length === 0) {
+          clearInterval(this.sendInterval);
+          this.sendInterval = undefined;
+        }
+      }, util.sendInterval);
     }
   }
 
   static get EVENTS() {
     return DCEvents;
   }
-
 }
 
 module.exports = DataConnection;
