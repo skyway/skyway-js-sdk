@@ -182,7 +182,6 @@ describe('Socket', () => {
     });
 
     it('should update the _io query on \'OPEN\' messages', () => {
-      let peerId = 'peerId';
       socket.start(undefined, token);
 
       const peerIdRegex = new RegExp(`&peerId=${peerId}`);
@@ -217,6 +216,31 @@ describe('Socket', () => {
       });
 
       assert.equal(spy.callCount, util.MESSAGE_TYPES.enums.length - 1);
+    });
+  });
+  
+  describe('Room API', () => {
+    let socket;
+    let peerId = 'peerId';
+    let token = 'token';
+
+    beforeEach(() => {
+      let apiKey = 'apiKey';
+
+      socket = new Socket(false, 'localhost', serverPort, apiKey);
+    });
+
+    it('should emit a message to the Peer upon an ROOM_USER_JOINED acknowledgement', () => {
+      const data = {roomName: 'testRoom'}; 
+
+      socket.start(peerId, token);
+
+      let spy = sinon.spy(socket, 'emit');
+      assert.equal(spy.callCount, 0);
+
+      socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_JOINED.key](data);
+
+      assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key, data));
     });
   });
 });

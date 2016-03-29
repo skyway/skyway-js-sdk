@@ -226,7 +226,8 @@ class Peer extends EventEmitter {
       this.options.secure,
       this.options.host,
       this.options.port,
-      this.options.key);
+      this.options.key
+    );
 
     this._setupMessageHandlers();
 
@@ -346,7 +347,8 @@ class Peer extends EventEmitter {
 
     this.socket.on(util.MESSAGE_TYPES.ROOM_USER_JOINED.key, roomUserJoinedMessage => {
       // TODO: remove console.log
-      console.log(roomUserJoinedMessage);
+      console.log('Peer is getting: ' + roomUserJoinedMessage);
+      console.log('Test: ' + this.socket.emit);
     });
   }
 
