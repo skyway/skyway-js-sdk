@@ -740,11 +740,11 @@ describe('Peer', () => {
             this._fakeMessage[event] = callback;
           },
           emit:       ioSpy,
-          disconnect: ioSpy, 
+          disconnect: ioSpy,
           connected:  true,
           io:         {opts: {query: ''}}
-        }   
-      );   
+        }
+      );
       Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
       Peer = proxyquire('../src/peer', {'./socket': Socket});
 

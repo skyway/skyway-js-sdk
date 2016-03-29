@@ -218,7 +218,7 @@ describe('Socket', () => {
       assert.equal(spy.callCount, util.MESSAGE_TYPES.enums.length - 1);
     });
   });
-  
+
   describe('Room API', () => {
     let socket;
     let peerId = 'peerId';
@@ -231,7 +231,7 @@ describe('Socket', () => {
     });
 
     it('should emit a message to the Peer upon an ROOM_USER_JOINED acknowledgement', () => {
-      const data = {roomName: 'testRoom'}; 
+      const data = {roomName: 'testRoom'};
 
       socket.start(peerId, token);
 
