@@ -220,27 +220,54 @@ describe('Socket', () => {
   });
 
   describe('Room API', () => {
-    let socket;
-    let peerId = 'peerId';
-    let token = 'token';
+    describe('Join', () => {
+      let socket;
+      let peerId = 'peerId';
+      let token = 'token';
 
-    beforeEach(() => {
-      let apiKey = 'apiKey';
+      beforeEach(() => {
+        let apiKey = 'apiKey';
 
-      socket = new Socket(false, 'localhost', serverPort, apiKey);
+        socket = new Socket(false, 'localhost', serverPort, apiKey);
+      });
+
+      it('should emit a message to the Peer upon a ROOM_USER_JOINED acknowledgement', () => {
+        const data = {roomName: 'testRoom'};
+
+        socket.start(peerId, token);
+
+        let spy = sinon.spy(socket, 'emit');
+        assert.equal(spy.callCount, 0);
+
+        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_JOINED.key](data);
+
+        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key, data));
+      });
     });
 
-    it('should emit a message to the Peer upon an ROOM_USER_JOINED acknowledgement', () => {
-      const data = {roomName: 'testRoom'};
+    describe('Send', () => {
+      let socket;
+      let peerId = 'peerId';
+      let token = 'token';
 
-      socket.start(peerId, token);
+      beforeEach(() => {
+        let apiKey = 'apiKey';
 
-      let spy = sinon.spy(socket, 'emit');
-      assert.equal(spy.callCount, 0);
+        socket = new Socket(false, 'localhost', serverPort, apiKey);
+      });
 
-      socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_JOINED.key](data);
+      it('should emit a message to the Peer upon a ROOM_DATA message', () => {
+        const data = {roomName: 'testRoom', payload: 'foobar'};
 
-      assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key, data));
+        socket.start(peerId, token);
+
+        let spy = sinon.spy(socket, 'emit');
+        assert.equal(spy.callCount, 0);
+
+        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_DATA.key](data);
+
+        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key, data));
+      });
     });
   });
 });

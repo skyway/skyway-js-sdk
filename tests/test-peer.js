@@ -779,7 +779,7 @@ describe('Peer', () => {
       });
     });
 
-    describe.only('Send', () => {
+    describe('Send', () => {
       const serverPort = 5080;
       let peer;
       let ioStub;
@@ -822,6 +822,7 @@ describe('Peer', () => {
         ioStub.restore();
         ioSpy.reset();
       });
+
       it('should correctly emit from socket when peer sends to room', () => {
         const roomName = 'testRoom';
  
