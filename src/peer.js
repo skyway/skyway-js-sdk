@@ -348,7 +348,6 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.ROOM_USER_JOINED.key, roomUserJoinedMessage => {
       // TODO: remove console.log
       console.log('Peer is getting: ' + roomUserJoinedMessage);
-      console.log('Test: ' + this.socket.emit);
     });
   }
 
