@@ -832,39 +832,5 @@ describe('Peer', () => {
       //   }, 200);
       // });
     });
-
-    describe.only('Send', () => {
-      const serverPort = 5080;
-      let peer;
-
-      beforeEach(() => {
-        peer = new Peer({
-          secure: false,
-          host:   'localhost',
-          port:   serverPort,
-          key:    apiKey
-        });
-      });
-
-      afterEach(() => {
-        peer.destroy();
-      });
-
-      it('should correctly emit from socket when peer sends to room', () => {
-        const roomName = 'testRoom';
-
-        let spy = sinon.spy();
-        peer.socket._io.emit = spy;
-        peer.socket._isOpen = true;
-
-        peer.joinRoom(roomName);
-        peer.sendRoom(roomName, 'foobar');
-
-        setTimeout(() => {
-          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key));
-          done();
-        }, 200);
-      });
-    });
   });
 });
