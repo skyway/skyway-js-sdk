@@ -1,7 +1,7 @@
 'use strict';
 
-let Peer              = require('../src/peer');
-let Socket            = require('../src/socket');
+const Peer              = require('../src/peer');
+const Socket            = require('../src/socket');
 const MediaConnection = require('../src/mediaConnection');
 const DataConnection  = require('../src/dataConnection');
 const util            = require('../src/util');
@@ -744,8 +744,8 @@ describe('Peer', () => {
           io:         {opts: {query: ''}}
         }
       );
-      Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
-      Peer = proxyquire('../src/peer', {'./socket': Socket});
+      const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+      const Peer = proxyquire('../src/peer', {'./socket': Socket});
 
       peer = new Peer({
         secure: false,
@@ -762,7 +762,7 @@ describe('Peer', () => {
       ioSpy.reset();
     });
 
-    it('should correctly emit from Socket when attempting to join a room', done => {
+    it('should correctly emit from Socket when attempting to join a room', () => {
       const roomName = 'testRoom';
 
       let spy = sinon.spy();
@@ -771,10 +771,7 @@ describe('Peer', () => {
 
       peer.joinRoom(roomName);
 
-      setTimeout(() => {
-        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
-        done();
-      }, 200);
+      assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
     });
   });
 });

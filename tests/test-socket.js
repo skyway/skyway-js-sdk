@@ -241,6 +241,7 @@ describe('Socket', () => {
       socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_JOINED.key](data);
 
       assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key, data));
+      assert.equal(spy.callCount, 1);
     });
   });
 });
