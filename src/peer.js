@@ -266,7 +266,7 @@ class Peer extends EventEmitter {
           username:   `${this.options.key}$${this.id}`,
           credential: credential
         });
-        this.options.config.iceTransportPolicy = 'relay';
+        this.options.config.iceTransportPolicy = this.options.config.iceTransportPolicy || 'all';
 
         util.log('SkyWay TURN Server is available');
       } else {
