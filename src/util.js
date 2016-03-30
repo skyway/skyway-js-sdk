@@ -24,7 +24,9 @@ const MessageTypes = new Enum([
   'EXPIRE',
   'CANDIDATE',
   'ROOM_JOIN',
+  'ROOM_LEAVE',
   'ROOM_USER_JOINED',
+  'ROOM_USER_LEFT',
   'ROOM_DATA'
 ]);
 
