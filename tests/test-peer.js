@@ -839,5 +839,70 @@ describe('Peer', () => {
         }, 200);
       });
     });
+
+    describe('Leave', () => {
+      const serverPort = 5080;
+      let peer;
+      let ioStub;
+      let ioSpy;
+
+      beforeEach(() => {
+        ioStub = sinon.stub(SocketIO, 'Socket');
+        ioSpy = sinon.spy();
+
+        ioStub.returns(
+          {
+            // socket.io is not standard eventEmitter API
+            // fake messages by calling io._fakeMessage[messagetype](data)
+            on: function(event, callback) {
+              if (!this._fakeMessage) {
+                this._fakeMessage = {};
+              }
+              this._fakeMessage[event] = callback;
+            },
+            emit:       ioSpy,
+            disconnect: ioSpy,
+            connected:  true,
+            io:         {opts: {query: ''}}
+          }
+        );
+        const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+        const Peer = proxyquire('../src/peer', {'./socket': Socket});
+
+        peer = new Peer({
+          secure: false,
+          host:   'localhost',
+          port:   serverPort,
+          key:    apiKey
+        });
+      });
+
+      afterEach(() => {
+        peer.destroy();
+
+        ioStub.restore();
+        ioSpy.reset();
+      });
+
+      it('should correctly emit from Socket when attempting to leave a room', done => {
+        const roomName = 'testRoom';
+
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+
+        peer.joinRoom(roomName);
+
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
+          peer.leaveRoom(roomName);
+
+          setTimeout(() => {
+            assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_LEAVE.key));
+            done();
+          }, 200);
+        }, 200);
+      });
+    });
   });
 });
