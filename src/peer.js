@@ -85,6 +85,8 @@ class Peer extends EventEmitter {
       return null;
     }
 
+    options = options || {};
+    options.pcConfig = this.options.config;
     const connection = new DataConnection(peerId, options);
     util.log('DataConnection created in connect method');
     this._addConnection(peerId, connection);
@@ -112,6 +114,7 @@ class Peer extends EventEmitter {
 
     options = options || {};
     options._stream = stream;
+    options.pcConfig = this.options.config;
     const mc = new MediaConnection(peerId, options);
     util.log('MediaConnection created in call method');
     this._addConnection(peerId, mc);
@@ -263,7 +266,7 @@ class Peer extends EventEmitter {
           username:   `${this.options.key}$${this.id}`,
           credential: credential
         });
-        this.options.config.iceTransports = 'all';
+        this.options.config.iceTransportPolicy = 'relay';
 
         util.log('SkyWay TURN Server is available');
       } else {
@@ -305,7 +308,8 @@ class Peer extends EventEmitter {
             connectionId:    connectionId,
             _payload:        offerMessage,
             metadata:        offerMessage.metadata,
-            _queuedMessages: this._queuedMessages[connectionId]
+            _queuedMessages: this._queuedMessages[connectionId],
+            pcConfig:        this.options.config
           }
         );
 
@@ -321,7 +325,8 @@ class Peer extends EventEmitter {
             metadata:        offerMessage.metadata,
             label:           offerMessage.label,
             serialization:   offerMessage.serialization,
-            _queuedMessages: this._queuedMessages[connectionId]
+            _queuedMessages: this._queuedMessages[connectionId],
+            pcConfig:        this.options.config
           }
         );
 
