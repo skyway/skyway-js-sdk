@@ -23,7 +23,7 @@ const NegotiatorEvents = new Enum([
 
 class Negotiator extends EventEmitter {
   startConnection(options, pcConfig) {
-    this._pc = this._createPeerConnection(options.type, pcConfig);
+    this._pc = this._createPeerConnection(pcConfig);
     this._setupPCListeners();
 
     if (options.type === 'media' && options._stream) {
@@ -41,12 +41,11 @@ class Negotiator extends EventEmitter {
     }
   }
 
-  _createPeerConnection(type, pcConfig) {
+  _createPeerConnection(pcConfig) {
     util.log('Creating RTCPeerConnection');
 
-    pcConfig = pcConfig || {};
-    pcConfig.iceServers = pcConfig.iceServers || util.defaultConfig.iceServers;
-
+    // Calling RTCPeerConnection with an empty object causes an error
+    // Either give it a proper pcConfig or undefined
     return new RTCPeerConnection(pcConfig);
   }
 
