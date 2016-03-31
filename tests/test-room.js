@@ -46,7 +46,7 @@ describe('Room', () => {
     });
   });
 
-  describe.only('Handle Events', () => {
+  describe('Handle Events', () => {
     it('should add to the members array and emit when someone joins the room', () => {
       const roomName = 'testRoom';
       const peerId1 = 'peer1';
@@ -109,12 +109,12 @@ describe('Room', () => {
 
     it('should emit to client when receiving data', () => {
       const roomName = 'testRoom';
-      const peerId1 = 'peer1';
-      const peerId2 = 'peer2';
+      const peerId = 'peer';
+      
       const data = 'foobar';
       const message = {roomName, data};
 
-      const room = new Room(roomName, {peerId: peerId1});
+      const room = new Room(roomName, {peerId: peerId});
 
       const spy = sinon.spy();
       room.emit = spy;
@@ -124,6 +124,27 @@ describe('Room', () => {
       assert(spy.calledOnce);
       assert.equal(spy.args[0][0], Room.EVENTS.data.key);
       assert.deepEqual(spy.args[0][1], message);
+    });
+  });
+
+  describe('Close', () => {
+    it('should emit close and leave events when close() is called', () => {
+      const roomName = 'testRoom';
+      const peerId = 'peer';
+      const message = {roomName: roomName};
+      
+      const room = new Room(roomName, {peerId: peerId});
+      room.open = true;
+
+      const spy = sinon.spy();
+      room.emit = spy;
+
+      room.close();
+
+      assert(spy.calledTwice);
+      assert.equal(spy.args[0][0], Room.MESSAGE_EVENTS.leave.key);
+      assert.deepEqual(spy.args[0][1], message);
+      assert.equal(spy.args[1][0], Room.EVENTS.close.key);
     });
   });
 });
