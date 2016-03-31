@@ -168,7 +168,7 @@ class Peer extends EventEmitter {
 
   joinRoom(roomName, roomOptions) {
     if (this.rooms[roomName]) {
-      return;
+      return undefined;
     }
 
     const room = new Room(roomName, roomOptions);
