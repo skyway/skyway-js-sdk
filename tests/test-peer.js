@@ -4,7 +4,6 @@ const Peer            = require('../src/peer');
 const Socket          = require('../src/socket');
 const MediaConnection = require('../src/mediaConnection');
 const DataConnection  = require('../src/dataConnection');
-const Room            = require('../src/room');
 const util            = require('../src/util');
 
 const assert      = require('power-assert');
@@ -787,7 +786,6 @@ describe('Peer', () => {
         let spy = sinon.spy();
         peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
- 
 
         assert.deepEqual(peer.rooms, {});
         const room = peer.joinRoom(roomName);
@@ -845,15 +843,16 @@ describe('Peer', () => {
         ioSpy.reset();
       });
 
-      it('should correctly emit from socket when peer sends to room', done => {
+      it('should correctly emit from socket when room emits a broadcast event', done => {
         const roomName = 'testRoom';
 
         let spy = sinon.spy();
         peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
 
-        peer.joinRoom(roomName);
-        peer.broadcast(roomName, 'foobar');
+        const room = peer.joinRoom(roomName);
+        room.open = true;
+        room.send('foobar');
 
         setTimeout(() => {
           assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key));
@@ -913,11 +912,12 @@ describe('Peer', () => {
         peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
 
-        peer.joinRoom(roomName);
+        const room = peer.joinRoom(roomName);
+        room.open = true;
 
         setTimeout(() => {
           assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
-          peer.leaveRoom(roomName);
+          room.close();
 
           setTimeout(() => {
             assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_LEAVE.key));

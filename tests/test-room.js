@@ -110,7 +110,7 @@ describe('Room', () => {
     it('should emit to client when receiving data', () => {
       const roomName = 'testRoom';
       const peerId = 'peer';
-      
+
       const data = 'foobar';
       const message = {roomName, data};
 
@@ -132,7 +132,7 @@ describe('Room', () => {
       const roomName = 'testRoom';
       const peerId = 'peer';
       const message = {roomName: roomName};
-      
+
       const room = new Room(roomName, {peerId: peerId});
       room.open = true;
 

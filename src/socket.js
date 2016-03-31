@@ -87,7 +87,6 @@ class Socket extends EventEmitter {
         });
       } else {
         this._io.on(type.key, message => {
-          console.log('Socket emitting: ' + type.key);
           this.emit(type.key, message);
         });
       }
