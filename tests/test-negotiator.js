@@ -56,11 +56,10 @@ describe('Negotiator', () => {
       const options = {
         originator: true
       };
-      const pcConfig = {};
 
       // not stub
       const negotiator = new Negotiator();
-      negotiator.startConnection(options, pcConfig);
+      negotiator.startConnection(options);
 
       assert(negotiator._pc);
       assert.equal(negotiator._pc.constructor.name, 'RTCPeerConnection');
@@ -150,29 +149,32 @@ describe('Negotiator', () => {
   });
 
   describe('_createPeerConnection', () => {
-    describe('when type is \'media\'', () => {
-      it('should return RTCPeerConnection object', () => {
-        const negotiator = new Negotiator();
-        const pc = negotiator._createPeerConnection('media');
+    it('should return RTCPeerConnection object', () => {
+      const negotiator = new Negotiator();
+      const pc = negotiator._createPeerConnection();
 
-        assert.equal(pc.constructor.name, 'RTCPeerConnection');
-      });
+      assert.equal(pc.constructor.name, 'RTCPeerConnection');
     });
 
-    describe('when type is \'data\'', () => {
-      it('should return RTCPeerConnection object', () => {
-        const negotiator = new Negotiator();
-        const pc = negotiator._createPeerConnection('data');
-
-        assert.equal(pc.constructor.name, 'RTCPeerConnection');
+    it('should call RTCPeerConnection with pcConfig', () => {
+      const pcStub = sinon.stub();
+      const Negotiator = proxyquire('../src/negotiator', {
+        '../src/webrtcShim': {
+          RTCPeerConnection: pcStub
+        }
       });
+      const negotiator = new Negotiator();
+      const pcConf = {};
+      negotiator._createPeerConnection(pcConf);
+
+      assert(pcStub.calledWith(pcConf));
     });
   });
 
   describe('_setupPCListeners', () => {
     it('should set up PeerConnection listeners', () => {
       const negotiator = new Negotiator();
-      const pc = negotiator._pc = negotiator._createPeerConnection('media');
+      const pc = negotiator._pc = negotiator._createPeerConnection();
 
       negotiator._setupPCListeners(pc);
       assert(pc.onaddstream);
@@ -191,7 +193,7 @@ describe('Negotiator', () => {
 
       beforeEach(() => {
         negotiator = new Negotiator();
-        pc = negotiator._pc = negotiator._createPeerConnection('media');
+        pc = negotiator._pc = negotiator._createPeerConnection();
         negotiator._setupPCListeners(pc);
       });
 
@@ -251,7 +253,7 @@ describe('Negotiator', () => {
             }
           });
           negotiator = new Negotiator();
-          pc = negotiator._pc = negotiator._createPeerConnection('media');
+          pc = negotiator._pc = negotiator._createPeerConnection();
           negotiator._setupPCListeners(pc);
         });
 
@@ -322,7 +324,7 @@ describe('Negotiator', () => {
 
     beforeEach(() => {
       negotiator = new Negotiator();
-      pc = negotiator._pc = negotiator._createPeerConnection('media');
+      pc = negotiator._pc = negotiator._createPeerConnection();
       negotiator._setupPCListeners(pc);
       promiseStub = sinon.stub().returnsPromise();
     });
@@ -377,7 +379,7 @@ describe('Negotiator', () => {
 
     beforeEach(() => {
       negotiator = new Negotiator();
-      pc = negotiator._pc = negotiator._createPeerConnection('media');
+      pc = negotiator._pc = negotiator._createPeerConnection();
       negotiator._setupPCListeners();
     });
 
@@ -433,8 +435,7 @@ describe('Negotiator', () => {
         type:       'data',
         originator: false
       };
-      const pcConfig = {};
-      negotiator.startConnection(options, pcConfig);
+      negotiator.startConnection(options);
 
       const candidate = {
         candidate:     'candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0',
@@ -462,7 +463,7 @@ describe('Negotiator', () => {
     const waitForAsync = 100;
     it('should setRemoteDescription', done => {
       const negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection('data', {});
+      negotiator._pc = negotiator._createPeerConnection();
 
       const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
 
@@ -484,7 +485,7 @@ describe('Negotiator', () => {
 
     it('should emit answerCreated', done => {
       const negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection('data', {});
+      negotiator._pc = negotiator._createPeerConnection();
 
       const emitSpy = sinon.spy(negotiator, 'emit');
 
@@ -518,7 +519,7 @@ describe('Negotiator', () => {
     const waitForAsync = 100;
     it('should setRemoteDescription', done => {
       const negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection('data', {});
+      negotiator._pc = negotiator._createPeerConnection();
       const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription');
 
       negotiator._pc.createOffer(offer => {
@@ -545,7 +546,7 @@ describe('Negotiator', () => {
     describe('cleanup', () => {
       it('should close and remove PC upon cleanup()', () => {
         const negotiator = new Negotiator();
-        negotiator._pc = negotiator._createPeerConnection('data', {});
+        negotiator._pc = negotiator._createPeerConnection();
 
         assert(negotiator._pc);
         negotiator.cleanup();

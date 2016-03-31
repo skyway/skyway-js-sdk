@@ -45,47 +45,49 @@ describe('Socket', () => {
     it('should be able to connect to a server', done => {
       let apiKey = 'apiKey';
       let token = 'token';
+      let peerId = 'peerId';
+      const openMessage = {peerId: peerId};
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(undefined, token);
 
       assert(stub.called);
-      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key]('peerId');
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](openMessage);
 
       assert.equal(socket.disconnected, false);
 
       done();
     });
 
-    it('should be able to connect to a server with a PeerID', done => {
+    it('should be able to connect to a server with a PeerID', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
+      const openMessage = {peerId: peerId};
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
 
       assert(stub.called);
-      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key]('peerId');
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](openMessage);
 
       assert.equal(socket.disconnected, false);
-
-      done();
     });
 
     it('should close socket and have disconnect status set', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
+      const openMessage = {peerId: peerId};
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
       assert.equal(socket.disconnected, true);
 
-      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](peerId);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](openMessage);
       assert.equal(socket.disconnected, false);
 
       socket.close();
@@ -98,12 +100,13 @@ describe('Socket', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
+      const openMessage = {peerId: peerId};
       let data = {type: 'MSG', message: 'hello world'};
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](peerId);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](openMessage);
       socket.send(data.type, data.message);
       assert(spy.calledWith(data.type, data.message));
       socket.close();
@@ -113,12 +116,13 @@ describe('Socket', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
+      const openMessage = {peerId: peerId};
       let data = {message: 'hello world'};
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
-      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](peerId);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](openMessage);
       socket.send(undefined, data.message);
       assert.deepEqual(spy.args[0], ['error', 'Invalid message']);
 
@@ -129,6 +133,7 @@ describe('Socket', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
+      const openMessage = {peerId: peerId};
       let data1 = {type: 'MSG', message: 'hello world'};
       let data2 = {type: 'MSG', message: 'goodbye world'};
       let receivedData;
@@ -144,7 +149,7 @@ describe('Socket', () => {
       assert.deepEqual(receivedData, undefined);
 
       // Second pass - peerID set, queued messages sent
-      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](peerId);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](openMessage);
       assert.deepEqual(socket._queue, []);
       assert.deepEqual(spy.args[0], ['MSG', data1.message]);
 
@@ -161,6 +166,7 @@ describe('Socket', () => {
     let socket;
     let peerId = 'peerId';
     let token = 'token';
+    const openMessage = {peerId: peerId};
 
     beforeEach(() => {
       let apiKey = 'apiKey';
@@ -174,15 +180,16 @@ describe('Socket', () => {
 
       assert.equal(spy.callCount, 0);
 
-      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](peerId);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](openMessage);
 
       assert(socket._isOpen);
       assert.equal(spy.callCount, 1);
-      assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.key, peerId));
+      assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.key, openMessage));
     });
 
     it('should update the _io query on \'OPEN\' messages', () => {
       let peerId = 'peerId';
+      const openMessage = {peerId: peerId};
       socket.start(undefined, token);
 
       const peerIdRegex = new RegExp(`&peerId=${peerId}`);
@@ -191,7 +198,7 @@ describe('Socket', () => {
       assert.equal(socket._isPeerIdSet, false);
       assert.equal(peerIdRegex.test(query), false);
 
-      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](peerId);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.OPEN.key](openMessage);
 
       query = socket._io.io.opts.query;
       assert(socket._isPeerIdSet);
