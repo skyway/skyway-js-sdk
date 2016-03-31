@@ -370,9 +370,24 @@ describe('Peer', () => {
       assert(peer.id === undefined);
 
       const peerId = 'testId';
-      peer.socket.emit(util.MESSAGE_TYPES.OPEN.key, peerId);
+      const openMessage = {peerId: peerId};
+      peer.socket.emit(util.MESSAGE_TYPES.OPEN.key, openMessage);
 
       assert(peer.id === peerId);
+    });
+
+    it('should add turn servers if credentials are defined in OPEN', () => {
+      assert(peer.id === undefined);
+
+      const peerId = 'testId';
+      const openMessage = {peerId: peerId, turnCredential: 'password'};
+
+      const iceServers = peer.options.config.iceServers;
+      assert(iceServers.length === 1);
+
+      peer.socket.emit(util.MESSAGE_TYPES.OPEN.key, openMessage);
+
+      assert(iceServers.length === 3);
     });
 
     it('should abort with server-error on ERROR events', () => {

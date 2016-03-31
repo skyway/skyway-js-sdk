@@ -87,6 +87,8 @@ class Peer extends EventEmitter {
       return null;
     }
 
+    options = options || {};
+    options.pcConfig = this.options.config;
     const connection = new DataConnection(peerId, options);
     util.log('DataConnection created in connect method');
     this._addConnection(peerId, connection);
@@ -114,6 +116,7 @@ class Peer extends EventEmitter {
 
     options = options || {};
     options._stream = stream;
+    options.pcConfig = this.options.config;
     const mc = new MediaConnection(peerId, options);
     util.log('MediaConnection created in call method');
     this._addConnection(peerId, mc);
@@ -273,10 +276,35 @@ class Peer extends EventEmitter {
   }
 
   _setupMessageHandlers() {
-    this.socket.on(util.MESSAGE_TYPES.OPEN.key, id => {
-      this.id = id;
+    this.socket.on(util.MESSAGE_TYPES.OPEN.key, openMessage => {
+      this.id = openMessage.peerId;
       this.open = true;
-      this.emit(Peer.EVENTS.open.key, id);
+
+      // Set up turn credentials
+      const credential = openMessage.turnCredential;
+      if (this.options.turn === true && credential) {
+        this.options.config.iceServers.push({
+          urls: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=tcp`,
+          url:  `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=tcp`,
+
+          username:   `${this.options.key}$${this.id}`,
+          credential: credential
+        });
+        this.options.config.iceServers.push({
+          urls: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=udp`,
+          url:  `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=udp`,
+
+          username:   `${this.options.key}$${this.id}`,
+          credential: credential
+        });
+        this.options.config.iceTransportPolicy = this.options.config.iceTransportPolicy || 'all';
+
+        util.log('SkyWay TURN Server is available');
+      } else {
+        util.log('SkyWay TURN Server is unavailable');
+      }
+
+      this.emit(Peer.EVENTS.open.key, this.id);
     });
 
     this.socket.on(util.MESSAGE_TYPES.ERROR.key, error => {
@@ -311,7 +339,8 @@ class Peer extends EventEmitter {
             connectionId:    connectionId,
             _payload:        offerMessage,
             metadata:        offerMessage.metadata,
-            _queuedMessages: this._queuedMessages[connectionId]
+            _queuedMessages: this._queuedMessages[connectionId],
+            pcConfig:        this.options.config
           }
         );
 
@@ -327,7 +356,8 @@ class Peer extends EventEmitter {
             metadata:        offerMessage.metadata,
             label:           offerMessage.label,
             serialization:   offerMessage.serialization,
-            _queuedMessages: this._queuedMessages[connectionId]
+            _queuedMessages: this._queuedMessages[connectionId],
+            pcConfig:        this.options.config
           }
         );
 

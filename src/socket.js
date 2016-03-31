@@ -68,22 +68,22 @@ class Socket extends EventEmitter {
   _setupMessageHandlers() {
     util.MESSAGE_TYPES.enums.forEach(type => {
       if (type.key === util.MESSAGE_TYPES.OPEN.key) {
-        this._io.on(type.key, peerId => {
-          if (!peerId) {
+        this._io.on(type.key, openMessage => {
+          if (!openMessage || !openMessage.peerId) {
             return;
           }
 
           this._isOpen = true;
           if (!this._isPeerIdSet) {
             // set peerId for when reconnecting to the server
-            this._io.io.opts.query += `&peerId=${peerId}`;
+            this._io.io.opts.query += `&peerId=${openMessage.peerId}`;
             this._isPeerIdSet = true;
           }
 
           this._sendQueuedMessages();
 
           // To inform the peer that the socket successfully connected
-          this.emit(type.key, peerId);
+          this.emit(type.key, openMessage);
         });
       } else {
         this._io.on(type.key, message => {
