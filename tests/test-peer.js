@@ -379,12 +379,12 @@ describe('Peer', () => {
       const peerId = 'testId';
       const openMessage = {peerId: peerId, turnCredential: 'password'};
 
-      const iceServers = peer.options.config.iceServers;
-      assert(iceServers.length === 1);
+      assert(peer.options.config.iceServers.length === 1);
+      assert(peer._pcConfig === undefined);
 
       peer.socket.emit(util.MESSAGE_TYPES.OPEN.key, openMessage);
 
-      assert(iceServers.length === 3);
+      assert(peer._pcConfig.iceServers.length === 5);
     });
 
     it('should abort with server-error on ERROR events', () => {

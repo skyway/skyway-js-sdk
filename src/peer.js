@@ -86,7 +86,7 @@ class Peer extends EventEmitter {
     }
 
     options = options || {};
-    options.pcConfig = this.options.config;
+    options.pcConfig = this._pcConfig;
     const connection = new DataConnection(peerId, options);
     util.log('DataConnection created in connect method');
     this._addConnection(peerId, connection);
@@ -114,7 +114,7 @@ class Peer extends EventEmitter {
 
     options = options || {};
     options._stream = stream;
-    options.pcConfig = this.options.config;
+    options.pcConfig = this._pcConfig;
     const mc = new MediaConnection(peerId, options);
     util.log('MediaConnection created in call method');
     this._addConnection(peerId, mc);
@@ -248,25 +248,28 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.OPEN.key, openMessage => {
       this.id = openMessage.peerId;
       this.open = true;
+      this._pcConfig = Object.assign({}, this.options.config);
+
+      // make a copy of iceServers as Object.assign still retains the reference
+      const iceServers = this._pcConfig.iceServers;
+      this._pcConfig.iceServers = iceServers ? iceServers.slice() : [];
 
       // Set up turn credentials
       const credential = openMessage.turnCredential;
       if (this.options.turn === true && credential) {
-        this.options.config.iceServers.push({
-          urls: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=tcp`,
-          url:  `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=tcp`,
+        for (let protocol of ['turn', 'turns']) {
+          for (let transport of ['tcp', 'udp']) {
+            const iceServer = {
+              urls: `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
+              url:  `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
 
-          username:   `${this.options.key}$${this.id}`,
-          credential: credential
-        });
-        this.options.config.iceServers.push({
-          urls: `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=udp`,
-          url:  `turn:${util.TURN_HOST}:${util.TURN_PORT}?transport=udp`,
+              username:   `${this.options.key}$${this.id}`,
+              credential: credential
+            };
 
-          username:   `${this.options.key}$${this.id}`,
-          credential: credential
-        });
-        this.options.config.iceTransportPolicy = this.options.config.iceTransportPolicy || 'all';
+            this._pcConfig.iceServers.push(iceServer);
+          }
+        }
 
         util.log('SkyWay TURN Server is available');
       } else {
@@ -309,7 +312,7 @@ class Peer extends EventEmitter {
             _payload:        offerMessage,
             metadata:        offerMessage.metadata,
             _queuedMessages: this._queuedMessages[connectionId],
-            pcConfig:        this.options.config
+            pcConfig:        this._pcConfig
           }
         );
 
@@ -326,7 +329,7 @@ class Peer extends EventEmitter {
             label:           offerMessage.label,
             serialization:   offerMessage.serialization,
             _queuedMessages: this._queuedMessages[connectionId],
-            pcConfig:        this.options.config
+            pcConfig:        this._pcConfig
           }
         );
 
