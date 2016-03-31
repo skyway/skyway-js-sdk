@@ -734,52 +734,50 @@ describe('Peer', () => {
   });
 
   describe('Room API', () => {
+    const serverPort = 5080;
     const timeoutVal = 200;
+    let peer;
+    let ioStub;
+    let ioSpy;
+    beforeEach(() => {
+      ioStub = sinon.stub(SocketIO, 'Socket');
+      ioSpy = sinon.spy();
+
+      ioStub.returns(
+        {
+          // socket.io is not standard eventEmitter API
+          // fake messages by calling io._fakeMessage[messagetype](data)
+          on: function(event, callback) {
+            if (!this._fakeMessage) {
+              this._fakeMessage = {};
+            }
+            this._fakeMessage[event] = callback;
+          },
+          emit:       ioSpy,
+          disconnect: ioSpy,
+          connected:  true,
+          io:         {opts: {query: ''}}
+        }
+      );
+      const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+      const Peer = proxyquire('../src/peer', {'./socket': Socket});
+
+      peer = new Peer({
+        secure: false,
+        host:   'localhost',
+        port:   serverPort,
+        key:    apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+
+      ioStub.restore();
+      ioSpy.reset();
+    });
 
     describe('Join', () => {
-      const serverPort = 5080;
-      let peer;
-      let ioStub;
-      let ioSpy;
-
-      beforeEach(() => {
-        ioStub = sinon.stub(SocketIO, 'Socket');
-        ioSpy = sinon.spy();
-
-        ioStub.returns(
-          {
-            // socket.io is not standard eventEmitter API
-            // fake messages by calling io._fakeMessage[messagetype](data)
-            on: function(event, callback) {
-              if (!this._fakeMessage) {
-                this._fakeMessage = {};
-              }
-              this._fakeMessage[event] = callback;
-            },
-            emit:       ioSpy,
-            disconnect: ioSpy,
-            connected:  true,
-            io:         {opts: {query: ''}}
-          }
-        );
-        const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
-        const Peer = proxyquire('../src/peer', {'./socket': Socket});
-
-        peer = new Peer({
-          secure: false,
-          host:   'localhost',
-          port:   serverPort,
-          key:    apiKey
-        });
-      });
-
-      afterEach(() => {
-        peer.destroy();
-
-        ioStub.restore();
-        ioSpy.reset();
-      });
-
       it('should create a new room and emit from Socket when joining a room', done => {
         const roomName = 'testRoom';
 
@@ -800,49 +798,6 @@ describe('Peer', () => {
     });
 
     describe('Send', () => {
-      const serverPort = 5080;
-      let peer;
-      let ioStub;
-      let ioSpy;
-
-      beforeEach(() => {
-        ioStub = sinon.stub(SocketIO, 'Socket');
-        ioSpy = sinon.spy();
-
-        ioStub.returns(
-          {
-            // socket.io is not standard eventEmitter API
-            // fake messages by calling io._fakeMessage[messagetype](data)
-            on: function(event, callback) {
-              if (!this._fakeMessage) {
-                this._fakeMessage = {};
-              }
-              this._fakeMessage[event] = callback;
-            },
-            emit:       ioSpy,
-            disconnect: ioSpy,
-            connected:  true,
-            io:         {opts: {query: ''}}
-          }
-        );
-        const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
-        const Peer = proxyquire('../src/peer', {'./socket': Socket});
-
-        peer = new Peer({
-          secure: false,
-          host:   'localhost',
-          port:   serverPort,
-          key:    apiKey
-        });
-      });
-
-      afterEach(() => {
-        peer.destroy();
-
-        ioStub.restore();
-        ioSpy.reset();
-      });
-
       it('should correctly emit from socket when room emits a broadcast event', done => {
         const roomName = 'testRoom';
 
@@ -862,49 +817,6 @@ describe('Peer', () => {
     });
 
     describe('Leave', () => {
-      const serverPort = 5080;
-      let peer;
-      let ioStub;
-      let ioSpy;
-
-      beforeEach(() => {
-        ioStub = sinon.stub(SocketIO, 'Socket');
-        ioSpy = sinon.spy();
-
-        ioStub.returns(
-          {
-            // socket.io is not standard eventEmitter API
-            // fake messages by calling io._fakeMessage[messagetype](data)
-            on: function(event, callback) {
-              if (!this._fakeMessage) {
-                this._fakeMessage = {};
-              }
-              this._fakeMessage[event] = callback;
-            },
-            emit:       ioSpy,
-            disconnect: ioSpy,
-            connected:  true,
-            io:         {opts: {query: ''}}
-          }
-        );
-        const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
-        const Peer = proxyquire('../src/peer', {'./socket': Socket});
-
-        peer = new Peer({
-          secure: false,
-          host:   'localhost',
-          port:   serverPort,
-          key:    apiKey
-        });
-      });
-
-      afterEach(() => {
-        peer.destroy();
-
-        ioStub.restore();
-        ioSpy.reset();
-      });
-
       it('should correctly emit from Socket when attempting to leave a room', done => {
         const roomName = 'testRoom';
 

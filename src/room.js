@@ -36,6 +36,7 @@ class Room extends EventEmitter {
     if (src === this._peerId) {
       this.open = true;
       this.emit(Room.EVENTS.open.key);
+      console.log('Joined room ' + this.name + '.');
       return;
     }
 

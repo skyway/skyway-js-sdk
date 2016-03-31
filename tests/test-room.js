@@ -1,14 +1,15 @@
 'use strict';
 
-const Room            = require('../src/room');
+const Room   = require('../src/room');
 
-const assert      = require('power-assert');
-const sinon       = require('sinon');
+const assert = require('power-assert');
+const sinon  = require('sinon');
 
 describe('Room', () => {
+  const roomName = 'testRoom';
+
   describe('Constructor', () => {
     it('should create a Room Object', () => {
-      const roomName = 'testRoom';
       const room = new Room(roomName, {});
 
       assert(room);
@@ -17,7 +18,6 @@ describe('Room', () => {
     });
 
     it('should create a Room Object with a peerId', () => {
-      const roomName = 'testRoom';
       const peerId = 'testId';
       const room = new Room(roomName, {peerId: peerId});
 
@@ -28,7 +28,6 @@ describe('Room', () => {
 
   describe('Send', () => {
     it('should emit a send event when sending data', () => {
-      const roomName = 'testRoom';
       const peerId = 'testId';
       const data = 'foobar';
 
@@ -48,7 +47,6 @@ describe('Room', () => {
 
   describe('Handle Events', () => {
     it('should add to the members array and emit when someone joins the room', () => {
-      const roomName = 'testRoom';
       const peerId1 = 'peer1';
       const peerId2 = 'peer2';
 
@@ -69,7 +67,6 @@ describe('Room', () => {
     });
 
     it('should emit an open event and not add to the members array when src peerId is own', () => {
-      const roomName = 'testRoom';
       const peerId = 'peerId';
 
       const room = new Room(roomName, {peerId: peerId});
@@ -87,7 +84,6 @@ describe('Room', () => {
     });
 
     it('should remove from members array and emit when someone leaves the room', () => {
-      const roomName = 'testRoom';
       const peerId1 = 'peer1';
       const peerId2 = 'peer2';
 
@@ -108,7 +104,6 @@ describe('Room', () => {
     });
 
     it('should emit to client when receiving data', () => {
-      const roomName = 'testRoom';
       const peerId = 'peer';
 
       const data = 'foobar';
@@ -129,7 +124,6 @@ describe('Room', () => {
 
   describe('Close', () => {
     it('should emit close and leave events when close() is called', () => {
-      const roomName = 'testRoom';
       const peerId = 'peer';
       const message = {roomName: roomName};
 
