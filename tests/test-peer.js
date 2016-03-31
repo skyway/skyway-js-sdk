@@ -719,7 +719,7 @@ describe('Peer', () => {
     });
   });
 
-  describe.only('Room API', () => {
+  describe('Room API', () => {
     const timeoutVal = 200;
 
     describe('Join', () => {
