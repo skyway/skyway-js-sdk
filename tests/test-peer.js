@@ -1,9 +1,10 @@
 'use strict';
 
-const Peer              = require('../src/peer');
-const Socket            = require('../src/socket');
+const Peer            = require('../src/peer');
+const Socket          = require('../src/socket');
 const MediaConnection = require('../src/mediaConnection');
 const DataConnection  = require('../src/dataConnection');
+const Room            = require('../src/room');
 const util            = require('../src/util');
 
 const assert      = require('power-assert');
@@ -718,7 +719,9 @@ describe('Peer', () => {
     });
   });
 
-  describe('Room API', () => {
+  describe.only('Room API', () => {
+    const timeoutVal = 200;
+
     describe('Join', () => {
       const serverPort = 5080;
       let peer;
@@ -763,19 +766,23 @@ describe('Peer', () => {
         ioSpy.reset();
       });
 
-      it('should correctly emit from Socket when attempting to join a room', done => {
+      it('should create a new room and emit from Socket when joining a room', done => {
         const roomName = 'testRoom';
 
         let spy = sinon.spy();
         peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
+ 
 
-        peer.joinRoom(roomName);
+        assert.deepEqual(peer.rooms, {});
+        const room = peer.joinRoom(roomName);
+
+        assert.deepEqual(peer.rooms[roomName], room);
 
         setTimeout(() => {
           assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
           done();
-        }, 200);
+        }, timeoutVal);
       });
     });
 
@@ -836,7 +843,7 @@ describe('Peer', () => {
         setTimeout(() => {
           assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key));
           done();
-        }, 200);
+        }, timeoutVal);
       });
     });
 
@@ -900,8 +907,8 @@ describe('Peer', () => {
           setTimeout(() => {
             assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_LEAVE.key));
             done();
-          }, 200);
-        }, 200);
+          }, timeoutVal);
+        }, timeoutVal);
       });
     });
   });
