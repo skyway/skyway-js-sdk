@@ -231,7 +231,7 @@ describe('Socket', () => {
         socket = new Socket(false, 'localhost', serverPort, apiKey);
       });
 
-      it('should emit a message to the Peer upon a ROOM_USER_JOINED acknowledgement', () => {
+      it('should emit a message to the Peer upon a ROOM_USER_JOIN acknowledgement', () => {
         const data = {roomName: 'testRoom'};
 
         socket.start(peerId, token);
@@ -239,9 +239,9 @@ describe('Socket', () => {
         let spy = sinon.spy(socket, 'emit');
         assert.equal(spy.callCount, 0);
 
-        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_JOINED.key](data);
+        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_JOIN.key](data);
 
-        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOINED.key, data));
+        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOIN.key, data));
         assert.equal(spy.callCount, 1);
       });
     });
@@ -282,7 +282,7 @@ describe('Socket', () => {
         socket = new Socket(false, 'localhost', serverPort, apiKey);
       });
 
-      it('should emit a message to the Peer upon a ROOM_USER_LEFT acknowledgement', () => {
+      it('should emit a message to the Peer upon a ROOM_USER_LEAVE acknowledgement', () => {
         const data = {roomName: 'testRoom'};
 
         socket.start(peerId, token);
@@ -290,9 +290,9 @@ describe('Socket', () => {
         let spy = sinon.spy(socket, 'emit');
         assert.equal(spy.callCount, 0);
 
-        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_LEFT.key](data);
+        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_LEAVE.key](data);
 
-        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_LEFT.key, data));
+        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_LEAVE.key, data));
         assert.equal(spy.callCount, 1);
       });
     });
