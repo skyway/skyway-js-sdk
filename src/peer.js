@@ -257,18 +257,25 @@ class Peer extends EventEmitter {
       // Set up turn credentials
       const credential = openMessage.turnCredential;
       if (this.options.turn === true && credential) {
-        for (let protocol of ['turn', 'turns']) {
-          for (let transport of ['tcp', 'udp']) {
-            const iceServer = {
-              urls: `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
-              url:  `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
+        // possible turn types are turn-tcp, turns-tcp, turn-udp
+        const turnCombinations = [
+          {protocol: 'turn', transport: 'tcp'},
+          {protocol: 'turns', transport: 'tcp'},
+          {protocol: 'turn', transport: 'udp'}
+        ];
+        for (let turnType of turnCombinations) {
+          const protocol = turnType.protocol;
+          const transport = turnType.transport;
 
-              username:   `${this.options.key}$${this.id}`,
-              credential: credential
-            };
+          const iceServer = {
+            urls: `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
+            url:  `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
 
-            this._pcConfig.iceServers.push(iceServer);
-          }
+            username:   `${this.options.key}$${this.id}`,
+            credential: credential
+          };
+
+          this._pcConfig.iceServers.push(iceServer);
         }
 
         util.log('SkyWay TURN Server is available');
