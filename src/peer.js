@@ -3,6 +3,7 @@
 const Connection      = require('./connection');
 const DataConnection  = require('./dataConnection');
 const MediaConnection = require('./mediaConnection');
+const Room            = require('./room');
 const Socket          = require('./socket');
 const util            = require('./util');
 
@@ -25,6 +26,7 @@ class Peer extends EventEmitter {
     // true when connected to SkyWay server
     this.open = false;
     this.connections = {};
+    this.rooms = {};
 
     // to prevent duplicate calls to destroy/disconnect
     this._disconnectCalled = false;
@@ -167,6 +169,34 @@ class Peer extends EventEmitter {
     }, 0);
   }
 
+  joinRoom(roomName, roomOptions) {
+    if (this.rooms[roomName]) {
+      return undefined;
+    }
+
+    const room = new Room(roomName, roomOptions);
+    this.rooms[roomName] = room;
+
+    this._setupRoomMessageHandlers(room);
+
+    const data = {
+      roomName:    roomName,
+      roomOptions: roomOptions
+    };
+    this.socket.send(util.MESSAGE_TYPES.ROOM_JOIN.key, data);
+
+    return room;
+  }
+
+  _setupRoomMessageHandlers(room) {
+    room.on(Room.MESSAGE_EVENTS.broadcast.key, sendMessage => {
+      this.socket.send(util.MESSAGE_TYPES.ROOM_DATA.key, sendMessage);
+    });
+    room.on(Room.MESSAGE_EVENTS.leave.key, leaveMessage => {
+      this.socket.send(util.MESSAGE_TYPES.ROOM_LEAVE.key, leaveMessage);
+    });
+  }
+
   reconnect() {
   }
 
@@ -221,7 +251,8 @@ class Peer extends EventEmitter {
       this.options.secure,
       this.options.host,
       this.options.port,
-      this.options.key);
+      this.options.key
+    );
 
     this._setupMessageHandlers();
 
@@ -365,6 +396,27 @@ class Peer extends EventEmitter {
         this._storeMessage(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
       }
     });
+
+    this.socket.on(util.MESSAGE_TYPES.ROOM_USER_JOIN.key, roomUserJoinMessage => {
+      const room = this.rooms[roomUserJoinMessage.roomName];
+      if (room) {
+        room.handleJoin(roomUserJoinMessage);
+      }
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.ROOM_USER_LEAVE.key, roomUserLeaveMessage => {
+      const room = this.rooms[roomUserLeaveMessage.roomName];
+      if (room) {
+        room.handleLeave(roomUserLeaveMessage);
+      }
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.ROOM_DATA.key, roomDataMessage => {
+      const room = this.rooms[roomDataMessage.roomName];
+      if (room) {
+        room.handleData(roomDataMessage);
+      }
+    });
   }
 
   _addConnection(peerId, connection) {
@@ -373,10 +425,10 @@ class Peer extends EventEmitter {
     }
     this.connections[peerId].push(connection);
 
-    this._setupConnectionMessageHanders(connection);
+    this._setupConnectionMessageHandlers(connection);
   }
 
-  _setupConnectionMessageHanders(connection) {
+  _setupConnectionMessageHandlers(connection) {
     connection.on(Connection.EVENTS.candidate.key, candidateMessage => {
       this.socket.send(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
     });

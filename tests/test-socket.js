@@ -190,6 +190,7 @@ describe('Socket', () => {
     it('should update the _io query on \'OPEN\' messages', () => {
       let peerId = 'peerId';
       const openMessage = {peerId: peerId};
+
       socket.start(undefined, token);
 
       const peerIdRegex = new RegExp(`&peerId=${peerId}`);
@@ -224,6 +225,85 @@ describe('Socket', () => {
       });
 
       assert.equal(spy.callCount, util.MESSAGE_TYPES.enums.length - 1);
+    });
+  });
+
+  describe('Room API', () => {
+    describe('Join', () => {
+      let socket;
+      let peerId = 'peerId';
+      let token = 'token';
+
+      beforeEach(() => {
+        let apiKey = 'apiKey';
+
+        socket = new Socket(false, 'localhost', serverPort, apiKey);
+      });
+
+      it('should emit a message to the Peer upon a ROOM_USER_JOIN acknowledgement', () => {
+        const data = {roomName: 'testRoom'};
+
+        socket.start(peerId, token);
+
+        let spy = sinon.spy(socket, 'emit');
+        assert.equal(spy.callCount, 0);
+
+        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_JOIN.key](data);
+
+        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOIN.key, data));
+        assert.equal(spy.callCount, 1);
+      });
+    });
+
+    describe('Send', () => {
+      let socket;
+      let peerId = 'peerId';
+      let token = 'token';
+
+      beforeEach(() => {
+        let apiKey = 'apiKey';
+
+        socket = new Socket(false, 'localhost', serverPort, apiKey);
+      });
+
+      it('should emit a message to the Peer upon a ROOM_DATA message', () => {
+        const data = {roomName: 'testRoom', payload: 'foobar'};
+
+        socket.start(peerId, token);
+
+        let spy = sinon.spy(socket, 'emit');
+        assert.equal(spy.callCount, 0);
+
+        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_DATA.key](data);
+
+        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key, data));
+      });
+    });
+
+    describe('Leave', () => {
+      let socket;
+      let peerId = 'peerId';
+      let token = 'token';
+
+      beforeEach(() => {
+        let apiKey = 'apiKey';
+
+        socket = new Socket(false, 'localhost', serverPort, apiKey);
+      });
+
+      it('should emit a message to the Peer upon a ROOM_USER_LEAVE acknowledgement', () => {
+        const data = {roomName: 'testRoom'};
+
+        socket.start(peerId, token);
+
+        let spy = sinon.spy(socket, 'emit');
+        assert.equal(spy.callCount, 0);
+
+        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_LEAVE.key](data);
+
+        assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_USER_LEAVE.key, data));
+        assert.equal(spy.callCount, 1);
+      });
     });
   });
 });

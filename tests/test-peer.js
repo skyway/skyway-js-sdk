@@ -6,8 +6,10 @@ const MediaConnection = require('../src/mediaConnection');
 const DataConnection  = require('../src/dataConnection');
 const util            = require('../src/util');
 
-const assert = require('power-assert');
-const sinon  = require('sinon');
+const assert      = require('power-assert');
+const proxyquire  = require('proxyquireify')(require);
+const sinon       = require('sinon');
+const SocketIO    = require('socket.io-client');
 
 const MediaStream = window.MediaStream || window.webkitMediaStream;
 
@@ -728,6 +730,113 @@ describe('Peer', () => {
       }
 
       assert(spy.withArgs([]).callCount === responseCodes.length);
+    });
+  });
+
+  describe('Room API', () => {
+    const serverPort = 5080;
+    const timeoutVal = 200;
+    let peer;
+    let ioStub;
+    let ioSpy;
+    beforeEach(() => {
+      ioStub = sinon.stub(SocketIO, 'Socket');
+      ioSpy = sinon.spy();
+
+      ioStub.returns(
+        {
+          // socket.io is not standard eventEmitter API
+          // fake messages by calling io._fakeMessage[messagetype](data)
+          on: function(event, callback) {
+            if (!this._fakeMessage) {
+              this._fakeMessage = {};
+            }
+            this._fakeMessage[event] = callback;
+          },
+          emit:       ioSpy,
+          disconnect: ioSpy,
+          connected:  true,
+          io:         {opts: {query: ''}}
+        }
+      );
+      const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+      const Peer = proxyquire('../src/peer', {'./socket': Socket});
+
+      peer = new Peer({
+        secure: false,
+        host:   'localhost',
+        port:   serverPort,
+        key:    apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+
+      ioStub.restore();
+      ioSpy.reset();
+    });
+
+    describe('Join', () => {
+      it('should create a new room and emit from Socket when joining a room', done => {
+        const roomName = 'testRoom';
+
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+
+        assert.deepEqual(peer.rooms, {});
+        const room = peer.joinRoom(roomName);
+
+        assert.deepEqual(peer.rooms[roomName], room);
+
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
+          done();
+        }, timeoutVal);
+      });
+    });
+
+    describe('Send', () => {
+      it('should correctly emit from socket when room emits a broadcast event', done => {
+        const roomName = 'testRoom';
+
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+
+        const room = peer.joinRoom(roomName);
+        room.open = true;
+        room.send('foobar');
+
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key));
+          done();
+        }, timeoutVal);
+      });
+    });
+
+    describe('Leave', () => {
+      it('should correctly emit from Socket when attempting to leave a room', done => {
+        const roomName = 'testRoom';
+
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+
+        const room = peer.joinRoom(roomName);
+        room.open = true;
+
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
+          room.close();
+
+          setTimeout(() => {
+            assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_LEAVE.key));
+            done();
+          }, timeoutVal);
+        }, timeoutVal);
+      });
     });
   });
 });
