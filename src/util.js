@@ -55,7 +55,8 @@ class Util {
       iceServers: [{
         urls: 'stun:stun.skyway.io:3478',
         url:  'stun:stun.skyway.io:3478'
-      }]
+      }],
+      iceTransportPolicy: 'all'
     };
 
     // Returns the current browser.

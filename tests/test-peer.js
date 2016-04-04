@@ -381,12 +381,14 @@ describe('Peer', () => {
       const peerId = 'testId';
       const openMessage = {peerId: peerId, turnCredential: 'password'};
 
-      const iceServers = peer.options.config.iceServers;
-      assert(iceServers.length === 1);
+      const defaultIceServersLength = util.defaultConfig.iceServers.length;
+      assert(peer.options.config.iceServers.length === defaultIceServersLength);
+      assert(peer._pcConfig === undefined);
 
       peer.socket.emit(util.MESSAGE_TYPES.OPEN.key, openMessage);
 
-      assert(iceServers.length === 3);
+      // 3 servers added: 'turn-udp', 'turn-tcp', 'turns-tcp'
+      assert(peer._pcConfig.iceServers.length === defaultIceServersLength + 3);
     });
 
     it('should abort with server-error on ERROR events', () => {
