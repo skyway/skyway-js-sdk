@@ -26,8 +26,8 @@ class DataConnection extends Connection {
     }
 
     // New send code properties
-    this.sendBuffer = [];
-    this.receivedData = {};
+    this._sendBuffer = [];
+    this._receivedData = {};
     // Messages stored by peer because DC was not ready yet
     this._queuedMessages = this.options._queuedMessages || [];
 
@@ -78,9 +78,9 @@ class DataConnection extends Connection {
 
     // If we haven't started receiving pieces of data with a given id, this will be undefined
     // In that case, we need to initialise receivedData[id] to hold incoming file chunks
-    let currData = this.receivedData[dataMeta.id];
+    let currData = this._receivedData[dataMeta.id];
     if (!currData) {
-      currData = this.receivedData[dataMeta.id] = {
+      currData = this._receivedData[dataMeta.id] = {
         size:          dataMeta.size,
         type:          dataMeta.type,
         name:          dataMeta.name,
@@ -133,7 +133,7 @@ class DataConnection extends Connection {
         } else {
           // Blob or File
           this.emit(DataConnection.EVENTS.data.key, blob);
-          delete this.receivedData[dataMeta.id];
+          delete this._receivedData[dataMeta.id];
         }
       }
     }
@@ -192,26 +192,26 @@ class DataConnection extends Connection {
 
       // Add all chunks to our buffer and start the send loop (if we haven't already)
       util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        this.sendBuffer.push(ab);
-        this.startSendLoop();
+        this._sendBuffer.push(ab);
+        this._startSendLoop();
       });
     }
   }
 
-  startSendLoop() {
+  _startSendLoop() {
     if (!this.sendInterval) {
       // Define send interval
       // Try sending a new chunk with every callback
       this.sendInterval = setInterval(() => {
         // Might need more extensive buffering than this:
-        let currMsg = this.sendBuffer.shift();
+        let currMsg = this._sendBuffer.shift();
         try {
           this._dc.send(currMsg);
         } catch (error) {
-          this.sendBuffer.push(currMsg);
+          this._sendBuffer.push(currMsg);
         }
 
-        if (this.sendBuffer.length === 0) {
+        if (this._sendBuffer.length === 0) {
           clearInterval(this.sendInterval);
           this.sendInterval = undefined;
         }
