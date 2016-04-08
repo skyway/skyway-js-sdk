@@ -41,7 +41,7 @@ class Util {
     this.chunkedBrowsers = {Chrome: 1};
     // Current recommended maximum chunksize is 16KB (DataChannel spec)
     // https://tools.ietf.org/html/draft-ietf-rtcweb-data-channel-13
-    this.maxChunkSize = 16300;
+    this.maxChunkSize = 16200;
 
     // Send loop interval in milliseconds
     this.sendInterval = 1;
