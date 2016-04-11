@@ -3,6 +3,7 @@
 const Connection = require('./connection');
 const util       = require('./util');
 const Enum       = require('enum');
+const sizeof     = require('object-sizeof');
 
 const DCEvents = new Enum([
   'open',
@@ -169,12 +170,11 @@ class DataConnection extends Connection {
       size =  Buffer.byteLength(data, 'utf8');
     }
 
-    const numSlices = Math.ceil(size / util.maxChunkSize);
     const dataMeta = {
       id:         util.randomId(),
       type:       type,
       size:       size,
-      totalParts: numSlices
+      totalParts: 0
     };
 
     if (type === 'file') {
@@ -184,9 +184,15 @@ class DataConnection extends Connection {
       dataMeta.mimeType = data.type;
     }
 
+    // dataMeta contains all possible parameters by now.
+    // Adjust the chunk size to avoid issues with sending
+    const chunkSize = util.maxChunkSize - sizeof(dataMeta);
+    const numSlices = Math.ceil(size / chunkSize);
+    dataMeta.totalParts = numSlices;
+
     // Perform any required slicing
     for (let sliceIndex = 0; sliceIndex < numSlices; sliceIndex++) {
-      const slice = data.slice(sliceIndex * util.maxChunkSize, (sliceIndex + 1) * util.maxChunkSize);
+      const slice = data.slice(sliceIndex * chunkSize, (sliceIndex + 1) * chunkSize);
       dataMeta.index = sliceIndex;
       dataMeta.data = slice;
 
