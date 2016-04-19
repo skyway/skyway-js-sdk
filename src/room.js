@@ -60,6 +60,22 @@ class Room extends EventEmitter {
     this.emit(Room.EVENTS.data.key, message);
   }
 
+  requestOffer() {
+    // Request OFFER from server
+  }
+
+  handleOffer(message) {
+
+  }
+
+  sendAnswer() {
+
+  }
+
+  handleSSRCs() {
+    // Could be own or others!
+  }
+
   send(data) {
     if (!this.open) {
       return;
