@@ -14,6 +14,7 @@ const PeerEvents = new Enum([
   'open',
   'error',
   'call',
+  'room_call',
   'connection',
   'close',
   'disconnected'
@@ -374,6 +375,23 @@ class Peer extends EventEmitter {
         util.log('DataConnection created in OFFER');
         this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.connection.key, connection);
+      } else if (offerMessage.connectionType === 'room') {
+        connection = new RoomConnection(
+          // This is problematic - Connection expects a remoteId
+          // Unless we have the remoteId contain the roomName instead?
+          offerMessage.src,
+          {
+            connectionId:    connectionId,
+            _payload:        offerMessage,
+            metadata:        offerMessage.metadata,
+            // we don't want any queued messages?
+            pcConfig:        this._pcConfig
+          }
+        );
+
+        util.log('RoomConnection created in OFFER');
+        this._addConnection(offerMessage.src, connection);
+        this.emit(Peer.EVENTS.room_call.key, connection);
       } else {
         util.warn('Received malformed connection type: ', offerMessage.connectionType);
       }
