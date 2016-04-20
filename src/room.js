@@ -114,13 +114,13 @@ class Room extends EventEmitter {
       this._setupPCListeners();
 
       if (this.localStream) {
-        this._pc.addStream(localStream);
+        this._pc.addStream(this.localStream);
       }
 
       this._pc.setRemoteDescription(description, () => {
         this._pc.createAnswer(answer => {
           this._pc.setLocalDescription(answer, () => {
-            //this.emit(Room.MESSAGE_EVENTS.answer.key, answer);
+            // this.emit(Room.MESSAGE_EVENTS.answer.key, answer);
           });
         });
       });

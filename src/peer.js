@@ -175,7 +175,7 @@ class Peer extends EventEmitter {
     }
 
     if (!roomOptions) {
-      roomOptions = {}
+      roomOptions = {};
     }
     roomOptions.pcConfig = this._pcConfig;
 
@@ -390,10 +390,10 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(util.MESSAGE_TYPES.ROOM_OFFER.key, offerMessage => {
-        // We want the Room class to handle this instead
-        // The Room class acts as RoomConnection
-        this.rooms[offerMessage.roomName].handleOffer(offerMessage.offer);
-        // NOTE: Room has already been created and added to this.rooms
+      // We want the Room class to handle this instead
+      // The Room class acts as RoomConnection
+      this.rooms[offerMessage.roomName].handleOffer(offerMessage.offer);
+      // NOTE: Room has already been created and added to this.rooms
     });
 
     this.socket.on(util.MESSAGE_TYPES.ANSWER.key, answerMessage => {
