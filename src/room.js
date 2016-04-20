@@ -39,9 +39,6 @@ class Room extends EventEmitter {
       console.log('Joined room ' + this.name + '.');
 
       // At this stage the Server has acknowledged us joining a room
-      // Now we send a JVB OFFER request to the Server
-      // (This should happen automatically when joining a room)
-
       return;
     }
 
@@ -65,8 +62,24 @@ class Room extends EventEmitter {
     this.emit(Room.EVENTS.data.key, message);
   }
 
-  handleOffer(message) {
+  handleOffer(offerMessage) {
     // Handle JVB Offer and send Answer to Server
+    connection = new RoomConnection(
+      // This is problematic - Connection expects a remoteId
+      // Unless we have the remoteId contain the roomName instead?
+      offerMessage.src,
+      {
+        connectionId:    connectionId,
+        _payload:        offerMessage,
+        metadata:        offerMessage.metadata,
+        // we don't want any queued messages?
+        pcConfig:        this._pcConfig
+      }
+    );
+
+    util.log('RoomConnection created in OFFER');
+    this._addConnection(offerMessage.src, connection);
+    this.emit(Peer.EVENTS.room_call.key, connection);
   }
 
   sendAnswer() {
