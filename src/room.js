@@ -23,6 +23,7 @@ const RoomMessageEvents = new Enum([
 class Room extends EventEmitter {
   constructor(name, options) {
     super();
+
     this.name = name;
     this._options = options || {};
     this._peerId = this._options.peerId;
@@ -110,6 +111,61 @@ class Room extends EventEmitter {
 
   handleOffer(offerMessage) {
     // Handle JVB Offer and send Answer to Server
+    console.log("RoomConnection setting offer", offer)
+    var description = new RTCSessionDescription({type:'offer', sdp:offer});
+    if (!pc) {
+      console.log('new RTCPeerConnection')
+      let pc = new RTCPeerConnection();
+
+      pc.onicecandidate = function(evt) {
+        if (!evt.candidate) {
+          pc.onicecandidate = function(){};
+          socket.emit('answer', pc.localDescription.sdp);
+        }
+      };
+
+      pc.oniceconnectionstatechange = function(evt) {
+        console.log('ice connection state changed to: ' + pc.iceConnectionState + "===================")
+      }
+
+      pc.onsignalingstatechange = function(evt) {
+        console.log('signaling state changed to: ' + pc.signalingState + "===================")
+      }
+
+      pc.onaddstream = function(evt) {
+        console.log('stream added')
+        console.log(evt)
+        count++;
+      }
+
+      pc.addStream(localStream);
+      pc.setRemoteDescription(description)
+      .then(function() {
+        return pc.createAnswer()
+      }).then(function(answer) {
+        pc.setLocalDescription(answer)
+        .then(() => {
+          socket.emit(answer)
+        })
+      }).catch(function(err) {
+        console.error(err);
+      });
+    } else {
+
+      pc.setRemoteDescription(description)
+      .then(function() {
+        console.log("done setRemoteDescription")
+        return pc.createAnswer()
+      }).then(function(answer) {
+        console.log("done createAnswer")
+        pc.setLocalDescription(answer)
+        .then(() => {
+          console.log("done setLocalDescription")
+        })
+      }).catch(function(err) {
+        console.error(err);
+      });
+    };
 
 
   }
