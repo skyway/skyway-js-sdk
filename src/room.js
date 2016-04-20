@@ -1,6 +1,5 @@
 'use strict';
 
-const RoomNegotiator = require('./roomNegotiator');
 const util           = require('./util');
 
 const EventEmitter = require('events');
@@ -21,7 +20,8 @@ const RoomEvents = new Enum([
 
 const RoomMessageEvents = new Enum([
   'broadcast',
-  'leave'
+  'leave',
+  'answer'
 ]);
 
 class Room extends EventEmitter {
@@ -32,35 +32,18 @@ class Room extends EventEmitter {
     this._options = options || {};
     this._peerId = this._options.peerId;
 
-    // Room acts as RoomConnection
-    this._negotiator = new RoomNegotiator(this);
-
     this.localStream = this.options._stream;
+    this.remoteStreams = {};
+
     this._pcAvailable = false;
-
-    if (this.localStream) {
-      this._negotiator.startConnection(
-        {
-          type:    'room',
-          _stream: this.localStream
-        },
-        this.options.pcConfig
-      );
-      this._pcAvailable = true;
-    }
-
-    this._negotiator.on(RoomNegotiator.EVENTS.addStream.key, remoteStream => {
-      util.log('Receiving room stream', remoteStream);
-
-      this.remoteStream = remoteStream;
-      this.emit('stream', remoteStream);
-    });
 
     this.open = false;
     this.members = [];
   }
 
+  //
   // Handle socket.io related events
+  //
   handleJoin(message) {
     const src = message.src;
 
@@ -93,134 +76,6 @@ class Room extends EventEmitter {
     this.emit(Room.EVENTS.data.key, message);
   }
 
-  // Handle JVB related events
-  handleAnswer(answerMessage) {
-    if (this._pcAvailable) {
-      this._negotiator.handleAnswer(answerMessage.answer);
-      this.open = true;
-    } else {
-      util.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.ANSWER.key, payload: answerMessage});
-    }
-  }
-
-  handleCandidate(candidateMessage) {
-    if (this._pcAvailable) {
-      this._negotiator.handleCandidate(candidateMessage.candidate);
-    } else {
-      util.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.CANDIDATE.key, payload: candidateMessage});
-    }
-  }
-
-  handleOffer(offerMessage) {
-    // Handle JVB Offer and send Answer to Server
-    console.log('RoomConnection setting offer', offerMessage);
-    let description = new RTCSessionDescription({type: 'offer', sdp: offer});
-    let pc;
-    if (!pc) {
-      console.log('new RTCPeerConnection');
-      pc = new RTCPeerConnection();
-
-      pc.onicecandidate = function(evt) {
-        if (!evt.candidate) {
-          pc.onicecandidate = function() {};
-          socket.emit('answer', pc.localDescription.sdp);
-        }
-      };
-
-      pc.oniceconnectionstatechange = function() {
-        console.log('ice connection state changed to: ' + pc.iceConnectionState + '===================');
-      };
-
-      pc.onsignalingstatechange = function() {
-        console.log('signaling state changed to: ' + pc.signalingState + '===================');
-      };
-
-      pc.onaddstream = function() {
-        console.log('stream added');
-        console.log(evt);
-        count++;
-      };
-
-      pc.addStream(localStream);
-      pc.setRemoteDescription(description)
-      .then(function() {
-        return pc.createAnswer();
-      }).then(function(answer) {
-        pc.setLocalDescription(answer)
-        .then(() => {
-          socket.emit(answer);
-        });
-      }).catch(function(err) {
-        console.error(err);
-      });
-    } else {
-      pc.setRemoteDescription(description)
-      .then(function() {
-        console.log('done setRemoteDescription');
-        return pc.createAnswer();
-      }).then(function(answer) {
-        console.log('done createAnswer');
-        pc.setLocalDescription(answer)
-        .then(() => {
-          console.log('done setLocalDescription');
-        });
-      }).catch(function(err) {
-        console.error(err);
-      });
-    }
-  }
-
-  sendAnswer() {
-    // This should be an emit (probably)
-  }
-
-  //
-  // Event Handlers
-  //
-  _setupNegotiatorMessageHandlers() {
-    this._negotiator.on(RoomNegotiator.EVENTS.answerCreated.key, answer => {
-      const connectionAnswer = {
-        answer:         answer,
-        dst:            this.remoteId,
-        connectionId:   this.id,
-        connectionType: this.type
-      };
-      this.emit(Connection.EVENTS.answer.key, connectionAnswer);
-    });
-
-    this._negotiator.on(RoomNegotiator.EVENTS.offerCreated.key, offer => {
-      const connectionOffer = {
-        offer:          offer,
-        dst:            this.remoteId,
-        connectionId:   this.id,
-        connectionType: this.type,
-        metadata:       this.metadata
-      };
-      if (this.serialization) {
-        connectionOffer.serialization = this.serialization;
-      }
-      if (this.label) {
-        connectionOffer.label = this.label;
-      }
-      this.emit(Connection.EVENTS.offer.key, connectionOffer);
-    });
-
-    this._negotiator.on(RoomNegotiator.EVENTS.iceCandidate.key, candidate => {
-      const connectionCandidate = {
-        candidate:      candidate,
-        dst:            this.remoteId,
-        connectionId:   this.id,
-        connectionType: this.type
-      };
-      this.emit(Connection.EVENTS.candidate.key, connectionCandidate);
-    });
-  }
-
-  //
-  // Other methods
-  //
   send(data) {
     if (!this.open) {
       return;
@@ -245,6 +100,120 @@ class Room extends EventEmitter {
     this.emit(Room.EVENTS.close.key);
   }
 
+  //
+  // Handle JVB related events
+  //
+  handleOffer(offer) {
+    // Handle JVB Offer and send Answer to Server
+    console.log('RoomConnection setting offer', offer);
+    let description = new RTCSessionDescription({type: 'offer', sdp: offer});
+    if (!this._pc) {
+      console.log('new RTCPeerConnection');
+      this._pc = new RTCPeerConnection(this._options.pcConfig);
+
+      this._setupPCListeners();
+
+      if (this.localStream) {
+        this._pc.addStream(localStream);
+      }
+
+      this._pc.setRemoteDescription(description, () => {
+        this._pc.createAnswer(answer => {
+          this._pc.setLocalDescription(answer, () => {
+            //this.emit(Room.MESSAGE_EVENTS.answer.key, answer);
+          });
+        });
+      });
+    } else {
+      this._pc.setRemoteDescription(description, () => {
+        console.log('done setRemoteDescription');
+        this._pc.createAnswer(answer => {
+          console.log('done createAnswer');
+          this._pc.setLocalDescription(answer, () => {
+            console.log('done setLocalDescription');
+          });
+        });
+      });
+    }
+  }
+
+  _setupPCListeners() {
+    this._pc.onaddstream = remoteStream => {
+      util.log('Received remote media stream');
+
+      // TODO: filter out unnecessary streams (streamUpdated()?)
+      // TODO: Is this id correct?
+      this.remoteStreams[remoteStream.id] = remoteStream;
+      this.emit('stream', remoteStream);
+    };
+
+    this._pc.onicecandidate = evt => {
+      if (!evt.candidate) {
+        util.log('ICE canddidates gathering complete');
+        this._pc.onicecandidate = () => {};
+        this.emit(Room.MESSAGE_EVENTS.answer.key, this._pc.localDescription.sdp);
+      }
+    };
+
+    this._pc.oniceconnectionstatechange = () => {
+      switch (this._pc.iceConnectionState) {
+        case 'new':
+          util.log('iceConnectionState is new');
+          break;
+        case 'checking':
+          util.log('iceConnectionState is checking');
+          break;
+        case 'connected':
+          util.log('iceConnectionState is connected');
+          break;
+        case 'completed':
+          util.log('iceConnectionState is completed');
+          break;
+        case 'failed':
+          util.log('iceConnectionState is failed, closing connection');
+          break;
+        case 'disconnected':
+          util.log('iceConnectionState is disconnected, closing connection');
+          break;
+        case 'closed':
+          util.log('iceConnectionState is closed');
+          break;
+        default:
+          break;
+      }
+    };
+
+    this._pc.onremovestream = () => {
+      util.log('`removestream` triggered');
+    };
+
+    this._pc.onsignalingstatechange = () => {
+      switch (this._pc.signalingState) {
+        case 'stable':
+          util.log('signalingState is stable');
+          break;
+        case 'have-local-offer':
+          util.log('signalingState is have-local-offer');
+          break;
+        case 'have-remote-offer':
+          util.log('signalingState is have-remote-offer');
+          break;
+        case 'have-local-pranswer':
+          util.log('signalingState is have-local-pranswer');
+          break;
+        case 'have-remote-pranswer':
+          util.log('signalingState is have-remote-pranswer');
+          break;
+        case 'closed':
+          util.log('signalingState is closed');
+          break;
+        default:
+          break;
+      }
+    };
+
+    return this._pc;
+  }
   static get EVENTS() {
     return RoomEvents;
   }

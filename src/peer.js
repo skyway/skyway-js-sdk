@@ -14,7 +14,6 @@ const PeerEvents = new Enum([
   'open',
   'error',
   'call',
-  'room_call',
   'connection',
   'close',
   'disconnected'
@@ -172,8 +171,13 @@ class Peer extends EventEmitter {
 
   joinRoom(roomName, roomOptions) {
     if (this.rooms[roomName]) {
-      return undefined;
+      return this.rooms[roomName];
     }
+
+    if (!roomOptions) {
+      roomOptions = {}
+    }
+    roomOptions.pcConfig = this._pcConfig;
 
     const room = new Room(roomName, roomOptions);
     this.rooms[roomName] = room;
@@ -195,6 +199,9 @@ class Peer extends EventEmitter {
     });
     room.on(Room.MESSAGE_EVENTS.leave.key, leaveMessage => {
       this.socket.send(util.MESSAGE_TYPES.ROOM_LEAVE.key, leaveMessage);
+    });
+    room.on(Room.MESSAGE_EVENTS.answer.key, answerMessage => {
+      this.socket.send(util.MESSAGE_TYPES.ROOM_ANSWER.key, answerMessage);
     });
   }
 
@@ -375,16 +382,18 @@ class Peer extends EventEmitter {
         util.log('DataConnection created in OFFER');
         this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.connection.key, connection);
-      } else if (offerMessage.connectionType === 'room') {
-        // We want the Room class to handle this instead
-        // The Room class acts as RoomConnection
-        room.handleOffer(offerMessage);
-        // NOTE: Room has already been created and added to this.rooms
       } else {
         util.warn('Received malformed connection type: ', offerMessage.connectionType);
       }
 
       delete this._queuedMessages[connectionId];
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.ROOM_OFFER.key, offerMessage => {
+        // We want the Room class to handle this instead
+        // The Room class acts as RoomConnection
+        this.rooms[offerMessage.roomName].handleOffer(offerMessage.offer);
+        // NOTE: Room has already been created and added to this.rooms
     });
 
     this.socket.on(util.MESSAGE_TYPES.ANSWER.key, answerMessage => {
