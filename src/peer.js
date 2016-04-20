@@ -379,6 +379,7 @@ class Peer extends EventEmitter {
         // We want the Room class to handle this instead
         // The Room class acts as RoomConnection
         room.handleOffer(offerMessage);
+        // NOTE: Room has already been created and added to this.rooms
       } else {
         util.warn('Received malformed connection type: ', offerMessage.connectionType);
       }
