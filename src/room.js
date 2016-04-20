@@ -1,9 +1,13 @@
 'use strict';
 
 const RoomNegotiator = require('./roomNegotiator');
+const util           = require('./util');
 
 const EventEmitter = require('events');
 const Enum         = require('enum');
+
+const shim              = require('../src/webrtcShim');
+const RTCPeerConnection = shim.RTCPeerConnection;
 
 const RoomEvents = new Enum([
   'stream',
@@ -37,15 +41,15 @@ class Room extends EventEmitter {
     if (this.localStream) {
       this._negotiator.startConnection(
         {
-          type:       'room',
-          _stream:    this.localStream
+          type:    'room',
+          _stream: this.localStream
         },
         this.options.pcConfig
       );
       this._pcAvailable = true;
     }
 
-    this._negotiator.on(Negotiator.EVENTS.addStream.key, remoteStream => {
+    this._negotiator.on(RoomNegotiator.EVENTS.addStream.key, remoteStream => {
       util.log('Receiving room stream', remoteStream);
 
       this.remoteStream = remoteStream;
@@ -111,76 +115,72 @@ class Room extends EventEmitter {
 
   handleOffer(offerMessage) {
     // Handle JVB Offer and send Answer to Server
-    console.log("RoomConnection setting offer", offer)
-    var description = new RTCSessionDescription({type:'offer', sdp:offer});
+    console.log('RoomConnection setting offer', offerMessage);
+    let description = new RTCSessionDescription({type: 'offer', sdp: offer});
+    let pc;
     if (!pc) {
-      console.log('new RTCPeerConnection')
-      let pc = new RTCPeerConnection();
+      console.log('new RTCPeerConnection');
+      pc = new RTCPeerConnection();
 
       pc.onicecandidate = function(evt) {
         if (!evt.candidate) {
-          pc.onicecandidate = function(){};
+          pc.onicecandidate = function() {};
           socket.emit('answer', pc.localDescription.sdp);
         }
       };
 
-      pc.oniceconnectionstatechange = function(evt) {
-        console.log('ice connection state changed to: ' + pc.iceConnectionState + "===================")
-      }
+      pc.oniceconnectionstatechange = function() {
+        console.log('ice connection state changed to: ' + pc.iceConnectionState + '===================');
+      };
 
-      pc.onsignalingstatechange = function(evt) {
-        console.log('signaling state changed to: ' + pc.signalingState + "===================")
-      }
+      pc.onsignalingstatechange = function() {
+        console.log('signaling state changed to: ' + pc.signalingState + '===================');
+      };
 
-      pc.onaddstream = function(evt) {
-        console.log('stream added')
-        console.log(evt)
+      pc.onaddstream = function() {
+        console.log('stream added');
+        console.log(evt);
         count++;
-      }
+      };
 
       pc.addStream(localStream);
       pc.setRemoteDescription(description)
       .then(function() {
-        return pc.createAnswer()
+        return pc.createAnswer();
       }).then(function(answer) {
         pc.setLocalDescription(answer)
         .then(() => {
-          socket.emit(answer)
-        })
+          socket.emit(answer);
+        });
       }).catch(function(err) {
         console.error(err);
       });
     } else {
-
       pc.setRemoteDescription(description)
       .then(function() {
-        console.log("done setRemoteDescription")
-        return pc.createAnswer()
+        console.log('done setRemoteDescription');
+        return pc.createAnswer();
       }).then(function(answer) {
-        console.log("done createAnswer")
+        console.log('done createAnswer');
         pc.setLocalDescription(answer)
         .then(() => {
-          console.log("done setLocalDescription")
-        })
+          console.log('done setLocalDescription');
+        });
       }).catch(function(err) {
         console.error(err);
       });
-    };
-
-
+    }
   }
 
   sendAnswer() {
     // This should be an emit (probably)
   }
 
-
-
   //
   // Event Handlers
   //
   _setupNegotiatorMessageHandlers() {
-    this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
+    this._negotiator.on(RoomNegotiator.EVENTS.answerCreated.key, answer => {
       const connectionAnswer = {
         answer:         answer,
         dst:            this.remoteId,
@@ -190,7 +190,7 @@ class Room extends EventEmitter {
       this.emit(Connection.EVENTS.answer.key, connectionAnswer);
     });
 
-    this._negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
+    this._negotiator.on(RoomNegotiator.EVENTS.offerCreated.key, offer => {
       const connectionOffer = {
         offer:          offer,
         dst:            this.remoteId,
@@ -207,7 +207,7 @@ class Room extends EventEmitter {
       this.emit(Connection.EVENTS.offer.key, connectionOffer);
     });
 
-    this._negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
+    this._negotiator.on(RoomNegotiator.EVENTS.iceCandidate.key, candidate => {
       const connectionCandidate = {
         candidate:      candidate,
         dst:            this.remoteId,

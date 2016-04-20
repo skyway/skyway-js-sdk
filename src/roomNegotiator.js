@@ -41,17 +41,17 @@ class RoomNegotiator extends EventEmitter {
 
   _setupPCListeners() {
     this._pc.onaddstream = evt => {
-      // Do we need RoomNegotiator, or can we simply repurpose this?
+      // Do we need RoomRoomNegotiator, or can we simply repurpose this?
       util.log('Received remote media stream');
       const stream = evt.stream;
-      this.emit(Negotiator.EVENTS.addStream.key, stream);
+      this.emit(RoomNegotiator.EVENTS.addStream.key, stream);
     };
 
     this._pc.onicecandidate = evt => {
       const candidate = evt.candidate;
       if (candidate) {
         util.log('Generated ICE candidate for:', candidate);
-        this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
+        this.emit(RoomNegotiator.EVENTS.iceCandidate.key, candidate);
       } else {
         util.log('ICE canddidates gathering complete');
       }
@@ -74,11 +74,11 @@ class RoomNegotiator extends EventEmitter {
           break;
         case 'failed':
           util.log('iceConnectionState is failed, closing connection');
-          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
+          this.emit(RoomNegotiator.EVENTS.iceConnectionDisconnected.key);
           break;
         case 'disconnected':
           util.log('iceConnectionState is disconnected, closing connection');
-          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
+          this.emit(RoomNegotiator.EVENTS.iceConnectionDisconnected.key);
           break;
         case 'closed':
           util.log('iceConnectionState is closed');
@@ -149,7 +149,7 @@ class RoomNegotiator extends EventEmitter {
     return new Promise((resolve, reject) => {
       this._pc.setLocalDescription(offer, () => {
         util.log('Set localDescription: offer');
-        this.emit(Negotiator.EVENTS.offerCreated.key, offer);
+        this.emit(RoomNegotiator.EVENTS.offerCreated.key, offer);
         resolve(offer);
       }, error => {
         this.emitError('webrtc', error);
@@ -173,7 +173,7 @@ class RoomNegotiator extends EventEmitter {
       .then(() => {
         return this._makeAnswerSdp();
       }).then(answer => {
-        this.emit(Negotiator.EVENTS.answerCreated.key, answer);
+        this.emit(RoomNegotiator.EVENTS.answerCreated.key, answer);
       });
   }
 
@@ -225,12 +225,12 @@ class RoomNegotiator extends EventEmitter {
     }
 
     err.type = type;
-    this.emit(Negotiator.EVENTS.error.key, err);
+    this.emit(RoomNegotiator.EVENTS.error.key, err);
   }
 
   static get EVENTS() {
-    return NegotiatorEvents;
+    return RoomNegotiatorEvents;
   }
 }
 
-module.exports = Negotiator;
+module.exports = RoomNegotiator;
