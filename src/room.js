@@ -37,6 +37,11 @@ class Room extends EventEmitter {
       this.open = true;
       this.emit(Room.EVENTS.open.key);
       console.log('Joined room ' + this.name + '.');
+
+      // At this stage the Server has acknowledged us joining a room
+      // Now we send a JVB OFFER request to the Server
+      // (This should happen automatically when joining a room)
+
       return;
     }
 
@@ -60,16 +65,12 @@ class Room extends EventEmitter {
     this.emit(Room.EVENTS.data.key, message);
   }
 
-  requestOffer() {
-    // Request OFFER from server
-  }
-
   handleOffer(message) {
-
+    // Handle JVB Offer and send Answer to Server
   }
 
   sendAnswer() {
-
+    // Necessary?
   }
 
   handleSSRCs() {

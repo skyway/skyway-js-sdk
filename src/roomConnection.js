@@ -1,7 +1,7 @@
 'use strict';
 
 const Connection = require('./connection');
-const Negotiator = require('./negotiator');
+const RoomNegotiator = require('./roomNegotiator');
 const util = require('./util');
 
 class RoomConnection extends Connection {
@@ -10,6 +10,8 @@ class RoomConnection extends Connection {
 
     this._idPrefix = 'rc_';
     this.type = 'room';
+    // We need to reassign _negotiator to be a RoomNegotiator
+    this._negotiator = new RoomNegotiator(this);
 
     this.localStream = this.options._stream;
     this._pcAvailable = false;
