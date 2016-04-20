@@ -41,15 +41,10 @@ class RoomNegotiator extends EventEmitter {
 
   _setupPCListeners() {
     this._pc.onaddstream = evt => {
+      // Do we need RoomNegotiator, or can we simply repurpose this?
       util.log('Received remote media stream');
       const stream = evt.stream;
       this.emit(Negotiator.EVENTS.addStream.key, stream);
-    };
-
-    this._pc.ondatachannel = evt => {
-      util.log('Received data channel');
-      const dc = evt.channel;
-      this.emit(Negotiator.EVENTS.dcReady.key, dc);
     };
 
     this._pc.onicecandidate = evt => {
