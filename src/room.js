@@ -32,7 +32,7 @@ class Room extends EventEmitter {
     this._options = options || {};
     this._peerId = this._options.peerId;
 
-    this.localStream = this.options._stream;
+    this.localStream = this._options._stream;
     this.remoteStreams = {};
 
     this._pcAvailable = false;
@@ -107,7 +107,17 @@ class Room extends EventEmitter {
     // Handle JVB Offer and send Answer to Server
     console.log('RoomConnection setting offer', offer);
     let description = new RTCSessionDescription({type: 'offer', sdp: offer});
-    if (!this._pc) {
+    if (this._pc) {
+      this._pc.setRemoteDescription(description, () => {
+        console.log('done setRemoteDescription');
+        this._pc.createAnswer(answer => {
+          console.log('done createAnswer');
+          this._pc.setLocalDescription(answer, () => {
+            console.log('done setLocalDescription');
+          });
+        });
+      });
+    } else {
       console.log('new RTCPeerConnection');
       this._pc = new RTCPeerConnection(this._options.pcConfig);
 
@@ -121,16 +131,6 @@ class Room extends EventEmitter {
         this._pc.createAnswer(answer => {
           this._pc.setLocalDescription(answer, () => {
             // this.emit(Room.MESSAGE_EVENTS.answer.key, answer);
-          });
-        });
-      });
-    } else {
-      this._pc.setRemoteDescription(description, () => {
-        console.log('done setRemoteDescription');
-        this._pc.createAnswer(answer => {
-          console.log('done createAnswer');
-          this._pc.setLocalDescription(answer, () => {
-            console.log('done setLocalDescription');
           });
         });
       });

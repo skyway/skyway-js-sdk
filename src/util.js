@@ -23,6 +23,7 @@ const MessageTypes = new Enum([
   'LEAVE',
   'EXPIRE',
   'CANDIDATE',
+  'ROOM_OFFER',
   'ROOM_JOIN',
   'ROOM_LEAVE',
   'ROOM_USER_JOIN',
