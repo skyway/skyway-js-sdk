@@ -480,6 +480,8 @@ describe('Negotiator', () => {
           assert(setRemoteSpy.calledWith(offer));
           done();
         }, waitForAsync);
+      }, err => {
+        assert.fail(err);
       });
     });
 
@@ -511,6 +513,8 @@ describe('Negotiator', () => {
 
           done();
         }, waitForAsync);
+      }, err => {
+        assert.fail(err);
       });
     });
   });
@@ -540,6 +544,8 @@ describe('Negotiator', () => {
           );
           done();
         }, waitForAsync);
+      }, err => {
+        assert.fail(err);
       });
     });
 
