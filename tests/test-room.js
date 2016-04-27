@@ -2,8 +2,11 @@
 
 const Room   = require('../src/room');
 
-const assert = require('power-assert');
-const sinon  = require('sinon');
+const shim              = require('../src/webrtcShim');
+const RTCPeerConnection = shim.RTCPeerConnection;
+
+const assert     = require('power-assert');
+const sinon      = require('sinon');
 
 describe('Room', () => {
   const roomName = 'testRoom';
@@ -45,7 +48,7 @@ describe('Room', () => {
     });
   });
 
-  describe('Handle Events', () => {
+  describe('Socket.io Events', () => {
     it('should add to the members array and emit when someone joins the room', () => {
       const peerId1 = 'peer1';
       const peerId2 = 'peer2';
@@ -119,6 +122,129 @@ describe('Room', () => {
       assert(spy.calledOnce);
       assert.equal(spy.args[0][0], Room.EVENTS.data.key);
       assert.deepEqual(spy.args[0][1], message);
+    });
+  });
+
+  describe('JVB', () => {
+    it('should setup a new PC when an offer is first handled', () => {
+      const peerId = 'peer';
+      const offer = 'offer';
+
+      const room = new Room(roomName, {peerId: peerId});
+      room.open = true;
+      assert.equal(room._pc, null);
+
+      room.handleOffer(offer);
+      assert(room._pc instanceof RTCPeerConnection);
+    });
+
+    it('should call setRemoteDescription on the PC when an offer is handled', () => {
+      const offer = 'offer';
+      const peerId = 'peer';
+
+      const spy = sinon.spy();
+      const pc = {setRemoteDescription: spy};
+
+      const room = new Room(roomName, {peerId: peerId});
+      room.open = true;
+      room._pc = pc;
+      room.handleOffer(offer);
+      assert(spy.calledOnce);
+    });
+
+    it('should call createAnswer when setRemoteDescription completes', () => {
+      const offer = 'offer';
+      const peerId = 'peer';
+
+      const setRemoteDescription = (description, callback) => {
+        callback();
+      };
+
+      const spy = sinon.spy();
+      const pc = {setRemoteDescription: setRemoteDescription, createAnswer: spy};
+
+      const room = new Room(roomName, {peerId: peerId});
+      room.open = true;
+      room._pc = pc;
+      room.handleOffer(offer);
+      assert(spy.calledOnce);
+    });
+
+    it('should call setLocalDescription when createAnswer completes', () => {
+      const offer = 'offer';
+      const peerId = 'peer';
+
+      const setRemoteDescription = (description, callback) => {
+        callback();
+      };
+      const createAnswer = callback => {
+        callback();
+      };
+
+      const spy = sinon.spy();
+      const pc = {setRemoteDescription: setRemoteDescription,
+                  createAnswer:         createAnswer,
+                  setLocalDescription:  spy};
+
+      const room = new Room(roomName, {peerId: peerId});
+      room.open = true;
+      room._pc = pc;
+      room.handleOffer(offer);
+      assert(spy.calledOnce);
+    });
+  });
+
+  describe('_setupPCListeners', () => {
+    it('should set up PeerConnection listeners', () => {
+      const offer = 'offer';
+      const peerId = 'peer';
+
+      const room = new Room(roomName, {peerId: peerId});
+      room.open = true;
+      room.handleOffer(offer);
+
+      const pc = room._pc;
+
+      assert(pc.onaddstream);
+      assert(pc.onicecandidate);
+      assert(pc.oniceconnectionstatechange);
+      assert(pc.onremovestream);
+      assert(pc.onsignalingstatechange);
+    });
+
+    describe('RTCPeerConnection\'s event listeners', () => {
+      const offer = 'offer';
+      const peerId = 'peer';
+      let room;
+      let pc;
+      let ev;
+
+      beforeEach(() => {
+        room = new Room(roomName, {peerId: peerId});
+        room.open = true;
+        room.handleOffer(offer);
+        pc = room._pc;
+
+        ev = {id: 'foobar'};
+      });
+
+      describe('onaddstream', () => {
+        it('should set remote stream on a onaddstream event', () => {
+          ev.stream = 'stream';
+          pc.onaddstream(ev);
+          assert.equal(room.remoteStreams.foobar, ev);
+        });
+      });
+
+      describe('onicecandidate', () => {
+        it('should emit \'answer\' upon receiving onicecandidate', done => {
+          room.on(Room.MESSAGE_EVENTS.answer.key, () => {
+            done();
+          });
+
+          pc.onicecandidate(ev);
+        });
+      });
     });
   });
 
