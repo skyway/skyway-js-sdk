@@ -50,7 +50,6 @@ class Room extends EventEmitter {
     if (src === this._peerId) {
       this.open = true;
       this.emit(Room.EVENTS.open.key);
-      console.log('Joined room ' + this.name + '.');
 
       // At this stage the Server has acknowledged us joining a room
       return;
@@ -93,6 +92,10 @@ class Room extends EventEmitter {
       return;
     }
 
+    if (this._pc) {
+      this._pc.close();
+    }
+
     const message = {
       roomName: this.name
     };
@@ -100,25 +103,19 @@ class Room extends EventEmitter {
     this.emit(Room.EVENTS.close.key);
   }
 
-  //
-  // Handle JVB related events
-  //
   handleOffer(offer) {
-    // Handle JVB Offer and send Answer to Server
-    console.log('RoomConnection setting offer', offer);
-    let description = new RTCSessionDescription({type: 'offer', sdp: offer});
+    // Handle SFU Offer and send Answer to Server
+    let description = new RTCSessionDescription(offer);
     if (this._pc) {
       this._pc.setRemoteDescription(description, () => {
-        console.log('done setRemoteDescription');
         this._pc.createAnswer(answer => {
-          console.log('done createAnswer');
           this._pc.setLocalDescription(answer, () => {
-            console.log('done setLocalDescription');
           });
         });
+      }, e => {
+        util.error('Problem setting remote offer', e);
       });
     } else {
-      console.log('new RTCPeerConnection');
       this._pc = new RTCPeerConnection(this._options.pcConfig);
 
       this._setupPCListeners();
@@ -129,17 +126,18 @@ class Room extends EventEmitter {
 
       this._pc.setRemoteDescription(description, () => {
         this._pc.createAnswer(answer => {
-          this._pc.setLocalDescription(answer, () => {
-            // this.emit(Room.MESSAGE_EVENTS.answer.key, answer);
-          });
+          this._pc.setLocalDescription(answer, () => {});
         });
+      }, e => {
+        util.error('Problem setting remote offer', e);
       });
     }
   }
 
   _setupPCListeners() {
-    this._pc.onaddstream = remoteStream => {
+    this._pc.onaddstream = evt => {
       util.log('Received remote media stream');
+      const remoteStream = evt.stream;
 
       // TODO: filter out unnecessary streams (streamUpdated()?)
       // TODO: Is this id correct?
@@ -151,7 +149,11 @@ class Room extends EventEmitter {
       if (!evt.candidate) {
         util.log('ICE canddidates gathering complete');
         this._pc.onicecandidate = () => {};
-        this.emit(Room.MESSAGE_EVENTS.answer.key, this._pc.localDescription.sdp);
+        const answerMessage = {
+          roomName: this.name,
+          answer:   this._pc.localDescription
+        };
+        this.emit(Room.MESSAGE_EVENTS.answer.key, answerMessage);
       }
     };
 
