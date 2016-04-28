@@ -62,7 +62,7 @@
     function step3 (room) {
       // Wait for stream on the call, then set peer video display
       room.on('stream', function(stream){
-        $('#their-video').prop('src', URL.createObjectURL(stream));
+        $('#their-videos').append($('<video autoplay class="remoteVideos">').prop('src', URL.createObjectURL(stream)));
       });
       // UI stuff
       room.on('close', step2);
@@ -80,7 +80,7 @@
 
   <!-- Video area -->
   <div class="pure-u-2-3" id="video-container">
-    <video id="their-video" autoplay></video>
+    <div id="their-videos"></div>
     <video id="my-video" muted="true" autoplay></video>
   </div>
 
