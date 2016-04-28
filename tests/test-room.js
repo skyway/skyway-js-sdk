@@ -229,10 +229,17 @@ describe('Room', () => {
       });
 
       describe('onaddstream', () => {
-        it('should set remote stream on a onaddstream event', () => {
+        it('should set remote stream and emit on a onaddstream event', () => {
           ev.stream = 'stream';
+          const spy = sinon.spy();
+          room.emit = spy;
+
           pc.onaddstream(ev);
+
           assert.equal(room.remoteStreams.foobar, ev.stream);
+          assert(spy.calledOnce);
+          assert.equal(spy.args[0][0], Room.EVENTS.stream.key);
+          assert.equal(spy.args[0][1], ev.stream);
         });
       });
 
