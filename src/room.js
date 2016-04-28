@@ -109,8 +109,13 @@ class Room extends EventEmitter {
     if (this._pc) {
       this._pc.setRemoteDescription(description, () => {
         this._pc.createAnswer(answer => {
-          this._pc.setLocalDescription(answer, () => {
-          });
+          this._pc.setLocalDescription(answer,
+            () => {},
+            e => {
+              util.error('Problem setting localDescription', e);
+            });
+        }, e => {
+          util.error('Problem creating answer', e);
         });
       }, e => {
         util.error('Problem setting remote offer', e);
@@ -126,7 +131,13 @@ class Room extends EventEmitter {
 
       this._pc.setRemoteDescription(description, () => {
         this._pc.createAnswer(answer => {
-          this._pc.setLocalDescription(answer, () => {});
+          this._pc.setLocalDescription(answer,
+            () => {},
+            e => {
+              util.error('Problem setting localDescription', e);
+            });
+        }, e => {
+          util.error('Problem creating answer', e);
         });
       }, e => {
         util.error('Problem setting remote offer', e);
@@ -142,7 +153,7 @@ class Room extends EventEmitter {
       // TODO: filter out unnecessary streams (streamUpdated()?)
       // TODO: Is this id correct?
       this.remoteStreams[evt.id] = remoteStream;
-      this.emit('stream', evt);
+      this.emit('stream', remoteStream);
     };
 
     this._pc.onicecandidate = evt => {
