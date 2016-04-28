@@ -128,7 +128,7 @@ describe('Room', () => {
   describe('JVB', () => {
     it('should setup a new PC when an offer is first handled', () => {
       const peerId = 'peer';
-      const offer = 'offer';
+      const offer = {};
 
       const room = new Room(roomName, {peerId: peerId});
       room.open = true;
@@ -139,7 +139,7 @@ describe('Room', () => {
     });
 
     it('should call setRemoteDescription on the PC when an offer is handled', () => {
-      const offer = 'offer';
+      const offer = {};
       const peerId = 'peer';
 
       const spy = sinon.spy();
@@ -153,7 +153,7 @@ describe('Room', () => {
     });
 
     it('should call createAnswer when setRemoteDescription completes', () => {
-      const offer = 'offer';
+      const offer = {};
       const peerId = 'peer';
 
       const setRemoteDescription = (description, callback) => {
@@ -171,7 +171,7 @@ describe('Room', () => {
     });
 
     it('should call setLocalDescription when createAnswer completes', () => {
-      const offer = 'offer';
+      const offer = {};
       const peerId = 'peer';
 
       const setRemoteDescription = (description, callback) => {
@@ -196,7 +196,7 @@ describe('Room', () => {
 
   describe('_setupPCListeners', () => {
     it('should set up PeerConnection listeners', () => {
-      const offer = 'offer';
+      const offer = {};
       const peerId = 'peer';
 
       const room = new Room(roomName, {peerId: peerId});
@@ -213,7 +213,7 @@ describe('Room', () => {
     });
 
     describe('RTCPeerConnection\'s event listeners', () => {
-      const offer = 'offer';
+      const offer = {};
       const peerId = 'peer';
       let room;
       let pc;
@@ -232,7 +232,7 @@ describe('Room', () => {
         it('should set remote stream on a onaddstream event', () => {
           ev.stream = 'stream';
           pc.onaddstream(ev);
-          assert.equal(room.remoteStreams.foobar, ev);
+          assert.equal(room.remoteStreams.foobar, ev.stream);
         });
       });
 

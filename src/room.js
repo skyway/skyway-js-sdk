@@ -141,8 +141,8 @@ class Room extends EventEmitter {
 
       // TODO: filter out unnecessary streams (streamUpdated()?)
       // TODO: Is this id correct?
-      this.remoteStreams[remoteStream.id] = remoteStream;
-      this.emit('stream', remoteStream);
+      this.remoteStreams[evt.id] = remoteStream;
+      this.emit('stream', evt);
     };
 
     this._pc.onicecandidate = evt => {
