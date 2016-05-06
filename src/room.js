@@ -151,8 +151,7 @@ class Room extends EventEmitter {
       const remoteStream = evt.stream;
 
       // TODO: filter out unnecessary streams (streamUpdated()?)
-      // TODO: Is this id correct?
-      this.remoteStreams[evt.id] = remoteStream;
+      this.remoteStreams[remoteStream.id] = remoteStream;
       this.emit(Room.EVENTS.stream.key, remoteStream);
     };
 
