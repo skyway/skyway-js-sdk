@@ -26642,7 +26642,7 @@ var Connection = function (_EventEmitter) {
 
 module.exports = Connection;
 
-},{"./negotiator":66,"./util":69,"enum":32,"events":33}],64:[function(require,module,exports){
+},{"./negotiator":66,"./util":70,"enum":32,"events":33}],64:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -26902,7 +26902,7 @@ var DataConnection = function (_Connection) {
 module.exports = DataConnection;
 
 }).call(this,require("buffer").Buffer)
-},{"./connection":63,"./util":69,"buffer":8,"enum":32,"object-sizeof":44}],65:[function(require,module,exports){
+},{"./connection":63,"./util":70,"buffer":8,"enum":32,"object-sizeof":44}],65:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -26986,7 +26986,7 @@ var MediaConnection = function (_Connection) {
 
 module.exports = MediaConnection;
 
-},{"./connection":63,"./negotiator":66,"./util":69}],66:[function(require,module,exports){
+},{"./connection":63,"./negotiator":66,"./util":70}],66:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -27274,7 +27274,7 @@ var Negotiator = function (_EventEmitter) {
 
 module.exports = Negotiator;
 
-},{"../src/webrtcShim":70,"./util":69,"enum":32,"events":33}],67:[function(require,module,exports){
+},{"../src/webrtcShim":71,"./util":70,"enum":32,"events":33}],67:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -27288,6 +27288,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var Connection = require('./connection');
 var DataConnection = require('./dataConnection');
 var MediaConnection = require('./mediaConnection');
+var Room = require('./room');
 var Socket = require('./socket');
 var util = require('./util');
 
@@ -27308,6 +27309,7 @@ var Peer = function (_EventEmitter) {
 
     _this.open = false;
     _this.connections = {};
+    _this.rooms = {};
 
     // to prevent duplicate calls to destroy/disconnect
     _this._disconnectCalled = false;
@@ -27366,7 +27368,7 @@ var Peer = function (_EventEmitter) {
       }
 
       options = options || {};
-      options.pcConfig = this.options.config;
+      options.pcConfig = this._pcConfig;
       var connection = new DataConnection(peerId, options);
       util.log('DataConnection created in connect method');
       this._addConnection(peerId, connection);
@@ -27387,7 +27389,7 @@ var Peer = function (_EventEmitter) {
 
       options = options || {};
       options._stream = stream;
-      options.pcConfig = this.options.config;
+      options.pcConfig = this._pcConfig;
       var mc = new MediaConnection(peerId, options);
       util.log('MediaConnection created in call method');
       this._addConnection(peerId, mc);
@@ -27467,6 +27469,46 @@ var Peer = function (_EventEmitter) {
       }, 0);
     }
   }, {
+    key: 'joinRoom',
+    value: function joinRoom(roomName, roomOptions) {
+      if (this.rooms[roomName]) {
+        return this.rooms[roomName];
+      }
+
+      if (!roomOptions) {
+        roomOptions = {};
+      }
+      roomOptions.pcConfig = this._pcConfig;
+
+      var room = new Room(roomName, roomOptions);
+      this.rooms[roomName] = room;
+
+      this._setupRoomMessageHandlers(room);
+
+      var data = {
+        roomName: roomName,
+        roomOptions: roomOptions
+      };
+      this.socket.send(util.MESSAGE_TYPES.ROOM_JOIN.key, data);
+
+      return room;
+    }
+  }, {
+    key: '_setupRoomMessageHandlers',
+    value: function _setupRoomMessageHandlers(room) {
+      var _this3 = this;
+
+      room.on(Room.MESSAGE_EVENTS.broadcast.key, function (sendMessage) {
+        _this3.socket.send(util.MESSAGE_TYPES.ROOM_DATA.key, sendMessage);
+      });
+      room.on(Room.MESSAGE_EVENTS.leave.key, function (leaveMessage) {
+        _this3.socket.send(util.MESSAGE_TYPES.ROOM_LEAVE.key, leaveMessage);
+      });
+      room.on(Room.MESSAGE_EVENTS.answer.key, function (answerMessage) {
+        _this3.socket.send(util.MESSAGE_TYPES.ROOM_ANSWER.key, answerMessage);
+      });
+    }
+  }, {
     key: 'reconnect',
     value: function reconnect() {}
   }, {
@@ -27510,91 +27552,118 @@ var Peer = function (_EventEmitter) {
   }, {
     key: '_delayedAbort',
     value: function _delayedAbort(type, message) {
-      var _this3 = this;
+      var _this4 = this;
 
       setTimeout(function () {
-        _this3._abort(type, message);
+        _this4._abort(type, message);
       }, 0);
     }
   }, {
     key: '_initializeServerConnection',
     value: function _initializeServerConnection(id) {
-      var _this4 = this;
+      var _this5 = this;
 
       this.socket = new Socket(this.options.secure, this.options.host, this.options.port, this.options.key);
 
       this._setupMessageHandlers();
 
       this.socket.on('error', function (error) {
-        _this4._abort('socket-error', error);
+        _this5._abort('socket-error', error);
       });
 
       this.socket.on('disconnect', function () {
         // If we haven't explicitly disconnected, emit error and disconnect.
-        if (!_this4._disconnectCalled) {
-          _this4.disconnect();
-          _this4.emitError('socket-error', 'Lost connection to server.');
+        if (!_this5._disconnectCalled) {
+          _this5.disconnect();
+          _this5.emitError('socket-error', 'Lost connection to server.');
         }
       });
 
       this.socket.start(id, this.options.token);
 
       window.onbeforeunload = function () {
-        _this4.destroy();
+        _this5.destroy();
       };
     }
   }, {
     key: '_setupMessageHandlers',
     value: function _setupMessageHandlers() {
-      var _this5 = this;
+      var _this6 = this;
 
       this.socket.on(util.MESSAGE_TYPES.OPEN.key, function (openMessage) {
-        _this5.id = openMessage.peerId;
-        _this5.open = true;
+        _this6.id = openMessage.peerId;
+        _this6.open = true;
+        _this6._pcConfig = Object.assign({}, _this6.options.config);
+
+        // make a copy of iceServers as Object.assign still retains the reference
+        var iceServers = _this6._pcConfig.iceServers;
+        _this6._pcConfig.iceServers = iceServers ? iceServers.slice() : [];
 
         // Set up turn credentials
         var credential = openMessage.turnCredential;
-        if (_this5.options.turn === true && credential) {
-          _this5.options.config.iceServers.push({
-            urls: 'turn:' + util.TURN_HOST + ':' + util.TURN_PORT + '?transport=tcp',
-            url: 'turn:' + util.TURN_HOST + ':' + util.TURN_PORT + '?transport=tcp',
+        if (_this6.options.turn === true && credential) {
+          // possible turn types are turn-tcp, turns-tcp, turn-udp
+          var turnCombinations = [{ protocol: 'turn', transport: 'tcp' }, { protocol: 'turns', transport: 'tcp' }, { protocol: 'turn', transport: 'udp' }];
+          var _iteratorNormalCompletion2 = true;
+          var _didIteratorError2 = false;
+          var _iteratorError2 = undefined;
 
-            username: _this5.options.key + '$' + _this5.id,
-            credential: credential
-          });
-          _this5.options.config.iceServers.push({
-            urls: 'turn:' + util.TURN_HOST + ':' + util.TURN_PORT + '?transport=udp',
-            url: 'turn:' + util.TURN_HOST + ':' + util.TURN_PORT + '?transport=udp',
+          try {
+            for (var _iterator2 = turnCombinations[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+              var turnType = _step2.value;
 
-            username: _this5.options.key + '$' + _this5.id,
-            credential: credential
-          });
-          _this5.options.config.iceTransportPolicy = _this5.options.config.iceTransportPolicy || 'all';
+              var protocol = turnType.protocol;
+              var transport = turnType.transport;
+
+              var iceServer = {
+                urls: protocol + ':' + util.TURN_HOST + ':' + util.TURN_PORT + '?transport=' + transport,
+                url: protocol + ':' + util.TURN_HOST + ':' + util.TURN_PORT + '?transport=' + transport,
+
+                username: _this6.options.key + '$' + _this6.id,
+                credential: credential
+              };
+
+              _this6._pcConfig.iceServers.push(iceServer);
+            }
+          } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+              }
+            } finally {
+              if (_didIteratorError2) {
+                throw _iteratorError2;
+              }
+            }
+          }
 
           util.log('SkyWay TURN Server is available');
         } else {
           util.log('SkyWay TURN Server is unavailable');
         }
 
-        _this5.emit(Peer.EVENTS.open.key, _this5.id);
+        _this6.emit(Peer.EVENTS.open.key, _this6.id);
       });
 
       this.socket.on(util.MESSAGE_TYPES.ERROR.key, function (error) {
-        _this5._abort('server-error', error);
+        _this6._abort('server-error', error);
       });
 
       this.socket.on(util.MESSAGE_TYPES.LEAVE.key, function (peerId) {
         util.log('Received leave message from ' + peerId);
-        _this5._cleanupPeer(peerId);
+        _this6._cleanupPeer(peerId);
       });
 
       this.socket.on(util.MESSAGE_TYPES.EXPIRE.key, function (peerId) {
-        _this5.emitError('peer-unavailable', 'Could not connect to peer ' + peerId);
+        _this6.emitError('peer-unavailable', 'Could not connect to peer ' + peerId);
       });
 
       this.socket.on(util.MESSAGE_TYPES.OFFER.key, function (offerMessage) {
         var connectionId = offerMessage.connectionId;
-        var connection = _this5.getConnection(offerMessage.src, connectionId);
+        var connection = _this6.getConnection(offerMessage.src, connectionId);
 
         if (connection) {
           util.warn('Offer received for existing Connection ID:', connectionId);
@@ -27606,13 +27675,13 @@ var Peer = function (_EventEmitter) {
             connectionId: connectionId,
             _payload: offerMessage,
             metadata: offerMessage.metadata,
-            _queuedMessages: _this5._queuedMessages[connectionId],
-            pcConfig: _this5.options.config
+            _queuedMessages: _this6._queuedMessages[connectionId],
+            pcConfig: _this6._pcConfig
           });
 
           util.log('MediaConnection created in OFFER');
-          _this5._addConnection(offerMessage.src, connection);
-          _this5.emit(Peer.EVENTS.call.key, connection);
+          _this6._addConnection(offerMessage.src, connection);
+          _this6.emit(Peer.EVENTS.call.key, connection);
         } else if (offerMessage.connectionType === 'data') {
           connection = new DataConnection(offerMessage.src, {
             connectionId: connectionId,
@@ -27620,37 +27689,65 @@ var Peer = function (_EventEmitter) {
             metadata: offerMessage.metadata,
             label: offerMessage.label,
             serialization: offerMessage.serialization,
-            _queuedMessages: _this5._queuedMessages[connectionId],
-            pcConfig: _this5.options.config
+            _queuedMessages: _this6._queuedMessages[connectionId],
+            pcConfig: _this6._pcConfig
           });
 
           util.log('DataConnection created in OFFER');
-          _this5._addConnection(offerMessage.src, connection);
-          _this5.emit(Peer.EVENTS.connection.key, connection);
+          _this6._addConnection(offerMessage.src, connection);
+          _this6.emit(Peer.EVENTS.connection.key, connection);
         } else {
           util.warn('Received malformed connection type: ', offerMessage.connectionType);
         }
 
-        delete _this5._queuedMessages[connectionId];
+        delete _this6._queuedMessages[connectionId];
+      });
+
+      this.socket.on(util.MESSAGE_TYPES.ROOM_OFFER.key, function (offerMessage) {
+        // We want the Room class to handle this instead
+        // The Room class acts as RoomConnection
+        _this6.rooms[offerMessage.roomName].handleOffer(offerMessage.offer);
+        // NOTE: Room has already been created and added to this.rooms
       });
 
       this.socket.on(util.MESSAGE_TYPES.ANSWER.key, function (answerMessage) {
-        var connection = _this5.getConnection(answerMessage.src, answerMessage.connectionId);
+        var connection = _this6.getConnection(answerMessage.src, answerMessage.connectionId);
 
         if (connection) {
           connection.handleAnswer(answerMessage);
         } else {
-          _this5._storeMessage(util.MESSAGE_TYPES.ANSWER.key, answerMessage);
+          _this6._storeMessage(util.MESSAGE_TYPES.ANSWER.key, answerMessage);
         }
       });
 
       this.socket.on(util.MESSAGE_TYPES.CANDIDATE.key, function (candidateMessage) {
-        var connection = _this5.getConnection(candidateMessage.src, candidateMessage.connectionId);
+        var connection = _this6.getConnection(candidateMessage.src, candidateMessage.connectionId);
 
         if (connection) {
           connection.handleCandidate(candidateMessage);
         } else {
-          _this5._storeMessage(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
+          _this6._storeMessage(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
+        }
+      });
+
+      this.socket.on(util.MESSAGE_TYPES.ROOM_USER_JOIN.key, function (roomUserJoinMessage) {
+        var room = _this6.rooms[roomUserJoinMessage.roomName];
+        if (room) {
+          room.handleJoin(roomUserJoinMessage);
+        }
+      });
+
+      this.socket.on(util.MESSAGE_TYPES.ROOM_USER_LEAVE.key, function (roomUserLeaveMessage) {
+        var room = _this6.rooms[roomUserLeaveMessage.roomName];
+        if (room) {
+          room.handleLeave(roomUserLeaveMessage);
+        }
+      });
+
+      this.socket.on(util.MESSAGE_TYPES.ROOM_DATA.key, function (roomDataMessage) {
+        var room = _this6.rooms[roomDataMessage.roomName];
+        if (room) {
+          room.handleData(roomDataMessage);
         }
       });
     }
@@ -27662,21 +27759,21 @@ var Peer = function (_EventEmitter) {
       }
       this.connections[peerId].push(connection);
 
-      this._setupConnectionMessageHanders(connection);
+      this._setupConnectionMessageHandlers(connection);
     }
   }, {
-    key: '_setupConnectionMessageHanders',
-    value: function _setupConnectionMessageHanders(connection) {
-      var _this6 = this;
+    key: '_setupConnectionMessageHandlers',
+    value: function _setupConnectionMessageHandlers(connection) {
+      var _this7 = this;
 
       connection.on(Connection.EVENTS.candidate.key, function (candidateMessage) {
-        _this6.socket.send(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
+        _this7.socket.send(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
       });
       connection.on(Connection.EVENTS.answer.key, function (answerMessage) {
-        _this6.socket.send(util.MESSAGE_TYPES.ANSWER.key, answerMessage);
+        _this7.socket.send(util.MESSAGE_TYPES.ANSWER.key, answerMessage);
       });
       connection.on(Connection.EVENTS.offer.key, function (offerMessage) {
-        _this6.socket.send(util.MESSAGE_TYPES.OFFER.key, offerMessage);
+        _this7.socket.send(util.MESSAGE_TYPES.OFFER.key, offerMessage);
       });
     }
   }, {
@@ -27691,46 +27788,15 @@ var Peer = function (_EventEmitter) {
     key: '_cleanup',
     value: function _cleanup() {
       if (this.connections) {
-        var _iteratorNormalCompletion2 = true;
-        var _didIteratorError2 = false;
-        var _iteratorError2 = undefined;
-
-        try {
-          for (var _iterator2 = Object.keys(this.connections)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-            var peer = _step2.value;
-
-            this._cleanupPeer(peer);
-          }
-        } catch (err) {
-          _didIteratorError2 = true;
-          _iteratorError2 = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion2 && _iterator2.return) {
-              _iterator2.return();
-            }
-          } finally {
-            if (_didIteratorError2) {
-              throw _iteratorError2;
-            }
-          }
-        }
-      }
-      this.emit(Peer.EVENTS.close.key);
-    }
-  }, {
-    key: '_cleanupPeer',
-    value: function _cleanupPeer(peer) {
-      if (this.connections[peer]) {
         var _iteratorNormalCompletion3 = true;
         var _didIteratorError3 = false;
         var _iteratorError3 = undefined;
 
         try {
-          for (var _iterator3 = this.connections[peer][Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-            var connection = _step3.value;
+          for (var _iterator3 = Object.keys(this.connections)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+            var peer = _step3.value;
 
-            connection.close();
+            this._cleanupPeer(peer);
           }
         } catch (err) {
           _didIteratorError3 = true;
@@ -27743,6 +27809,37 @@ var Peer = function (_EventEmitter) {
           } finally {
             if (_didIteratorError3) {
               throw _iteratorError3;
+            }
+          }
+        }
+      }
+      this.emit(Peer.EVENTS.close.key);
+    }
+  }, {
+    key: '_cleanupPeer',
+    value: function _cleanupPeer(peer) {
+      if (this.connections[peer]) {
+        var _iteratorNormalCompletion4 = true;
+        var _didIteratorError4 = false;
+        var _iteratorError4 = undefined;
+
+        try {
+          for (var _iterator4 = this.connections[peer][Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+            var connection = _step4.value;
+
+            connection.close();
+          }
+        } catch (err) {
+          _didIteratorError4 = true;
+          _iteratorError4 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion4 && _iterator4.return) {
+              _iterator4.return();
+            }
+          } finally {
+            if (_didIteratorError4) {
+              throw _iteratorError4;
             }
           }
         }
@@ -27760,7 +27857,256 @@ var Peer = function (_EventEmitter) {
 
 module.exports = Peer;
 
-},{"./connection":63,"./dataConnection":64,"./mediaConnection":65,"./socket":68,"./util":69,"enum":32,"events":33}],68:[function(require,module,exports){
+},{"./connection":63,"./dataConnection":64,"./mediaConnection":65,"./room":68,"./socket":69,"./util":70,"enum":32,"events":33}],68:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var util = require('./util');
+
+var EventEmitter = require('events');
+var Enum = require('enum');
+
+var shim = require('../src/webrtcShim');
+var RTCPeerConnection = shim.RTCPeerConnection;
+
+var RoomEvents = new Enum(['stream', 'open', 'close', 'peerJoin', 'peerLeave', 'error', 'data']);
+
+var RoomMessageEvents = new Enum(['broadcast', 'leave', 'answer']);
+
+var Room = function (_EventEmitter) {
+  _inherits(Room, _EventEmitter);
+
+  function Room(name, options) {
+    _classCallCheck(this, Room);
+
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Room).call(this));
+
+    _this.name = name;
+    _this._options = options || {};
+    _this._peerId = _this._options.peerId;
+
+    _this.localStream = _this._options._stream;
+    _this.remoteStreams = {};
+
+    _this._pcAvailable = false;
+
+    _this.open = false;
+    _this.members = [];
+    return _this;
+  }
+
+  //
+  // Handle socket.io related events
+  //
+
+  _createClass(Room, [{
+    key: 'handleJoin',
+    value: function handleJoin(message) {
+      var src = message.src;
+
+      if (src === this._peerId) {
+        this.open = true;
+        this.emit(Room.EVENTS.open.key);
+
+        // At this stage the Server has acknowledged us joining a room
+        return;
+      }
+
+      this.members.push(src);
+      this.emit(Room.EVENTS.peerJoin.key, src);
+    }
+  }, {
+    key: 'handleLeave',
+    value: function handleLeave(message) {
+      if (!this.open) {
+        return;
+      }
+
+      var src = message.src;
+
+      var index = this.members.indexOf(src);
+      this.members.splice(index, 1);
+      this.emit(Room.EVENTS.peerLeave.key, src);
+    }
+  }, {
+    key: 'handleData',
+    value: function handleData(message) {
+      this.emit(Room.EVENTS.data.key, message);
+    }
+  }, {
+    key: 'send',
+    value: function send(data) {
+      if (!this.open) {
+        return;
+      }
+
+      var message = {
+        roomName: this.name,
+        data: data
+      };
+      this.emit(Room.MESSAGE_EVENTS.broadcast.key, message);
+    }
+  }, {
+    key: 'close',
+    value: function close() {
+      if (!this.open) {
+        return;
+      }
+
+      if (this._pc) {
+        this._pc.close();
+      }
+
+      var message = {
+        roomName: this.name
+      };
+      this.emit(Room.MESSAGE_EVENTS.leave.key, message);
+      this.emit(Room.EVENTS.close.key);
+    }
+  }, {
+    key: 'handleOffer',
+    value: function handleOffer(offer) {
+      var _this2 = this;
+
+      // Handle SFU Offer and send Answer to Server
+      var description = new RTCSessionDescription(offer);
+      if (this._pc) {
+        this._pc.setRemoteDescription(description, function () {
+          _this2._pc.createAnswer(function (answer) {
+            _this2._pc.setLocalDescription(answer, function () {});
+          });
+        }, function (e) {
+          util.error('Problem setting remote offer', e);
+        });
+      } else {
+        this._pc = new RTCPeerConnection(this._options.pcConfig);
+
+        this._setupPCListeners();
+
+        if (this.localStream) {
+          this._pc.addStream(this.localStream);
+        }
+
+        this._pc.setRemoteDescription(description, function () {
+          _this2._pc.createAnswer(function (answer) {
+            _this2._pc.setLocalDescription(answer, function () {});
+          });
+        }, function (e) {
+          util.error('Problem setting remote offer', e);
+        });
+      }
+    }
+  }, {
+    key: '_setupPCListeners',
+    value: function _setupPCListeners() {
+      var _this3 = this;
+
+      this._pc.onaddstream = function (evt) {
+        util.log('Received remote media stream');
+        var remoteStream = evt.stream;
+
+        // TODO: filter out unnecessary streams (streamUpdated()?)
+        // TODO: Is this id correct?
+        _this3.remoteStreams[evt.id] = remoteStream;
+        _this3.emit('stream', evt);
+      };
+
+      this._pc.onicecandidate = function (evt) {
+        if (!evt.candidate) {
+          util.log('ICE canddidates gathering complete');
+          _this3._pc.onicecandidate = function () {};
+          var answerMessage = {
+            roomName: _this3.name,
+            answer: _this3._pc.localDescription
+          };
+          _this3.emit(Room.MESSAGE_EVENTS.answer.key, answerMessage);
+        }
+      };
+
+      this._pc.oniceconnectionstatechange = function () {
+        switch (_this3._pc.iceConnectionState) {
+          case 'new':
+            util.log('iceConnectionState is new');
+            break;
+          case 'checking':
+            util.log('iceConnectionState is checking');
+            break;
+          case 'connected':
+            util.log('iceConnectionState is connected');
+            break;
+          case 'completed':
+            util.log('iceConnectionState is completed');
+            break;
+          case 'failed':
+            util.log('iceConnectionState is failed, closing connection');
+            break;
+          case 'disconnected':
+            util.log('iceConnectionState is disconnected, closing connection');
+            break;
+          case 'closed':
+            util.log('iceConnectionState is closed');
+            break;
+          default:
+            break;
+        }
+      };
+
+      this._pc.onremovestream = function () {
+        util.log('`removestream` triggered');
+      };
+
+      this._pc.onsignalingstatechange = function () {
+        switch (_this3._pc.signalingState) {
+          case 'stable':
+            util.log('signalingState is stable');
+            break;
+          case 'have-local-offer':
+            util.log('signalingState is have-local-offer');
+            break;
+          case 'have-remote-offer':
+            util.log('signalingState is have-remote-offer');
+            break;
+          case 'have-local-pranswer':
+            util.log('signalingState is have-local-pranswer');
+            break;
+          case 'have-remote-pranswer':
+            util.log('signalingState is have-remote-pranswer');
+            break;
+          case 'closed':
+            util.log('signalingState is closed');
+            break;
+          default:
+            break;
+        }
+      };
+
+      return this._pc;
+    }
+  }], [{
+    key: 'EVENTS',
+    get: function get() {
+      return RoomEvents;
+    }
+  }, {
+    key: 'MESSAGE_EVENTS',
+    get: function get() {
+      return RoomMessageEvents;
+    }
+  }]);
+
+  return Room;
+}(EventEmitter);
+
+module.exports = Room;
+
+},{"../src/webrtcShim":71,"./util":70,"enum":32,"events":33}],69:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -27913,7 +28259,7 @@ var Socket = function (_EventEmitter) {
 
 module.exports = Socket;
 
-},{"./util":69,"events":33,"socket.io-client":50}],69:[function(require,module,exports){
+},{"./util":70,"events":33,"socket.io-client":50}],70:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -27935,7 +28281,7 @@ var LogLevel = new Enum({
   FULL: 3
 });
 
-var MessageTypes = new Enum(['OPEN', 'ERROR', 'OFFER', 'ANSWER', 'LEAVE', 'EXPIRE', 'CANDIDATE']);
+var MessageTypes = new Enum(['OPEN', 'ERROR', 'OFFER', 'ANSWER', 'LEAVE', 'EXPIRE', 'CANDIDATE', 'ROOM_OFFER', 'ROOM_ANSWER', 'ROOM_JOIN', 'ROOM_LEAVE', 'ROOM_ANSWER', 'ROOM_USER_JOIN', 'ROOM_USER_LEAVE', 'ROOM_DATA']);
 
 var Util = function () {
   function Util() {
@@ -27965,7 +28311,8 @@ var Util = function () {
       iceServers: [{
         urls: 'stun:stun.skyway.io:3478',
         url: 'stun:stun.skyway.io:3478'
-      }]
+      }],
+      iceTransportPolicy: 'all'
     };
 
     // Returns the current browser.
@@ -28176,7 +28523,7 @@ var Util = function () {
 
 module.exports = new Util();
 
-},{"./webrtcShim":70,"enum":32,"js-binarypack":40}],70:[function(require,module,exports){
+},{"./webrtcShim":71,"enum":32,"js-binarypack":40}],71:[function(require,module,exports){
 "use strict";
 
 module.exports.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription;

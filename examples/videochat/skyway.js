@@ -1,1 +1,0 @@
-../../dist/skyway.js

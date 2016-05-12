@@ -4,6 +4,7 @@ const Peer            = require('../src/peer');
 const Socket          = require('../src/socket');
 const MediaConnection = require('../src/mediaConnection');
 const DataConnection  = require('../src/dataConnection');
+const Room            = require('../src/room');
 const util            = require('../src/util');
 
 const assert      = require('power-assert');
@@ -795,6 +796,49 @@ describe('Peer', () => {
         setTimeout(() => {
           assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
           done();
+        }, timeoutVal);
+      });
+    });
+
+    describe('Offer', () => {
+      it('should call handleOffer() on a room when a ROOM_OFFER message is received', done => {
+        const roomName = 'testRoom';
+        const offer = {roomName: roomName, offer: 'foobar'};
+
+        let spy = sinon.spy();
+        peer.socket._isOpen = true;
+
+        peer.joinRoom(roomName);
+        peer.rooms[roomName].handleOffer = spy;
+
+        peer.socket.emit(util.MESSAGE_TYPES.ROOM_OFFER.key, offer);
+
+        setTimeout(() => {
+          assert(spy.calledWith(offer.offer));
+          done();
+        }, timeoutVal);
+      });
+    });
+
+    describe('Answer', () => {
+      it('should correctly emit from Socket when sending a JVB signalling answer', done => {
+        const roomName = 'testRoom';
+
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+
+        const room = peer.joinRoom(roomName);
+        room.open = true;
+
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
+          room.emit(Room.MESSAGE_EVENTS.answer.key, 'foobar');
+
+          setTimeout(() => {
+            assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_ANSWER.key));
+            done();
+          }, timeoutVal);
         }, timeoutVal);
       });
     });
