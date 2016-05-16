@@ -12,7 +12,8 @@
       "align": "value"
     }],
     "max-nested-callbacks": [2,8],
-    "no-var": 2
+    "no-var": 2,
+    "max-len": [1, 120]
   },
   "env": {
     "browser": true,
