@@ -135,6 +135,16 @@ describe('MediaConnection', () => {
 
       mc._negotiator.emit(Negotiator.EVENTS.offerCreated.key, offer);
     });
+
+    it('should cleanup the connection on negotiator \'iceConnectionDisconnected\' event', () => {
+      mc.open = true;
+      let spy = sinon.spy(mc, 'close');
+
+      mc._negotiator.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
+
+      assert(spy.calledOnce);
+      assert.equal(mc.open, false);
+    });
   });
 
   describe('Add Stream', () => {

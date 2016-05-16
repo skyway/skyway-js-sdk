@@ -27980,7 +27980,11 @@ var Room = function (_EventEmitter) {
       if (this._pc) {
         this._pc.setRemoteDescription(description, function () {
           _this2._pc.createAnswer(function (answer) {
-            _this2._pc.setLocalDescription(answer, function () {});
+            _this2._pc.setLocalDescription(answer, function () {}, function (e) {
+              util.error('Problem setting localDescription', e);
+            });
+          }, function (e) {
+            util.error('Problem creating answer', e);
           });
         }, function (e) {
           util.error('Problem setting remote offer', e);
@@ -27996,7 +28000,11 @@ var Room = function (_EventEmitter) {
 
         this._pc.setRemoteDescription(description, function () {
           _this2._pc.createAnswer(function (answer) {
-            _this2._pc.setLocalDescription(answer, function () {});
+            _this2._pc.setLocalDescription(answer, function () {}, function (e) {
+              util.error('Problem setting localDescription', e);
+            });
+          }, function (e) {
+            util.error('Problem creating answer', e);
           });
         }, function (e) {
           util.error('Problem setting remote offer', e);
@@ -28013,9 +28021,8 @@ var Room = function (_EventEmitter) {
         var remoteStream = evt.stream;
 
         // TODO: filter out unnecessary streams (streamUpdated()?)
-        // TODO: Is this id correct?
-        _this3.remoteStreams[evt.id] = remoteStream;
-        _this3.emit('stream', evt);
+        _this3.remoteStreams[remoteStream.id] = remoteStream;
+        _this3.emit(Room.EVENTS.stream.key, remoteStream);
       };
 
       this._pc.onicecandidate = function (evt) {
