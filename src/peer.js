@@ -170,6 +170,10 @@ class Peer extends EventEmitter {
   }
 
   joinRoom(roomName, roomOptions) {
+    if (roomName === undefined) {
+      this.emitError('room-error', 'Room name must be defined.');
+    }
+
     if (this.rooms[roomName]) {
       return this.rooms[roomName];
     }
