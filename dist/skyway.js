@@ -26627,7 +26627,7 @@ var Connection = function (_EventEmitter) {
   }, {
     key: 'peer',
     get: function get() {
-      util.warn(this.constructor.name + '.peer is deprecated and may be removed from a future version. Please use ' + this.constructor.name + '.remoteId instead.');
+      util.warn(this.constructor.name + '.peer is deprecated and may be removed from a future version.' + (' Please use ' + this.constructor.name + '.remoteId instead.'));
       return this.remoteId;
     }
   }], [{
@@ -27579,6 +27579,11 @@ var Peer = function (_EventEmitter) {
         }
       });
 
+      this.socket.on('reconnect_failed', function (err) {
+        // On e.g. server timeout
+        console.log('hmm');
+      });
+
       this.socket.start(id, this.options.token);
 
       window.onbeforeunload = function () {
@@ -27980,7 +27985,11 @@ var Room = function (_EventEmitter) {
       if (this._pc) {
         this._pc.setRemoteDescription(description, function () {
           _this2._pc.createAnswer(function (answer) {
-            _this2._pc.setLocalDescription(answer, function () {});
+            _this2._pc.setLocalDescription(answer, function () {}, function (e) {
+              util.error('Problem setting localDescription', e);
+            });
+          }, function (e) {
+            util.error('Problem creating answer', e);
           });
         }, function (e) {
           util.error('Problem setting remote offer', e);
@@ -27996,7 +28005,11 @@ var Room = function (_EventEmitter) {
 
         this._pc.setRemoteDescription(description, function () {
           _this2._pc.createAnswer(function (answer) {
-            _this2._pc.setLocalDescription(answer, function () {});
+            _this2._pc.setLocalDescription(answer, function () {}, function (e) {
+              util.error('Problem setting localDescription', e);
+            });
+          }, function (e) {
+            util.error('Problem creating answer', e);
           });
         }, function (e) {
           util.error('Problem setting remote offer', e);
@@ -28013,9 +28026,8 @@ var Room = function (_EventEmitter) {
         var remoteStream = evt.stream;
 
         // TODO: filter out unnecessary streams (streamUpdated()?)
-        // TODO: Is this id correct?
-        _this3.remoteStreams[evt.id] = remoteStream;
-        _this3.emit('stream', evt);
+        _this3.remoteStreams[remoteStream.id] = remoteStream;
+        _this3.emit(Room.EVENTS.stream.key, remoteStream);
       };
 
       this._pc.onicecandidate = function (evt) {
@@ -28145,6 +28157,8 @@ var Socket = function (_EventEmitter) {
   _createClass(Socket, [{
     key: 'start',
     value: function start(id, token) {
+      var _this2 = this;
+
       var query = undefined;
       if (id) {
         query = 'apiKey=' + this._key + '&token=' + token + '&peerId=' + id;
@@ -28155,7 +28169,12 @@ var Socket = function (_EventEmitter) {
 
       this._io = io(this._httpUrl, {
         'force new connection': true,
-        'query': query
+        'query': query,
+        'reconnectionAttempts': 2
+      });
+
+      this._io.on('reconnect_failed', function () {
+        _this2.emit('error', 'Could not connect to server.');
       });
 
       this._setupMessageHandlers();
@@ -28189,30 +28208,30 @@ var Socket = function (_EventEmitter) {
   }, {
     key: '_setupMessageHandlers',
     value: function _setupMessageHandlers() {
-      var _this2 = this;
+      var _this3 = this;
 
       util.MESSAGE_TYPES.enums.forEach(function (type) {
         if (type.key === util.MESSAGE_TYPES.OPEN.key) {
-          _this2._io.on(type.key, function (openMessage) {
+          _this3._io.on(type.key, function (openMessage) {
             if (!openMessage || !openMessage.peerId) {
               return;
             }
 
-            _this2._isOpen = true;
-            if (!_this2._isPeerIdSet) {
+            _this3._isOpen = true;
+            if (!_this3._isPeerIdSet) {
               // set peerId for when reconnecting to the server
-              _this2._io.io.opts.query += '&peerId=' + openMessage.peerId;
-              _this2._isPeerIdSet = true;
+              _this3._io.io.opts.query += '&peerId=' + openMessage.peerId;
+              _this3._isPeerIdSet = true;
             }
 
-            _this2._sendQueuedMessages();
+            _this3._sendQueuedMessages();
 
             // To inform the peer that the socket successfully connected
-            _this2.emit(type.key, openMessage);
+            _this3.emit(type.key, openMessage);
           });
         } else {
-          _this2._io.on(type.key, function (message) {
-            _this2.emit(type.key, message);
+          _this3._io.on(type.key, function (message) {
+            console.log(type.key);
           });
         }
       });

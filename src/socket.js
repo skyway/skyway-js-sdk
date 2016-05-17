@@ -35,7 +35,12 @@ class Socket extends EventEmitter {
 
     this._io = io(this._httpUrl, {
       'force new connection': true,
-      'query':                query
+      'query':                query,
+      'reconnectionAttempts': 2
+    });
+
+    this._io.on('reconnect_failed', () => {
+      this.emit('error', 'Could not connect to server.');
     });
 
     this._setupMessageHandlers();
