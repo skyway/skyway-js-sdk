@@ -788,10 +788,12 @@ describe('Peer', () => {
         const errMsg = 'Room name must be defined.';
 
         peer.on('error', err => {
-          assert(err.type === 'room-error');
-          assert(err.message === errMsg);
-          assert.deepEqual(peer.rooms, {});
-          done();
+          setTimeout(() => {
+            assert(err.type === 'room-error');
+            assert(err.message === errMsg);
+            assert.deepEqual(peer.rooms, {});
+            done();
+          }, 0);
         });
 
         assert.deepEqual(peer.rooms, {});
