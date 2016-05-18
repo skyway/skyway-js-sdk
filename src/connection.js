@@ -128,7 +128,8 @@ class Connection extends EventEmitter {
   }
 
   get peer() {
-    util.warn(`${this.constructor.name}.peer is deprecated and may be removed from a future version. Please use ${this.constructor.name}.remoteId instead.`);
+    util.warn(`${this.constructor.name}.peer is deprecated and may be removed from a future version.` +
+        ` Please use ${this.constructor.name}.remoteId instead.`);
     return this.remoteId;
   }
 
