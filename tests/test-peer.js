@@ -781,6 +781,44 @@ describe('Peer', () => {
     });
 
     describe('Join', () => {
+      it('should abort if the room name is undefined', done => {
+        const roomName = undefined;
+        peer.socket._isOpen = true;
+
+        const errMsg = 'Room name must be defined.';
+
+        peer.on('error', err => {
+          setTimeout(() => {
+            assert(err.type === 'room-error');
+            assert(err.message === errMsg);
+            assert.deepEqual(peer.rooms, {});
+            done();
+          }, 0);
+        });
+
+        assert.deepEqual(peer.rooms, {});
+        peer.joinRoom(roomName);
+      });
+
+      it('should abort if the room name is an empty string', done => {
+        const roomName = '';
+        peer.socket._isOpen = true;
+
+        const errMsg = 'Room name must be defined.';
+
+        peer.on('error', err => {
+          setTimeout(() => {
+            assert(err.type === 'room-error');
+            assert(err.message === errMsg);
+            assert.deepEqual(peer.rooms, {});
+            done();
+          }, 0);
+        });
+
+        assert.deepEqual(peer.rooms, {});
+        peer.joinRoom(roomName);
+      });
+
       it('should create a new room and emit from Socket when joining a room', done => {
         const roomName = 'testRoom';
 
