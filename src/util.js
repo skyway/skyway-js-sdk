@@ -230,6 +230,14 @@ class Util {
     fr.readAsBinaryString(blob);
   }
 
+  blobToString(blob, cb) {
+    let fr = new FileReader();
+    fr.onload = event => {
+      cb(event.target.result);
+    };
+    fr.readAsText(blob);
+  }
+
   binaryStringToArrayBuffer(binary) {
     let byteArray = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) {

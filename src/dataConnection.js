@@ -75,6 +75,11 @@ class DataConnection extends Connection {
   }
 
   _handleDataMessage(msg) {
+    if (this.serialization === 'none') {
+      this.emit(DataConnection.EVENTS.data, msg);
+      return;
+    }
+
     const dataMeta = util.unpack(msg.data);
 
     // If we haven't started receiving pieces of data with a given id, this will be undefined
@@ -109,34 +114,22 @@ class DataConnection extends Connection {
       }
 
       if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
-        // We want to convert any type of data to an ArrayBuffer
-        util.blobToArrayBuffer(util.pack(blob), ab => {
-          // It seems there is an additional BinaryPack step included somewhere
-          // if serialization is 'binary'...
-          this.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
+        if (currData.type === 'string') {
+          util.blobToString(blob, str => {
+            this.emit(DataConnection.EVENTS.data.key, str);
+          });
+          return;
+        }
+        util.blobToArrayBuffer(blob, ab => {
+          this.emit(DataConnection.EVENTS.data.key, ab);
         });
       } else if (this.serialization === 'json') {
         // To convert back to JSON from Blob type, we need to convert to AB and unpack
-        // This is identical to 'binary' serialization processing, but keeping it separate for now
         util.blobToArrayBuffer(blob, ab => {
           this.emit(DataConnection.EVENTS.data.key, util.unpack(ab));
         });
-      } else if (this.serialization === 'none') {
-        // No serialization
-        if (currData.type === 'string') {
-          util.blobToBinaryString(blob, str => {
-            this.emit(DataConnection.EVENTS.data.key, str);
-          });
-        } else if (currData.type === 'arraybuffer') {
-          util.blobToArrayBuffer(blob, ab => {
-            this.emit(DataConnection.EVENTS.data.key, ab);
-          });
-        } else {
-          // Blob or File
-          this.emit(DataConnection.EVENTS.data.key, blob);
-          delete this._receivedData[dataMeta.id];
-        }
       }
+      delete this._receivedData[dataMeta.id];
     }
   }
 
@@ -149,14 +142,18 @@ class DataConnection extends Connection {
     let type;
     let size;
 
+    if (this.serialization === 'none') {
+      this._sendBuffer.push(data);
+      this._startSendLoop();
+      return;
+    }
+
     if (this.serialization === 'json') {
       type = 'json';
       // JSON undergoes an extra BinaryPack step for compression
       data = util.pack(data);
       size = data.size;
-    }
-
-    if (data instanceof File) {
+    } else if (data instanceof File) {
       type = 'file';
       size = data.size;
     } else if (data instanceof Blob) {
@@ -196,11 +193,16 @@ class DataConnection extends Connection {
       dataMeta.index = sliceIndex;
       dataMeta.data = slice;
 
-      // Add all chunks to our buffer and start the send loop (if we haven't already)
-      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        this._sendBuffer.push(ab);
+      if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
+        // Add all chunks to our buffer and start the send loop (if we haven't already)
+        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+          this._sendBuffer.push(ab);
+          this._startSendLoop();
+        });
+      } else {
+        this._sendBuffer.push(util.pack(dataMeta));
         this._startSendLoop();
-      });
+      }
     }
   }
 
