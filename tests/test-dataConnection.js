@@ -256,7 +256,7 @@ describe('DataConnection', () => {
         type:       typeof message
       };
 
-      const dc = new DataConnection('remoteId', {serialization: 'none'});
+      const dc = new DataConnection('remoteId');
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -399,7 +399,7 @@ describe('DataConnection', () => {
         type:       typeof slice2
       };
 
-      const dc = new DataConnection('remoteId', {serialization: 'none'});
+      const dc = new DataConnection('remoteId');
       dc._negotiator.emit('dcReady', {});
 
       dc.on('data', data => {
@@ -431,7 +431,7 @@ describe('DataConnection', () => {
     });
 
     it('should correctly send string messages', done => {
-      const message = 'foobar';
+      const message = 'foobar.　ほげホゲ文字化け。éü£ (ಠل͜ಠ)( ͡° ͜ʖ ͡°)(ง◕ᴥ◕)ง';
       let sendSpy = sinon.spy();
 
       const dc = new DataConnection('remoteId', {});

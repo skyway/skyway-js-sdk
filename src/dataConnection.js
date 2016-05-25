@@ -193,16 +193,11 @@ class DataConnection extends Connection {
       dataMeta.index = sliceIndex;
       dataMeta.data = slice;
 
-      if (this.serialization === 'binary' || this.serialization === 'binary-utf8') {
-        // Add all chunks to our buffer and start the send loop (if we haven't already)
-        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-          this._sendBuffer.push(ab);
-          this._startSendLoop();
-        });
-      } else {
-        this._sendBuffer.push(util.pack(dataMeta));
+      // Add all chunks to our buffer and start the send loop (if we haven't already)
+      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        this._sendBuffer.push(ab);
         this._startSendLoop();
-      }
+      });
     }
   }
 
