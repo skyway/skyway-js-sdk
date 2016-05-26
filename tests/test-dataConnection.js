@@ -243,6 +243,16 @@ describe('DataConnection', () => {
 
       dc._negotiator.emit(Negotiator.EVENTS.offerCreated.key, offer);
     });
+
+    it('should cleanup the connection on negotiator \'iceConnectionDisconnected\' event', () => {
+      dc.open = true;
+      let spy = sinon.spy(dc, 'close');
+
+      dc._negotiator.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
+
+      assert(spy.calledOnce);
+      assert.equal(dc.open, false);
+    });
   });
 
   describe('Handle Message', () => {
