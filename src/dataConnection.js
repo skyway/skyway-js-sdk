@@ -11,6 +11,13 @@ const DCEvents = new Enum([
   'error'
 ]);
 
+const DCSerializations = new Enum([
+  'binary',
+  'binary-utf8',
+  'json',
+  'none'
+]);
+
 class DataConnection extends Connection {
   constructor(remoteId, options) {
     super(remoteId, options);
@@ -21,9 +28,13 @@ class DataConnection extends Connection {
 
     // Serialization is binary by default
     if (this.options.serialization) {
+      if (!DataConnection.SERIALIZATIONS.get(this.options.serialization)) {
+        // Can't emit error as there hasn't been a chance to set up listeners
+        throw new Error('Invalid serialization');
+      }
       this.serialization = this.options.serialization;
     } else {
-      this.serialization = 'binary';
+      this.serialization = DataConnection.SERIALIZATIONS.binary.key;
     }
 
     // New send code properties
@@ -75,14 +86,11 @@ class DataConnection extends Connection {
   }
 
   _handleDataMessage(msg) {
-    if (this.serialization === 'none') {
+    if (this.serialization === DataConnection.SERIALIZATIONS.none.key) {
       this.emit(DataConnection.EVENTS.data, msg.data);
       return;
-    } else if (this.serialization === 'json') {
+    } else if (this.serialization === DataConnection.SERIALIZATIONS.json.key) {
       this.emit(DataConnection.EVENTS.data, JSON.parse(msg.data));
-      return;
-    } else if (this.serialization !== 'binary' && this.serialization !== 'binary-utf8') {
-      this.emit(DataConnection.EVENTS.error.key, new Error('Invalid serialization type'));
       return;
     }
 
@@ -124,15 +132,17 @@ class DataConnection extends Connection {
         ' You should listen for the `open` event before sending messages.'));
     }
 
-    if (this.serialization === 'none') {
+    if (this.serialization === DataConnection.SERIALIZATIONS.none.key) {
       this._sendBuffer.push(data);
       this._startSendLoop();
       return;
-    } else if (this.serialization === 'json') {
+    } else if (this.serialization === DataConnection.SERIALIZATIONS.json.key) {
       this._sendBuffer.push(JSON.stringify(data));
       this._startSendLoop();
       return;
     }
+
+    // Everything below is for serialization binary or binary-utf8
 
     let packedData = util.pack(data);
     let size = packedData.size;
@@ -195,6 +205,10 @@ class DataConnection extends Connection {
 
   static get EVENTS() {
     return DCEvents;
+  }
+
+  static get SERIALIZATIONS() {
+    return DCSerializations;
   }
 }
 
