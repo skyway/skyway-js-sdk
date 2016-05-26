@@ -106,6 +106,22 @@ describe('DataConnection', () => {
       assert(dc._dc.onclose);
     });
 
+    it('default serialization should be binary', () => {
+      const dc = new DataConnection('remoteId', {});
+
+      assert(dc.serialization === 'binary');
+    });
+
+    it('should throw an error if serialization is not valid', done => {
+      let dc;
+      try {
+        dc = new DataConnection('remoteId', {serialization: 'foobar'});
+      } catch (e) {
+        assert(dc === undefined);
+        done();
+      }
+    });
+
     it('should process any queued messages after PeerConnection object is created', () => {
       const messages = [{type: util.MESSAGE_TYPES.ANSWER.key, payload: 'message'}];
 
