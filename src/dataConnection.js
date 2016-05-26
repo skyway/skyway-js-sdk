@@ -128,8 +128,15 @@ class DataConnection extends Connection {
 
   send(data) {
     if (!this.open) {
-      this.emit(DataConnection.EVENTS.error.key, new Error('Connection is not open.' +
-        ' You should listen for the `open` event before sending messages.'));
+      this.emit(
+        DataConnection.EVENTS.error.key,
+        new Error('Connection is not open. You should listen for the `open` event before sending messages.')
+      );
+      return;
+    }
+
+    if (data === undefined || data === null) {
+      return;
     }
 
     if (this.serialization === DataConnection.SERIALIZATIONS.none.key) {

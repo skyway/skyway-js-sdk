@@ -248,7 +248,30 @@ describe('DataConnection', () => {
   describe('Handle Message', () => {
     describe('when serialization is binary', () => {
       it('should correctly unpack a string message', done => {
-        const message = 'foobar';
+        const message = 'foobar.　ほげホゲ文字化け。éü£ (ಠل͜ಠ)( ͡° ͜ʖ ͡°)(ง◕ᴥ◕)ง';
+        const dataMeta = {
+          id:         'test',
+          index:      0,
+          totalParts: 1,
+          data:       util.pack(message),
+          type:       typeof message
+        };
+
+        const dc = new DataConnection('remoteId');
+        dc._negotiator.emit('dcReady', {});
+
+        dc.on('data', data => {
+          assert.equal(data, message);
+          done();
+        });
+
+        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+          dc._handleDataMessage({data: ab});
+        });
+      });
+
+      it('should correctly unpack an empty string message', done => {
+        const message = '';
         const dataMeta = {
           id:         'test',
           index:      0,
@@ -434,12 +457,49 @@ describe('DataConnection', () => {
         done();
       });
 
-      dc.send('foobar', false);
+      dc.send('foobar');
+    });
+
+    it('should not call dc.send if called with no arguments', done => {
+      let sendSpy = sinon.spy();
+
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit('dcReady', {send: sendSpy});
+      dc._dc.onopen();
+
+      setTimeout(() => {
+        assert(sendSpy.callCount === 0);
+        done();
+      }, 100);
+
+      dc.send(null);
+      dc.send(undefined);
+      dc.send();
     });
 
     describe('when serialization is binary', () => {
       it('should correctly send string messages', done => {
         const message = 'foobar.　ほげホゲ文字化け。éü£ (ಠل͜ಠ)( ͡° ͜ʖ ͡°)(ง◕ᴥ◕)ง';
+        let sendSpy = sinon.spy();
+
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._dc.onopen();
+
+        setTimeout(() => {
+          assert(sendSpy.calledOnce);
+
+          const unpacked = util.unpack(sendSpy.args[0][0]);
+          const reconstructed = util.unpack(unpacked.data);
+          assert.equal(reconstructed, message);
+          done();
+        }, 100);
+
+        dc.send(message);
+      });
+
+      it('should correctly send empty string', done => {
+        const message = '';
         let sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
