@@ -214,6 +214,20 @@ class Util {
     return chunks;
   }
 
+  joinArrayBuffers(buffers) {
+    let size = buffers.reduce((sum, buffer) => {
+      return sum + buffer.byteLength;
+    }, 0);
+    let tmpArray = new Uint8Array(size);
+    let currPos = 0;
+    for (let buffer of buffers) {
+      tmpArray.set(new Uint8Array(buffer), currPos);
+      currPos += buffer.byteLength;
+    }
+
+    return tmpArray.buffer;
+  }
+
   blobToArrayBuffer(blob, cb) {
     let fr = new FileReader();
     fr.onload = event => {
@@ -228,6 +242,14 @@ class Util {
       cb(event.target.result);
     };
     fr.readAsBinaryString(blob);
+  }
+
+  blobToString(blob, cb) {
+    let fr = new FileReader();
+    fr.onload = event => {
+      cb(event.target.result);
+    };
+    fr.readAsText(blob);
   }
 
   binaryStringToArrayBuffer(binary) {
