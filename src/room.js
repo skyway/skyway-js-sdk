@@ -15,13 +15,15 @@ const RoomEvents = new Enum([
   'peerJoin',
   'peerLeave',
   'error',
-  'data'
+  'data',
+  'log'
 ]);
 
 const RoomMessageEvents = new Enum([
   'broadcast',
   'leave',
-  'answer'
+  'answer',
+  'getLog'
 ]);
 
 class Room extends EventEmitter {
@@ -75,6 +77,29 @@ class Room extends EventEmitter {
     this.emit(Room.EVENTS.data.key, message);
   }
 
+  handleLog(message) {
+    // Loop through and handle each in turn
+
+    for (const jsonLog of message.log) {
+      console.log(jsonLog);
+      const log = JSON.parse(jsonLog);
+      const src = log.message.src;
+
+      if (log.messageType === util.MESSAGE_TYPES.ROOM_USER_JOIN.key) {
+        this.members.push(src);
+
+        this.emit(Room.EVENTS.peerJoin.key, src);
+      } else if (log.messageType === util.MESSAGE_TYPES.ROOM_USER_LEAVE.key) {
+        const index = this.members.indexOf(src);
+        this.members.splice(index, 1);
+
+        this.emit(Room.EVENTS.peerLeave.key, src);
+      } else if (log.messageType === util.MESSAGE_TYPES.ROOM_DATA.key) {
+        this.handleData(log.message);
+      }
+    }
+  }
+
   send(data) {
     if (!this.open) {
       return;
@@ -85,6 +110,13 @@ class Room extends EventEmitter {
       data:     data
     };
     this.emit(Room.MESSAGE_EVENTS.broadcast.key, message);
+  }
+
+  getLog() {
+    const message = {
+      roomName: this.name
+    };
+    this.emit(Room.MESSAGE_EVENTS.getLog.key, message);
   }
 
   close() {

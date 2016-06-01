@@ -208,6 +208,9 @@ class Peer extends EventEmitter {
     room.on(Room.MESSAGE_EVENTS.answer.key, answerMessage => {
       this.socket.send(util.MESSAGE_TYPES.ROOM_ANSWER.key, answerMessage);
     });
+    room.on(Room.MESSAGE_EVENTS.getLog.key, getLogMessage => {
+      this.socket.send(util.MESSAGE_TYPES.ROOM_LOG.key, getLogMessage);
+    });
   }
 
   reconnect() {
@@ -445,6 +448,13 @@ class Peer extends EventEmitter {
       const room = this.rooms[roomDataMessage.roomName];
       if (room) {
         room.handleData(roomDataMessage);
+      }
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.ROOM_LOG.key, roomLogMessage => {
+      const room = this.rooms[roomLogMessage.roomName];
+      if (room) {
+        room.handleLog(roomLogMessage);
       }
     });
   }
