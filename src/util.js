@@ -52,6 +52,9 @@ class Util {
     // The actual chunk size is adjusted in dataChannel to accomodate metaData
     this.maxChunkSize = 16300;
 
+    // Number of reconnection attempts to server before giving up
+    this.reconnectionAttempts = 2;
+
     // Send loop interval in milliseconds
     this.sendInterval = 1;
 

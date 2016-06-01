@@ -36,7 +36,7 @@ class Socket extends EventEmitter {
     this._io = io(this._httpUrl, {
       'force new connection': true,
       'query':                query,
-      'reconnectionAttempts': 2
+      'reconnectionAttempts': util.reconnectionAttempts
     });
 
     this._io.on('reconnect_failed', () => {
