@@ -106,6 +106,22 @@ describe('DataConnection', () => {
       assert(dc._dc.onclose);
     });
 
+    it('default serialization should be binary', () => {
+      const dc = new DataConnection('remoteId', {});
+
+      assert(dc.serialization === 'binary');
+    });
+
+    it('should throw an error if serialization is not valid', done => {
+      let dc;
+      try {
+        dc = new DataConnection('remoteId', {serialization: 'foobar'});
+      } catch (e) {
+        assert(dc === undefined);
+        done();
+      }
+    });
+
     it('should process any queued messages after PeerConnection object is created', () => {
       const messages = [{type: util.MESSAGE_TYPES.ANSWER.key, payload: 'message'}];
 
@@ -243,176 +259,216 @@ describe('DataConnection', () => {
 
       dc._negotiator.emit(Negotiator.EVENTS.offerCreated.key, offer);
     });
+
+    it('should cleanup the connection on negotiator \'iceConnectionDisconnected\' event', () => {
+      dc.open = true;
+      let spy = sinon.spy(dc, 'close');
+
+      dc._negotiator.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
+
+      assert(spy.calledOnce);
+      assert.equal(dc.open, false);
+    });
   });
 
   describe('Handle Message', () => {
-    it('should correctly unpack a string message', done => {
-      const message = 'foobar';
-      const dataMeta = {
-        id:         'test',
-        index:      0,
-        totalParts: 1,
-        data:       message,
-        type:       typeof message
-      };
+    describe('when serialization is binary', () => {
+      it('should correctly unpack a string message', done => {
+        const message = 'foobar.　ほげホゲ文字化け。éü£ (ಠل͜ಠ)( ͡° ͜ʖ ͡°)(ง◕ᴥ◕)ง';
+        const dataMeta = {
+          id:         'test',
+          index:      0,
+          totalParts: 1,
+          data:       util.pack(message),
+          type:       typeof message
+        };
 
-      const dc = new DataConnection('remoteId', {serialization: 'none'});
-      dc._negotiator.emit('dcReady', {});
+        const dc = new DataConnection('remoteId');
+        dc._negotiator.emit('dcReady', {});
 
-      dc.on('data', data => {
-        assert.equal(data, message);
-        done();
+        dc.on('data', data => {
+          assert.equal(data, message);
+          done();
+        });
+
+        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+          dc._handleDataMessage({data: ab});
+        });
       });
 
-      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        dc._handleDataMessage({data: ab});
-      });
-    });
+      it('should correctly unpack an empty string message', done => {
+        const message = '';
+        const dataMeta = {
+          id:         'test',
+          index:      0,
+          totalParts: 1,
+          data:       util.pack(message),
+          type:       typeof message
+        };
 
-    it('should correctly unpack JSON messages', done => {
-      const jsonObj = {name: 'testObject'};
-      // JSON data is binary packed for compression purposes
-      const packedJson = util.pack(jsonObj);
+        const dc = new DataConnection('remoteId');
+        dc._negotiator.emit('dcReady', {});
 
-      const dataMeta = {
-        id:         'test',
-        index:      0,
-        totalParts: 1,
-        data:       packedJson,
-        type:       'json'
-      };
+        dc.on('data', data => {
+          assert.equal(data, message);
+          done();
+        });
 
-      const dc = new DataConnection('remoteId', {serialization: 'json'});
-      dc._negotiator.emit('dcReady', {});
-
-      dc.on('data', data => {
-        assert.deepEqual(data, jsonObj);
-        done();
+        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+          dc._handleDataMessage({data: ab});
+        });
       });
 
-      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        dc._handleDataMessage({data: ab});
-      });
-    });
+      it('should correctly unpack JSON messages', done => {
+        const jsonObj = {name: 'testObject'};
+        // JSON data is binary packed for compression purposes
+        const packedJson = util.pack(jsonObj);
 
-    it('should correctly handle ArrayBuffer messages', done => {
-      const message = 'foobar';
-      const abMessage = util.binaryStringToArrayBuffer(message);
+        const dataMeta = {
+          id:         'test',
+          index:      0,
+          totalParts: 1,
+          data:       packedJson,
+          type:       'json'
+        };
 
-      const dataMeta = {
-        id:         'test',
-        index:      0,
-        totalParts: 1,
-        data:       abMessage,
-        type:       'arraybuffer'
-      };
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {});
 
-      const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {});
+        dc.on('data', data => {
+          assert.deepEqual(data, jsonObj);
+          done();
+        });
 
-      dc.on('data', data => {
-        // We want to check that the received data is an ArrayBuffer
-        assert.deepEqual(data, abMessage);
-        done();
-      });
-
-      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        dc._handleDataMessage({data: ab});
-      });
-    });
-
-    it('should correctly handle Blob messages', done => {
-      const message = 'foobar';
-      const blob = new Blob([message], {type: 'text/plain'});
-
-      const dataMeta = {
-        id:         'test',
-        index:      0,
-        totalParts: 1,
-        data:       blob,
-        type:       blob.type
-      };
-
-      const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {});
-
-      dc.on('data', data => {
-        // We want to check that the received data is an ArrayBuffer
-        assert.deepEqual(data, blob);
-        done();
+        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+          dc._handleDataMessage({data: ab});
+        });
       });
 
-      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        dc._handleDataMessage({data: ab});
-      });
-    });
+      it('should correctly handle ArrayBuffer messages', done => {
+        const message = 'foobar';
+        const abMessage = util.binaryStringToArrayBuffer(message);
 
-    it('should correctly reconstruct a sent file', done => {
-      const mimeType = 'text/plain;charset=utf-8;';
-      const file = new File(['foobar'], 'testfile', {
-        type: mimeType
-      });
+        const dataMeta = {
+          id:         'test',
+          index:      0,
+          totalParts: 1,
+          data:       util.pack(abMessage),
+          type:       'arraybuffer'
+        };
 
-      const dc = new DataConnection('remoteId', {serialization: 'binary'});
-      dc._negotiator.emit('dcReady', {});
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {});
 
-      const dataMeta = {
-        id:         'test',
-        index:      0,
-        totalParts: 1,
-        data:       file,
-        name:       file.name,
-        type:       file.type
-      };
+        dc.on('data', data => {
+          // We want to check that the received data is an ArrayBuffer
+          assert.deepEqual(data, abMessage);
+          done();
+        });
 
-      dc.on('data', data => {
-        assert.deepEqual(data, file);
-        done();
+        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+          dc._handleDataMessage({data: ab});
+        });
       });
 
-      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-        dc._handleDataMessage({data: ab});
-      });
-    });
+      it('should correctly handle Blob messages', done => {
+        const message = 'foobar';
+        const blob = new Blob([message], {type: 'text/plain'});
 
-    it('should be able to recombine chunked messages', done => {
-      // Chunk size is 16300
-      // Each char is 2 bytes
-      const len = util.maxChunkSize + 1000;
-      const string = new Array(len + 1).join('a');
+        const dataMeta = {
+          id:         'test',
+          index:      0,
+          totalParts: 1,
+          data:       util.pack(blob),
+          type:       blob.type
+        };
 
-      const slice1 = string.slice(0, util.maxChunkSize);
-      const slice2 = string.slice(util.maxChunkSize, util.maxChunkSize * 2);
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {});
 
-      const dataMeta1 = {
-        id:         'test',
-        index:      0,
-        totalParts: 2,
-        data:       slice1,
-        type:       typeof slice1
-      };
-      const dataMeta2 = {
-        id:         'test',
-        index:      1,
-        totalParts: 2,
-        data:       slice2,
-        type:       typeof slice2
-      };
+        dc.on('data', data => {
+          // We want to check that the received data is an ArrayBuffer
+          assert.deepEqual(data, blob);
+          done();
+        });
 
-      const dc = new DataConnection('remoteId', {serialization: 'none'});
-      dc._negotiator.emit('dcReady', {});
-
-      dc.on('data', data => {
-        // Receives the reconstructed string after all chunks have been handled
-        assert.deepEqual(data, string);
-        done();
+        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+          dc._handleDataMessage({data: ab});
+        });
       });
 
-      util.blobToArrayBuffer(util.pack(dataMeta1), ab1 => {
-        util.blobToArrayBuffer(util.pack(dataMeta2), ab2 => {
+      it('should be able to recombine chunked messages', done => {
+        // Chunk size is 16300
+        // Each char is 2 bytes
+        const len = util.maxChunkSize + 1000;
+        const string = new Array(len + 1).join('a');
+        const packedString = util.pack(string);
+
+        const slice1 = packedString.slice(0, util.maxChunkSize);
+        const slice2 = packedString.slice(util.maxChunkSize, util.maxChunkSize * 2);
+
+        const dataMeta1 = {
+          id:         'test',
+          index:      0,
+          totalParts: 2,
+          data:       slice1,
+          type:       typeof slice1
+        };
+        const dataMeta2 = {
+          id:         'test',
+          index:      1,
+          totalParts: 2,
+          data:       slice2,
+          type:       typeof slice2
+        };
+
+        const dc = new DataConnection('remoteId');
+        dc._negotiator.emit('dcReady', {});
+
+        dc.on('data', data => {
+          // Receives the reconstructed string after all chunks have been handled
+          assert.deepEqual(data, string);
+          done();
+        });
+
+        util.blobToArrayBuffer(util.pack(dataMeta1), ab1 => {
           dc._handleDataMessage({data: ab1});
+        });
+        util.blobToArrayBuffer(util.pack(dataMeta2), ab2 => {
           dc._handleDataMessage({data: ab2});
         });
+      });
+    });
+
+    describe('when serialization is json', () => {
+      it('should correctly parse JSON messages', done => {
+        const jsonObj = {name: 'testObject'};
+
+        const dc = new DataConnection('remoteId', {serialization: 'json'});
+        dc._negotiator.emit('dcReady', {});
+
+        dc.on('data', data => {
+          assert.deepEqual(data, jsonObj);
+          done();
+        });
+
+        dc._handleDataMessage({data: JSON.stringify(jsonObj)});
+      });
+    });
+
+    describe('when serialization is none', () => {
+      it('should receive objects exactly as received with no processing', done => {
+        const message = Symbol();
+
+        const dc = new DataConnection('remoteId', {serialization: 'none'});
+        dc._negotiator.emit('dcReady', {});
+
+        dc.on('data', data => {
+          assert.equal(data, message);
+          done();
+        });
+
+        dc._handleDataMessage({data: message});
       });
     });
   });
@@ -427,11 +483,10 @@ describe('DataConnection', () => {
         done();
       });
 
-      dc.send('foobar', false);
+      dc.send('foobar');
     });
 
-    it('should correctly send string messages', done => {
-      const message = 'foobar';
+    it('should not call dc.send if called with no arguments', done => {
       let sendSpy = sinon.spy();
 
       const dc = new DataConnection('remoteId', {});
@@ -439,123 +494,205 @@ describe('DataConnection', () => {
       dc._dc.onopen();
 
       setTimeout(() => {
-        assert(sendSpy.calledOnce);
-
-        const unpacked = util.unpack(sendSpy.args[0][0]);
-        assert.equal(unpacked.data, message);
+        assert(sendSpy.callCount === 0);
         done();
       }, 100);
 
-      dc.send(message);
+      dc.send(null);
+      dc.send(undefined);
+      dc.send();
     });
 
-    it('should correctly pack and send JSON data', done => {
-      const jsonObj = {name: 'testObject'};
-      let sendSpy = sinon.spy();
+    describe('when serialization is binary', () => {
+      it('should correctly send string messages', done => {
+        const message = 'foobar.　ほげホゲ文字化け。éü£ (ಠل͜ಠ)( ͡° ͜ʖ ͡°)(ง◕ᴥ◕)ง';
+        let sendSpy = sinon.spy();
 
-      const dc = new DataConnection('remoteId', {serialization: 'json'});
-      dc._negotiator.emit('dcReady', {send: sendSpy});
-      dc._dc.onopen();
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._dc.onopen();
 
-      setTimeout(() => {
-        assert(sendSpy.calledOnce);
+        setTimeout(() => {
+          assert(sendSpy.calledOnce);
 
-        const unpacked = util.unpack(sendSpy.args[0][0]);
-        const data = util.unpack(unpacked.data);
-        assert.deepEqual(data, jsonObj);
-        done();
-      }, 100);
+          const unpacked = util.unpack(sendSpy.args[0][0]);
+          const reconstructed = util.unpack(unpacked.data);
+          assert.equal(reconstructed, message);
+          done();
+        }, 100);
 
-      dc.send(jsonObj);
-    });
-
-    it('should correctly send ArrayBuffer data', done => {
-      const message = 'foobar';
-      const abMessage = util.binaryStringToArrayBuffer(message);
-      let sendSpy = sinon.spy();
-
-      const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {send: sendSpy});
-      dc._dc.onopen();
-
-      setTimeout(() => {
-        assert(sendSpy.calledOnce);
-
-        const unpacked = util.unpack(sendSpy.args[0][0]);
-        assert.deepEqual(unpacked.data, abMessage);
-        done();
-      }, 100);
-
-      dc.send(abMessage);
-    });
-
-    it('should correctly send Blob data', done => {
-      const message = 'foobar';
-      const blob = new Blob([message], {type: 'text/plain'});
-      let sendSpy = sinon.spy();
-
-      const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {send: sendSpy});
-      dc._dc.onopen();
-
-      setTimeout(() => {
-        assert(sendSpy.calledOnce);
-
-        const unpacked = util.unpack(sendSpy.args[0][0]);
-        assert.deepEqual(unpacked.data, blob);
-        done();
-      }, 100);
-
-      dc.send(blob);
-    });
-
-    it('should correctly send a File', done => {
-      const mimeType = 'text/plain;charset=utf-8;';
-      const file = new File(['foobar'], 'testfile', {
-        type: mimeType
+        dc.send(message);
       });
 
-      let sendSpy = sinon.spy();
+      it('should correctly send empty string', done => {
+        const message = '';
+        let sendSpy = sinon.spy();
 
-      const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {send: sendSpy});
-      dc._dc.onopen();
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._dc.onopen();
 
-      setTimeout(() => {
-        assert(sendSpy.calledOnce);
+        setTimeout(() => {
+          assert(sendSpy.calledOnce);
 
-        const unpacked = util.unpack(sendSpy.args[0][0]);
-        assert.deepEqual(unpacked.data, file);
-        done();
-      }, 100);
+          const unpacked = util.unpack(sendSpy.args[0][0]);
+          const reconstructed = util.unpack(unpacked.data);
+          assert.equal(reconstructed, message);
+          done();
+        }, 100);
 
-      dc.send(file);
-    });
+        dc.send(message);
+      });
 
-    it('should correctly chunk and send a large message', done => {
-      const len = util.maxChunkSize + 1000;
-      const string = new Array(len + 1).join('a');
+      it('should correctly pack and send JSON data', done => {
+        const jsonObj = {name: 'testObject'};
+        let sendSpy = sinon.spy();
 
-      let sendSpy = sinon.spy();
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._dc.onopen();
 
-      const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {send: sendSpy});
-      dc._dc.onopen();
+        setTimeout(() => {
+          assert(sendSpy.calledOnce);
 
-      setTimeout(() => {
-        assert(sendSpy.calledTwice);
+          const unpacked = util.unpack(sendSpy.args[0][0]);
+          const data = util.unpack(unpacked.data);
+          assert.deepEqual(data, jsonObj);
+          done();
+        }, 100);
 
-        const unpacked1 = util.unpack(sendSpy.args[0][0]);
-        const unpacked2 = util.unpack(sendSpy.args[1][0]);
+        dc.send(jsonObj);
+      });
 
-        const blob = new Blob([unpacked1.data, unpacked2.data]);
-        util.blobToBinaryString(blob, data => {
+      it('should correctly send ArrayBuffer data', done => {
+        const message = 'foobar';
+        const abMessage = util.binaryStringToArrayBuffer(message);
+        let sendSpy = sinon.spy();
+
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._dc.onopen();
+
+        setTimeout(() => {
+          assert(sendSpy.calledOnce);
+
+          const unpacked = util.unpack(sendSpy.args[0][0]);
+          assert.deepEqual(unpacked.data, abMessage);
+          done();
+        }, 100);
+
+        dc.send(abMessage);
+      });
+
+      it('should correctly send Blob data', done => {
+        const message = 'foobar';
+        const blob = new Blob([message], {type: 'text/plain'});
+        let sendSpy = sinon.spy();
+
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._dc.onopen();
+
+        setTimeout(() => {
+          assert(sendSpy.calledOnce);
+
+          const unpacked = util.unpack(sendSpy.args[0][0]);
+          assert.deepEqual(unpacked.data, blob);
+          done();
+        }, 100);
+
+        dc.send(blob);
+      });
+
+      it('should correctly send a File', done => {
+        const mimeType = 'text/plain;charset=utf-8;';
+        const file = new File(['foobar'], 'testfile', {
+          type: mimeType
+        });
+
+        let sendSpy = sinon.spy();
+
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._dc.onopen();
+
+        setTimeout(() => {
+          assert(sendSpy.calledOnce);
+
+          const unpacked = util.unpack(sendSpy.args[0][0]);
+          assert.deepEqual(unpacked.data, file);
+          done();
+        }, 100);
+
+        dc.send(file);
+      });
+
+      it('should correctly chunk and send a large message', done => {
+        const len = util.maxChunkSize + 1000;
+        const string = new Array(len + 1).join('a');
+
+        let sendSpy = sinon.spy();
+
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._dc.onopen();
+
+        setTimeout(() => {
+          assert(sendSpy.calledTwice);
+
+          const unpacked1 = util.unpack(sendSpy.args[0][0]);
+          const unpacked2 = util.unpack(sendSpy.args[1][0]);
+
+          const ab = util.joinArrayBuffers([unpacked1.data, unpacked2.data]);
+          const data = util.unpack(ab);
           assert.deepEqual(data, string);
           done();
-        });
-      }, 100);
+        }, 100);
 
-      dc.send(string);
+        dc.send(string);
+      });
+    });
+
+    describe('when serialization is json', () => {
+      it('should correctly stringify and send JSON data', done => {
+        const jsonObj = {name: 'testObject'};
+        let sendSpy = sinon.spy();
+
+        const dc = new DataConnection('remoteId', {serialization: 'json'});
+        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._dc.onopen();
+
+        setTimeout(() => {
+          assert(sendSpy.calledOnce);
+
+          const data = JSON.parse(sendSpy.args[0][0]);
+          assert.deepEqual(data, jsonObj);
+          done();
+        }, 100);
+
+        dc.send(jsonObj);
+      });
+    });
+
+    describe('when serialization is none', () => {
+      it('should send any data exactly as is with no processing', done => {
+        const message = Symbol();
+        let sendSpy = sinon.spy();
+
+        const dc = new DataConnection('remoteId', {serialization: 'none'});
+        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._dc.onopen();
+
+        setTimeout(() => {
+          assert(sendSpy.calledOnce);
+
+          const data = sendSpy.args[0][0];
+          assert.equal(data, message);
+          done();
+        }, 100);
+
+        dc.send(message);
+      });
     });
   });
 
