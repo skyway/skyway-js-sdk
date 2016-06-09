@@ -255,7 +255,7 @@ describe('Room', () => {
     });
   });
 
-  describe.only('Logging', () => {
+  describe('Logging', () => {
     it('should emit a getLog event when getLog() is called', () => {
       const peerId = 'peer';
 

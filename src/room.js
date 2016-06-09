@@ -85,13 +85,8 @@ class Room extends EventEmitter {
       const src = logEvent.message.src;
 
       if (logEvent.messageType === util.MESSAGE_TYPES.ROOM_USER_JOIN.key) {
-        this.members.push(src);
-
         this.emit(Room.EVENTS.peerJoin.key, src);
       } else if (logEvent.messageType === util.MESSAGE_TYPES.ROOM_USER_LEAVE.key) {
-        const index = this.members.indexOf(src);
-        this.members.splice(index, 1);
-
         this.emit(Room.EVENTS.peerLeave.key, src);
       } else if (logEvent.messageType === util.MESSAGE_TYPES.ROOM_DATA.key) {
         this.handleData(logEvent.message);
