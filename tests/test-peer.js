@@ -1,7 +1,5 @@
 'use strict';
 
-const Peer            = require('../src/peer');
-const Socket          = require('../src/socket');
 const MediaConnection = require('../src/mediaConnection');
 const DataConnection  = require('../src/dataConnection');
 const Room            = require('../src/room');
@@ -17,6 +15,34 @@ const MediaStream = window.MediaStream || window.webkitMediaStream;
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
   const timeForAsync = 10;
+  let ioStub;
+  let ioSpy;
+  let onStub;
+  let Peer;
+
+  beforeEach(() => {
+    ioStub = sinon.stub(SocketIO, 'Socket');
+    ioSpy = sinon.spy();
+    onStub = sinon.stub();
+
+    ioStub.returns(
+      {
+        on:         onStub,
+        emit:       ioSpy,
+        disconnect: ioSpy,
+        connected:  true,
+        io:         {opts: {query: ''}}
+      }
+    );
+    const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+    Peer = proxyquire('../src/peer', {'./socket': Socket, './util': util});
+  });
+
+  afterEach(() => {
+    ioStub.restore();
+    ioSpy.reset();
+    onStub.reset();
+  });
 
   describe('Constructor', () => {
     it('should create a Peer object', () => {
@@ -31,13 +57,13 @@ describe('Peer', () => {
       const peer = new Peer({
         key: apiKey
       });
-      assert(peer.options.debug === util.LOG_LEVELS.NONE);
-      assert(peer.options.host === util.CLOUD_HOST);
-      assert(peer.options.port === util.CLOUD_PORT);
+      assert.equal(peer.options.debug.value, util.LOG_LEVELS.NONE.value);
+      assert.equal(peer.options.host, util.CLOUD_HOST);
+      assert.equal(peer.options.port, util.CLOUD_PORT);
       assert(peer.options.token);
-      assert(typeof peer.options.token === 'string');
-      assert(peer.options.config === util.defaultConfig);
-      assert(peer.options.turn === true);
+      assert.equal(typeof peer.options.token, 'string');
+      assert.deepEqual(peer.options.config, util.defaultConfig);
+      assert.equal(peer.options.turn, true);
     });
 
     it('should create a Peer object with options overwritten', () => {
@@ -90,26 +116,23 @@ describe('Peer', () => {
       });
 
       assert(peer.socket);
-      assert(peer.socket instanceof Socket);
+      assert.equal(peer.socket.constructor.name, 'Socket');
     });
 
     it('should set up socket message listeners', () => {
-      const spy = sinon.spy(Socket.prototype, 'on');
-
       const peer = new Peer({
         key: apiKey
       });
 
       assert(peer);
-      assert(spy.called === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.OPEN.key) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.ERROR.key) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.LEAVE.key) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.EXPIRE.key) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.OFFER.key) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.ANSWER.key) === true);
-      assert(spy.calledWith(util.MESSAGE_TYPES.CANDIDATE.key) === true);
-      spy.restore();
+      assert(onStub.called === true);
+      assert(onStub.calledWith(util.MESSAGE_TYPES.OPEN.key) === true);
+      assert(onStub.calledWith(util.MESSAGE_TYPES.ERROR.key) === true);
+      assert(onStub.calledWith(util.MESSAGE_TYPES.LEAVE.key) === true);
+      assert(onStub.calledWith(util.MESSAGE_TYPES.EXPIRE.key) === true);
+      assert(onStub.calledWith(util.MESSAGE_TYPES.OFFER.key) === true);
+      assert(onStub.calledWith(util.MESSAGE_TYPES.ANSWER.key) === true);
+      assert(onStub.calledWith(util.MESSAGE_TYPES.CANDIDATE.key) === true);
     });
 
     it('should abort on a socket "error"', done => {
@@ -192,7 +215,7 @@ describe('Peer', () => {
       peer.disconnect();
 
       peer.on('disconnected', () => {
-        assert(spy.calledOnce === true);
+        assert(spy.calledOnce);
         spy.restore();
         done();
       });
@@ -245,7 +268,7 @@ describe('Peer', () => {
 
       peer.destroy();
 
-      assert(spy.calledOnce === true);
+      assert(spy.calledOnce);
 
       spy.restore();
     });
@@ -265,7 +288,7 @@ describe('Peer', () => {
       peer.destroy();
       peer.destroy();
 
-      assert(spy.calledOnce === true);
+      assert(spy.calledOnce);
 
       spy.restore();
     });
@@ -349,7 +372,7 @@ describe('Peer', () => {
 
       peer._cleanupPeer(peerId);
       for (let spy of spies) {
-        assert(spy.calledOnce === true);
+        assert(spy.calledOnce);
       }
     });
   });
@@ -413,7 +436,8 @@ describe('Peer', () => {
 
       peer.socket.emit(util.MESSAGE_TYPES.LEAVE.key, peerId);
 
-      assert(spy.calledOnce === true);
+      console.log(spy.callCount);
+      assert(spy.calledOnce);
       assert(spy.calledWith(`Received leave message from ${peerId}`) === true);
 
       spy.restore();
@@ -595,8 +619,8 @@ describe('Peer', () => {
 
       const conn = peer.call(peerId, new MediaStream());
 
-      assert(conn instanceof MediaConnection);
-      assert(spy.calledOnce === true);
+      assert.equal(conn.constructor.name, 'MediaConnection');
+      assert(spy.calledOnce);
       assert(spy.calledWith(peerId, conn));
 
       spy.restore();
@@ -620,7 +644,7 @@ describe('Peer', () => {
 
       peer.call('testId', undefined);
 
-      assert(spy.calledOnce === true);
+      assert(spy.calledOnce);
       spy.restore();
     });
   });
@@ -644,8 +668,8 @@ describe('Peer', () => {
 
       const conn = peer.connect(peerId, {});
 
-      assert(conn instanceof DataConnection);
-      assert(spy.calledOnce === true);
+      assert.equal(conn.constructor.name, 'DataConnection');
+      assert(spy.calledOnce);
       assert(spy.calledWith(peerId, conn));
 
       spy.restore();
@@ -706,7 +730,7 @@ describe('Peer', () => {
       const peerList = ['peerId1', 'peerId2', 'peerId3'];
       requests[0].respond(200, {}, JSON.stringify(peerList));
 
-      assert(spy.calledOnce === true);
+      assert(spy.calledOnce);
       assert(spy.calledWith(peerList) === true);
     });
 
@@ -738,33 +762,9 @@ describe('Peer', () => {
 
   describe('Room API', () => {
     const serverPort = 5080;
-    const timeoutVal = 200;
+    const timeoutVal = 500;
     let peer;
-    let ioStub;
-    let ioSpy;
     beforeEach(() => {
-      ioStub = sinon.stub(SocketIO, 'Socket');
-      ioSpy = sinon.spy();
-
-      ioStub.returns(
-        {
-          // socket.io is not standard eventEmitter API
-          // fake messages by calling io._fakeMessage[messagetype](data)
-          on: function(event, callback) {
-            if (!this._fakeMessage) {
-              this._fakeMessage = {};
-            }
-            this._fakeMessage[event] = callback;
-          },
-          emit:       ioSpy,
-          disconnect: ioSpy,
-          connected:  true,
-          io:         {opts: {query: ''}}
-        }
-      );
-      const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
-      const Peer = proxyquire('../src/peer', {'./socket': Socket});
-
       peer = new Peer({
         secure: false,
         host:   'localhost',
@@ -775,9 +775,6 @@ describe('Peer', () => {
 
     afterEach(() => {
       peer.destroy();
-
-      ioStub.restore();
-      ioSpy.reset();
     });
 
     describe('Join', () => {
@@ -862,22 +859,18 @@ describe('Peer', () => {
       it('should correctly emit from Socket when sending a JVB signalling answer', done => {
         const roomName = 'testRoom';
 
-        let spy = sinon.spy();
-        peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
 
         const room = peer.joinRoom(roomName);
         room.open = true;
 
-        setTimeout(() => {
-          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
-          room.emit(Room.MESSAGE_EVENTS.answer.key, 'foobar');
+        assert(ioSpy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
+        room.emit(Room.MESSAGE_EVENTS.answer.key, 'foobar');
 
-          setTimeout(() => {
-            assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_ANSWER.key));
-            done();
-          }, timeoutVal);
-        }, timeoutVal);
+        setTimeout(() => {
+          assert(ioSpy.calledWith(util.MESSAGE_TYPES.ROOM_ANSWER.key));
+          done();
+        });
       });
     });
 
