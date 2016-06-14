@@ -79,7 +79,6 @@ class Room extends EventEmitter {
 
   handleLog(message) {
     // Loop through and handle each in turn
-
     for (const jsonLog of message.log) {
       const logEvent = JSON.parse(jsonLog);
       const src = logEvent.message.src;

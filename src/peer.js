@@ -183,6 +183,7 @@ class Peer extends EventEmitter {
       roomOptions = {};
     }
     roomOptions.pcConfig = this._pcConfig;
+    roomOptions.peerId = this.id;
 
     const room = new Room(roomName, roomOptions);
     this.rooms[roomName] = room;
@@ -203,6 +204,7 @@ class Peer extends EventEmitter {
       this.socket.send(util.MESSAGE_TYPES.ROOM_DATA.key, sendMessage);
     });
     room.on(Room.MESSAGE_EVENTS.leave.key, leaveMessage => {
+      delete this.rooms[room.name];
       this.socket.send(util.MESSAGE_TYPES.ROOM_LEAVE.key, leaveMessage);
     });
     room.on(Room.MESSAGE_EVENTS.answer.key, answerMessage => {
