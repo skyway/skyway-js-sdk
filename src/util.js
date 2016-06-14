@@ -30,7 +30,13 @@ const MessageTypes = new Enum([
   'ROOM_ANSWER',
   'ROOM_USER_JOIN',
   'ROOM_USER_LEAVE',
-  'ROOM_DATA'
+  'ROOM_DATA',
+  'MESH_USER_LIST',
+  'MESH_JOIN',
+  'MESH_OFFER',
+  'MESH_ANSWER',
+  'MESH_CANDIDATE',
+  'MESH_LEAVE'
 ]);
 
 class Util {

@@ -3,7 +3,8 @@
 const Connection      = require('./connection');
 const DataConnection  = require('./dataConnection');
 const MediaConnection = require('./mediaConnection');
-const Room            = require('./room');
+const SFURoom         = require('./sfuRoom');
+const MeshRoom        = require('./meshRoom');
 const Socket          = require('./socket');
 const util            = require('./util');
 
@@ -26,7 +27,8 @@ class Peer extends EventEmitter {
     // true when connected to SkyWay server
     this.open = false;
     this.connections = {};
-    this.rooms = {};
+    this.meshRooms = {};
+    this.sfuRooms = {};
 
     // to prevent duplicate calls to destroy/disconnect
     this._disconnectCalled = false;
@@ -123,6 +125,51 @@ class Peer extends EventEmitter {
     return mc;
   }
 
+  joinRoom(roomName, roomOptions) {
+    if (!roomName) {
+      this.emitError('room-error', 'Room name must be defined.');
+      return null;
+    }
+
+    if (!roomOptions) {
+      roomOptions = {};
+    }
+    roomOptions.pcConfig = this._pcConfig;
+
+    const data = {
+      roomName:    roomName,
+      roomOptions: roomOptions
+    };
+
+    if(roomOptions.mode === 'sfu'){
+      if (this.sfuRooms[roomName]) {
+        return this.sfuRooms[roomName];
+      }
+      const sfuRoom = new SFURoom(roomName, roomOptions);
+      this.sfuRooms[roomName] = sfuRoom;
+      this._setupSFURoomMessageHandlers(sfuRoom);
+      console.log(util.MESSAGE_TYPES.ROOM_JOIN.key);
+      this.socket.send(util.MESSAGE_TYPES.ROOM_JOIN.key, data);
+      return sfuRoom;
+
+    }else{
+      if (this.meshRooms[roomName]) {
+        return this.meshRooms[roomName];
+      }
+      roomOptions.peerId = roomOptions.peerId || this.id;
+      const meshRoom = new MeshRoom(roomName, roomOptions);
+      this.meshRooms[roomName] = meshRoom;
+      this._setupMeshRoomMessageHandlers(meshRoom);
+
+      if(meshRoom.stream) {
+        meshRoom.callRoom(meshRoom.stream)
+      }
+      // this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
+      console.log(meshRoom)
+      return meshRoom;
+    }
+  }
+
   getConnection(peerId, connectionId) {
     if (this.connections[peerId]) {
       for (let connection of this.connections[peerId]) {
@@ -169,44 +216,35 @@ class Peer extends EventEmitter {
     }, 0);
   }
 
-  joinRoom(roomName, roomOptions) {
-    if (!roomName) {
-      this.emitError('room-error', 'Room name must be defined.');
-      return null;
-    }
-
-    if (this.rooms[roomName]) {
-      return this.rooms[roomName];
-    }
-
-    if (!roomOptions) {
-      roomOptions = {};
-    }
-    roomOptions.pcConfig = this._pcConfig;
-
-    const room = new Room(roomName, roomOptions);
-    this.rooms[roomName] = room;
-
-    this._setupRoomMessageHandlers(room);
-
-    const data = {
-      roomName:    roomName,
-      roomOptions: roomOptions
-    };
-    this.socket.send(util.MESSAGE_TYPES.ROOM_JOIN.key, data);
-
-    return room;
-  }
-
-  _setupRoomMessageHandlers(room) {
-    room.on(Room.MESSAGE_EVENTS.broadcast.key, sendMessage => {
+  _setupSFURoomMessageHandlers(room) {
+    room.on(SFURoom.MESSAGE_EVENTS.broadcast.key, sendMessage => {
       this.socket.send(util.MESSAGE_TYPES.ROOM_DATA.key, sendMessage);
     });
-    room.on(Room.MESSAGE_EVENTS.leave.key, leaveMessage => {
+    room.on(SFURoom.MESSAGE_EVENTS.leave.key, leaveMessage => {
       this.socket.send(util.MESSAGE_TYPES.ROOM_LEAVE.key, leaveMessage);
     });
-    room.on(Room.MESSAGE_EVENTS.answer.key, answerMessage => {
+    room.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
       this.socket.send(util.MESSAGE_TYPES.ROOM_ANSWER.key, answerMessage);
+    });
+  }
+
+  _setupMeshRoomMessageHandlers(room) {
+    console.log('setup mesh message handler')
+    room.on(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage => {
+      console.log('meshRoomManager on offer')
+      this.socket.send(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage);
+    });
+    room.on(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage => {
+      console.log('meshRoomManager on answer')
+      this.socket.send(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage);
+    });
+    room.on(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
+      console.log('meshRoomManager on candidate')
+      this.socket.send(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage);
+    });
+    room.on(MeshRoom.MESSAGE_EVENTS.get_peers.key, data => {
+      console.log('meshRoomManager on get_peers')
+      this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
     });
   }
 
@@ -397,8 +435,8 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.ROOM_OFFER.key, offerMessage => {
       // We want the Room class to handle this instead
       // The Room class acts as RoomConnection
-      this.rooms[offerMessage.roomName].handleOffer(offerMessage.offer);
-      // NOTE: Room has already been created and added to this.rooms
+      this.sfuRooms[offerMessage.roomName].handleOffer(offerMessage.offer);
+      // NOTE: Room has already been created and added to this.sruRooms
     });
 
     this.socket.on(util.MESSAGE_TYPES.ANSWER.key, answerMessage => {
@@ -428,24 +466,50 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(util.MESSAGE_TYPES.ROOM_USER_JOIN.key, roomUserJoinMessage => {
-      const room = this.rooms[roomUserJoinMessage.roomName];
+      const room = this.sfuRooms[roomUserJoinMessage.roomName];
       if (room) {
         room.handleJoin(roomUserJoinMessage);
       }
     });
 
     this.socket.on(util.MESSAGE_TYPES.ROOM_USER_LEAVE.key, roomUserLeaveMessage => {
-      const room = this.rooms[roomUserLeaveMessage.roomName];
+      const room = this.sfuRooms[roomUserLeaveMessage.roomName];
       if (room) {
         room.handleLeave(roomUserLeaveMessage);
       }
     });
 
     this.socket.on(util.MESSAGE_TYPES.ROOM_DATA.key, roomDataMessage => {
-      const room = this.rooms[roomDataMessage.roomName];
+      const room = this.sfuRooms[roomDataMessage.roomName];
       if (room) {
         room.handleData(roomDataMessage);
       }
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.MESH_USER_LIST.key, roomUserListMessage => {
+      console.log('socket on MESH_USER_LIST', roomUserListMessage)
+      const room = this.meshRooms[roomUserListMessage.roomName];
+      if(room.stream) {
+        room.makeCalls(roomUserListMessage.userList);
+      }
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage => {
+      console.log('socket on MESH_OFFER')
+      const room = this.meshRooms[offerMessage.roomName];
+      room.handleOffer(offerMessage);
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage => {
+      console.log('socket on MESH_ANSWER');
+      const room = this.meshRooms[answerMessage.roomName];
+      room.handleAnswer(answerMessage);
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage => {
+      console.log('socket on MESH_CANDIDATE');
+      const room = this.meshRooms[candidateMessage.roomName];
+      room.handleCandidate(candidateMessage)
     });
   }
 
