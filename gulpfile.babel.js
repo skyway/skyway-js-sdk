@@ -97,10 +97,6 @@ gulp.task('default', () => {
   runSequence('lint', 'build');
 });
 
-gulp.task("watch", function() {
-  gulp.watch("./src/*.js", ["doc"])
-});
-
 gulp.doneCallback = function(err) {
   process.exit(err ? 1 : 0);
 };
