@@ -5,6 +5,18 @@ const Negotiator = require('./negotiator');
 const util = require('./util');
 
 class MediaConnection extends Connection {
+  /**
+   * Creates an Media Connection instance. 
+   * @param {string} [remoteId] - Remote peerID.
+   * @param {Object} options - @@@@
+   * @param {string} options.key - API key.
+   * @param {Integer} [options.debug=util.LOG_LEVELS.NONE] - @@@
+   * @param {string} [options.host=util.CLOUD_HOST] - @@@
+   * @param {Object} [options.port=util.CLOUD_PORT] - @@@
+   * @param {Object} [options.token=util.randomToken()] - @@@
+   * @param {Object} [options.config=util.defaultConfig] - @@@
+   * @param {Object} [options.turn=true] - @@@
+   */
   constructor(remoteId, options) {
     super(remoteId, options);
 

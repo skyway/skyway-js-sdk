@@ -19,12 +19,19 @@ const SFURoomEvents = new Enum([
 ]);
 
 const SFURoomMessageEvents = new Enum([
+  'offer_request',
   'broadcast',
   'leave',
   'answer'
 ]);
 
+/** Class to handle SFU related operations.  */
 class SFURoom extends EventEmitter {
+  /**
+   * Create a SFURoom. Should not be called by the user.
+   * @param {string} name - Room name.
+   * @param {Object} options - @@@.
+   */
   constructor(name, options) {
     super();
 
@@ -41,68 +48,34 @@ class SFURoom extends EventEmitter {
     this.members = [];
   }
 
-  //
-  // Handle socket.io related events
-  //
-  handleJoin(message) {
-    const src = message.src;
-
-    if (src === this._peerId) {
-      this.open = true;
-      this.emit(SFURoom.EVENTS.open.key);
-
-      // At this stage the Server has acknowledged us joining a room
-      return;
+  /**
+   * Send Offer request message to SFU server.
+   * @param {MediaStream} stream - A media stream.
+   * @param {Object} options - @@@@.
+   */
+  callRoom(stream, options) {
+    if (!stream) {
+      util.error(
+        'To call a peer, you must provide ' +
+        'a stream from your browser\'s `getUserMedia`.'
+      );
+      return null;
     }
 
-    this.members.push(src);
-    this.emit(SFURoom.EVENTS.peerJoin.key, src);
-  }
+    this.localStream = stream;
 
-  handleLeave(message) {
-    if (!this.open) {
-      return;
-    }
-
-    const src = message.src;
-
-    const index = this.members.indexOf(src);
-    this.members.splice(index, 1);
-    this.emit(SFURoom.EVENTS.peerLeave.key, src);
-  }
-
-  handleData(message) {
-    this.emit(SFURoom.EVENTS.data.key, message);
-  }
-
-  send(data) {
-    if (!this.open) {
-      return;
-    }
-
-    const message = {
-      roomName: this.name,
-      data:     data
+    const data = {
+      roomName:    this.name,
+      roomOptions: this._options
     };
-    this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
+
+    this.emit(SFURoom.MESSAGE_EVENTS.offer_request.key, data);
   }
 
-  close() {
-    if (!this.open) {
-      return;
-    }
-
-    if (this._pc) {
-      this._pc.close();
-    }
-
-    const message = {
-      roomName: this.name
-    };
-    this.emit(SFURoom.MESSAGE_EVENTS.leave.key, message);
-    this.emit(SFURoom.EVENTS.close.key);
-  }
-
+  /**
+   * Handles Offer message from SFU server.
+   * @param {Object} offer - Offer SDP from SFU server.
+   */
   handleOffer(offer) {
     // Handle SFU Offer and send Answer to Server
     let description = new RTCSessionDescription(offer);
@@ -143,6 +116,84 @@ class SFURoom extends EventEmitter {
         util.error('Problem setting remote offer', e);
       });
     }
+  }
+
+  /**
+   * Handles Join message from SFU server.
+   * @param {Object} message - Message from SFU server.
+   */
+  handleJoin(message) {
+    const src = message.src;
+
+    if (src === this._peerId) {
+      this.open = true;
+      this.emit(SFURoom.EVENTS.open.key);
+
+      // At this stage the Server has acknowledged us joining a room
+      return;
+    }
+
+    this.members.push(src);
+    this.emit(SFURoom.EVENTS.peerJoin.key, src);
+  }
+
+  /**
+   * Handles Leave message from SFU server.
+   * @param {Object} message - Message from SFU server.
+   */
+  handleLeave(message) {
+    if (!this.open) {
+      return;
+    }
+
+    const src = message.src;
+
+    const index = this.members.indexOf(src);
+    this.members.splice(index, 1);
+    this.emit(SFURoom.EVENTS.peerLeave.key, src);
+  }
+
+  /**
+   * Handles Leave message from SFU server.
+   * @param {Object} message - Message from SFU server.
+   */
+  handleData(message) {
+    this.emit(SFURoom.EVENTS.data.key, message);
+  }
+
+  /**
+   * Sends data to all participants in the Room.
+   * @param {Object} data - Data to send.
+   */
+  send(data) {
+    if (!this.open) {
+      return;
+    }
+
+    const message = {
+      roomName: this.name,
+      data:     data
+    };
+    this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
+  }
+
+  /**
+   * Close
+   */
+  close() {
+    if (!this.open) {
+      return;
+    }
+
+    if (this._pc) {
+      this._pc.close();
+    }
+
+    const message = {
+      roomName: this.name
+    };
+    this.emit(SFURoom.MESSAGE_EVENTS.leave.key, message);
+    this.emit(SFURoom.EVENTS.close.key);
   }
 
   _setupPCListeners() {
@@ -226,10 +277,17 @@ class SFURoom extends EventEmitter {
 
     return this._pc;
   }
+  
+  /**
+   * EVENTS
+   */
   static get EVENTS() {
     return SFURoomEvents;
   }
 
+  /**
+   * MESSAGE_EVENTS
+   */
   static get MESSAGE_EVENTS() {
     return SFURoomMessageEvents;
   }

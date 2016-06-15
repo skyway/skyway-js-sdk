@@ -20,14 +20,21 @@ const MeshMessageEvents = new Enum([
   'get_peers'
 ]);
 
+/** Fullmesh room */
 class MeshRoom extends EventEmitter {
+
+  /**
+   * Creates a MeshRoom instance.
+   * @param {string} name - Room name.
+   * @param {Object} options - @@@@
+   */
   constructor(name, options) {
     super();
 
     this.name = name;
     this._options = options || {};
     this._peerId = this._options.peerId;
-    this.stream = this._options._stream;
+    this.localStream = this._options._stream;
     this._pcConfig = this._options.pcConfig;
     this.remoteStreams = {};
     this.connections = {};
@@ -44,9 +51,13 @@ class MeshRoom extends EventEmitter {
     this.connections[peerId].push(connection);
   }
 
+  /**
+   * Returns a connection according to given peerId and connectionId.
+   * @param {string} peerId - peerID.
+   * @param {string} connectionId - connectionID.
+   * @return A MediaConnection or DataConnection.
+   */
   getConnection(peerId, connectionId) {
-    console.log('P2PConnectionManager.getConnection')
-    console.log(this)
     if (this.connections && this.connections[peerId]) {
       for (let connection of this.connections[peerId]) {
         if (connection.id === connectionId) {
@@ -57,6 +68,11 @@ class MeshRoom extends EventEmitter {
     return null;
   }
 
+  /**
+   * Starts getting users list in the room.
+   * @param {MediaStream} stream - A media stream.
+   * @param {Object} options - @@@@.
+   */
   callRoom(stream, options) {
     if (!stream) {
       util.error(
@@ -66,7 +82,7 @@ class MeshRoom extends EventEmitter {
       return null;
     }
 
-    this.stream = stream;
+    this.localStream = stream;
 
     const data = {
       roomName:    this.name,
@@ -76,9 +92,14 @@ class MeshRoom extends EventEmitter {
     this.emit(MeshRoom.MESSAGE_EVENTS.get_peers.key, data);
   }
 
+  /**
+   * Starts video call to all users in the room.
+   * @param {Array} peerIds - A list of PeerIDs.
+   * @param {Object} options - @@@@
+   */
   makeCalls(peerIds, options) {
     options = options || {};
-    options._stream = this.stream;
+    options._stream = this.localStream;
 
     for(let i=0; i<peerIds.length; i++){
       let peerId = peerIds[i];
@@ -90,11 +111,18 @@ class MeshRoom extends EventEmitter {
       }
     }
   }
-
-  connectRoom(peerIds, stream, options) {
-
-  }
   
+  /**
+   * Handles Offer message from remote peer and create new Media Connection.
+   * @param {Object} offerMessage - Offer message.
+   * @param {string} offerMessage.src - Sender's peerID.
+   * @param {string} [offerMessage.dst] - Reciever's peerID.
+   * @param {Object} offerMessage.offer - Offer SDP.
+   * @param {string} [offerMessage.connctionType] - 'media' or 'data'.
+   * @param {string} offerMessage.connctionId - connectionID.
+   * @param {string} [offerMessage.roomName] - Room name.
+   * @param {string} [offerMessage.metadata] - metadata.
+   */
   handleOffer(offerMessage){
     const connectionId = offerMessage.connectionId;
     let connection = this.getConnection(offerMessage.src, connectionId);
@@ -119,12 +147,16 @@ class MeshRoom extends EventEmitter {
       this._addConnection(offerMessage.src, connection);
       this._setupMessageHandlers(connection);
 
-      connection.answer(this.stream);
+      connection.answer(this.localStream);
     } else {
       util.warn('Received malformed connection type: ', offerMessage.connectionType);
     }
   }
 
+  /**
+   * Handles Answer message from remote peer.
+   * @param {Object} offerMessage - Offer message.
+   */
   handleAnswer(answerMessage) {
    const connection = this.getConnection(
                           answerMessage.src,
@@ -138,6 +170,10 @@ class MeshRoom extends EventEmitter {
     }
   }
 
+  /**
+   * Handles Candidate message from remote peer.
+   * @param {Object} offerMessage - Offer message.
+   */
   handleCandidate(candidateMessage) {
     const connection = this.getConnection(
                           candidateMessage.src,
@@ -172,14 +208,23 @@ class MeshRoom extends EventEmitter {
     });
   }
 
+  /**
+   * Close
+   */
   close() {
     console.log('implement close method')
   }
 
+  /**
+   * EVENTS
+   */
   static get EVENTS() {
     return MeshEvents;
   }
 
+  /**
+   * MESSAGE_EVENTS
+   */
   static get MESSAGE_EVENTS() {
     return MeshMessageEvents;
   }

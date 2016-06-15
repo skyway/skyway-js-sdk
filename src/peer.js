@@ -21,6 +21,18 @@ const PeerEvents = new Enum([
 ]);
 
 class Peer extends EventEmitter {
+  /**
+   * Creates an peer. It's called by user application.
+   * @param {string} [id] - own peerID.
+   * @param {Object} options - @@@@
+   * @param {string} options.key - API key.
+   * @param {Integer} [options.debug=util.LOG_LEVELS.NONE] - @@@
+   * @param {string} [options.host=util.CLOUD_HOST] - @@@
+   * @param {Object} [options.port=util.CLOUD_PORT] - @@@
+   * @param {Object} [options.token=util.randomToken()] - @@@
+   * @param {Object} [options.config=util.defaultConfig] - @@@
+   * @param {Object} [options.turn=true] - @@@
+   */
   constructor(id, options) {
     super();
 
@@ -76,6 +88,15 @@ class Peer extends EventEmitter {
     this._initializeServerConnection(id);
   }
 
+  /**
+   * Creates new DataConnection.
+   * @param {string} peerId - @@@
+   * @param {Object} [options] - @@@@
+   * @param {string} [options.label] - @@@@
+   * @param {string} [options.metadata] - @@@@
+   * @param {string} [options.serialization] - @@@@
+   * @param {boolean} [options.reliable] - @@@@
+   */
   connect(peerId, options) {
     if (this._disconnectCalled) {
       util.warn('You cannot connect to a new Peer because you called ' +
@@ -97,6 +118,13 @@ class Peer extends EventEmitter {
     return connection;
   }
 
+  /**
+   * Creates new MediaConnection.
+   * @param {string} peerId - @@@
+   * @param {MediaStream} stream - @@@
+   * @param {Object} options - @@@@
+   * @param {Object} [options.label] - @@@@
+   */
   call(peerId, stream, options) {
     if (this._disconnectCalled) {
       util.warn('You cannot connect to a new Peer because you called ' +
@@ -125,6 +153,11 @@ class Peer extends EventEmitter {
     return mc;
   }
 
+  /**
+   * Creates new MeshRoom or SFURoom. If roomOptions has a stream, it calls callRoom.
+   * @param {string} roomName - @@@
+   * @param {Object} roomOptions - @@@@
+   */
   joinRoom(roomName, roomOptions) {
     if (!roomName) {
       this.emitError('room-error', 'Room name must be defined.');
@@ -148,8 +181,13 @@ class Peer extends EventEmitter {
       const sfuRoom = new SFURoom(roomName, roomOptions);
       this.sfuRooms[roomName] = sfuRoom;
       this._setupSFURoomMessageHandlers(sfuRoom);
-      console.log(util.MESSAGE_TYPES.ROOM_JOIN.key);
+
       this.socket.send(util.MESSAGE_TYPES.ROOM_JOIN.key, data);
+
+      if(sfuRoom.localStream) {
+        sfuRoom.callRoom(sfuRoom.localStream)
+      }
+
       return sfuRoom;
 
     }else{
@@ -161,15 +199,20 @@ class Peer extends EventEmitter {
       this.meshRooms[roomName] = meshRoom;
       this._setupMeshRoomMessageHandlers(meshRoom);
 
-      if(meshRoom.stream) {
-        meshRoom.callRoom(meshRoom.stream)
+      this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
+
+      if(meshRoom.localStream) {
+        meshRoom.callRoom(meshRoom.localStream)
       }
-      // this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
-      console.log(meshRoom)
       return meshRoom;
     }
   }
 
+  /**
+   * Returns a connection according to given peerId and connectionId.
+   * @param {string} peerId - @@@
+   * @param {Object} connectionId - @@@@
+   */
   getConnection(peerId, connectionId) {
     if (this.connections[peerId]) {
       for (let connection of this.connections[peerId]) {
@@ -191,6 +234,9 @@ class Peer extends EventEmitter {
     this.emit(Peer.EVENTS.error.key, err);
   }
 
+  /**
+   * Destroy
+   */
   destroy() {
     if (!this._destroyCalled) {
       this._destroyCalled = true;
@@ -199,6 +245,9 @@ class Peer extends EventEmitter {
     }
   }
 
+  /**
+   * Disconnect
+   */
   disconnect() {
     setTimeout(() => {
       if (!this._disconnectCalled) {
@@ -217,6 +266,9 @@ class Peer extends EventEmitter {
   }
 
   _setupSFURoomMessageHandlers(room) {
+    room.on(SFURoom.MESSAGE_EVENTS.offer_request.key, sendMessage => {
+      this.socket.send(util.MESSAGE_TYPES.SFU_OFFER_REQUEST.key, sendMessage);
+    });
     room.on(SFURoom.MESSAGE_EVENTS.broadcast.key, sendMessage => {
       this.socket.send(util.MESSAGE_TYPES.ROOM_DATA.key, sendMessage);
     });
@@ -244,13 +296,16 @@ class Peer extends EventEmitter {
     });
     room.on(MeshRoom.MESSAGE_EVENTS.get_peers.key, data => {
       console.log('meshRoomManager on get_peers')
-      this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
+      this.socket.send(util.MESSAGE_TYPES.MESH_USER_LIST_REQUEST.key, data);
     });
   }
 
   reconnect() {
   }
 
+  /**
+   * listAllPeers
+   */
   listAllPeers(cb) {
     cb = cb || function() {};
     const self = this;
@@ -297,6 +352,10 @@ class Peer extends EventEmitter {
     }, 0);
   }
 
+  /**
+   * Creates new Socket and initalize its message handlers.
+   * @param {string} id - peerID.
+   */
   _initializeServerConnection(id) {
     this.socket = new Socket(
       this.options.secure,
@@ -489,7 +548,7 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.MESH_USER_LIST.key, roomUserListMessage => {
       console.log('socket on MESH_USER_LIST', roomUserListMessage)
       const room = this.meshRooms[roomUserListMessage.roomName];
-      if(room.stream) {
+      if(room.localStream) {
         room.makeCalls(roomUserListMessage.userList);
       }
     });
