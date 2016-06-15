@@ -11,6 +11,7 @@ const babelify    = require('babelify');
 const source      = require('vinyl-source-stream');
 const buffer      = require('vinyl-buffer');
 const runSequence = require('run-sequence');
+const jsdoc       = require('gulp-jsdoc3');
 
 const karmaConfig = require('./karma.conf.js');
 const KarmaServer = require('karma').Server;
@@ -87,8 +88,17 @@ gulp.task('build', () => {
     .pipe(gulp.dest('dist'));
 });
 
+gulp.task('doc', cb => {
+  gulp.src(['README.md', './src/*.js'], {read: false})
+    .pipe(jsdoc(cb));
+});
+
 gulp.task('default', () => {
   runSequence('lint', 'build');
+});
+
+gulp.task("watch", function() {
+  gulp.watch("./src/*.js", ["doc"])
 });
 
 gulp.doneCallback = function(err) {
