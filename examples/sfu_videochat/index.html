@@ -3,6 +3,7 @@
   <title>PeerJS - Video chat example</title>
   <link rel="stylesheet" href="style.css">
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
   <script type="text/javascript" src="../../dist/skyway.js"></script>
   <script>
     // Compatibility shim
@@ -12,15 +13,9 @@
       key: 'yourkey-a515-486b-8488-407b41150e43',
       debug: 3
     });
-
+    var room;
     peer.on('open', function(){
       $('#my-id').text(peer.id);
-    });
-    // Receiving a call
-    peer.on('call', function(call){
-      // Answer the call automatically (instead of prompting user) for demo purposes
-      call.answer(window.localStream);
-      step3(call);
     });
     peer.on('error', function(err){
       alert(err.message);
@@ -31,11 +26,12 @@
     $(function(){
       $('#make-call').click(function(){
         // Initiate a call!
-        var call = peer.call($('#callto-id').val(), window.localStream);
-        step3(call);
+        room = peer.joinRoom($('#join-room').val(), {_stream: window.localStream});
+        $('#room-id').text(room.name);
+        step3(room);
       });
       $('#end-call').click(function(){
-        window.existingCall.close();
+        room.close();
         step2();
       });
       // Retry if getUserMedia fails
@@ -59,19 +55,13 @@
       $('#step1, #step3').hide();
       $('#step2').show();
     }
-    function step3 (call) {
-      // Hang up on an existing call if present
-      if (window.existingCall) {
-        window.existingCall.close();
-      }
+    function step3 (room) {
       // Wait for stream on the call, then set peer video display
-      call.on('stream', function(stream){
-        $('#their-video').prop('src', URL.createObjectURL(stream));
+      room.on('stream', function(stream){
+        $('#their-videos').append($('<video autoplay class="remoteVideos">').prop('src', URL.createObjectURL(stream)));
       });
       // UI stuff
-      window.existingCall = call;
-      $('#their-id').text(call.remoteId);
-      call.on('close', step2);
+      room.on('close', step2);
       $('#step1, #step2').hide();
       $('#step3').show();
     }
@@ -86,7 +76,7 @@
 
   <!-- Video area -->
   <div class="pure-u-2-3" id="video-container">
-    <video id="their-video" autoplay></video>
+    <div id="their-videos"></div>
     <video id="my-video" muted="true" autoplay></video>
   </div>
 
@@ -106,17 +96,16 @@
     <!-- Make calls to others -->
     <div id="step2">
       <p>Your id: <span id="my-id">...</span></p>
-      <p>Share this id with others so they can call you.</p>
       <h3>Make a call</h3>
       <div class="pure-form">
-        <input type="text" placeholder="Call user id..." id="callto-id">
-        <a href="#" class="pure-button pure-button-success" id="make-call">Call</a>
+        <input type="text" placeholder="Join room..." id="join-room">
+        <a href="#" class="pure-button pure-button-success" id="make-call">Join</a>
       </div>
     </div>
 
     <!-- Call in progress -->
     <div id="step3">
-      <p>Currently in call with <span id="their-id">...</span></p>
+      <p>Currently in room <span id="room-id">...</span></p>
       <p><a href="#" class="pure-button pure-button-error" id="end-call">End call</a></p>
     </div>
   </div>
