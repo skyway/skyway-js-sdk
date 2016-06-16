@@ -4,7 +4,7 @@ const Peer            = require('../src/peer');
 const Socket          = require('../src/socket');
 const MediaConnection = require('../src/mediaConnection');
 const DataConnection  = require('../src/dataConnection');
-const Room            = require('../src/room');
+const SFURoom            = require('../src/sfuRoom');
 const util            = require('../src/util');
 
 const assert      = require('power-assert');
@@ -736,7 +736,7 @@ describe('Peer', () => {
     });
   });
 
-  describe('Room API', () => {
+  describe('SFURoom API', () => {
     const serverPort = 5080;
     const timeoutVal = 200;
     let peer;
@@ -791,13 +791,13 @@ describe('Peer', () => {
           setTimeout(() => {
             assert(err.type === 'room-error');
             assert(err.message === errMsg);
-            assert.deepEqual(peer.rooms, {});
+            assert.deepEqual(peer.sfuRooms, {});
             done();
           }, 0);
         });
 
-        assert.deepEqual(peer.rooms, {});
-        peer.joinRoom(roomName);
+        assert.deepEqual(peer.sfuRooms, {});
+        peer.joinRoom(roomName, {mode: 'sfu'});
       });
 
       it('should abort if the room name is an empty string', done => {
@@ -810,13 +810,13 @@ describe('Peer', () => {
           setTimeout(() => {
             assert(err.type === 'room-error');
             assert(err.message === errMsg);
-            assert.deepEqual(peer.rooms, {});
+            assert.deepEqual(peer.sfuRooms, {});
             done();
           }, 0);
         });
 
-        assert.deepEqual(peer.rooms, {});
-        peer.joinRoom(roomName);
+        assert.deepEqual(peer.sfuRooms, {});
+        peer.joinRoom(roomName, {mode: 'sfu'});
       });
 
       it('should create a new room and emit from Socket when joining a room', done => {
@@ -826,30 +826,30 @@ describe('Peer', () => {
         peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
 
-        assert.deepEqual(peer.rooms, {});
-        const room = peer.joinRoom(roomName);
+        assert.deepEqual(peer.sfuRooms, {});
+        const room = peer.joinRoom(roomName, {mode: 'sfu'});
 
-        assert.deepEqual(peer.rooms[roomName], room);
+        assert.deepEqual(peer.sfuRooms[roomName], room);
 
         setTimeout(() => {
-          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
+          assert(spy.calledWith(util.MESSAGE_TYPES.SFU_JOIN.key));
           done();
         }, timeoutVal);
       });
     });
 
     describe('Offer', () => {
-      it('should call handleOffer() on a room when a ROOM_OFFER message is received', done => {
+      it('should call handleOffer() on a room when a SFU_OFFER message is received', done => {
         const roomName = 'testRoom';
         const offer = {roomName: roomName, offer: 'foobar'};
 
         let spy = sinon.spy();
         peer.socket._isOpen = true;
 
-        peer.joinRoom(roomName);
-        peer.rooms[roomName].handleOffer = spy;
+        peer.joinRoom(roomName, {mode: 'sfu'});
+        peer.sfuRooms[roomName].handleOffer = spy;
 
-        peer.socket.emit(util.MESSAGE_TYPES.ROOM_OFFER.key, offer);
+        peer.socket.emit(util.MESSAGE_TYPES.SFU_OFFER.key, offer);
 
         setTimeout(() => {
           assert(spy.calledWith(offer.offer));
@@ -866,15 +866,15 @@ describe('Peer', () => {
         peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
 
-        const room = peer.joinRoom(roomName);
+        const room = peer.joinRoom(roomName, {mode: 'sfu'});
         room.open = true;
 
         setTimeout(() => {
-          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
-          room.emit(Room.MESSAGE_EVENTS.answer.key, 'foobar');
+          assert(spy.calledWith(util.MESSAGE_TYPES.SFU_JOIN.key));
+          room.emit(SFURoom.MESSAGE_EVENTS.answer.key, 'foobar');
 
           setTimeout(() => {
-            assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_ANSWER.key));
+            assert(spy.calledWith(util.MESSAGE_TYPES.SFU_ANSWER.key));
             done();
           }, timeoutVal);
         }, timeoutVal);
@@ -889,12 +889,12 @@ describe('Peer', () => {
         peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
 
-        const room = peer.joinRoom(roomName);
+        const room = peer.joinRoom(roomName, {mode: 'sfu'});
         room.open = true;
         room.send('foobar');
 
         setTimeout(() => {
-          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key));
+          assert(spy.calledWith(util.MESSAGE_TYPES.SFU_DATA.key));
           done();
         }, timeoutVal);
       });
@@ -908,15 +908,15 @@ describe('Peer', () => {
         peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
 
-        const room = peer.joinRoom(roomName);
+        const room = peer.joinRoom(roomName, {mode: 'sfu'});
         room.open = true;
 
         setTimeout(() => {
-          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_JOIN.key));
+          assert(spy.calledWith(util.MESSAGE_TYPES.SFU_JOIN.key));
           room.close();
 
           setTimeout(() => {
-            assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_LEAVE.key));
+            assert(spy.calledWith(util.MESSAGE_TYPES.SFU_LEAVE.key));
             done();
           }, timeoutVal);
         }, timeoutVal);

@@ -182,7 +182,7 @@ class Peer extends EventEmitter {
       this.sfuRooms[roomName] = sfuRoom;
       this._setupSFURoomMessageHandlers(sfuRoom);
 
-      this.socket.send(util.MESSAGE_TYPES.ROOM_JOIN.key, data);
+      this.socket.send(util.MESSAGE_TYPES.SFU_JOIN.key, data);
 
       if(sfuRoom.localStream) {
         sfuRoom.callRoom(sfuRoom.localStream)
@@ -270,13 +270,13 @@ class Peer extends EventEmitter {
       this.socket.send(util.MESSAGE_TYPES.SFU_OFFER_REQUEST.key, sendMessage);
     });
     room.on(SFURoom.MESSAGE_EVENTS.broadcast.key, sendMessage => {
-      this.socket.send(util.MESSAGE_TYPES.ROOM_DATA.key, sendMessage);
+      this.socket.send(util.MESSAGE_TYPES.SFU_DATA.key, sendMessage);
     });
     room.on(SFURoom.MESSAGE_EVENTS.leave.key, leaveMessage => {
-      this.socket.send(util.MESSAGE_TYPES.ROOM_LEAVE.key, leaveMessage);
+      this.socket.send(util.MESSAGE_TYPES.SFU_LEAVE.key, leaveMessage);
     });
     room.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.ROOM_ANSWER.key, answerMessage);
+      this.socket.send(util.MESSAGE_TYPES.SFU_ANSWER.key, answerMessage);
     });
   }
 
@@ -491,7 +491,7 @@ class Peer extends EventEmitter {
       delete this._queuedMessages[connectionId];
     });
 
-    this.socket.on(util.MESSAGE_TYPES.ROOM_OFFER.key, offerMessage => {
+    this.socket.on(util.MESSAGE_TYPES.SFU_OFFER.key, offerMessage => {
       // We want the Room class to handle this instead
       // The Room class acts as RoomConnection
       this.sfuRooms[offerMessage.roomName].handleOffer(offerMessage.offer);
@@ -524,21 +524,21 @@ class Peer extends EventEmitter {
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.ROOM_USER_JOIN.key, roomUserJoinMessage => {
+    this.socket.on(util.MESSAGE_TYPES.SFU_USER_JOIN.key, roomUserJoinMessage => {
       const room = this.sfuRooms[roomUserJoinMessage.roomName];
       if (room) {
         room.handleJoin(roomUserJoinMessage);
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.ROOM_USER_LEAVE.key, roomUserLeaveMessage => {
+    this.socket.on(util.MESSAGE_TYPES.SFU_USER_LEAVE.key, roomUserLeaveMessage => {
       const room = this.sfuRooms[roomUserLeaveMessage.roomName];
       if (room) {
         room.handleLeave(roomUserLeaveMessage);
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.ROOM_DATA.key, roomDataMessage => {
+    this.socket.on(util.MESSAGE_TYPES.SFU_DATA.key, roomDataMessage => {
       const room = this.sfuRooms[roomDataMessage.roomName];
       if (room) {
         room.handleData(roomDataMessage);
@@ -550,6 +550,20 @@ class Peer extends EventEmitter {
       const room = this.meshRooms[roomUserListMessage.roomName];
       if(room.localStream) {
         room.makeCalls(roomUserListMessage.userList);
+      }
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.MESH_USER_JOIN.key, roomUserJoinMessage => {
+      const room = this.meshRooms[roomUserJoinMessage.roomName];
+      if (room) {
+        room.handleJoin(roomUserJoinMessage);
+      }
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.MESH_USER_LEAVE.key, roomUserLeaveMessage => {
+      const room = this.sfuRooms[roomUserLeaveMessage.roomName];
+      if (room) {
+        room.handleLeave(roomUserLeaveMessage);
       }
     });
 
