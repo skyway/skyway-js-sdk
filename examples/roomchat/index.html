@@ -53,6 +53,30 @@
         });
         $('.filler').hide();
         $('#connections').append(chatbox);
+        room.getLog();
+        room.once('log', function(logs) {
+          for(var i = 0; i < logs.length; i++) {
+            var log = JSON.parse(logs[i]);
+
+            switch (log.messageType) {
+              case 'ROOM_DATA':
+                messages.append('<div><span class="peer">' + log.message.src + '</span>: ' + log.message.data + '</div>');
+                break;
+              case 'ROOM_USER_JOIN':
+                if (log.message.src === peer.id) {
+                  break;
+                }
+                messages.append('<div><span class="peer">' + log.message.src + '</span>: has joined the room </div>');
+                break;
+              case 'ROOM_USER_LEAVE':
+                if (log.message.src === peer.id) {
+                  break;
+                }
+                messages.append('<div><span class="peer">' + log.message.src + '</span>: has left the room </div>');
+                break;
+            }
+          }
+        });
         room.on('data', function(message) {
           if (message.data instanceof ArrayBuffer) {
             var dataView = new Uint8Array(message.data);

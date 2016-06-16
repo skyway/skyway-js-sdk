@@ -456,7 +456,7 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.ROOM_LOG.key, roomLogMessage => {
       const room = this.rooms[roomLogMessage.roomName];
       if (room) {
-        room.handleLog(roomLogMessage);
+        room.handleLog(roomLogMessage.log);
       }
     });
   }

@@ -77,20 +77,8 @@ class Room extends EventEmitter {
     this.emit(Room.EVENTS.data.key, message);
   }
 
-  handleLog(message) {
-    // Loop through and handle each in turn
-    for (const jsonLog of message.log) {
-      const logEvent = JSON.parse(jsonLog);
-      const src = logEvent.message.src;
-
-      if (logEvent.messageType === util.MESSAGE_TYPES.ROOM_USER_JOIN.key) {
-        this.emit(Room.EVENTS.peerJoin.key, src);
-      } else if (logEvent.messageType === util.MESSAGE_TYPES.ROOM_USER_LEAVE.key) {
-        this.emit(Room.EVENTS.peerLeave.key, src);
-      } else if (logEvent.messageType === util.MESSAGE_TYPES.ROOM_DATA.key) {
-        this.handleData(logEvent.message);
-      }
-    }
+  handleLog(log) {
+    this.emit(Room.EVENTS.log.key, log);
   }
 
   send(data) {
