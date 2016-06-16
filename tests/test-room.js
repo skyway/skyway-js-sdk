@@ -1,7 +1,6 @@
 'use strict';
 
 const Room   = require('../src/room');
-const util   = require('../src/util');
 
 const shim              = require('../src/webrtcShim');
 const RTCPeerConnection = shim.RTCPeerConnection;
@@ -271,88 +270,18 @@ describe('Room', () => {
       assert.equal(spy.args[0][0], Room.MESSAGE_EVENTS.getLog.key);
     });
 
-    it('should emit a ROOM_USER_JOIN event upon handling a log with a join event', () => {
+    it('should emit a log event when handleLog is called', done => {
       const peerId1 = 'peerId1';
-      const peerId2 = 'peerId2';
-      const logEvent = {
-        messageType: util.MESSAGE_TYPES.ROOM_USER_JOIN.key,
-        message:     {
-          src: peerId2
-        }
-      };
-      const jsonEvent = JSON.stringify(logEvent);
-
-      // Fully constructed message for room object to handle
-      const logMessage = {
-        log: [jsonEvent]
-      };
+      const testLog = Symbol();
 
       const room = new Room(roomName, {peerId: peerId1});
       room.open = true;
 
-      const spy = sinon.spy();
-      room.emit = spy;
-
-      room.handleLog(logMessage);
-
-      assert(spy.calledOnce);
-      assert.equal(spy.args[0][0], Room.EVENTS.peerJoin.key);
-    });
-
-    it('should emit a ROOM_USER_LEAVE event upon handling a log with a leave event', () => {
-      const peerId1 = 'peerId1';
-      const peerId2 = 'peerId2';
-      const logEvent = {
-        messageType: util.MESSAGE_TYPES.ROOM_USER_LEAVE.key,
-        message:     {
-          src: peerId2
-        }
-      };
-      const jsonEvent = JSON.stringify(logEvent);
-
-      // Fully constructed message for room object to handle
-      const logMessage = {
-        log: [jsonEvent]
-      };
-
-      const room = new Room(roomName, {peerId: peerId1});
-      room.open = true;
-
-      const spy = sinon.spy();
-      room.emit = spy;
-
-      room.handleLog(logMessage);
-
-      assert(spy.calledOnce);
-      assert.equal(spy.args[0][0], Room.EVENTS.peerLeave.key);
-    });
-
-    it('should call handleData() upon handling a log with a data event', () => {
-      const peerId1 = 'peerId1';
-      const peerId2 = 'peerId2';
-      const logEvent = {
-        messageType: util.MESSAGE_TYPES.ROOM_DATA.key,
-        message:     {
-          src: peerId2
-        }
-      };
-      const jsonEvent = JSON.stringify(logEvent);
-
-      // Fully constructed message for room object to handle
-      const logMessage = {
-        log: [jsonEvent]
-      };
-
-      const room = new Room(roomName, {peerId: peerId1});
-      room.open = true;
-
-      const spy = sinon.spy();
-      room.handleData = spy;
-
-      room.handleLog(logMessage);
-
-      assert(spy.calledOnce);
-      assert.deepEqual(spy.args[0][0], logEvent.message);
+      room.on('log', log => {
+        assert.equal(log, testLog);
+        done();
+      });
+      room.handleLog(testLog);
     });
   });
 

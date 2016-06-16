@@ -927,7 +927,7 @@ describe('Peer', () => {
         peer.socket.emit(util.MESSAGE_TYPES.ROOM_LOG.key, roomLogMessage);
 
         setTimeout(() => {
-          assert(spy.calledWith(roomLogMessage));
+          assert(spy.calledWith(roomLogMessage.log));
           done();
         }, timeoutVal);
       });
