@@ -436,7 +436,6 @@ describe('Peer', () => {
 
       peer.socket.emit(util.MESSAGE_TYPES.LEAVE.key, peerId);
 
-      console.log(spy.callCount);
       assert(spy.calledOnce);
       assert(spy.calledWith(`Received leave message from ${peerId}`) === true);
 
