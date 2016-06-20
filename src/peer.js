@@ -183,6 +183,7 @@ class Peer extends EventEmitter {
       roomOptions = {};
     }
     roomOptions.pcConfig = this._pcConfig;
+    roomOptions.peerId = this.id;
 
     const room = new Room(roomName, roomOptions);
     this.rooms[roomName] = room;
