@@ -1,0 +1,206 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <title>PeerJS chat demo</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Language" content="en-us">
+
+  <link href="fancy.css" rel="stylesheet" type="text/css">
+
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+  <script type="text/javascript" src="../../dist/skyway.js"></script>
+
+  <script>
+    // Connect to PeerJS, have server assign an ID instead of providing one
+    // Showing off some of the configs available with PeerJS :).
+    var peer = new Peer({
+      // Set API key for cloud server (you don't need this if you're running your
+      // own.
+      key: 'yourkey0-a515-486b-8488-407b41150e43',
+      // Set highest debug level (log everything!).
+      debug: 3,
+      // Set a logging function:
+      logFunction: function() {
+        var copy = Array.prototype.slice.call(arguments).join(' ');
+        $('.log').append(copy + '<br>');
+      }
+    });
+    var connectedPeers = {};
+    // Show this peer's ID.
+    peer.on('open', function(id){
+      $('#pid').text(id);
+    });
+    // Await connections from others
+    peer.on('connection', connect);
+    peer.on('error', function(err) {
+      console.log(err);
+    })
+    // Handle a connection object.
+    function connect(room) {
+      // Handle a chat connection.
+        var chatbox = $('<div></div>').addClass('connection').addClass('active').attr('id', room.name);
+        var header = $('<h1></h1>').html('Room: <strong>' + room.name + '</strong>');
+        var messages = $('<div><em>Peer connected.</em></div>').addClass('messages');
+        chatbox.append(header);
+        chatbox.append(messages);
+        // Select connection handler.
+        chatbox.on('click', function() {
+          if ($(this).attr('class').indexOf('active') === -1) {
+            $(this).addClass('active');
+          } else {
+            $(this).removeClass('active');
+          }
+        });
+        $('.filler').hide();
+        $('#connections').append(chatbox);
+        room.getLog();
+        room.once('log', function(logs) {
+          for(var i = 0; i < logs.length; i++) {
+            var log = JSON.parse(logs[i]);
+
+            switch (log.messageType) {
+              case 'ROOM_DATA':
+                messages.append('<div><span class="peer">' + log.message.src + '</span>: ' + log.message.data + '</div>');
+                break;
+              case 'ROOM_USER_JOIN':
+                if (log.message.src === peer.id) {
+                  break;
+                }
+                messages.append('<div><span class="peer">' + log.message.src + '</span>: has joined the room </div>');
+                break;
+              case 'ROOM_USER_LEAVE':
+                if (log.message.src === peer.id) {
+                  break;
+                }
+                messages.append('<div><span class="peer">' + log.message.src + '</span>: has left the room </div>');
+                break;
+            }
+          }
+        });
+        room.on('data', function(message) {
+          if (message.data instanceof ArrayBuffer) {
+            var dataView = new Uint8Array(message.data);
+            var dataBlob = new Blob([dataView]);
+            var url = window.URL.createObjectURL(dataBlob);
+            messages.append('<div><span class="file">' +
+              message.src + ' has sent you a <a target="_blank" href="' + url + '">file</a>.</span></div>');
+          } else {
+            messages.append('<div><span class="peer">' + message.src + '</span>: ' + message.data + '</div>');
+          }
+        });
+        room.on('peerJoin', function(peerId) {
+          messages.append('<div><span class="peer">' + peerId + '</span>: has joined the room </div>');
+        });
+        room.on('peerLeave', function(peerId) {
+          messages.append('<div><span class="peer">' + peerId + '</span>: has left the room </div>');
+        });
+    }
+    $(document).ready(function() {
+      // Prepare file drop box.
+      var box = $('#box');
+      box.on('dragenter', doNothing);
+      box.on('dragover', doNothing);
+      box.on('drop', function(e){
+        e.originalEvent.preventDefault();
+        var file = e.originalEvent.dataTransfer.files[0];
+        eachActiveRoom(function(room, $c) {
+          room.send(file);
+          $c.find('.messages').append('<div><span class="file">You sent a file.</span></div>');
+        });
+      });
+      function doNothing(e){
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      // Connect to a room
+      $('#connect').click(function() {
+        var roomName = $('#rid').val();
+        if (!connectedPeers[roomName]) {
+          // Create 2 connections, one labelled chat and another labelled file.
+          var room = peer.joinRoom(roomName);
+          room.on('open', function() {
+            connect(room);
+          });
+        }
+      });
+      // Close a connection.
+      $('#close').click(function() {
+        eachActiveRoom(function(room, $c) {
+          room.close();
+          $c.remove();
+        });
+      });
+      // Send a chat message to all active connections.
+      $('#send').submit(function(e) {
+        e.preventDefault();
+        // For each active connection, send the message.
+        var msg = $('#text').val();
+        eachActiveRoom(function(room, $c) {
+          room.send(msg);
+          $c.find('.messages').append('<div><span class="you">You: </span>' + msg
+            + '</div>');
+        });
+        $('#text').val('');
+        $('#text').focus();
+      });
+      // Goes through each active peer and calls FN on its connections.
+      function eachActiveRoom(fn) {
+        var actives = $('.active');
+        var checkedIds = {};
+        actives.each(function() {
+          var peerId = $(this).attr('id');
+          if (!checkedIds[peerId]) {
+            var room = peer.rooms[peerId];
+            fn(room, $(this));
+          }
+          checkedIds[peerId] = 1;
+        });
+      }
+      // Show browser version
+      $('#browsers').text(navigator.userAgent);
+    });
+    // Make sure things clean up properly.
+    window.onunload = window.onbeforeunload = function(e) {
+      if (!!peer && !peer.destroyed) {
+        peer.destroy();
+      }
+    };
+  </script>
+</head>
+
+<body>
+<a href="https://github.com/peers/peerjs"><img style="position: absolute; top: 0; right: 0; border: 0;"
+                                               src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"
+                                               alt="Fork me on GitHub"></a>
+
+<div id="actions">
+  Your PeerJS ID is <span id="pid"></span><br>
+  Connect to a room: <input type="text" id="rid" placeholder="Someone else's id"><input class="button" type="button" value="Connect" id="connect"><br><br>
+
+  <form id="send">
+    <input type="text" id="text" placeholder="Enter message"><input class="button" type="submit" value="Send to selected peers">
+  </form>
+  <button id="close">Close selected connections</button>
+</div>
+
+<div id="wrap"><div id="connections"><span class="filler">You have not yet
+        made any connections.</span></div>
+  <div class="clear"></div></div>
+
+<div id="box" style="background: #fff; font-size: 18px;padding:40px 30px; text-align: center;">
+  Drag file here to send to active connections.
+</div>
+
+
+<div class="warning browser">
+  <div class="important">Your browser version: <span id="browsers"></span><br>
+    Currently <strong>Firefox 22+ and Google Chrome 26.0.1403.0 or above</strong> is required.</strong></div>For more up to date compatibility
+  information see <a href="http://peerjs.com/status">PeerJS WebRTC
+  Status</a><br>Note that this demo may also fail if you are behind
+  stringent firewalls or both you and the remote peer and behind symmetric
+  NATs.
+
+  <div class="log" style="color:#FF7500;text-shadow:none;padding:15px;background:#eee"><strong>Connection status</strong>:<br></div>
+</div>
+</body>
+</html>

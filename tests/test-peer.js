@@ -892,6 +892,46 @@ describe('Peer', () => {
       });
     });
 
+    describe('Logging', () => {
+      it('should correctly emit from socket when room emits a getLog event', done => {
+        const roomName = 'testRoom';
+
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+
+        const room = peer.joinRoom(roomName);
+        room.open = true;
+        room.getLog();
+
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.ROOM_LOG.key));
+          done();
+        }, timeoutVal);
+      });
+
+      it('should call handleLog() on a room when a ROOM_LOG message is received', done => {
+        const roomName = 'testRoom';
+        const roomLogMessage = {
+          roomName: roomName,
+          log:      ['log1', 'log2']
+        };
+
+        let spy = sinon.spy();
+        peer.socket._isOpen = true;
+
+        peer.joinRoom(roomName);
+        peer.rooms[roomName].handleLog = spy;
+
+        peer.socket.emit(util.MESSAGE_TYPES.ROOM_LOG.key, roomLogMessage);
+
+        setTimeout(() => {
+          assert(spy.calledWith(roomLogMessage.log));
+          done();
+        }, timeoutVal);
+      });
+    });
+
     describe('Leave', () => {
       it('should correctly emit from Socket when attempting to leave a room', done => {
         const roomName = 'testRoom';
