@@ -117,7 +117,7 @@
         var roomName = $('#rid').val();
         if (!connectedPeers[roomName]) {
           // Create 2 connections, one labelled chat and another labelled file.
-          var room = peer.joinRoom(roomName, {mode: 'sfu'});
+          var room = peer.joinRoom(roomName);
           room.on('open', function() {
             connect(room);
           });
@@ -136,7 +136,7 @@
         // For each active connection, send the message.
         var msg = $('#text').val();
         eachActiveRoom(function(room, $c) {
-          room.send(msg);
+          room.sendByWS(msg);
           $c.find('.messages').append('<div><span class="you">You: </span>' + msg
             + '</div>');
         });

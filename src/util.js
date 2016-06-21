@@ -41,6 +41,7 @@ const MessageTypes = new Enum([
   'MESH_ANSWER',
   'MESH_CANDIDATE',
   'MESH_LEAVE',
+  'MESH_DATA',
   'MESH_LOG'
 ]);
 

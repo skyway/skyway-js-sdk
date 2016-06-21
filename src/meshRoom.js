@@ -8,8 +8,13 @@ const MediaConnection = require('./mediaConnection');
 
 const MeshEvents = new Enum([
   'stream',
+  'open',
+  'close',
   'peerJoin',
-  'peerLeave'
+  'peerLeave',
+  'error',
+  'data',
+  'log'
 ]);
 
 const MeshMessageEvents = new Enum([
@@ -51,19 +56,18 @@ class MeshRoom extends EventEmitter {
    * @param {MediaStream} stream - A media stream.
    * @param {Object} options - @@@@.
    */
-  callRoom(stream, options) {
+  callRoom(stream) {
     if (!stream) {
       util.error(
         'To call a peer, you must provide ' +
         'a stream from your browser\'s `getUserMedia`.'
       );
-      return null;
     }
 
     this.localStream = stream;
 
     const data = {
-      roomName:    this.name
+      roomName: this.name
     };
 
     this.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, data);
@@ -74,9 +78,9 @@ class MeshRoom extends EventEmitter {
    * @param {MediaStream} stream - A media stream.
    * @param {Object} options - @@@@.
    */
-  connectRoom(options) {
+  connectRoom() {
     const data = {
-      roomName:    this.name
+      roomName: this.name
     };
 
     this.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, data);
@@ -91,9 +95,9 @@ class MeshRoom extends EventEmitter {
     options = options || {};
     options._stream = this.localStream;
 
-    for(let i=0; i<peerIds.length; i++){
+    for (let i = 0; i < peerIds.length; i++) {
       let peerId = peerIds[i];
-      if(this._peerId !== peerId){
+      if (this._peerId !== peerId) {
         const mc = new MediaConnection(peerId, options);
         util.log('MediaConnection created in callRoom method');
         this._addConnection(peerId, mc);
@@ -131,7 +135,7 @@ class MeshRoom extends EventEmitter {
    * Returns a connection according to given peerId and connectionId.
    * @param {string} peerId - peerID.
    * @param {string} connectionId - connectionID.
-   * @return A MediaConnection or DataConnection.
+   * @return {Connection} A MediaConnection or DataConnection.
    */
   getConnection(peerId, connectionId) {
     if (this.connections && this.connections[peerId]) {
@@ -145,11 +149,20 @@ class MeshRoom extends EventEmitter {
   }
 
   /**
-   * Handles Join message from new participant.
+   * Handles Join message.
    * @param {Object} message - Message.
    */
   handleJoin(message) {
     const src = message.src;
+
+    if (src === this._peerId) {
+      this.open = true;
+      this.emit(MeshRoom.EVENTS.open.key);
+
+      // At this stage the Server has acknowledged us joining a room
+      return;
+    }
+
     this.emit(MeshRoom.EVENTS.peerJoin.key, src);
   }
 
@@ -163,6 +176,18 @@ class MeshRoom extends EventEmitter {
   }
 
   /**
+   * Handles data from other participant.
+   * @param {Object} message - Data.
+   */
+  handleData(message) {
+    this.emit(MeshRoom.EVENTS.data.key, message);
+  }
+
+  handleLog(log) {
+    this.emit(MeshRoom.EVENTS.log.key, log);
+  }
+
+  /**
    * Handles Offer message from remote peer and create new Media Connection.
    * @param {Object} offerMessage - Offer message.
    * @param {string} offerMessage.src - Sender's peerID.
@@ -173,7 +198,7 @@ class MeshRoom extends EventEmitter {
    * @param {string} [offerMessage.roomName] - Room name.
    * @param {string} [offerMessage.metadata] - metadata.
    */
-  handleOffer(offerMessage){
+  handleOffer(offerMessage) {
     const connectionId = offerMessage.connectionId;
     let connection = this.getConnection(offerMessage.src, connectionId);
 
@@ -205,10 +230,10 @@ class MeshRoom extends EventEmitter {
 
   /**
    * Handles Answer message from remote peer.
-   * @param {Object} offerMessage - Offer message.
+   * @param {Object} answerMessage - Answer message.
    */
   handleAnswer(answerMessage) {
-   const connection = this.getConnection(
+    const connection = this.getConnection(
                           answerMessage.src,
                           answerMessage.connectionId
                         );
@@ -222,7 +247,7 @@ class MeshRoom extends EventEmitter {
 
   /**
    * Handles Candidate message from remote peer.
-   * @param {Object} offerMessage - Offer message.
+   * @param {Object} candidateMessage - Offer message.
    */
   handleCandidate(candidateMessage) {
     const connection = this.getConnection(
@@ -234,7 +259,7 @@ class MeshRoom extends EventEmitter {
       connection.handleCandidate(candidateMessage);
     } else {
       this._storeMessage(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
-    }   
+    }
   }
 
   _storeMessage(type, message) {
@@ -269,12 +294,11 @@ class MeshRoom extends EventEmitter {
     this.emit(MeshRoom.MESSAGE_EVENTS.broadcastByDC.key, message);
   }
 
-
-  /**
-   * Close
-   */
-  close() {
-    console.log('implement close method')
+  getLog() {
+    const message = {
+      roomName: this.name
+    };
+    this.emit(MeshRoom.MESSAGE_EVENTS.getLog.key, message);
   }
 
   /**
@@ -291,7 +315,5 @@ class MeshRoom extends EventEmitter {
     return MeshMessageEvents;
   }
 }
-
-
 
 module.exports = MeshRoom;

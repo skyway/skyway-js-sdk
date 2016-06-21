@@ -43,7 +43,6 @@ describe('SFURoom', () => {
 
       assert(spy.calledOnce);
       assert.equal(spy.args[0][0], SFURoom.MESSAGE_EVENTS.broadcast.key);
-      console.log(spy.args[0][1])
       assert.deepEqual(spy.args[0][1], {roomName: sfuRoomName, data: data});
     });
   });
@@ -54,7 +53,6 @@ describe('SFURoom', () => {
       const peerId2 = 'peer2';
 
       const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId1});
-      console.log(sfuRoom)
       sfuRoom.open = true;
       assert.equal(sfuRoom.members.length, 0);
 

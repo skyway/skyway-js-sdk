@@ -95,6 +95,7 @@ class Peer extends EventEmitter {
    * @param {string} [options.metadata] - @@@@
    * @param {string} [options.serialization] - @@@@
    * @param {boolean} [options.reliable] - @@@@
+   * @return {Connection} An instance of DataConnection.
    */
   connect(peerId, options) {
     if (this._disconnectCalled) {
@@ -123,6 +124,7 @@ class Peer extends EventEmitter {
    * @param {MediaStream} stream - @@@
    * @param {Object} options - @@@@
    * @param {Object} [options.label] - @@@@
+   * @return {Connection} An instance of MediaConnection.
    */
   call(peerId, stream, options) {
     if (this._disconnectCalled) {
@@ -156,6 +158,7 @@ class Peer extends EventEmitter {
    * Creates new MeshRoom or SFURoom. If roomOptions has a stream, it calls callRoom.
    * @param {string} roomName - @@@
    * @param {Object} roomOptions - @@@@
+   * @return {Room} An instance of SFURoom or MeshRoom.
    */
   joinRoom(roomName, roomOptions) {
     if (!roomName) {
@@ -174,7 +177,7 @@ class Peer extends EventEmitter {
       roomOptions: roomOptions
     };
 
-    if(roomOptions.mode === 'sfu'){
+    if (roomOptions.mode === 'sfu') {
       if (this.rooms[roomName]) {
         return this.rooms[roomName];
       }
@@ -184,32 +187,33 @@ class Peer extends EventEmitter {
 
       this.socket.send(util.MESSAGE_TYPES.SFU_JOIN.key, data);
 
-      if(sfuRoom.localStream) {
-        sfuRoom.callRoom(sfuRoom.localStream)
+      if (sfuRoom.localStream) {
+        sfuRoom.callRoom(sfuRoom.localStream);
       }
       return sfuRoom;
-
-    }else{
-      if (this.rooms[roomName]) {
-        return this.rooms[roomName];
-      }
-      const meshRoom = new MeshRoom(roomName, roomOptions);
-      this.rooms[roomName] = meshRoom;
-      this._setupMeshRoomMessageHandlers(meshRoom);
-
-      this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
-
-      if(meshRoom.localStream) {
-        meshRoom.callRoom(meshRoom.localStream)
-      }
-      return meshRoom;
     }
+
+    // mode is blank or 'mesh'
+    if (this.rooms[roomName]) {
+      return this.rooms[roomName];
+    }
+    const meshRoom = new MeshRoom(roomName, roomOptions);
+    this.rooms[roomName] = meshRoom;
+    this._setupMeshRoomMessageHandlers(meshRoom);
+
+    this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
+
+    if (meshRoom.localStream) {
+      meshRoom.callRoom(meshRoom.localStream);
+    }
+    return meshRoom;
   }
 
   /**
    * Returns a connection according to given peerId and connectionId.
    * @param {string} peerId - @@@
    * @param {Object} connectionId - @@@@
+   * @return {Connection} connection
    */
   getConnection(peerId, connectionId) {
     if (this.connections[peerId]) {
@@ -280,7 +284,6 @@ class Peer extends EventEmitter {
     room.on(SFURoom.MESSAGE_EVENTS.getLog.key, getLogMessage => {
       this.socket.send(util.MESSAGE_TYPES.SFU_LOG.key, getLogMessage);
     });
-
   }
 
   _setupMeshRoomMessageHandlers(room) {
@@ -289,7 +292,7 @@ class Peer extends EventEmitter {
     });
     room.on(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage => {
       this.socket.send(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage);
-    })
+    });
     room.on(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
       this.socket.send(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage);
     });
@@ -300,7 +303,7 @@ class Peer extends EventEmitter {
       this.socket.send(util.MESSAGE_TYPES.MESH_DATA.key, sendMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.broadcastByDC.key, sendMessage => {
-      this.socket.send(util.MESSAGE_TYPES.MESH_DATA.key, sendMessage);
+      console.log(sendMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.getLog.key, getLogMessage => {
       this.socket.send(util.MESSAGE_TYPES.MESH_LOG.key, getLogMessage);
@@ -310,9 +313,6 @@ class Peer extends EventEmitter {
   reconnect() {
   }
 
-  /**
-   * listAllPeers
-   */
   listAllPeers(cb) {
     cb = cb || function() {};
     const self = this;
@@ -565,27 +565,22 @@ class Peer extends EventEmitter {
 
     this.socket.on(util.MESSAGE_TYPES.MESH_USER_LIST.key, roomUserListMessage => {
       const room = this.rooms[roomUserListMessage.roomName];
-      if(room.localStream) {
+      if (room.localStream) {
         room.makeCalls(roomUserListMessage.userList);
       }
     });
 
     this.socket.on(util.MESSAGE_TYPES.MESH_USER_JOIN.key, roomUserJoinMessage => {
       const room = this.rooms[roomUserJoinMessage.roomName];
-      //add when the client does't have room object.
       if (room) {
         room.handleJoin(roomUserJoinMessage);
-      }else {
-
       }
     });
 
     this.socket.on(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage => {
       const room = this.rooms[offerMessage.roomName];
-      if(room){
+      if (room) {
         room.handleOffer(offerMessage);
-      }else{
-        
       }
     });
 
@@ -596,7 +591,21 @@ class Peer extends EventEmitter {
 
     this.socket.on(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage => {
       const room = this.rooms[candidateMessage.roomName];
-      room.handleCandidate(candidateMessage)
+      room.handleCandidate(candidateMessage);
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.MESH_DATA.key, roomDataMessage => {
+      const room = this.rooms[roomDataMessage.roomName];
+      if (room) {
+        room.handleData(roomDataMessage);
+      }
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.MESH_LOG.key, roomLogMessage => {
+      const room = this.rooms[roomLogMessage.roomName];
+      if (room) {
+        room.handleLog(roomLogMessage.log);
+      }
     });
   }
 

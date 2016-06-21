@@ -24,7 +24,7 @@ const SFURoomMessageEvents = new Enum([
   'answer',
   'getLog',
   'broadcast',
-  'leave',
+  'leave'
 ]);
 
 /** Class to handle SFU related operations.  */
@@ -55,13 +55,12 @@ class SFURoom extends EventEmitter {
    * @param {MediaStream} stream - A media stream.
    * @param {Object} options - @@@@.
    */
-  callRoom(stream, options) {
+  callRoom(stream) {
     if (!stream) {
       util.error(
         'To call a peer, you must provide ' +
         'a stream from your browser\'s `getUserMedia`.'
       );
-      return null;
     }
 
     this.localStream = stream;
@@ -163,10 +162,6 @@ class SFURoom extends EventEmitter {
     this.emit(SFURoom.EVENTS.data.key, message);
   }
 
-  /**
-   * Sends data to all participants in the Room.
-   * @param {Object} data - Data to send.
-   */
   handleLog(log) {
     this.emit(SFURoom.EVENTS.log.key, log);
   }
@@ -183,9 +178,6 @@ class SFURoom extends EventEmitter {
     this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
   }
 
-  /**
-   * Close
-   */
   getLog() {
     const message = {
       roomName: this.name
@@ -193,6 +185,9 @@ class SFURoom extends EventEmitter {
     this.emit(SFURoom.MESSAGE_EVENTS.getLog.key, message);
   }
 
+  /**
+   * Close
+   */
   close() {
     if (!this.open) {
       return;
@@ -290,7 +285,7 @@ class SFURoom extends EventEmitter {
 
     return this._pc;
   }
-  
+
   /**
    * EVENTS
    */
