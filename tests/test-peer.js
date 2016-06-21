@@ -2,7 +2,7 @@
 
 const MediaConnection = require('../src/mediaConnection');
 const DataConnection  = require('../src/dataConnection');
-const SFURoom            = require('../src/sfuRoom');
+const SFURoom         = require('../src/sfuRoom');
 const util            = require('../src/util');
 
 const assert      = require('power-assert');
@@ -951,6 +951,187 @@ describe('Peer', () => {
             assert(spy.calledWith(util.MESSAGE_TYPES.SFU_LEAVE.key));
             done();
           }, timeoutVal);
+        }, timeoutVal);
+      });
+    });
+  });
+
+  describe('MeshRoom API', () => {
+    const serverPort = 5080;
+    const timeoutVal = 500;
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        secure: false,
+        host:   'localhost',
+        port:   serverPort,
+        key:    apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    describe('Join', () => {
+      it('should abort if the room name is undefined', done => {
+        const roomName = undefined;
+        peer.socket._isOpen = true;
+
+        const errMsg = 'Room name must be defined.';
+
+        peer.on('error', err => {
+          setTimeout(() => {
+            assert(err.type === 'room-error');
+            assert(err.message === errMsg);
+            assert.deepEqual(peer.rooms, {});
+            done();
+          }, 0);
+        });
+
+        assert.deepEqual(peer.rooms, {});
+        peer.joinRoom(roomName, {mode: 'sfu'});
+      });
+
+      it('should abort if the room name is an empty string', done => {
+        const roomName = '';
+        peer.socket._isOpen = true;
+
+        const errMsg = 'Room name must be defined.';
+
+        peer.on('error', err => {
+          setTimeout(() => {
+            assert(err.type === 'room-error');
+            assert(err.message === errMsg);
+            assert.deepEqual(peer.rooms, {});
+            done();
+          }, 0);
+        });
+
+        assert.deepEqual(peer.rooms, {});
+        peer.joinRoom(roomName, {mode: 'sfu'});
+      });
+
+      it('should create a new meshRoom when mode is empty', () => {
+        const roomName = 'testRoom';
+        const room = peer.joinRoom(roomName);
+
+        assert.equal(room.constructor.name, 'MeshRoom');
+      });
+
+      it('should create a new room and emit from Socket when joining a room', done => {
+        const roomName = 'testRoom';
+
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+
+        assert.deepEqual(peer.rooms, {});
+        const room = peer.joinRoom(roomName);
+
+        assert.deepEqual(peer.rooms[roomName], room);
+
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.MESH_JOIN.key));
+          done();
+        }, timeoutVal);
+      });
+    });
+
+    describe('Offer', () => {
+      it('should call handleOffer() on a room when a MESH_OFFER message is received', done => {
+        const roomName = 'testRoom';
+        const offer = {roomName: roomName, offer: 'foobar'};
+
+        let spy = sinon.spy();
+        peer.socket._isOpen = true;
+
+        peer.joinRoom(roomName);
+        peer.rooms[roomName].handleOffer = spy;
+
+        peer.socket.emit(util.MESSAGE_TYPES.MESH_OFFER.key, offer);
+
+        setTimeout(() => {
+          assert(spy.calledWith(offer));
+          done();
+        }, timeoutVal);
+      });
+    });
+
+    describe('Answer', () => {
+      it('should correctly emit from Socket when sending a JVB signalling answer', done => {
+        const roomName = 'testRoom';
+
+        peer.socket._isOpen = true;
+
+        const room = peer.joinRoom(roomName);
+        room.open = true;
+
+        assert(ioSpy.calledWith(util.MESSAGE_TYPES.MESH_JOIN.key));
+        room.emit(SFURoom.MESSAGE_EVENTS.answer.key, 'foobar');
+
+        setTimeout(() => {
+          assert(ioSpy.calledWith(util.MESSAGE_TYPES.MESH_ANSWER.key));
+          done();
+        });
+      });
+    });
+
+    describe('Send', () => {
+      it('should correctly emit from socket when room emits a broadcast event', done => {
+        const roomName = 'testRoom';
+
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+
+        const room = peer.joinRoom(roomName);
+        room.open = true;
+        room.sendByWS('foobar');
+
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.MESH_DATA.key));
+          done();
+        }, timeoutVal);
+      });
+    });
+
+    describe('Logging', () => {
+      it('should correctly emit from socket when room emits a getLog event', done => {
+        const roomName = 'testRoom';
+
+        let spy = sinon.spy();
+        peer.socket._io.emit = spy;
+        peer.socket._isOpen = true;
+
+        const room = peer.joinRoom(roomName);
+        room.open = true;
+        room.getLog();
+
+        setTimeout(() => {
+          assert(spy.calledWith(util.MESSAGE_TYPES.MESH_LOG.key));
+          done();
+        }, timeoutVal);
+      });
+
+      it('should call handleLog() on a room when a MESH_LOG message is received', done => {
+        const roomName = 'testRoom';
+        const roomLogMessage = {
+          roomName: roomName,
+          log:      ['log1', 'log2']
+        };
+
+        let spy = sinon.spy();
+        peer.socket._isOpen = true;
+
+        peer.joinRoom(roomName);
+        peer.rooms[roomName].handleLog = spy;
+
+        peer.socket.emit(util.MESSAGE_TYPES.MESH_LOG.key, roomLogMessage);
+
+        setTimeout(() => {
+          assert(spy.calledWith(roomLogMessage.log));
+          done();
         }, timeoutVal);
       });
     });
