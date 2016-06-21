@@ -113,14 +113,14 @@ class Room extends EventEmitter {
         const remoteStream = this._unknownStreams[msid];
         remoteStream.peerId = this._msidMap[remoteStream.id];
 
+        delete this._unknownStreams[msid];
+
         if (remoteStream.peerId === this._peerId) {
           return;
         }
 
         this.remoteStreams[remoteStream.id] = remoteStream;
         this.emit(Room.EVENTS.stream.key, remoteStream);
-
-        delete this._unknownStreams[msid];
       }
     }
   }

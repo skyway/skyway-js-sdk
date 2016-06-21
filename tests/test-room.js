@@ -229,9 +229,11 @@ describe('Room', () => {
       });
 
       describe('onaddstream', () => {
-        it('should set remote stream and emit on a onaddstream event', () => {
+        it('should set remote stream and emit stream with peerId on a onaddstream event', () => {
           const spy = sinon.spy();
+          const peerId = 'peerId';
           room.emit = spy;
+          room._msidMap[ev.stream.id] = peerId;
 
           pc.onaddstream(ev);
 
@@ -239,6 +241,17 @@ describe('Room', () => {
           assert(spy.calledOnce);
           assert.equal(spy.args[0][0], Room.EVENTS.stream.key);
           assert.equal(spy.args[0][1], ev.stream);
+          assert.equal(ev.stream.peerId, peerId);
+        });
+
+        it('should store the stream and not emit if the msid isn\'t in _msidMap', () => {
+          const spy = sinon.spy();
+          room.emit = spy;
+
+          pc.onaddstream(ev);
+
+          assert.equal(spy.callCount, 0);
+          assert.equal(room._unknownStreams[ev.stream.id], ev.stream);
         });
       });
 
@@ -271,6 +284,40 @@ describe('Room', () => {
       assert.equal(spy.args[0][0], Room.MESSAGE_EVENTS.leave.key);
       assert.deepEqual(spy.args[0][1], message);
       assert.equal(spy.args[1][0], Room.EVENTS.close.key);
+    });
+  });
+
+  describe('updateMsidMap', () => {
+    it('should update room._msidMap', () => {
+      const peerId = 'peer';
+      const room = new Room(roomName, {peerId: peerId});
+      const newMsidMap = {stream1: {}, stream2: {}};
+
+      assert.deepEqual(room._msidMap, {});
+      room.updateMsidMap(newMsidMap);
+      assert.equal(room._msidMap, newMsidMap);
+    });
+    it('should emit stream if previously unknown stream is in msidMap', () => {
+      const peerId = 'peer';
+      const remotePeerId = 'remotePeerId';
+      const room = new Room(roomName, {peerId: peerId});
+      const stream = {id: 'streamId'};
+
+      const newMsidMap = {};
+      newMsidMap[stream.id] = remotePeerId;
+
+      room._unknownStreams[stream.id] = stream;
+
+      const spy = sinon.spy(room, 'emit');
+
+      room.updateMsidMap(newMsidMap);
+
+      assert(spy.calledOnce);
+      assert.equal(spy.args[0][0], Room.EVENTS.stream.key);
+
+      assert.equal(spy.args[0][1], stream);
+      console.log(stream);
+      assert.equal(stream.peerId, remotePeerId);
     });
   });
 });
