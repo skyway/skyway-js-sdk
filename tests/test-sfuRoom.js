@@ -255,6 +255,37 @@ describe('SFURoom', () => {
     });
   });
 
+  describe('Logging', () => {
+    it('should emit a getLog event when getLog() is called', () => {
+      const peerId = 'peer';
+
+      const room = new SFURoom(sfuRoomName, {peerId: peerId});
+      room.open = true;
+
+      const spy = sinon.spy();
+      room.emit = spy;
+
+      room.getLog();
+
+      assert(spy.calledOnce);
+      assert.equal(spy.args[0][0], SFURoom.MESSAGE_EVENTS.getLog.key);
+    });
+
+    it('should emit a log event when handleLog is called', done => {
+      const peerId1 = 'peerId1';
+      const testLog = Symbol();
+
+      const room = new SFURoom(sfuRoomName, {peerId: peerId1});
+      room.open = true;
+
+      room.on('log', log => {
+        assert.equal(log, testLog);
+        done();
+      });
+      room.handleLog(testLog);
+    });
+  });
+
   describe('Close', () => {
     it('should emit close and leave events when close() is called', () => {
       const peerId = 'peer';

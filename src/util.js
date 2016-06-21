@@ -32,13 +32,16 @@ const MessageTypes = new Enum([
   'SFU_USER_JOIN',
   'SFU_USER_LEAVE',
   'SFU_DATA',
+  'SFU_LOG',
   'MESH_JOIN',
+  'MESH_USER_JOIN',
   'MESH_USER_LIST_REQUEST',
   'MESH_USER_LIST',
   'MESH_OFFER',
   'MESH_ANSWER',
   'MESH_CANDIDATE',
-  'MESH_LEAVE'
+  'MESH_LEAVE',
+  'MESH_LOG'
 ]);
 
 class Util {

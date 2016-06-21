@@ -36,11 +36,10 @@
       console.log(err);
     })
     // Handle a connection object.
-    function connect(c) {
+    function connect(room) {
       // Handle a chat connection.
-      if (c.label === 'chat') {
-        var chatbox = $('<div></div>').addClass('connection').addClass('active').attr('id', c.remoteId);
-        var header = $('<h1></h1>').html('Chat with <strong>' + c.remoteId + '</strong>');
+        var chatbox = $('<div></div>').addClass('connection').addClass('active').attr('id', room.name);
+        var header = $('<h1></h1>').html('Room: <strong>' + room.name + '</strong>');
         var messages = $('<div><em>Peer connected.</em></div>').addClass('messages');
         chatbox.append(header);
         chatbox.append(messages);
@@ -54,31 +53,47 @@
         });
         $('.filler').hide();
         $('#connections').append(chatbox);
-        c.on('data', function(data) {
-          messages.append('<div><span class="peer">' + c.remoteId + '</span>: ' + data +
-            '</div>');
-        });
-        c.on('close', function() {
-          alert(c.remoteId + ' has left the chat.');
-          chatbox.remove();
-          if ($('.connection').length === 0) {
-            $('.filler').show();
+        room.getLog();
+        room.once('log', function(logs) {
+          for(var i = 0; i < logs.length; i++) {
+            var log = JSON.parse(logs[i]);
+
+            switch (log.messageType) {
+              case 'ROOM_DATA':
+                messages.append('<div><span class="peer">' + log.message.src + '</span>: ' + log.message.data + '</div>');
+                break;
+              case 'ROOM_USER_JOIN':
+                if (log.message.src === peer.id) {
+                  break;
+                }
+                messages.append('<div><span class="peer">' + log.message.src + '</span>: has joined the room </div>');
+                break;
+              case 'ROOM_USER_LEAVE':
+                if (log.message.src === peer.id) {
+                  break;
+                }
+                messages.append('<div><span class="peer">' + log.message.src + '</span>: has left the room </div>');
+                break;
+            }
           }
-          delete connectedPeers[c.remoteId];
         });
-      } else if (c.label === 'file') {
-        c.on('data', function(data) {
-          // If we're getting a file, create a URL for it.
-          if (data.constructor === ArrayBuffer) {
-            var dataView = new Uint8Array(data);
+        room.on('data', function(message) {
+          if (message.data instanceof ArrayBuffer) {
+            var dataView = new Uint8Array(message.data);
             var dataBlob = new Blob([dataView]);
             var url = window.URL.createObjectURL(dataBlob);
-            $('#' + c.remoteId).find('.messages').append('<div><span class="file">' +
-              c.remoteId + ' has sent you a <a target="_blank" href="' + url + '">file</a>.</span></div>');
+            messages.append('<div><span class="file">' +
+              message.src + ' has sent you a <a target="_blank" href="' + url + '">file</a>.</span></div>');
+          } else {
+            messages.append('<div><span class="peer">' + message.src + '</span>: ' + message.data + '</div>');
           }
         });
-      }
-      connectedPeers[c.remoteId] = 1;
+        room.on('peerJoin', function(peerId) {
+          messages.append('<div><span class="peer">' + peerId + '</span>: has joined the room </div>');
+        });
+        room.on('peerLeave', function(peerId) {
+          messages.append('<div><span class="peer">' + peerId + '</span>: has left the room </div>');
+        });
     }
     $(document).ready(function() {
       // Prepare file drop box.
@@ -88,42 +103,31 @@
       box.on('drop', function(e){
         e.originalEvent.preventDefault();
         var file = e.originalEvent.dataTransfer.files[0];
-        eachActiveConnection(function(c, $c) {
-          if (c.label === 'file') {
-            c.send(file);
-            $c.find('.messages').append('<div><span class="file">You sent a file.</span></div>');
-          }
+        eachActiveRoom(function(room, $c) {
+          room.send(file);
+          $c.find('.messages').append('<div><span class="file">You sent a file.</span></div>');
         });
       });
       function doNothing(e){
         e.preventDefault();
         e.stopPropagation();
       }
-      // Connect to a peer
+      // Connect to a room
       $('#connect').click(function() {
-        var requestedPeer = $('#rid').val();
-        if (!connectedPeers[requestedPeer]) {
+        var roomName = $('#rid').val();
+        if (!connectedPeers[roomName]) {
           // Create 2 connections, one labelled chat and another labelled file.
-          var c = peer.connect(requestedPeer, {
-            label: 'chat',
-            metadata: {message: 'hi i want to chat with you!'}
+          var room = peer.joinRoom(roomName);
+          room.on('open', function() {
+            connect(room);
           });
-          c.on('open', function() {
-            connect(c);
-          });
-          c.on('error', function(err) { alert(err); });
-          var f = peer.connect(requestedPeer, { label: 'file', reliable: true });
-          f.on('open', function() {
-            connect(f);
-          });
-          f.on('error', function(err) { alert(err); });
         }
-        connectedPeers[requestedPeer] = 1;
       });
       // Close a connection.
       $('#close').click(function() {
-        eachActiveConnection(function(c) {
-          c.close();
+        eachActiveRoom(function(room, $c) {
+          room.close();
+          $c.remove();
         });
       });
       // Send a chat message to all active connections.
@@ -131,28 +135,23 @@
         e.preventDefault();
         // For each active connection, send the message.
         var msg = $('#text').val();
-        eachActiveConnection(function(c, $c) {
-          if (c.label === 'chat') {
-            c.send(msg);
-            $c.find('.messages').append('<div><span class="you">You: </span>' + msg
-              + '</div>');
-          }
+        eachActiveRoom(function(room, $c) {
+          room.send(msg);
+          $c.find('.messages').append('<div><span class="you">You: </span>' + msg
+            + '</div>');
         });
         $('#text').val('');
         $('#text').focus();
       });
       // Goes through each active peer and calls FN on its connections.
-      function eachActiveConnection(fn) {
+      function eachActiveRoom(fn) {
         var actives = $('.active');
         var checkedIds = {};
         actives.each(function() {
           var peerId = $(this).attr('id');
           if (!checkedIds[peerId]) {
-            var conns = peer.connections[peerId];
-            for (var i = 0, ii = conns.length; i < ii; i += 1) {
-              var conn = conns[i];
-              fn(conn, $(this));
-            }
+            var room = peer.rooms[peerId];
+            fn(room, $(this));
           }
           checkedIds[peerId] = 1;
         });
@@ -176,7 +175,7 @@
 
 <div id="actions">
   Your PeerJS ID is <span id="pid"></span><br>
-  Connect to a peer: <input type="text" id="rid" placeholder="Someone else's id"><input class="button" type="button" value="Connect" id="connect"><br><br>
+  Connect to a room: <input type="text" id="rid" placeholder="Someone else's id"><input class="button" type="button" value="Connect" id="connect"><br><br>
 
   <form id="send">
     <input type="text" id="text" placeholder="Enter message"><input class="button" type="submit" value="Send to selected peers">

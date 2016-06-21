@@ -7,17 +7,22 @@ const Connection      = require('./connection');
 const MediaConnection = require('./mediaConnection');
 
 const MeshEvents = new Enum([
-  'stream'
+  'stream',
+  'getPeers',
+  'peerJoin',
+  'peerLeave'
 ]);
 
 const MeshMessageEvents = new Enum([
-  'broadcast',
-  'leave',
-  'candidate',
+  'broadcastByWS',
+  'broadcastByDC',
   'offer',
   'answer',
+  'candidate',
+  'leave',
   'close',
-  'get_peers'
+  'getPeers',
+  'getLog'
 ]);
 
 /** Fullmesh room */
@@ -42,32 +47,6 @@ class MeshRoom extends EventEmitter {
     this._queuedMessages = {};
   }
 
-  _addConnection(peerId, connection) {
-    console.log('P2PConnectionManager._addConnection')
-    console.log(this)
-    if (!this.connections[peerId]) {
-      this.connections[peerId] = [];
-    }
-    this.connections[peerId].push(connection);
-  }
-
-  /**
-   * Returns a connection according to given peerId and connectionId.
-   * @param {string} peerId - peerID.
-   * @param {string} connectionId - connectionID.
-   * @return A MediaConnection or DataConnection.
-   */
-  getConnection(peerId, connectionId) {
-    if (this.connections && this.connections[peerId]) {
-      for (let connection of this.connections[peerId]) {
-        if (connection.id === connectionId) {
-          return connection;
-        }
-      }
-    }
-    return null;
-  }
-
   /**
    * Starts getting users list in the room.
    * @param {MediaStream} stream - A media stream.
@@ -85,11 +64,23 @@ class MeshRoom extends EventEmitter {
     this.localStream = stream;
 
     const data = {
-      roomName:    this.name,
-      roomOptions: this._options
+      roomName:    this.name
     };
 
-    this.emit(MeshRoom.MESSAGE_EVENTS.get_peers.key, data);
+    this.emit(MeshRoom.EVENTS.getPeers.key, data);
+  }
+
+  /**
+   * Starts getting users list in the room.
+   * @param {MediaStream} stream - A media stream.
+   * @param {Object} options - @@@@.
+   */
+  connectRoom(options) {
+    const data = {
+      roomName:    this.name
+    };
+
+    this.emit(MeshRoom.EVENTS.getPeers.key, data);
   }
 
   /**
@@ -111,7 +102,70 @@ class MeshRoom extends EventEmitter {
       }
     }
   }
-  
+
+  _addConnection(peerId, connection) {
+    if (!this.connections[peerId]) {
+      this.connections[peerId] = [];
+    }
+    this.connections[peerId].push(connection);
+  }
+
+  _setupMessageHandlers(connection) {
+    connection.on(Connection.EVENTS.offer.key, offerMessage => {
+      console.log('connection on offer')
+      offerMessage.roomName = this.name;
+      this.emit(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage);
+    });
+    connection.on(Connection.EVENTS.answer.key, answerMessage => {
+      console.log('connection on answer')
+      answerMessage.roomName = this.name;
+      this.emit(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage);
+    });
+    connection.on(Connection.EVENTS.candidate.key, candidateMessage => {
+      console.log('connection on candidate')
+      candidateMessage.roomName = this.name;
+      this.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
+    });
+    connection.on('stream', remoteStream => {
+      this.emit('stream', remoteStream);
+    });
+  }
+
+  /**
+   * Returns a connection according to given peerId and connectionId.
+   * @param {string} peerId - peerID.
+   * @param {string} connectionId - connectionID.
+   * @return A MediaConnection or DataConnection.
+   */
+  getConnection(peerId, connectionId) {
+    if (this.connections && this.connections[peerId]) {
+      for (let connection of this.connections[peerId]) {
+        if (connection.id === connectionId) {
+          return connection;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Handles Join message from new participant.
+   * @param {Object} message - Message.
+   */
+  handleJoin(message) {
+    const src = message.src;
+    this.emit(MeshRoom.EVENTS.peerJoin.key, src);
+  }
+
+  /**
+   * Handles Leave message from other participant.
+   * @param {Object} message - Message.
+   */
+  handleLeave(message) {
+    const src = message.src;
+    this.emit(MeshRoom.EVENTS.peerLeave.key, src);
+  }
+
   /**
    * Handles Offer message from remote peer and create new Media Connection.
    * @param {Object} offerMessage - Offer message.
@@ -187,26 +241,38 @@ class MeshRoom extends EventEmitter {
     }   
   }
 
-  _setupMessageHandlers(connection) {
-    connection.on(Connection.EVENTS.candidate.key, candidateMessage => {
-      console.log('connection on candidate')
-      candidateMessage.roomName = this.name;
-      this.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
-    });
-    connection.on(Connection.EVENTS.answer.key, answerMessage => {
-      console.log('connection on answer')
-      answerMessage.roomName = this.name;
-      this.emit(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage);
-    });
-    connection.on(Connection.EVENTS.offer.key, offerMessage => {
-      console.log('connection on offer')
-      offerMessage.roomName = this.name;
-      this.emit(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage);
-    });
-    connection.on('stream', remoteStream => {
-      this.emit('stream', remoteStream);
-    });
+  _storeMessage(type, message) {
+    if (!this._queuedMessages[message.connectionId]) {
+      this._queuedMessages[message.connectionId] = [];
+    }
+    this._queuedMessages[message.connectionId]
+      .push({type: type, payload: message});
   }
+
+  /**
+   * Sends data to all participants in the Room with WebSocket.
+   * @param {Object} data - Data to send.
+   */
+  sendByWS(data) {
+    const message = {
+      roomName: this.name,
+      data:     data
+    };
+    this.emit(MeshRoom.MESSAGE_EVENTS.broadcastByWS.key, message);
+  }
+
+  /**
+   * Sends data to all participants in the Room with DataChannel.
+   * @param {Object} data - Data to send.
+   */
+  sendByDC(data) {
+    const message = {
+      roomName: this.name,
+      data:     data
+    };
+    this.emit(MeshRoom.MESSAGE_EVENTS.broadcastByDC.key, message);
+  }
+
 
   /**
    * Close

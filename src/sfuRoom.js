@@ -15,14 +15,16 @@ const SFURoomEvents = new Enum([
   'peerJoin',
   'peerLeave',
   'error',
-  'data'
+  'data',
+  'log'
 ]);
 
 const SFURoomMessageEvents = new Enum([
   'offer_request',
   'broadcast',
   'leave',
-  'answer'
+  'answer',
+  'getLog'
 ]);
 
 /** Class to handle SFU related operations.  */
@@ -154,8 +156,8 @@ class SFURoom extends EventEmitter {
   }
 
   /**
-   * Handles Leave message from SFU server.
-   * @param {Object} message - Message from SFU server.
+   * Handles data from other participant.
+   * @param {Object} message - Data.
    */
   handleData(message) {
     this.emit(SFURoom.EVENTS.data.key, message);
@@ -165,6 +167,10 @@ class SFURoom extends EventEmitter {
    * Sends data to all participants in the Room.
    * @param {Object} data - Data to send.
    */
+  handleLog(log) {
+    this.emit(SFURoom.EVENTS.log.key, log);
+  }
+
   send(data) {
     if (!this.open) {
       return;
@@ -180,6 +186,13 @@ class SFURoom extends EventEmitter {
   /**
    * Close
    */
+  getLog() {
+    const message = {
+      roomName: this.name
+    };
+    this.emit(SFURoom.MESSAGE_EVENTS.getLog.key, message);
+  }
+
   close() {
     if (!this.open) {
       return;
