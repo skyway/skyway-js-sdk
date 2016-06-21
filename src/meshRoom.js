@@ -8,17 +8,16 @@ const MediaConnection = require('./mediaConnection');
 
 const MeshEvents = new Enum([
   'stream',
-  'getPeers',
   'peerJoin',
   'peerLeave'
 ]);
 
 const MeshMessageEvents = new Enum([
-  'broadcastByWS',
-  'broadcastByDC',
   'offer',
   'answer',
   'candidate',
+  'broadcastByWS',
+  'broadcastByDC',
   'leave',
   'close',
   'getPeers',
@@ -67,7 +66,7 @@ class MeshRoom extends EventEmitter {
       roomName:    this.name
     };
 
-    this.emit(MeshRoom.EVENTS.getPeers.key, data);
+    this.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, data);
   }
 
   /**
@@ -80,7 +79,7 @@ class MeshRoom extends EventEmitter {
       roomName:    this.name
     };
 
-    this.emit(MeshRoom.EVENTS.getPeers.key, data);
+    this.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, data);
   }
 
   /**
@@ -112,17 +111,14 @@ class MeshRoom extends EventEmitter {
 
   _setupMessageHandlers(connection) {
     connection.on(Connection.EVENTS.offer.key, offerMessage => {
-      console.log('connection on offer')
       offerMessage.roomName = this.name;
       this.emit(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage);
     });
     connection.on(Connection.EVENTS.answer.key, answerMessage => {
-      console.log('connection on answer')
       answerMessage.roomName = this.name;
       this.emit(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage);
     });
     connection.on(Connection.EVENTS.candidate.key, candidateMessage => {
-      console.log('connection on candidate')
       candidateMessage.roomName = this.name;
       this.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
     });

@@ -61,7 +61,7 @@ describe('MeshRoom', () => {
       meshRoom.callRoom(stream);
 
       assert(emitSpy.calledOnce);
-      assert.equal(emitSpy.args[0][0], MeshRoom.EVENTS.getPeers.key);
+      assert.equal(emitSpy.args[0][0], MeshRoom.MESSAGE_EVENTS.getPeers.key);
       assert.deepEqual(emitSpy.args[0][1], {roomName: meshRoomName});
     });
   });
@@ -71,7 +71,7 @@ describe('MeshRoom', () => {
       meshRoom.connectRoom();
 
       assert(emitSpy.calledOnce);
-      assert.equal(emitSpy.args[0][0], MeshRoom.EVENTS.getPeers.key);
+      assert.equal(emitSpy.args[0][0], MeshRoom.MESSAGE_EVENTS.getPeers.key);
       assert.deepEqual(emitSpy.args[0][1], {roomName: meshRoomName});
     });
   });

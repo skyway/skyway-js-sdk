@@ -787,12 +787,12 @@ describe('Peer', () => {
           setTimeout(() => {
             assert(err.type === 'room-error');
             assert(err.message === errMsg);
-            assert.deepEqual(peer.sfuRooms, {});
+            assert.deepEqual(peer.rooms, {});
             done();
           }, 0);
         });
 
-        assert.deepEqual(peer.sfuRooms, {});
+        assert.deepEqual(peer.rooms, {});
         peer.joinRoom(roomName, {mode: 'sfu'});
       });
 
@@ -806,12 +806,12 @@ describe('Peer', () => {
           setTimeout(() => {
             assert(err.type === 'room-error');
             assert(err.message === errMsg);
-            assert.deepEqual(peer.sfuRooms, {});
+            assert.deepEqual(peer.rooms, {});
             done();
           }, 0);
         });
 
-        assert.deepEqual(peer.sfuRooms, {});
+        assert.deepEqual(peer.rooms, {});
         peer.joinRoom(roomName, {mode: 'sfu'});
       });
 
@@ -822,10 +822,10 @@ describe('Peer', () => {
         peer.socket._io.emit = spy;
         peer.socket._isOpen = true;
 
-        assert.deepEqual(peer.sfuRooms, {});
+        assert.deepEqual(peer.rooms, {});
         const room = peer.joinRoom(roomName, {mode: 'sfu'});
 
-        assert.deepEqual(peer.sfuRooms[roomName], room);
+        assert.deepEqual(peer.rooms[roomName], room);
 
         setTimeout(() => {
           assert(spy.calledWith(util.MESSAGE_TYPES.SFU_JOIN.key));
@@ -843,7 +843,7 @@ describe('Peer', () => {
         peer.socket._isOpen = true;
 
         peer.joinRoom(roomName, {mode: 'sfu'});
-        peer.sfuRooms[roomName].handleOffer = spy;
+        peer.rooms[roomName].handleOffer = spy;
 
         peer.socket.emit(util.MESSAGE_TYPES.SFU_OFFER.key, offer);
 
@@ -921,7 +921,7 @@ describe('Peer', () => {
         peer.socket._isOpen = true;
 
         peer.joinRoom(roomName, {mode: 'sfu'});
-        peer.sfuRooms[roomName].handleLog = spy;
+        peer.rooms[roomName].handleLog = spy;
 
         peer.socket.emit(util.MESSAGE_TYPES.SFU_LOG.key, roomLogMessage);
 

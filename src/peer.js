@@ -39,8 +39,7 @@ class Peer extends EventEmitter {
     // true when connected to SkyWay server
     this.open = false;
     this.connections = {};
-    this.meshRooms = {};
-    this.sfuRooms = {};
+    this.rooms = {};
 
     // to prevent duplicate calls to destroy/disconnect
     this._disconnectCalled = false;
@@ -168,6 +167,7 @@ class Peer extends EventEmitter {
       roomOptions = {};
     }
     roomOptions.pcConfig = this._pcConfig;
+    roomOptions.peerId = this.id;
 
     const data = {
       roomName:    roomName,
@@ -175,11 +175,11 @@ class Peer extends EventEmitter {
     };
 
     if(roomOptions.mode === 'sfu'){
-      if (this.sfuRooms[roomName]) {
-        return this.sfuRooms[roomName];
+      if (this.rooms[roomName]) {
+        return this.rooms[roomName];
       }
       const sfuRoom = new SFURoom(roomName, roomOptions);
-      this.sfuRooms[roomName] = sfuRoom;
+      this.rooms[roomName] = sfuRoom;
       this._setupSFURoomMessageHandlers(sfuRoom);
 
       this.socket.send(util.MESSAGE_TYPES.SFU_JOIN.key, data);
@@ -187,16 +187,14 @@ class Peer extends EventEmitter {
       if(sfuRoom.localStream) {
         sfuRoom.callRoom(sfuRoom.localStream)
       }
-
       return sfuRoom;
 
     }else{
-      if (this.meshRooms[roomName]) {
-        return this.meshRooms[roomName];
+      if (this.rooms[roomName]) {
+        return this.rooms[roomName];
       }
-      roomOptions.peerId = roomOptions.peerId || this.id;
       const meshRoom = new MeshRoom(roomName, roomOptions);
-      this.meshRooms[roomName] = meshRoom;
+      this.rooms[roomName] = meshRoom;
       this._setupMeshRoomMessageHandlers(meshRoom);
 
       this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
@@ -266,14 +264,14 @@ class Peer extends EventEmitter {
   }
 
   _setupSFURoomMessageHandlers(room) {
-    room.on(SFURoom.MESSAGE_EVENTS.offer_request.key, sendMessage => {
+    room.on(SFURoom.MESSAGE_EVENTS.offerRequest.key, sendMessage => {
       this.socket.send(util.MESSAGE_TYPES.SFU_OFFER_REQUEST.key, sendMessage);
     });
     room.on(SFURoom.MESSAGE_EVENTS.broadcast.key, sendMessage => {
       this.socket.send(util.MESSAGE_TYPES.SFU_DATA.key, sendMessage);
     });
     room.on(SFURoom.MESSAGE_EVENTS.leave.key, leaveMessage => {
-      delete this.sfuRooms[room.name];
+      delete this.rooms[room.name];
       this.socket.send(util.MESSAGE_TYPES.SFU_LEAVE.key, leaveMessage);
     });
     room.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
@@ -286,29 +284,22 @@ class Peer extends EventEmitter {
   }
 
   _setupMeshRoomMessageHandlers(room) {
-    console.log('setup mesh message handler')
     room.on(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage => {
-      console.log('meshRoomManager on offer')
       this.socket.send(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage => {
-      console.log('meshRoomManager on answer')
       this.socket.send(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage);
     })
     room.on(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
-      console.log('meshRoomManager on candidate')
       this.socket.send(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.getPeers.key, requestMessage => {
-      console.log('meshRoomManager on get_peers')
       this.socket.send(util.MESSAGE_TYPES.MESH_USER_LIST_REQUEST.key, requestMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.broadcastByWS.key, sendMessage => {
-      console.log('meshRoomManager on broadcastByWS')
       this.socket.send(util.MESSAGE_TYPES.MESH_DATA.key, sendMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.broadcastByDC.key, sendMessage => {
-      console.log('meshRoomManager on broadcastByDC')
       this.socket.send(util.MESSAGE_TYPES.MESH_DATA.key, sendMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.getLog.key, getLogMessage => {
@@ -536,7 +527,7 @@ class Peer extends EventEmitter {
     // SFU
 
     this.socket.on(util.MESSAGE_TYPES.SFU_USER_JOIN.key, roomUserJoinMessage => {
-      const room = this.sfuRooms[roomUserJoinMessage.roomName];
+      const room = this.rooms[roomUserJoinMessage.roomName];
       if (room) {
         room.handleJoin(roomUserJoinMessage);
       }
@@ -545,25 +536,26 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.SFU_OFFER.key, offerMessage => {
       // We want the Room class to handle this instead
       // The Room class acts as RoomConnection
-      this.sfuRooms[offerMessage.roomName].handleOffer(offerMessage.offer);
+      this.rooms[offerMessage.roomName].handleOffer(offerMessage.offer);
       // NOTE: Room has already been created and added to this.sruRooms
     });
 
     this.socket.on(util.MESSAGE_TYPES.SFU_USER_LEAVE.key, roomUserLeaveMessage => {
-      const room = this.sfuRooms[roomUserLeaveMessage.roomName];
+      const room = this.rooms[roomUserLeaveMessage.roomName];
       if (room) {
         room.handleLeave(roomUserLeaveMessage);
       }
     });
 
     this.socket.on(util.MESSAGE_TYPES.SFU_DATA.key, roomDataMessage => {
-      const room = this.sfuRooms[roomDataMessage.roomName];
+      const room = this.rooms[roomDataMessage.roomName];
       if (room) {
         room.handleData(roomDataMessage);
       }
     });
+
     this.socket.on(util.MESSAGE_TYPES.SFU_LOG.key, roomLogMessage => {
-      const room = this.sfuRooms[roomLogMessage.roomName];
+      const room = this.rooms[roomLogMessage.roomName];
       if (room) {
         room.handleLog(roomLogMessage.log);
       }
@@ -572,15 +564,14 @@ class Peer extends EventEmitter {
     // MESH
 
     this.socket.on(util.MESSAGE_TYPES.MESH_USER_LIST.key, roomUserListMessage => {
-      console.log('socket on MESH_USER_LIST', roomUserListMessage)
-      const room = this.meshRooms[roomUserListMessage.roomName];
+      const room = this.rooms[roomUserListMessage.roomName];
       if(room.localStream) {
         room.makeCalls(roomUserListMessage.userList);
       }
     });
 
     this.socket.on(util.MESSAGE_TYPES.MESH_USER_JOIN.key, roomUserJoinMessage => {
-      const room = this.meshRooms[roomUserJoinMessage.roomName];
+      const room = this.rooms[roomUserJoinMessage.roomName];
       //add when the client does't have room object.
       if (room) {
         room.handleJoin(roomUserJoinMessage);
@@ -590,8 +581,7 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage => {
-      console.log('socket on MESH_OFFER')
-      const room = this.meshRooms[offerMessage.roomName];
+      const room = this.rooms[offerMessage.roomName];
       if(room){
         room.handleOffer(offerMessage);
       }else{
@@ -600,14 +590,12 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage => {
-      console.log('socket on MESH_ANSWER');
-      const room = this.meshRooms[answerMessage.roomName];
+      const room = this.rooms[answerMessage.roomName];
       room.handleAnswer(answerMessage);
     });
 
     this.socket.on(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage => {
-      console.log('socket on MESH_CANDIDATE');
-      const room = this.meshRooms[candidateMessage.roomName];
+      const room = this.rooms[candidateMessage.roomName];
       room.handleCandidate(candidateMessage)
     });
   }

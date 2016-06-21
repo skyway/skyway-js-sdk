@@ -59,16 +59,16 @@
             var log = JSON.parse(logs[i]);
 
             switch (log.messageType) {
-              case 'ROOM_DATA':
+              case 'SFU_DATA':
                 messages.append('<div><span class="peer">' + log.message.src + '</span>: ' + log.message.data + '</div>');
                 break;
-              case 'ROOM_USER_JOIN':
+              case 'SFU_USER_JOIN':
                 if (log.message.src === peer.id) {
                   break;
                 }
                 messages.append('<div><span class="peer">' + log.message.src + '</span>: has joined the room </div>');
                 break;
-              case 'ROOM_USER_LEAVE':
+              case 'SFU_USER_LEAVE':
                 if (log.message.src === peer.id) {
                   break;
                 }
@@ -117,7 +117,7 @@
         var roomName = $('#rid').val();
         if (!connectedPeers[roomName]) {
           // Create 2 connections, one labelled chat and another labelled file.
-          var room = peer.joinRoom(roomName);
+          var room = peer.joinRoom(roomName, {mode: 'sfu'});
           room.on('open', function() {
             connect(room);
           });

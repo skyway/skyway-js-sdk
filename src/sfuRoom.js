@@ -20,11 +20,11 @@ const SFURoomEvents = new Enum([
 ]);
 
 const SFURoomMessageEvents = new Enum([
-  'offer_request',
+  'offerRequest',
+  'answer',
+  'getLog',
   'broadcast',
   'leave',
-  'answer',
-  'getLog'
 ]);
 
 /** Class to handle SFU related operations.  */
@@ -71,7 +71,7 @@ class SFURoom extends EventEmitter {
       roomOptions: this._options
     };
 
-    this.emit(SFURoom.MESSAGE_EVENTS.offer_request.key, data);
+    this.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, data);
   }
 
   /**
