@@ -18,21 +18,40 @@ const DCSerializations = new Enum([
   'none'
 ]);
 
+/**
+ * Class that manages data connections to other peers.
+ * @extends Connection
+ */
 class DataConnection extends Connection {
+  /**
+   * Create a data connection to another peer.
+   * @param {string} remoteId - The peerId of the peer you are connecting to.
+   * @param {object} [options] - Optional arguments for the connection.
+   * @param {string} [options.connectionId] - An ID to uniquely identify the connection. Defaults to random string if not specified.
+   * @param {string} [options.serialization] - How to serialize data when sending. One of 'binary', 'json' or 'none'.
+   * @param {string} [options.label] - Label to easily identify the connection on either peer.
+   * @param {string} [options.queuedMessages] - An array of messages that were already received before the connection was created.
+   * @param {string} [options.payload] - An offer message that triggered creating this object.
+   */
   constructor(remoteId, options) {
     super(remoteId, options);
 
     this._idPrefix = 'dc_';
     this.type = 'data';
-    this.label = this.options.label || this.id;
+
+    /**
+     * Label to easily identify the DataConnection on either peer.
+     * @type {string}
+     */
+    this.label = this._options.label || this.id;
 
     // Serialization is binary by default
-    if (this.options.serialization) {
-      if (!DataConnection.SERIALIZATIONS.get(this.options.serialization)) {
+    if (this._options.serialization) {
+      if (!DataConnection.SERIALIZATIONS.get(this._options.serialization)) {
         // Can't emit error as there hasn't been a chance to set up listeners
         throw new Error('Invalid serialization');
       }
-      this.serialization = this.options.serialization;
+      this.serialization = this._options.serialization;
     } else {
       this.serialization = DataConnection.SERIALIZATIONS.binary.key;
     }
@@ -41,11 +60,11 @@ class DataConnection extends Connection {
     this._sendBuffer = [];
     this._receivedData = {};
     // Messages stored by peer because DC was not ready yet
-    this._queuedMessages = this.options._queuedMessages || [];
+    this._queuedMessages = this._options.queuedMessages || [];
 
     // Maybe don't need this anymore
-    if (this.options._payload) {
-      this._peerBrowser = this.options._payload.browser;
+    if (this._options.payload) {
+      this._peerBrowser = this._options.payload.browser;
     }
 
     // This replaces the PeerJS 'initialize' method
@@ -56,7 +75,7 @@ class DataConnection extends Connection {
     });
 
     this._negotiator.startConnection(
-      this.options._payload || {
+      this._options.payload || {
         originator: true,
         type:       'data',
         label:      this.label
@@ -67,6 +86,10 @@ class DataConnection extends Connection {
     this._handleQueuedMessages();
   }
 
+  /**
+   * Set up data channel event and message handlers.
+   * @private
+   */
   _setupMessageHandlers() {
     this._dc.onopen = () => {
       util.log('Data channel connection success');
@@ -85,6 +108,11 @@ class DataConnection extends Connection {
     };
   }
 
+  /**
+   * Handle a data message from the peer.
+   * @param {object} msg - The data message to handle.
+   * @private
+   */
   _handleDataMessage(msg) {
     if (this.serialization === DataConnection.SERIALIZATIONS.none.key) {
       this.emit(DataConnection.EVENTS.data, msg.data);
@@ -126,6 +154,10 @@ class DataConnection extends Connection {
     }
   }
 
+  /**
+   * Send data to peer. If serialization is 'binary', it will chunk it before sending.
+   * @param {*} data - The data to send to the peer.
+   */
   send(data) {
     if (!this.open) {
       this.emit(
@@ -189,6 +221,10 @@ class DataConnection extends Connection {
     }
   }
 
+  /**
+   * Start sending messages at intervals to allow other threads to run.
+   * @private
+   */
   _startSendLoop() {
     if (!this.sendInterval) {
       // Define send interval
@@ -210,13 +246,41 @@ class DataConnection extends Connection {
     }
   }
 
+  /**
+   * Possible serializations for the DataConnection.
+   * @type {Enum}
+   */
+  static get SERIALIZATIONS() {
+    return DCSerializations;
+  }
+
+  /**
+   * Events the DataConnection class can emit.
+   * @type {Enum}
+   */
   static get EVENTS() {
     return DCEvents;
   }
 
-  static get SERIALIZATIONS() {
-    return DCSerializations;
-  }
+  /**
+   * DataConnection created event.
+   *
+   * @event DataConnection#open
+   */
+
+  /**
+   * Data received from peer.
+   *
+   * @event DataConnection#data
+   * @type {*}
+   */
+
+  /**
+   * Error occurred.
+   *
+   * @event DataConnection#error
+   * @type {Error}
+   */
 }
 
 module.exports = DataConnection;

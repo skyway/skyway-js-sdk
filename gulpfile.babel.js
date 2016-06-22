@@ -57,7 +57,15 @@ gulp.task('clean', () => {
 });
 
 gulp.task('lint', () => {
-  return gulp.src(['**/*.js', '!node_modules/**', '!dist/**', '!coverage/**', '!examples/**'])
+  return gulp.src(
+    [
+      '**/*.js',
+      '!node_modules/**',
+      '!dist/**',
+      '!coverage/**',
+      '!docs/**',
+      '!examples/**'
+    ])
     .pipe(eslint('.eslintrc'))
     .pipe(eslint.format())
     .pipe(eslint.failAfterError());
@@ -88,8 +96,8 @@ gulp.task('build', () => {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('doc', cb => {
-  gulp.src(['README.md', './src/*.js'], {read: false})
+gulp.task('doc', cb => 
+  gulp.src(['README.md', './src/**/*.js'], {read: false})
     .pipe(jsdoc(cb));
 });
 

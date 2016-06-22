@@ -146,7 +146,7 @@ class Peer extends EventEmitter {
     }
 
     options = options || {};
-    options._stream = stream;
+    options.stream = stream;
     options.pcConfig = this._pcConfig;
     const mc = new MediaConnection(peerId, options);
     util.log('MediaConnection created in call method');
@@ -463,11 +463,11 @@ class Peer extends EventEmitter {
         connection = new MediaConnection(
           offerMessage.src,
           {
-            connectionId:    connectionId,
-            _payload:        offerMessage,
-            metadata:        offerMessage.metadata,
-            _queuedMessages: this._queuedMessages[connectionId],
-            pcConfig:        this._pcConfig
+            connectionId:   connectionId,
+            payload:        offerMessage,
+            metadata:       offerMessage.metadata,
+            queuedMessages: this._queuedMessages[connectionId],
+            pcConfig:       this._pcConfig
           }
         );
 
@@ -478,13 +478,13 @@ class Peer extends EventEmitter {
         connection = new DataConnection(
           offerMessage.src,
           {
-            connectionId:    connectionId,
-            _payload:        offerMessage,
-            metadata:        offerMessage.metadata,
-            label:           offerMessage.label,
-            serialization:   offerMessage.serialization,
-            _queuedMessages: this._queuedMessages[connectionId],
-            pcConfig:        this._pcConfig
+            connectionId:   connectionId,
+            payload:        offerMessage,
+            metadata:       offerMessage.metadata,
+            label:          offerMessage.label,
+            serialization:  offerMessage.serialization,
+            queuedMessages: this._queuedMessages[connectionId],
+            pcConfig:       this._pcConfig
           }
         );
 
