@@ -64,8 +64,8 @@ describe('DataConnection', () => {
     });
 
     it('should store any messages passed in when created', () => {
-      const dc = new DataConnection('remoteId', {_queuedMessages: ['message']});
-      assert.deepEqual(dc.options._queuedMessages, ['message']);
+      const dc = new DataConnection('remoteId', {queuedMessages: ['message']});
+      assert.deepEqual(dc._options.queuedMessages, ['message']);
     });
 
     it('should set properties from arguments properly', () => {
@@ -78,7 +78,7 @@ describe('DataConnection', () => {
         label:         label,
         serialization: serialization,
         metadata:      metadata,
-        _payload:      {browser: peerBrowser}
+        payload:       {browser: peerBrowser}
       };
 
       const dc = new DataConnection(id, options);
@@ -89,7 +89,7 @@ describe('DataConnection', () => {
       assert.equal(dc.serialization, serialization);
       assert.equal(dc.metadata, metadata);
       assert.equal(dc._peerBrowser, peerBrowser);
-      assert.equal(dc.options, options);
+      assert.equal(dc._options, options);
     });
   });
 
@@ -127,7 +127,7 @@ describe('DataConnection', () => {
 
       let spy = sinon.spy();
       sinon.stub(DataConnection.prototype, 'handleAnswer', spy);
-      const dc = new DataConnection('remoteId', {_queuedMessages: messages});
+      const dc = new DataConnection('remoteId', {queuedMessages: messages});
 
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy.calledOnce, true);
@@ -144,8 +144,7 @@ describe('DataConnection', () => {
       sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
       sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
 
-      const dc = new DataConnection('remoteId', {_queuedMessages: messages});
-      // dc._pcAvailable = true;
+      const dc = new DataConnection('remoteId', {queuedMessages: messages});
 
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy1.calledOnce, true);
@@ -160,8 +159,7 @@ describe('DataConnection', () => {
       sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
       sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
 
-      const dc = new DataConnection('remoteId', {_queuedMessages: messages});
-      // dc._pcAvailable = true;
+      const dc = new DataConnection('remoteId', {queuedMessages: messages});
 
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy1.called, false);
@@ -286,7 +284,7 @@ describe('DataConnection', () => {
         const dc = new DataConnection('remoteId');
         dc._negotiator.emit('dcReady', {});
 
-        dc.on('data', data => {
+        dc.on(DataConnection.EVENTS.data.key, data => {
           assert.equal(data, message);
           done();
         });
@@ -309,7 +307,7 @@ describe('DataConnection', () => {
         const dc = new DataConnection('remoteId');
         dc._negotiator.emit('dcReady', {});
 
-        dc.on('data', data => {
+        dc.on(DataConnection.EVENTS.data.key, data => {
           assert.equal(data, message);
           done();
         });
@@ -335,7 +333,7 @@ describe('DataConnection', () => {
         const dc = new DataConnection('remoteId', {});
         dc._negotiator.emit('dcReady', {});
 
-        dc.on('data', data => {
+        dc.on(DataConnection.EVENTS.data.key, data => {
           assert.deepEqual(data, jsonObj);
           done();
         });
@@ -360,7 +358,7 @@ describe('DataConnection', () => {
         const dc = new DataConnection('remoteId', {});
         dc._negotiator.emit('dcReady', {});
 
-        dc.on('data', data => {
+        dc.on(DataConnection.EVENTS.data.key, data => {
           // We want to check that the received data is an ArrayBuffer
           assert.deepEqual(data, abMessage);
           done();
@@ -386,7 +384,7 @@ describe('DataConnection', () => {
         const dc = new DataConnection('remoteId', {});
         dc._negotiator.emit('dcReady', {});
 
-        dc.on('data', data => {
+        dc.on(DataConnection.EVENTS.data.key, data => {
           // We want to check that the received data is an ArrayBuffer
           assert.deepEqual(data, blob);
           done();
@@ -425,7 +423,7 @@ describe('DataConnection', () => {
         const dc = new DataConnection('remoteId');
         dc._negotiator.emit('dcReady', {});
 
-        dc.on('data', data => {
+        dc.on(DataConnection.EVENTS.data.key, data => {
           // Receives the reconstructed string after all chunks have been handled
           assert.deepEqual(data, string);
           done();
@@ -447,7 +445,7 @@ describe('DataConnection', () => {
         const dc = new DataConnection('remoteId', {serialization: 'json'});
         dc._negotiator.emit('dcReady', {});
 
-        dc.on('data', data => {
+        dc.on(DataConnection.EVENTS.data.key, data => {
           assert.deepEqual(data, jsonObj);
           done();
         });
@@ -463,7 +461,7 @@ describe('DataConnection', () => {
         const dc = new DataConnection('remoteId', {serialization: 'none'});
         dc._negotiator.emit('dcReady', {});
 
-        dc.on('data', data => {
+        dc.on(DataConnection.EVENTS.data.key, data => {
           assert.equal(data, message);
           done();
         });
@@ -478,7 +476,7 @@ describe('DataConnection', () => {
       const dc = new DataConnection('remoteId', {});
       assert.equal(dc.open, false);
 
-      dc.on('error', error => {
+      dc.on(DataConnection.EVENTS.error.key, error => {
         assert(error instanceof Error);
         done();
       });

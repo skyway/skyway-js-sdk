@@ -459,7 +459,7 @@ describe('Peer', () => {
       peer.on(Peer.EVENTS.call.key, connection => {
         assert(connection);
         assert(connection.constructor.name === 'MediaConnection');
-        assert(connection.options.connectionId === connectionId);
+        assert(connection._options.connectionId === connectionId);
         assert(Object.keys(peer.connections[peerId]).length === 1);
         assert(peer.getConnection(peerId, connection.id) === connection);
         done();
@@ -480,7 +480,7 @@ describe('Peer', () => {
       peer.on(Peer.EVENTS.connection.key, connection => {
         assert(connection);
         assert(connection.constructor.name === 'DataConnection');
-        assert(connection.options.connectionId === connectionId);
+        assert(connection._options.connectionId === connectionId);
         assert(Object.keys(peer.connections[peerId]).length === 1);
         assert(peer.getConnection(peerId, connection.id) === connection);
 
