@@ -26,10 +26,11 @@
     $(function(){
       $('#make-call').click(function(){
         // Initiate a call!
-        // room = peer.joinRoom($('#join-room').val(), {_stream: window.localStream});
+        room = peer.joinRoom($('#join-room').val(), {_stream: window.localStream});
 
-        room = peer.joinRoom($('#join-room').val());
-        room.callRoom(window.localStream);
+        room.on('call', function(call){
+          call.answer(window.localStream);
+        });
 
         $('#room-id').text(room.name);
         step3(room);

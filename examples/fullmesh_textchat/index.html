@@ -104,7 +104,7 @@
         e.originalEvent.preventDefault();
         var file = e.originalEvent.dataTransfer.files[0];
         eachActiveRoom(function(room, $c) {
-          room.send(file);
+          room.sendWS(file);
           $c.find('.messages').append('<div><span class="file">You sent a file.</span></div>');
         });
       });
