@@ -20,15 +20,19 @@ const PeerEvents = new Enum([
   'disconnected'
 ]);
 
+/**
+ * Class to handle all connections and it's event handlers.
+ * @extends EventEmitter
+ */
 class Peer extends EventEmitter {
   /**
    * Creates an peer. It's called by user application.
-   * @param {string} [id] - own peerID.
-   * @param {Object} options - @@@@
-   * @param {string} options.key - API key.
-   * @param {Integer} [options.debug=util.LOG_LEVELS.NONE] - @@@
-   * @param {string} [options.host=util.CLOUD_HOST] - @@@
-   * @param {Object} [options.port=util.CLOUD_PORT] - @@@
+   * @param {string} [id] - User's peerID.
+   * @param {Object} options - Optional arguments for the connection.
+   * @param {string} options.key - SkyWay APIkey.
+   * @param {Integer} [options.debug=0] - Log level. NONE:0, ERROR:1, WARN:2, FULL:3.
+   * @param {string} [options.host='skyway.io'] - Host name of signaling server.
+   * @param {Object} [options.port=443] - Port number of signaling server.
    * @param {Object} [options.token=util.randomToken()] - @@@
    * @param {Object} [options.config=util.defaultConfig] - @@@
    * @param {Object} [options.turn=true] - @@@
@@ -160,51 +164,61 @@ class Peer extends EventEmitter {
    * @param {Object} roomOptions - @@@@
    * @return {Room} An instance of SFURoom or MeshRoom.
    */
-  joinRoom(roomName, roomOptions) {
+  joinRoom(roomName, roomOptions = {}) {
     if (!roomName) {
       this.emitError('room-error', 'Room name must be defined.');
       return null;
     }
 
-    if (!roomOptions) {
-      roomOptions = {};
-    }
     roomOptions.pcConfig = this._pcConfig;
     roomOptions.peerId = this.id;
+
+    if (roomOptions.mode === 'sfu') {
+      return this._initSfuRoom(roomName, roomOptions);
+    }
+
+    // mode is blank or 'mesh'
+    return this._initFullMeshRoom(roomName, roomOptions);
+  }
+
+  _initSfuRoom(roomName, roomOptions) {
+    if (this.rooms[roomName]) {
+      return this.rooms[roomName];
+    }
+    const sfuRoom = new SFURoom(roomName, this.id, roomOptions);
+    this.rooms[roomName] = sfuRoom;
+    this._setupSFURoomMessageHandlers(sfuRoom);
 
     const data = {
       roomName:    roomName,
       roomOptions: roomOptions
     };
 
-    if (roomOptions.mode === 'sfu') {
-      if (this.rooms[roomName]) {
-        return this.rooms[roomName];
-      }
-      const sfuRoom = new SFURoom(roomName, roomOptions);
-      this.rooms[roomName] = sfuRoom;
-      this._setupSFURoomMessageHandlers(sfuRoom);
+    this.socket.send(util.MESSAGE_TYPES.SFU_JOIN.key, data);
 
-      this.socket.send(util.MESSAGE_TYPES.SFU_JOIN.key, data);
-
-      if (sfuRoom.localStream) {
-        sfuRoom.callRoom(sfuRoom.localStream);
-      }
-      return sfuRoom;
+    if (sfuRoom.localStream) {
+      sfuRoom.callRoom(sfuRoom.localStream);
     }
+    return sfuRoom;
+  }
 
-    // mode is blank or 'mesh'
+  _initFullMeshRoom(roomName, roomOptions) {
     if (this.rooms[roomName]) {
       return this.rooms[roomName];
     }
-    const meshRoom = new MeshRoom(roomName, roomOptions);
+    const meshRoom = new MeshRoom(roomName, this.id, roomOptions);
     this.rooms[roomName] = meshRoom;
     this._setupMeshRoomMessageHandlers(meshRoom);
+
+    const data = {
+      roomName:    roomName,
+      roomOptions: roomOptions
+    };
 
     this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
 
     if (meshRoom.localStream) {
-      meshRoom.callRoom(meshRoom.localStream);
+      meshRoom.call(meshRoom.localStream);
     }
     return meshRoom;
   }
@@ -301,9 +315,6 @@ class Peer extends EventEmitter {
     });
     room.on(MeshRoom.MESSAGE_EVENTS.broadcastByWS.key, sendMessage => {
       this.socket.send(util.MESSAGE_TYPES.MESH_DATA.key, sendMessage);
-    });
-    room.on(MeshRoom.MESSAGE_EVENTS.broadcastByDC.key, sendMessage => {
-      console.log(sendMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.getLog.key, getLogMessage => {
       this.socket.send(util.MESSAGE_TYPES.MESH_LOG.key, getLogMessage);
@@ -565,8 +576,14 @@ class Peer extends EventEmitter {
 
     this.socket.on(util.MESSAGE_TYPES.MESH_USER_LIST.key, roomUserListMessage => {
       const room = this.rooms[roomUserListMessage.roomName];
-      if (room.localStream) {
-        room.makeCalls(roomUserListMessage.userList);
+      if (room) {
+        if (roomUserListMessage.type === 'media') {
+          let options = {};
+          options.pcConfig = this._pcConfig;
+          room.makeMCs(roomUserListMessage.userList, options);
+        } else {
+          room.makeDCs(roomUserListMessage.userList);
+        }
       }
     });
 

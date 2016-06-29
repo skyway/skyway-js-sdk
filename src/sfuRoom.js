@@ -1,51 +1,42 @@
 'use strict';
 
-const util           = require('./util');
-
-const EventEmitter = require('events');
-const Enum         = require('enum');
-
+const util              = require('./util');
+const Room              = require('./room');
+const Enum              = require('enum');
 const shim              = require('../src/webrtcShim');
 const RTCPeerConnection = shim.RTCPeerConnection;
 
-const SFURoomEvents = new Enum([
-  'stream',
-  'open',
-  'close',
-  'peerJoin',
-  'peerLeave',
-  'error',
-  'data',
-  'log'
-]);
+const Events = [
+];
 
-const SFURoomMessageEvents = new Enum([
+const MessageEvents = [
   'offerRequest',
-  'answer',
-  'getLog',
-  'broadcast',
-  'leave'
-]);
+  'broadcast'
+];
 
-/** Class to handle SFU related operations.  */
-class SFURoom extends EventEmitter {
+Array.prototype.push.apply(Events, Room.Events);
+const SFUEvents = new Enum(Events);
+Array.prototype.push.apply(MessageEvents, Room.MessageEvents);
+const SFUMessageEvents = new Enum(MessageEvents);
+
+/**
+ * Class that manages SFU type room type room.
+ * @extends EventEmitter
+ */
+class SFURoom extends Room {
   /**
-   * Create a SFURoom. Should not be called by the user.
+   * Creates a SFU room.
    * @param {string} name - Room name.
-   * @param {Object} options - @@@.
+   * @param {string} peerId - Optional arguments for the connection.
+   * @param {object} [options] - Optional arguments for the connection.
+   * @param {MediaStream} [options.localStream] - The MediaStream to send to the remote peer.
+   * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    */
-  constructor(name, options) {
-    super();
+  constructor(name, peerId, options) {
+    super(name, peerId, options);
 
-    this.name = name;
-    this._options = options || {};
-    this._peerId = this._options.peerId;
-
-    this.localStream = this._options._stream;
     this.remoteStreams = {};
-
     this._pcAvailable = false;
-
     this.open = false;
     this.members = [];
   }
@@ -55,7 +46,7 @@ class SFURoom extends EventEmitter {
    * @param {MediaStream} stream - A media stream.
    * @param {Object} options - @@@@.
    */
-  callRoom(stream) {
+  call(stream) {
     if (!stream) {
       util.error(
         'To call a peer, you must provide ' +
@@ -290,14 +281,14 @@ class SFURoom extends EventEmitter {
    * EVENTS
    */
   static get EVENTS() {
-    return SFURoomEvents;
+    return SFUEvents;
   }
 
   /**
    * MESSAGE_EVENTS
    */
   static get MESSAGE_EVENTS() {
-    return SFURoomMessageEvents;
+    return SFUMessageEvents;
   }
 }
 

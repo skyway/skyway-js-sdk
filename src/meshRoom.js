@@ -1,62 +1,55 @@
 'use strict';
 
 const util            = require('./util');
-const EventEmitter    = require('events');
 const Enum            = require('enum');
+const Room            = require('./room');
 const Connection      = require('./connection');
 const MediaConnection = require('./mediaConnection');
 
-const MeshEvents = new Enum([
-  'stream',
-  'open',
-  'close',
-  'peerJoin',
-  'peerLeave',
-  'error',
-  'data',
-  'log'
-]);
+const Events = [
+  'call'
+];
 
-const MeshMessageEvents = new Enum([
-  'offer',
-  'answer',
-  'candidate',
+const MessageEvents = [
   'broadcastByWS',
   'broadcastByDC',
-  'leave',
-  'close',
-  'getPeers',
-  'getLog'
-]);
+  'getPeers'
+];
 
-/** Fullmesh room */
-class MeshRoom extends EventEmitter {
+Array.prototype.push.apply(Events, Room.Events);
+const MeshEvents = new Enum(Events);
+Array.prototype.push.apply(MessageEvents, Room.MessageEvents);
+const MeshMessageEvents = new Enum(MessageEvents);
+
+/**
+ * Class that manages fullmesh type room.
+ * @extends EventEmitter
+ */
+class MeshRoom extends Room {
 
   /**
-   * Creates a MeshRoom instance.
+   * Creates a fullmesh room.
    * @param {string} name - Room name.
-   * @param {Object} options - @@@@
+   * @param {string} peerId - Room name.
+   * @param {object} [options] - Optional arguments for the connection.
+   * @param {MediaStream} [options.localStream] - The MediaStream to send to the remote peer.
+   * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    */
-  constructor(name, options) {
-    super();
+  constructor(name, peerId, options) {
+    super(name, peerId, options);
 
-    this.name = name;
-    this._options = options || {};
-    this._peerId = this._options.peerId;
-    this.localStream = this._options._stream;
     this._pcConfig = this._options.pcConfig;
     this.remoteStreams = {};
     this.connections = {};
-
-    this._queuedMessages = {};
   }
 
   /**
-   * Starts getting users list in the room.
-   * @param {MediaStream} stream - A media stream.
-   * @param {Object} options - @@@@.
+   * This functions is called by client app.
+   * It emit getPeers event for getting peerIds of all of room participant.
+   * After getting peerIds, makeMCs is called.
+   * @param {MediaStream} stream - The MediaStream to send to the remote peer.
    */
-  callRoom(stream) {
+  call(stream) {
     if (!stream) {
       util.error(
         'To call a peer, you must provide ' +
@@ -67,31 +60,53 @@ class MeshRoom extends EventEmitter {
     this.localStream = stream;
 
     const data = {
-      roomName: this.name
+      roomName: this.name,
+      type:     'media'
     };
 
     this.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, data);
   }
 
   /**
-   * Starts getting users list in the room.
-   * @param {MediaStream} stream - A media stream.
-   * @param {Object} options - @@@@.
+   * This functions is called by client app.
+   * It emit getPeers event for getting peerIds of all of room participant.
+   * After getting peerIds, makeDCs is called.
    */
-  connectRoom() {
+  connect() {
     const data = {
-      roomName: this.name
+      roomName: this.name,
+      type:     'data'
     };
 
     this.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, data);
   }
 
   /**
-   * Starts video call to all users in the room.
-   * @param {Array} peerIds - A list of PeerIDs.
-   * @param {Object} options - @@@@
+   * Start video call to all participants in the room.
+   * @param {Array} peerIds - Array of peerIds you are calling to.
+   * @param {Object} [options] - Optional arguments for the MediaConnection.
    */
-  makeCalls(peerIds, options) {
+  makeMCs(peerIds, options) {
+    options = options || {};
+    options.stream = this.localStream;
+    options.localStream = this.localStream;
+
+    peerIds.forEach(peerId => {
+      if (this._peerId !== peerId) {
+        const mc = new MediaConnection(peerId, options);
+        util.log('MediaConnection to ${peerId} created in call method');
+        this._addConnection(peerId, mc);
+        this._setupMessageHandlers(mc);
+      }
+    });
+  }
+
+  /**
+   * Start data connection to all participants in the room.
+   * @param {Array} peerIds - Array of peerIds you are calling to.
+   * @param {Object} [options] - Optional arguments for the DataConnection.
+   */
+  makeDCs(peerIds, options) {
     options = options || {};
     options._stream = this.localStream;
 
@@ -99,13 +114,19 @@ class MeshRoom extends EventEmitter {
       let peerId = peerIds[i];
       if (this._peerId !== peerId) {
         const mc = new MediaConnection(peerId, options);
-        util.log('MediaConnection created in callRoom method');
+        util.log('MediaConnection created in call method');
         this._addConnection(peerId, mc);
         this._setupMessageHandlers(mc);
       }
     }
   }
 
+  /**
+   * Add a connection to room's connections property.
+   * @param {string} peerId - User's peerID.
+   * @param {MediaConnection|DataConnection} connection - An instance of MediaConneciton or DataConnection.
+   * @private
+   */
   _addConnection(peerId, connection) {
     if (!this.connections[peerId]) {
       this.connections[peerId] = [];
@@ -113,6 +134,11 @@ class MeshRoom extends EventEmitter {
     this.connections[peerId].push(connection);
   }
 
+  /**
+   * Set up connection event and message handlers.
+   * @param {MediaConnection|DataConnection} connection - An instance of MediaConneciton or DataConnection.
+   * @private
+   */
   _setupMessageHandlers(connection) {
     connection.on(Connection.EVENTS.offer.key, offerMessage => {
       offerMessage.roomName = this.name;
@@ -126,81 +152,87 @@ class MeshRoom extends EventEmitter {
       candidateMessage.roomName = this.name;
       this.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
     });
-    connection.on('stream', remoteStream => {
-      this.emit('stream', remoteStream);
+    connection.on(MediaConnection.EVENTS.stream.key, remoteStream => {
+      this.emit(MediaConnection.EVENTS.stream.key, remoteStream);
     });
   }
 
   /**
    * Returns a connection according to given peerId and connectionId.
-   * @param {string} peerId - peerID.
-   * @param {string} connectionId - connectionID.
-   * @return {Connection} A MediaConnection or DataConnection.
+   * @param {string} peerId - User's PeerId.
+   * @param {string} connectionId - An ID to uniquely identify the connection.
+   * @return  {Connection} A connection according to given peerId and connectionId.
+   * @private
    */
-  getConnection(peerId, connectionId) {
+  _getConnection(peerId, connectionId) {
     if (this.connections && this.connections[peerId]) {
-      for (let connection of this.connections[peerId]) {
-        if (connection.id === connectionId) {
-          return connection;
-        }
-      }
+      let conn = this.connections[peerId].filter(connection => {
+        return connection.id === connectionId;
+      });
+      return conn[0];
     }
     return null;
   }
 
   /**
-   * Handles Join message.
-   * @param {Object} message - Message.
+   * Handle join message from new participant in the room.
+   * It emits peerJoin event.
+   * If the message contain user's peerId, it also emits open event.
+   * @param {Object} joinMessage - Message object.
+   * @param {string} joinMessage.src - The peerId of the peer that joined.
+   * @param {string} joinMessage.roomName - The name of the joined room.
    */
-  handleJoin(message) {
-    const src = message.src;
-
+  handleJoin(joinMessage) {
+    const src = joinMessage.src;
     if (src === this._peerId) {
-      this.open = true;
       this.emit(MeshRoom.EVENTS.open.key);
-
-      // At this stage the Server has acknowledged us joining a room
       return;
     }
-
     this.emit(MeshRoom.EVENTS.peerJoin.key, src);
   }
 
   /**
-   * Handles Leave message from other participant.
-   * @param {Object} message - Message.
+   * Handle leave message from other participant in the room.
+   * It emits peerLeave event.
+   * @param {Object} leaveMessage - Message object.
    */
-  handleLeave(message) {
-    const src = message.src;
+  handleLeave(leaveMessage) {
+    const src = leaveMessage.src;
     this.emit(MeshRoom.EVENTS.peerLeave.key, src);
+    // delete connection
   }
 
   /**
-   * Handles data from other participant.
-   * @param {Object} message - Data.
+   * Handle data message from other paricipants in the room.
+   * It emits data event.
+   * @param {object} dataMessage - The data message to handle.
    */
-  handleData(message) {
-    this.emit(MeshRoom.EVENTS.data.key, message);
-  }
-
-  handleLog(log) {
-    this.emit(MeshRoom.EVENTS.log.key, log);
+  handleData(dataMessage) {
+    this.emit(MeshRoom.EVENTS.data.key, dataMessage);
   }
 
   /**
-   * Handles Offer message from remote peer and create new Media Connection.
-   * @param {Object} offerMessage - Offer message.
-   * @param {string} offerMessage.src - Sender's peerID.
-   * @param {string} [offerMessage.dst] - Reciever's peerID.
-   * @param {Object} offerMessage.offer - Offer SDP.
-   * @param {string} [offerMessage.connctionType] - 'media' or 'data'.
-   * @param {string} offerMessage.connctionId - connectionID.
-   * @param {string} [offerMessage.roomName] - Room name.
-   * @param {string} [offerMessage.metadata] - metadata.
+   * Handle log message.
+   * It emits log event.
+   * @param {object} logMessage - The room's logs.
+   */
+  handleLog(logMessage) {
+    this.emit(MeshRoom.EVENTS.log.key, logMessage);
+  }
+
+  /**
+   * Handle offer message from new participant and create a Connection instance.
+   * @param {object} offerMessage - Message object containing sdp offer.
+   * @param {object} offerMessage.offer - Object containing sdp answer.
+   * @param {string} offerMessage.connectionId - Object containing sdp answer.
+   * @param {string} offerMessage.connectionType - Object containing sdp answer.
+   * @param {string} offerMessage.dst - Object containing sdp answer.
+   * @param {string} offerMessage.roomName - Object containing sdp answer.
+   * @param {string} offerMessage.src - Object containing sdp answer.
    */
   handleOffer(offerMessage) {
     const connectionId = offerMessage.connectionId;
-    let connection = this.getConnection(offerMessage.src, connectionId);
+    let connection = this._getConnection(offerMessage.src, connectionId);
 
     if (connection) {
       util.warn('Offer received for existing Connection ID:', connectionId);
@@ -211,68 +243,67 @@ class MeshRoom extends EventEmitter {
       connection = new MediaConnection(
         offerMessage.src,
         {
-          connectionId:    connectionId,
-          _payload:        offerMessage,
-          metadata:        offerMessage.metadata,
-          _queuedMessages: this._queuedMessages[connectionId],
-          pcConfig:        this._pcConfig
+          connectionId: connectionId,
+          payload:      offerMessage,
+          metadata:     offerMessage.metadata,
+          pcConfig:     this._pcConfig
         }
       );
       util.log('MediaConnection created in OFFER');
       this._addConnection(offerMessage.src, connection);
       this._setupMessageHandlers(connection);
 
-      connection.answer(this.localStream);
+      this.emit(MeshRoom.EVENTS.call.key, connection);
     } else {
       util.warn('Received malformed connection type: ', offerMessage.connectionType);
     }
   }
 
   /**
-   * Handles Answer message from remote peer.
-   * @param {Object} answerMessage - Answer message.
+   * Handle snswer message from participant in the room.
+   * @param {object} answerMessage - Message object containing sdp answer.
+   * @param {object} answerMessage.answer - Object containing sdp answer.
+   * @param {string} answerMessage.connectionId - Object containing sdp answer.
+   * @param {string} answerMessage.connectionType - Object containing sdp answer.
+   * @param {string} answerMessage.dst - Object containing sdp answer.
+   * @param {string} answerMessage.roomName - Object containing sdp answer.
+   * @param {string} answerMessage.src - Object containing sdp answer.
    */
   handleAnswer(answerMessage) {
-    const connection = this.getConnection(
+    const connection = this._getConnection(
                           answerMessage.src,
                           answerMessage.connectionId
                         );
 
     if (connection) {
       connection.handleAnswer(answerMessage);
-    } else {
-      this._storeMessage(util.MESSAGE_TYPES.ANSWER.key, answerMessage);
     }
   }
 
   /**
-   * Handles Candidate message from remote peer.
-   * @param {Object} candidateMessage - Offer message.
+   * Handles Answer message from participant in the room.
+   * @param {object} candidateMessage - Message object containing sdp candidate.
+   * @param {object} candidateMessage.candidate - Object containing sdp answer.
+   * @param {string} candidateMessage.connectionId - Object containing sdp answer.
+   * @param {string} candidateMessage.connectionType - Object containing sdp answer.
+   * @param {string} candidateMessage.dst - Object containing sdp answer.
+   * @param {string} candidateMessage.roomName - Object containing sdp answer.
+   * @param {string} candidateMessage.src - Object containing sdp answer.
    */
   handleCandidate(candidateMessage) {
-    const connection = this.getConnection(
+    const connection = this._getConnection(
                           candidateMessage.src,
                           candidateMessage.connectionId
                         );
 
     if (connection) {
       connection.handleCandidate(candidateMessage);
-    } else {
-      this._storeMessage(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
     }
-  }
-
-  _storeMessage(type, message) {
-    if (!this._queuedMessages[message.connectionId]) {
-      this._queuedMessages[message.connectionId] = [];
-    }
-    this._queuedMessages[message.connectionId]
-      .push({type: type, payload: message});
   }
 
   /**
-   * Sends data to all participants in the Room with WebSocket.
-   * @param {Object} data - Data to send.
+   * Send data to all participants in the room with WebSocket.
+   * @param {*} data - The data to send.
    */
   sendByWS(data) {
     const message = {
@@ -283,8 +314,8 @@ class MeshRoom extends EventEmitter {
   }
 
   /**
-   * Sends data to all participants in the Room with DataChannel.
-   * @param {Object} data - Data to send.
+   * Send data to all participants in the room with DataChannel.
+   * @param {*} data - The data to send.
    */
   sendByDC(data) {
     const message = {
@@ -294,6 +325,9 @@ class MeshRoom extends EventEmitter {
     this.emit(MeshRoom.MESSAGE_EVENTS.broadcastByDC.key, message);
   }
 
+  /**
+   * Start getting room's logs from SkyWay server.
+   */
   getLog() {
     const message = {
       roomName: this.name
@@ -302,14 +336,16 @@ class MeshRoom extends EventEmitter {
   }
 
   /**
-   * EVENTS
+   * Events the MeshRoom class can emit.
+   * @type {Enum}
    */
   static get EVENTS() {
     return MeshEvents;
   }
 
   /**
-   * MESSAGE_EVENTS
+   * Message events the MeshRoom class can emit.
+   * @type {Enum}
    */
   static get MESSAGE_EVENTS() {
     return MeshMessageEvents;
