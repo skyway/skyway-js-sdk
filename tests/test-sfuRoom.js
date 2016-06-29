@@ -11,17 +11,9 @@ const sinon      = require('sinon');
 describe('SFURoom', () => {
   const sfuRoomName = 'testSFURoom';
   describe('Constructor', () => {
-    it('should create a SFURoom Object', () => {
-      const sfuRoom = new SFURoom(sfuRoomName, {});
-
-      assert(sfuRoom);
-      assert(sfuRoom instanceof SFURoom);
-      assert.equal(sfuRoom.open, false);
-    });
-
     it('should create a SFURoom Object with a peerId', () => {
       const peerId = 'testId';
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
 
       assert(sfuRoom);
       assert.equal(sfuRoom._peerId, peerId);
@@ -33,7 +25,7 @@ describe('SFURoom', () => {
       const peerId = 'testId';
       const data = 'foobar';
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
       sfuRoom.open = true;
 
       const spy = sinon.spy();
@@ -52,7 +44,7 @@ describe('SFURoom', () => {
       const peerId1 = 'peer1';
       const peerId2 = 'peer2';
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId1});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId1);
       sfuRoom.open = true;
       assert.equal(sfuRoom.members.length, 0);
 
@@ -71,7 +63,7 @@ describe('SFURoom', () => {
     it('should emit an open event and not add to the members array when src peerId is own', () => {
       const peerId = 'peerId';
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
       sfuRoom.open = true;
       assert.equal(sfuRoom.members.length, 0);
 
@@ -89,7 +81,7 @@ describe('SFURoom', () => {
       const peerId1 = 'peer1';
       const peerId2 = 'peer2';
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId1});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId1);
       sfuRoom.open = true;
       sfuRoom.members = [peerId2];
       assert.equal(sfuRoom.members.length, 1);
@@ -111,7 +103,7 @@ describe('SFURoom', () => {
       const data = 'foobar';
       const message = {sfuRoomName, data};
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
 
       const spy = sinon.spy();
       sfuRoom.emit = spy;
@@ -129,7 +121,7 @@ describe('SFURoom', () => {
       const peerId = 'peer';
       const offer = {};
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
       sfuRoom.open = true;
       assert.equal(sfuRoom._pc, null);
 
@@ -144,7 +136,7 @@ describe('SFURoom', () => {
       const spy = sinon.spy();
       const pc = {setRemoteDescription: spy};
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
       sfuRoom.open = true;
       sfuRoom._pc = pc;
       sfuRoom.handleOffer(offer);
@@ -162,7 +154,7 @@ describe('SFURoom', () => {
       const spy = sinon.spy();
       const pc = {setRemoteDescription: setRemoteDescription, createAnswer: spy};
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
       sfuRoom.open = true;
       sfuRoom._pc = pc;
       sfuRoom.handleOffer(offer);
@@ -185,7 +177,7 @@ describe('SFURoom', () => {
                   createAnswer:         createAnswer,
                   setLocalDescription:  spy};
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
       sfuRoom.open = true;
       sfuRoom._pc = pc;
       sfuRoom.handleOffer(offer);
@@ -198,7 +190,7 @@ describe('SFURoom', () => {
       const offer = {};
       const peerId = 'peer';
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
       sfuRoom.open = true;
       sfuRoom.handleOffer(offer);
 
@@ -219,7 +211,7 @@ describe('SFURoom', () => {
       let ev;
 
       beforeEach(() => {
-        sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+        sfuRoom = new SFURoom(sfuRoomName, peerId);
         sfuRoom.open = true;
         sfuRoom.handleOffer(offer);
         pc = sfuRoom._pc;
@@ -257,7 +249,7 @@ describe('SFURoom', () => {
     it('should emit a getLog event when getLog() is called', () => {
       const peerId = 'peer';
 
-      const room = new SFURoom(sfuRoomName, {peerId: peerId});
+      const room = new SFURoom(sfuRoomName, peerId);
       room.open = true;
 
       const spy = sinon.spy();
@@ -289,7 +281,7 @@ describe('SFURoom', () => {
       const peerId = 'peer';
       const message = {roomName: sfuRoomName};
 
-      const sfuRoom = new SFURoom(sfuRoomName, {peerId: peerId});
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
       sfuRoom.open = true;
 
       const spy = sinon.spy();
