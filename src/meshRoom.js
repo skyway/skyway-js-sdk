@@ -23,28 +23,29 @@ const MeshMessageEvents = new Enum(MessageEvents);
 
 /**
  * Class that manages fullmesh type room.
- * @extends EventEmitter
+ * @extends Room
  */
 class MeshRoom extends Room {
 
   /**
    * Creates a fullmesh room.
    * @param {string} name - Room name.
-   * @param {string} peerId - Room name.
+   * @param {string} peerId - User's peerId.
    * @param {object} [options] - Optional arguments for the connection.
-   * @param {MediaStream} [options.localStream] - The MediaStream to send to the remote peer.
+   * @param {MediaStream} [options.stream] - The MediaStream to send to the remote peer.
    * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    */
   constructor(name, peerId, options) {
     super(name, peerId, options);
 
     this._pcConfig = this._options.pcConfig;
+
     this.remoteStreams = {};
     this.connections = {};
   }
 
   /**
-   * This functions is called by client app.
+   * Called by client app to create MediaConnections.
    * It emit getPeers event for getting peerIds of all of room participant.
    * After getting peerIds, makeMCs is called.
    * @param {MediaStream} stream - The MediaStream to send to the remote peer.
@@ -68,7 +69,7 @@ class MeshRoom extends Room {
   }
 
   /**
-   * This functions is called by client app.
+   * Called by client app to create DataConnections.
    * It emit getPeers event for getting peerIds of all of room participant.
    * After getting peerIds, makeDCs is called.
    */
@@ -89,7 +90,7 @@ class MeshRoom extends Room {
   makeMCs(peerIds, options) {
     options = options || {};
     options.stream = this.localStream;
-    options.localStream = this.localStream;
+    // options.localStream = this.localStream;
 
     peerIds.forEach(peerId => {
       if (this._peerId !== peerId) {
@@ -135,6 +136,13 @@ class MeshRoom extends Room {
   }
 
   /**
+   * Delete a connection from room's connections property.
+   * @private
+   */
+  _deleteConnection() {
+  }
+
+  /**
    * Set up connection event and message handlers.
    * @param {MediaConnection|DataConnection} connection - An instance of MediaConneciton or DataConnection.
    * @private
@@ -158,7 +166,7 @@ class MeshRoom extends Room {
   }
 
   /**
-   * Returns a connection according to given peerId and connectionId.
+   * Return a connection according to given peerId and connectionId.
    * @param {string} peerId - User's PeerId.
    * @param {string} connectionId - An ID to uniquely identify the connection.
    * @return  {Connection} A connection according to given peerId and connectionId.
@@ -176,8 +184,7 @@ class MeshRoom extends Room {
 
   /**
    * Handle join message from new participant in the room.
-   * It emits peerJoin event.
-   * If the message contain user's peerId, it also emits open event.
+   * It emits peerJoin event and if the message contains user's peerId, also emits open event.
    * @param {Object} joinMessage - Message object.
    * @param {string} joinMessage.src - The peerId of the peer that joined.
    * @param {string} joinMessage.roomName - The name of the joined room.
@@ -193,42 +200,26 @@ class MeshRoom extends Room {
 
   /**
    * Handle leave message from other participant in the room.
-   * It emits peerLeave event.
+   * It deletes connection from room's connections property and emits peerLeave event.
    * @param {Object} leaveMessage - Message object.
+   * @param {string} leaveMessage.src - The peerId of the peer that left.
+   * @param {string} leaveMessage.roomName - The name of the left room.
    */
   handleLeave(leaveMessage) {
     const src = leaveMessage.src;
     this.emit(MeshRoom.EVENTS.peerLeave.key, src);
-    // delete connection
+    // TODO: delete connection
   }
 
   /**
-   * Handle data message from other paricipants in the room.
-   * It emits data event.
-   * @param {object} dataMessage - The data message to handle.
-   */
-  handleData(dataMessage) {
-    this.emit(MeshRoom.EVENTS.data.key, dataMessage);
-  }
-
-  /**
-   * Handle log message.
-   * It emits log event.
-   * @param {object} logMessage - The room's logs.
-   */
-  handleLog(logMessage) {
-    this.emit(MeshRoom.EVENTS.log.key, logMessage);
-  }
-
-  /**
-   * Handle offer message from new participant and create a Connection instance.
-   * @param {object} offerMessage - Message object containing sdp offer.
-   * @param {object} offerMessage.offer - Object containing sdp answer.
-   * @param {string} offerMessage.connectionId - Object containing sdp answer.
-   * @param {string} offerMessage.connectionType - Object containing sdp answer.
-   * @param {string} offerMessage.dst - Object containing sdp answer.
-   * @param {string} offerMessage.roomName - Object containing sdp answer.
-   * @param {string} offerMessage.src - Object containing sdp answer.
+   * Handle Offer message from new participant and create a Connection instance.
+   * @param {object} offerMessage - Message object containing Offer SDP.
+   * @param {object} offerMessage.offer - Object containing Offer SDP text.
+   * @param {string} offerMessage.connectionId - An ID to uniquely identify the connection.
+   * @param {string} offerMessage.connectionType - One of 'media' or 'data'.
+   * @param {string} offerMessage.dst - The peerId of the peer who receiving the Offer.
+   * @param {string} offerMessage.roomName - The name of the room user is joining.
+   * @param {string} offerMessage.src - The peerId of the peer who sent the Offer.
    */
   handleOffer(offerMessage) {
     const connectionId = offerMessage.connectionId;
@@ -260,14 +251,14 @@ class MeshRoom extends Room {
   }
 
   /**
-   * Handle snswer message from participant in the room.
-   * @param {object} answerMessage - Message object containing sdp answer.
-   * @param {object} answerMessage.answer - Object containing sdp answer.
-   * @param {string} answerMessage.connectionId - Object containing sdp answer.
-   * @param {string} answerMessage.connectionType - Object containing sdp answer.
-   * @param {string} answerMessage.dst - Object containing sdp answer.
-   * @param {string} answerMessage.roomName - Object containing sdp answer.
-   * @param {string} answerMessage.src - Object containing sdp answer.
+   * Handle Answer message from participant in the room.
+   * @param {object} answerMessage - Message object containing Answer SDP.
+   * @param {object} answerMessage.answer - Object containing Answer SDP text.
+   * @param {string} answerMessage.connectionId - An ID to uniquely identify the connection.
+   * @param {string} answerMessage.connectionType - One of 'media' or 'data'.
+   * @param {string} answerMessage.dst - The peerId of the peer who receiving the Answer.
+   * @param {string} answerMessage.roomName - The name of the room user is joining.
+   * @param {string} answerMessage.src - The peerId of the peer who sent the Answer.
    */
   handleAnswer(answerMessage) {
     const connection = this._getConnection(
@@ -281,14 +272,14 @@ class MeshRoom extends Room {
   }
 
   /**
-   * Handles Answer message from participant in the room.
-   * @param {object} candidateMessage - Message object containing sdp candidate.
-   * @param {object} candidateMessage.candidate - Object containing sdp answer.
-   * @param {string} candidateMessage.connectionId - Object containing sdp answer.
-   * @param {string} candidateMessage.connectionType - Object containing sdp answer.
-   * @param {string} candidateMessage.dst - Object containing sdp answer.
-   * @param {string} candidateMessage.roomName - Object containing sdp answer.
-   * @param {string} candidateMessage.src - Object containing sdp answer.
+   * Handles Candidate message from participant in the room.
+   * @param {object} candidateMessage - Message object containing Candidate SDP.
+   * @param {object} candidateMessage.candidate - Object containing Candidate SDP text.
+   * @param {string} candidateMessage.connectionId - An ID to uniquely identify the connection.
+   * @param {string} candidateMessage.connectionType - One of 'media' or 'data'.
+   * @param {string} candidateMessage.dst - The peerId of the peer who receiving the Candidate.
+   * @param {string} candidateMessage.roomName - The name of the room user is joining.
+   * @param {string} candidateMessage.src - The peerId of the peer who sent the Candidate.
    */
   handleCandidate(candidateMessage) {
     const connection = this._getConnection(
@@ -303,6 +294,7 @@ class MeshRoom extends Room {
 
   /**
    * Send data to all participants in the room with WebSocket.
+   * It emits broadcastByWS event.
    * @param {*} data - The data to send.
    */
   sendByWS(data) {
@@ -315,6 +307,7 @@ class MeshRoom extends Room {
 
   /**
    * Send data to all participants in the room with DataChannel.
+   * It emits broadcastByDC event.
    * @param {*} data - The data to send.
    */
   sendByDC(data) {
@@ -323,16 +316,6 @@ class MeshRoom extends Room {
       data:     data
     };
     this.emit(MeshRoom.MESSAGE_EVENTS.broadcastByDC.key, message);
-  }
-
-  /**
-   * Start getting room's logs from SkyWay server.
-   */
-  getLog() {
-    const message = {
-      roomName: this.name
-    };
-    this.emit(MeshRoom.MESSAGE_EVENTS.getLog.key, message);
   }
 
   /**

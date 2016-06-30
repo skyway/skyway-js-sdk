@@ -26,14 +26,18 @@ const MessageEvents = [
 const RoomEvents = new Enum(Events);
 const RoomMessageEvents = new Enum(MessageEvents);
 
-/** Room */
+/**
+ * Class to manage rooms where one or more users can participate
+ * @extends EventEmitter
+ */
 class Room extends EventEmitter {
 
   /**
    * Creates a Room instance.
    * @param {string} name - Room name.
-   * @param {string} peerId - @@@@
-   * @param {Object} options - @@@@
+   * @param {string} peerId - User's peerId.
+   * @param {object} [options] - Optional arguments for the connection.
+   * @param {object} [options.stream] - User's medias stream to send other participants.
    */
   constructor(name, peerId, options) {
     super();
@@ -41,21 +45,33 @@ class Room extends EventEmitter {
     this.name = name;
     this._options = options || {};
     this._peerId = peerId;
-    this.localStream = this._options._stream;
+    this.localStream = this._options.stream;
   }
 
   /**
-   * Handles data from other participant.
-   * @param {Object} message - Data.
+   * Handle received data message from other paricipants in the room.
+   * It emits data event.
+   * @param {object} dataMessage - The data message to handle.
+   * @param {ArrayBuffer} dataMessage.data - The data that received by all of participant.
+   * @param {string} dataMessage.src -  The peerId of the peer who sent the data.
+   * @param {string} dataMessage.roomName -  The name of the room user is joining.
    */
-  handleData(message) {
-    this.emit(Room.EVENTS.data.key, message);
+  handleData(dataMessage) {
+    this.emit(Room.EVENTS.data.key, dataMessage);
   }
 
-  handleLog(log) {
-    this.emit(Room.EVENTS.log.key, log);
+  /**
+   * Handle received log message.
+   * It emits log event with room's logs.
+   * @param {Array} logMessage - An array containing JSON text.
+   */
+  handleLog(logMessage) {
+    this.emit(Room.EVENTS.log.key, logMessage);
   }
 
+  /**
+   * Start getting room's logs from SkyWay server.
+   */
   getLog() {
     const message = {
       roomName: this.name
@@ -64,28 +80,32 @@ class Room extends EventEmitter {
   }
 
   /**
-   * EVENTS
+   * Events the Room class can emit.
+   * @type {Array}
    */
   static get Events() {
     return Events;
   }
 
   /**
-   * EVENTS
+   * Events the Room class can emit.
+   * @type {Enum}
    */
   static get EVENTS() {
     return RoomEvents;
   }
 
   /**
-   * EVENTS
+   * Events the Room class can emit.
+   * @type {Array}
    */
   static get MessageEvents() {
     return MessageEvents;
   }
 
   /**
-   * MESSAGE_EVENTS
+   * Events the Room class can emit.
+   * @type {Enum}
    */
   static get MESSAGE_EVENTS() {
     return RoomMessageEvents;

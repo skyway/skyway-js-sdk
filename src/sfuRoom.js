@@ -21,15 +21,15 @@ const SFUMessageEvents = new Enum(MessageEvents);
 
 /**
  * Class that manages SFU type room type room.
- * @extends EventEmitter
+ * @extends Room
  */
 class SFURoom extends Room {
   /**
-   * Creates a SFU room.
+   * Creates a SFU type room.
    * @param {string} name - Room name.
    * @param {string} peerId - Optional arguments for the connection.
    * @param {object} [options] - Optional arguments for the connection.
-   * @param {MediaStream} [options.localStream] - The MediaStream to send to the remote peer.
+   * @param {MediaStream} [options.stream] - The MediaStream to send to the remote peer.
    * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    */
   constructor(name, peerId, options) {
@@ -43,8 +43,7 @@ class SFURoom extends Room {
 
   /**
    * Send Offer request message to SFU server.
-   * @param {MediaStream} stream - A media stream.
-   * @param {Object} options - @@@@.
+   * @param {MediaStream} stream - A media stream to send.
    */
   call(stream) {
     if (!stream) {
@@ -66,6 +65,7 @@ class SFURoom extends Room {
 
   /**
    * Handles Offer message from SFU server.
+   * It create new RTCPeerConnection object.
    * @param {Object} offer - Offer SDP from SFU server.
    */
   handleOffer(offer) {
@@ -112,10 +112,13 @@ class SFURoom extends Room {
 
   /**
    * Handles Join message from SFU server.
-   * @param {Object} message - Message from SFU server.
+   * It emits peerJoin event and if the message contains user's peerId, also emits open event.
+   * @param {Object} joinMessage - Message object.
+   * @param {string} joinMessage.src - The peerId of the peer that joined.
+   * @param {string} joinMessage.roomName - The name of the joined room.
    */
-  handleJoin(message) {
-    const src = message.src;
+  handleJoin(joinMessage) {
+    const src = joinMessage.src;
 
     if (src === this._peerId) {
       this.open = true;
@@ -131,14 +134,15 @@ class SFURoom extends Room {
 
   /**
    * Handles Leave message from SFU server.
-   * @param {Object} message - Message from SFU server.
+   * It emits peerLeave message.
+   * @param {Object} leaveMessage - Message from SFU server.
    */
-  handleLeave(message) {
+  handleLeave(leaveMessage) {
     if (!this.open) {
       return;
     }
 
-    const src = message.src;
+    const src = leaveMessage.src;
 
     const index = this.members.indexOf(src);
     this.members.splice(index, 1);
@@ -146,17 +150,10 @@ class SFURoom extends Room {
   }
 
   /**
-   * Handles data from other participant.
-   * @param {Object} message - Data.
+   * Send data to all participants in the room with WebSocket.
+   * It emits broadcast event.
+   * @param {*} data - The data to send.
    */
-  handleData(message) {
-    this.emit(SFURoom.EVENTS.data.key, message);
-  }
-
-  handleLog(log) {
-    this.emit(SFURoom.EVENTS.log.key, log);
-  }
-
   send(data) {
     if (!this.open) {
       return;
@@ -169,15 +166,8 @@ class SFURoom extends Room {
     this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
   }
 
-  getLog() {
-    const message = {
-      roomName: this.name
-    };
-    this.emit(SFURoom.MESSAGE_EVENTS.getLog.key, message);
-  }
-
   /**
-   * Close
+   * Close PeerConnection and emit leave and close event.
    */
   close() {
     if (!this.open) {
@@ -195,6 +185,10 @@ class SFURoom extends Room {
     this.emit(SFURoom.EVENTS.close.key);
   }
 
+  /**
+   * Set up PeerConnection event message handlers.
+   * @private
+   */
   _setupPCListeners() {
     this._pc.onaddstream = evt => {
       util.log('Received remote media stream');
@@ -273,19 +267,19 @@ class SFURoom extends Room {
           break;
       }
     };
-
-    return this._pc;
   }
 
   /**
-   * EVENTS
+   * Events the SFURoom class can emit.
+   * @type {Enum}
    */
   static get EVENTS() {
     return SFUEvents;
   }
 
   /**
-   * MESSAGE_EVENTS
+   * Message events the MeshRoom class can emit.
+   * @type {Enum}
    */
   static get MESSAGE_EVENTS() {
     return SFUMessageEvents;
