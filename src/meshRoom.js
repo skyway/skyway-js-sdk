@@ -136,6 +136,7 @@ class MeshRoom extends Room {
 
   /**
    * Delete a connections according to given peerId.
+   * @param {string} peerId - An id of the peer that will be deleted.
    * @private
    */
   _deleteConnections(peerId) {
@@ -324,10 +325,12 @@ class MeshRoom extends Room {
    * Close all connections in the room.
    */
   close() {
-    for(let peerId in this.connections){
-      this.connections[peerId].forEach(connection => {
-        connection.close();
-      });
+    for (let peerId in this.connections) {
+      if (this.connections.hasOwnProperty(peerId)) {
+        this.connections[peerId].forEach(connection => {
+          connection.close();
+        });
+      }
     }
     const message = {
       roomName: this.name

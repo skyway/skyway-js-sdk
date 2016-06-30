@@ -22,7 +22,7 @@ describe('MeshRoom', () => {
     closeSpy = sinon.spy();
 
     mcStub.returns({
-      on:     onSpy,
+      on:    onSpy,
       close: closeSpy
     });
     MeshRoom = proxyquire('../src/meshRoom', {'./mediaConnection': mcStub});
