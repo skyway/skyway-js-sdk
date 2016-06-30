@@ -96,7 +96,7 @@ gulp.task('build', () => {
     .pipe(gulp.dest('dist'));
 });
 
-gulp.task('doc', cb => 
+gulp.task('doc', cb => {
   gulp.src(['README.md', './src/**/*.js'], {read: false})
     .pipe(jsdoc(cb));
 });
