@@ -13,33 +13,30 @@ describe('MeshRoom', () => {
   let meshRoom;
   let mcStub;
   let onSpy;
-  let answerSpy;
+  let closeSpy;
   let emitSpy;
 
   beforeEach(() => {
     mcStub = sinon.stub();
     onSpy = sinon.spy();
-    answerSpy = sinon.spy();
+    closeSpy = sinon.spy();
 
     mcStub.returns({
       on:     onSpy,
-      answer: answerSpy
+      close: closeSpy
     });
     MeshRoom = proxyquire('../src/meshRoom', {'./mediaConnection': mcStub});
-    meshRoom = new MeshRoom(meshRoomName, peerId, {_stream: 'stream'});
+    meshRoom = new MeshRoom(meshRoomName, peerId, {stream: 'stream'});
     emitSpy = sinon.spy(meshRoom, 'emit');
   });
 
   describe('Constructor', () => {
-    it('should create a MeshRoom Object', () => {
-      const meshRoom = new MeshRoom(meshRoomName, {});
+    it('should create a MeshRoom Object with a peerId', () => {
+      const peerId = 'peerId';
+      const meshRoom = new MeshRoom(meshRoomName, peerId, {});
 
       assert(meshRoom);
       assert(meshRoom instanceof MeshRoom);
-    });
-
-    it('should create a MeshRoom Object with a peerId', () => {
-      assert(meshRoom);
       assert.equal(meshRoom._peerId, peerId);
     });
   });
@@ -80,20 +77,18 @@ describe('MeshRoom', () => {
     });
   });
 
-  describe('_addConnection', () => {
-    it('should add connection to connections property', () => {
+  describe('_deleteConnections', () => {
+    it('should delete connections from connections property', () => {
       const peerId1 = 'peerId1';
       const connection1 = 'connection1';
       meshRoom._addConnection(peerId1, connection1);
-
-      const peerId2 = 'peerId2';
       const connection2 = 'connection2';
-      meshRoom._addConnection(peerId2, connection2);
+      meshRoom._addConnection(peerId1, connection2);
 
-      assert(meshRoom.connections[peerId1]);
-      assert.deepEqual(meshRoom.connections[peerId1][0], connection1);
-      assert(meshRoom.connections[peerId1]);
-      assert.deepEqual(meshRoom.connections[peerId2][0], connection2);
+      assert(meshRoom.connections[peerId1].length, 2);
+
+      meshRoom._deleteConnections(peerId1);
+      assert.equal(meshRoom.connections[peerId1], undefined);
     });
   });
 
@@ -139,7 +134,7 @@ describe('MeshRoom', () => {
   });
 
   describe('handleLeave', () => {
-    it('should emit peerLeave event', () => {
+    it('should call _deleteConnections and emit peerLeave event', () => {
       const peerId1 = 'peerId1';
       const message = {src: peerId1};
       meshRoom.handleLeave(message);
@@ -228,6 +223,17 @@ describe('MeshRoom', () => {
       assert(emitSpy.calledOnce);
       assert.equal(emitSpy.args[0][0], MeshRoom.MESSAGE_EVENTS.broadcastByDC.key);
       assert.deepEqual(emitSpy.args[0][1], {roomName: meshRoomName, data: data});
+    });
+  });
+
+  describe('close', () => {
+    it('should close all connections within the room and emit close and leave events', () => {
+      meshRoom.makeMCs(['peerId1', 'peerId2']);
+      meshRoom.close();
+
+      assert(closeSpy.calledTwice);
+      assert.equal(emitSpy.args[0][0], MeshRoom.MESSAGE_EVENTS.leave.key);
+      assert.equal(emitSpy.args[1][0], MeshRoom.EVENTS.close.key);
     });
   });
 

@@ -90,7 +90,6 @@ class MeshRoom extends Room {
   makeMCs(peerIds, options) {
     options = options || {};
     options.stream = this.localStream;
-    // options.localStream = this.localStream;
 
     peerIds.forEach(peerId => {
       if (this._peerId !== peerId) {
@@ -136,10 +135,13 @@ class MeshRoom extends Room {
   }
 
   /**
-   * Delete a connection from room's connections property.
+   * Delete a connections according to given peerId.
    * @private
    */
-  _deleteConnection() {
+  _deleteConnections(peerId) {
+    if (this.connections[peerId]) {
+      delete this.connections[peerId];
+    }
   }
 
   /**
@@ -207,8 +209,8 @@ class MeshRoom extends Room {
    */
   handleLeave(leaveMessage) {
     const src = leaveMessage.src;
+    this._deleteConnections(src);
     this.emit(MeshRoom.EVENTS.peerLeave.key, src);
-    // TODO: delete connection
   }
 
   /**
@@ -316,6 +318,22 @@ class MeshRoom extends Room {
       data:     data
     };
     this.emit(MeshRoom.MESSAGE_EVENTS.broadcastByDC.key, message);
+  }
+
+  /**
+   * Close all connections in the room.
+   */
+  close() {
+    for(let peerId in this.connections){
+      this.connections[peerId].forEach(connection => {
+        connection.close();
+      });
+    }
+    const message = {
+      roomName: this.name
+    };
+    this.emit(MeshRoom.MESSAGE_EVENTS.leave.key, message);
+    this.emit(MeshRoom.EVENTS.close.key);
   }
 
   /**

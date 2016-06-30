@@ -42,7 +42,8 @@ const MessageTypes = new Enum([
   'MESH_CANDIDATE',
   'MESH_LEAVE',
   'MESH_DATA',
-  'MESH_LOG'
+  'MESH_LOG',
+  'MESH_USER_LEAVE',
 ]);
 
 class Util {
