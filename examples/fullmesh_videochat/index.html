@@ -26,7 +26,7 @@
     $(function(){
       $('#make-call').click(function(){
         // Initiate a call!
-        room = peer.joinRoom($('#join-room').val(), {_stream: window.localStream});
+        room = peer.joinRoom($('#join-room').val(), {stream: window.localStream});
 
         room.on('call', function(call){
           call.answer(window.localStream);
@@ -98,9 +98,9 @@
       </div>
     </div>
 
+    <p>Your id: <span id="my-id">...</span></p>
     <!-- Make calls to others -->
     <div id="step2">
-      <p>Your id: <span id="my-id">...</span></p>
       <h3>Make a call</h3>
       <div class="pure-form">
         <input type="text" placeholder="Join room..." id="join-room">
