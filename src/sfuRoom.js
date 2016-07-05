@@ -14,20 +14,20 @@ const MessageEvents = [
   'broadcast'
 ];
 
-Array.prototype.push.apply(Events, Room.Events);
 const SFUEvents = new Enum(Events);
-Array.prototype.push.apply(MessageEvents, Room.MessageEvents);
+SFUEvents.extend(Room.EVENTS.enums);
 const SFUMessageEvents = new Enum(MessageEvents);
+SFUMessageEvents.extend(Room.MESSAGE_EVENTS.enums);
 
 /**
- * Class that manages SFU type room type room.
+ * Class that manages SFU type room.
  * @extends Room
  */
 class SFURoom extends Room {
   /**
    * Creates a SFU type room.
    * @param {string} name - Room name.
-   * @param {string} peerId - Optional arguments for the connection.
+   * @param {string} peerId - peerId - User's peerId.
    * @param {object} [options] - Optional arguments for the connection.
    * @param {MediaStream} [options.stream] - The MediaStream to send to the remote peer.
    * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.

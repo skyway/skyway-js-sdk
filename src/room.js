@@ -39,11 +39,16 @@ class Room extends EventEmitter {
    * @param {object} [options] - Optional arguments for the connection.
    * @param {object} [options.stream] - User's medias stream to send other participants.
    */
-  constructor(name, peerId, options) {
+  constructor(name, peerId, options = {}) {
     super();
 
+    // Abstract class
+    if (this.constructor === Room) {
+      throw new TypeError('Cannot construct Room instances directly');
+    }
+
     this.name = name;
-    this._options = options || {};
+    this._options = options;
     this._peerId = peerId;
     this.localStream = this._options.stream;
   }
@@ -54,19 +59,23 @@ class Room extends EventEmitter {
    * @param {object} dataMessage - The data message to handle.
    * @param {ArrayBuffer} dataMessage.data - The data that received by all of participant.
    * @param {string} dataMessage.src -  The peerId of the peer who sent the data.
-   * @param {string} dataMessage.roomName -  The name of the room user is joining.
+   * @param {string} [dataMessage.roomName] -  The name of the room user is joining.
    */
   handleData(dataMessage) {
-    this.emit(Room.EVENTS.data.key, dataMessage);
+    const message = {
+      data: dataMessage.data,
+      src:  dataMessage.src
+    };
+    this.emit(Room.EVENTS.data.key, message);
   }
 
   /**
    * Handle received log message.
    * It emits log event with room's logs.
-   * @param {Array} logMessage - An array containing JSON text.
+   * @param {Array} logs - An array containing JSON text.
    */
-  handleLog(logMessage) {
-    this.emit(Room.EVENTS.log.key, logMessage);
+  handleLog(logs) {
+    this.emit(Room.EVENTS.log.key, logs);
   }
 
   /**
@@ -81,26 +90,10 @@ class Room extends EventEmitter {
 
   /**
    * Events the Room class can emit.
-   * @type {Array}
-   */
-  static get Events() {
-    return Events;
-  }
-
-  /**
-   * Events the Room class can emit.
    * @type {Enum}
    */
   static get EVENTS() {
     return RoomEvents;
-  }
-
-  /**
-   * Events the Room class can emit.
-   * @type {Array}
-   */
-  static get MessageEvents() {
-    return MessageEvents;
   }
 
   /**

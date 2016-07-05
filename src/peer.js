@@ -124,6 +124,14 @@ class Peer extends EventEmitter {
     return mc;
   }
 
+  /**
+   * Join fullmesh type or SFU type room that two or more users can join.
+   * @param {string} roomName - The name of the room user is joining to.
+   * @param {object} [roomOptions]- Optional arguments for the RTCPeerConnection.
+   * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
+   * @param {MesiaStream} [roomOptions.stream] - Media stream user wants to emit.
+   * @return {SFURoom|MeshRoom} - An instance of SFURoom or MeshRoom.
+   */
   joinRoom(roomName, roomOptions = {}) {
     if (!roomName) {
       this.emitError('room-error', 'Room name must be defined.');
@@ -141,6 +149,17 @@ class Peer extends EventEmitter {
     return this._initFullMeshRoom(roomName, roomOptions);
   }
 
+  /**
+   * Create and setup a SFURoom instance and emit SFU_JOIN message to SkyWay server.
+   * If user called joinRoom with a MediaStream, it call callwith it.
+   * @param {string} roomName - The name of the room user is joining to.
+   * @param {object} roomOptions- Optional arguments for the RTCPeerConnection.
+   * @param {string} roomOptions.pcConfig -  A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @param {string} roomOptions.peerId - User's peerId.
+   * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
+   * @param {MesiaStream} [roomOptions.stream] - Media stream user wants to emit.
+   * @return {SFURoom} - An instance of SFURoom.
+   */
   _initSfuRoom(roomName, roomOptions) {
     if (this.rooms[roomName]) {
       return this.rooms[roomName];
@@ -157,11 +176,22 @@ class Peer extends EventEmitter {
     this.socket.send(util.MESSAGE_TYPES.SFU_JOIN.key, data);
 
     if (sfuRoom.localStream) {
-      sfuRoom.callRoom(sfuRoom.localStream);
+      sfuRoom.call(sfuRoom.localStream);
     }
     return sfuRoom;
   }
 
+  /**
+   * Create and setup a MeshRoom instance and emit MESH_JOIN message to SkyWay server.
+   * If user called joinRoom with a MediaStream, it call call with it.
+   * @param {string} roomName - The name of the room user is joining to.
+   * @param {object} roomOptions - Optional arguments for the RTCPeerConnection.
+   * @param {string} roomOptions.pcConfig -  A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @param {string} roomOptions.peerId - User's peerId.
+   * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
+   * @param {MesiaStream} [roomOptions.stream] - Media stream user wants to emit.
+   * @return {SFURoom} - An instance of MeshRoom.
+   */
   _initFullMeshRoom(roomName, roomOptions) {
     if (this.rooms[roomName]) {
       return this.rooms[roomName];
@@ -493,10 +523,10 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(util.MESSAGE_TYPES.SFU_OFFER.key, offerMessage => {
-      // We want the Room class to handle this instead
-      // The Room class acts as RoomConnection
-      this.rooms[offerMessage.roomName].handleOffer(offerMessage.offer);
-      // NOTE: Room has already been created and added to this.sruRooms
+      const room = this.rooms[offerMessage.roomName];
+      if (room) {
+        this.rooms[offerMessage.roomName].handleOffer(offerMessage.offer);
+      }
     });
 
     this.socket.on(util.MESSAGE_TYPES.SFU_USER_LEAVE.key, roomUserLeaveMessage => {
@@ -525,12 +555,12 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.MESH_USER_LIST.key, roomUserListMessage => {
       const room = this.rooms[roomUserListMessage.roomName];
       if (room) {
+        let options = {};
+        options.pcConfig = this._pcConfig;
         if (roomUserListMessage.type === 'media') {
-          let options = {};
-          options.pcConfig = this._pcConfig;
           room.makeMCs(roomUserListMessage.userList, options);
         } else {
-          room.makeDCs(roomUserListMessage.userList);
+          room.makeDCs(roomUserListMessage.userList, options);
         }
       }
     });

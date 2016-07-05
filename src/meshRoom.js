@@ -5,6 +5,7 @@ const Enum            = require('enum');
 const Room            = require('./room');
 const Connection      = require('./connection');
 const MediaConnection = require('./mediaConnection');
+const DataConnection = require('./dataConnection');
 
 const Events = [
   'call'
@@ -16,10 +17,10 @@ const MessageEvents = [
   'getPeers'
 ];
 
-Array.prototype.push.apply(Events, Room.Events);
 const MeshEvents = new Enum(Events);
-Array.prototype.push.apply(MessageEvents, Room.MessageEvents);
+MeshEvents.extend(Room.EVENTS.enums);
 const MeshMessageEvents = new Enum(MessageEvents);
+MeshMessageEvents.extend(Room.MESSAGE_EVENTS.enums);
 
 /**
  * Class that manages fullmesh type room.
@@ -28,7 +29,7 @@ const MeshMessageEvents = new Enum(MessageEvents);
 class MeshRoom extends Room {
 
   /**
-   * Creates a fullmesh room.
+   * Create a fullmesh room.
    * @param {string} name - Room name.
    * @param {string} peerId - User's peerId.
    * @param {object} [options] - Optional arguments for the connection.
@@ -87,14 +88,13 @@ class MeshRoom extends Room {
    * @param {Array} peerIds - Array of peerIds you are calling to.
    * @param {Object} [options] - Optional arguments for the MediaConnection.
    */
-  makeMCs(peerIds, options) {
-    options = options || {};
+  makeMCs(peerIds, options = {}) {
     options.stream = this.localStream;
 
     peerIds.forEach(peerId => {
       if (this._peerId !== peerId) {
         const mc = new MediaConnection(peerId, options);
-        util.log('MediaConnection to ${peerId} created in call method');
+        util.log('MediaConnection to ${peerId} created in makeMCs method');
         this._addConnection(peerId, mc);
         this._setupMessageHandlers(mc);
       }
@@ -106,17 +106,14 @@ class MeshRoom extends Room {
    * @param {Array} peerIds - Array of peerIds you are calling to.
    * @param {Object} [options] - Optional arguments for the DataConnection.
    */
-  makeDCs(peerIds, options) {
-    options = options || {};
-    options._stream = this.localStream;
-
+  makeDCs(peerIds, options = {}) {
     for (let i = 0; i < peerIds.length; i++) {
       let peerId = peerIds[i];
       if (this._peerId !== peerId) {
-        const mc = new MediaConnection(peerId, options);
-        util.log('MediaConnection created in call method');
-        this._addConnection(peerId, mc);
-        this._setupMessageHandlers(mc);
+        const dc = new DataConnection(peerId, options);
+        util.log('DataConnection created in makeDCs method');
+        this._addConnection(peerId, dc);
+        this._setupMessageHandlers(dc);
       }
     }
   }
