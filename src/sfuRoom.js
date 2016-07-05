@@ -6,11 +6,16 @@ const Enum              = require('enum');
 const shim              = require('../src/webrtcShim');
 const RTCPeerConnection = shim.RTCPeerConnection;
 
+const Events = [
+];
+
 const MessageEvents = [
   'offerRequest',
   'broadcast'
 ];
 
+const SFUEvents = new Enum(Events);
+SFUEvents.extend(Room.EVENTS.enums);
 const SFUMessageEvents = new Enum(MessageEvents);
 SFUMessageEvents.extend(Room.MESSAGE_EVENTS.enums);
 
@@ -140,7 +145,7 @@ class SFURoom extends Room {
 
     const index = this.members.indexOf(src);
     this.members.splice(index, 1);
-    this.emit(SFURoom.EVENTS.r.key, src);
+    this.emit(SFURoom.EVENTS.peerLeave.key, src);
   }
 
   /**
@@ -261,6 +266,14 @@ class SFURoom extends Room {
           break;
       }
     };
+  }
+
+  /**
+   * Events the SFURoom class can emit.
+   * @type {Enum}
+   */
+  static get EVENTS() {
+    return SFUEvents;
   }
 
   /**
