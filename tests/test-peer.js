@@ -784,12 +784,10 @@ describe('Peer', () => {
         const errMsg = 'Room name must be defined.';
 
         peer.on('error', err => {
-          setTimeout(() => {
-            assert(err.type === 'room-error');
-            assert(err.message === errMsg);
-            assert.deepEqual(peer.rooms, {});
-            done();
-          }, 0);
+          assert(err.type === 'room-error');
+          assert(err.message === errMsg);
+          assert.deepEqual(peer.rooms, {});
+          done();
         });
 
         assert.deepEqual(peer.rooms, {});
@@ -803,12 +801,10 @@ describe('Peer', () => {
         const errMsg = 'Room name must be defined.';
 
         peer.on('error', err => {
-          setTimeout(() => {
-            assert(err.type === 'room-error');
-            assert(err.message === errMsg);
-            assert.deepEqual(peer.rooms, {});
-            done();
-          }, 0);
+          assert(err.type === 'room-error');
+          assert(err.message === errMsg);
+          assert.deepEqual(peer.rooms, {});
+          done();
         });
 
         assert.deepEqual(peer.rooms, {});
@@ -981,12 +977,10 @@ describe('Peer', () => {
         const errMsg = 'Room name must be defined.';
 
         peer.on('error', err => {
-          setTimeout(() => {
-            assert(err.type === 'room-error');
-            assert(err.message === errMsg);
-            assert.deepEqual(peer.rooms, {});
-            done();
-          }, 0);
+          assert(err.type === 'room-error');
+          assert(err.message === errMsg);
+          assert.deepEqual(peer.rooms, {});
+          done();
         });
 
         assert.deepEqual(peer.rooms, {});
@@ -1000,12 +994,10 @@ describe('Peer', () => {
         const errMsg = 'Room name must be defined.';
 
         peer.on('error', err => {
-          setTimeout(() => {
-            assert(err.type === 'room-error');
-            assert(err.message === errMsg);
-            assert.deepEqual(peer.rooms, {});
-            done();
-          }, 0);
+          assert(err.type === 'room-error');
+          assert(err.message === errMsg);
+          assert.deepEqual(peer.rooms, {});
+          done();
         });
 
         assert.deepEqual(peer.rooms, {});
