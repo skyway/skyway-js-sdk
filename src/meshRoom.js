@@ -345,12 +345,47 @@ class MeshRoom extends Room {
   }
 
   /**
+   * Offer SDP received and MediaConnection instance created event.
+   *
+   * @event MeshRoom#call
+   * @type {MediaConnection}
+   */
+
+  /**
    * Message events the MeshRoom class can emit.
    * @type {Enum}
    */
   static get MESSAGE_EVENTS() {
     return MeshMessageEvents;
   }
+
+  /**
+   * Get all peer's peerId joining in the room.
+   *
+   * @event MeshRoom#getPeers
+   * @type {object}
+   * @property {string} roomName - The Room name.
+   * @property {string} type - One of 'media' or 'data'.
+
+   */
+
+  /**
+   * Send data to all peers in the room by WebSocket.
+   *
+   * @event MeshRoom#broadcastByWS
+   * @type {object}
+   * @property {string} roomName - The Room name.
+   * @property {*} data - The data to send.
+   */
+
+  /**
+   * Send data to all peers in the room by DataChannel.
+   *
+   * @event MeshRoom#broadcastByDC
+   * @type {object}
+   * @property {string} roomName - The Room name.
+   * @property {*} data - The data to send.
+   */
 }
 
 module.exports = MeshRoom;

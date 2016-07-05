@@ -6,16 +6,11 @@ const Enum              = require('enum');
 const shim              = require('../src/webrtcShim');
 const RTCPeerConnection = shim.RTCPeerConnection;
 
-const Events = [
-];
-
 const MessageEvents = [
   'offerRequest',
   'broadcast'
 ];
 
-const SFUEvents = new Enum(Events);
-SFUEvents.extend(Room.EVENTS.enums);
 const SFUMessageEvents = new Enum(MessageEvents);
 SFUMessageEvents.extend(Room.MESSAGE_EVENTS.enums);
 
@@ -56,8 +51,7 @@ class SFURoom extends Room {
     this.localStream = stream;
 
     const data = {
-      roomName:    this.name,
-      roomOptions: this._options
+      roomName: this.name
     };
 
     this.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, data);
@@ -146,7 +140,7 @@ class SFURoom extends Room {
 
     const index = this.members.indexOf(src);
     this.members.splice(index, 1);
-    this.emit(SFURoom.EVENTS.peerLeave.key, src);
+    this.emit(SFURoom.EVENTS.r.key, src);
   }
 
   /**
@@ -270,20 +264,30 @@ class SFURoom extends Room {
   }
 
   /**
-   * Events the SFURoom class can emit.
-   * @type {Enum}
-   */
-  static get EVENTS() {
-    return SFUEvents;
-  }
-
-  /**
    * Message events the MeshRoom class can emit.
    * @type {Enum}
    */
   static get MESSAGE_EVENTS() {
     return SFUMessageEvents;
   }
+
+  /**
+   * Send offer request to SkyWay server.
+   *
+   * @event MeshRoom#offerRequest
+   * @type {object}
+   * @property {string} roomName - The Room name.
+
+   */
+
+  /**
+   * Send data to all peers in the room by WebSocket.
+   *
+   * @event MeshRoom#broadcast
+   * @type {object}
+   * @property {string} roomName - The Room name.
+   * @property {*} data - The data to send.
+   */
 }
 
 module.exports = SFURoom;

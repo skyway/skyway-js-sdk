@@ -57,7 +57,7 @@ class Room extends EventEmitter {
    * Handle received data message from other paricipants in the room.
    * It emits data event.
    * @param {object} dataMessage - The data message to handle.
-   * @param {ArrayBuffer} dataMessage.data - The data that received by all of participant.
+   * @param {ArrayBuffer} dataMessage.data - The data that a peer sent in the room.
    * @param {string} dataMessage.src -  The peerId of the peer who sent the data.
    * @param {string} [dataMessage.roomName] -  The name of the room user is joining.
    */
@@ -97,12 +97,123 @@ class Room extends EventEmitter {
   }
 
   /**
+   * MediaStream received from peer in the room.
+   *
+   * @event Room#stream
+   * @type {MediaStream}
+   */
+
+  /**
+   * Room is ready.
+   *
+   * @event Room#open
+   */
+
+  /**
+   * All connections in the room has closed.
+   *
+   * @event Room#close
+   */
+
+  /**
+   * New peer has joined.
+   *
+   * @event Room#peerJoin
+   * @type {string}
+   */
+
+  /**
+   * A peer has left.
+   *
+   * @event Room#peerLeave
+   * @type {string}
+   */
+
+  /**
+   * Error occured
+   *
+   * @event Room#error
+   */
+
+  /**
+   * Data received from peer.
+   *
+   * @event Room#data
+   * @type {object}
+   * @property {string} src - The peerId of the peer who sent the data.
+   * @property {*} data - The data that a peer sent in the room.
+   */
+
+  /**
+   * Room's log received.
+   *
+   * @event Room#log
+   * @type {Array}
+   */
+
+  /**
+   * Connection closed event.
+   *
+   * @event Connection#close
+   */
+
+  /**
    * Events the Room class can emit.
    * @type {Enum}
    */
   static get MESSAGE_EVENTS() {
     return RoomMessageEvents;
   }
+
+  /**
+   * Offer created event.
+   *
+   * @event Room#offer
+   * @type {object}
+   * @property {RTCSessionDescription} offer - The local offer to send to the peer.
+   * @property {string} dst - Destination peerId
+   * @property {string} connectionId - This connection's id.
+   * @property {string} connectionType - This connection's type.
+   * @property {object} metadata - Any extra data to send with the connection.
+   */
+
+  /**
+   * Answer created event.
+   *
+   * @event Room#answer
+   * @type {object}
+   * @property {RTCSessionDescription} answer - The local answer to send to the peer.
+   * @property {string} dst - Destination peerId
+   * @property {string} connectionId - This connection's id.
+   * @property {string} connectionType - This connection's type.
+   */
+
+  /**
+   * ICE candidate created event.
+   *
+   * @event Room#candidate
+   * @type {object}
+   * @property {RTCIceCandidate} candidate - The ice candidate.
+   * @property {string} dst - Destination peerId
+   * @property {string} connectionId - This connection's id.
+   * @property {string} connectionType - This connection's type.
+   */
+
+  /**
+   * Left the room.
+   *
+   * @event Room#candidate
+   * @type {object}
+   * @property {string} roomName - The room name.
+   */
+
+  /**
+   * Get room log from SkyWay server.
+   *
+   * @event Room#candidate
+   * @type {object}
+   * @property {string} roomName - The room name.
+   */
 }
 
 module.exports = Room;
