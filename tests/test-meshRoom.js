@@ -12,12 +12,14 @@ describe('MeshRoom', () => {
   let MeshRoom;
   let meshRoom;
   let mcStub;
+  let dcStub;
   let onSpy;
   let closeSpy;
   let emitSpy;
 
   beforeEach(() => {
     mcStub = sinon.stub();
+    dcStub = sinon.stub();
     onSpy = sinon.spy();
     closeSpy = sinon.spy();
 
@@ -25,7 +27,11 @@ describe('MeshRoom', () => {
       on:    onSpy,
       close: closeSpy
     });
-    MeshRoom = proxyquire('../src/meshRoom', {'./mediaConnection': mcStub});
+
+    dcStub.returns({
+      on: onSpy
+    });
+    MeshRoom = proxyquire('../src/meshRoom', {'./mediaConnection': mcStub, './dataConnection': dcStub});
     meshRoom = new MeshRoom(meshRoomName, peerId, {stream: 'stream'});
     emitSpy = sinon.spy(meshRoom, 'emit');
   });
@@ -72,6 +78,21 @@ describe('MeshRoom', () => {
       assert.equal(mcStub.callCount, 2);
       assert.equal(mcStub.args[0][0], peerId1);
       assert.equal(mcStub.args[1][0], peerId2);
+      assert(meshRoom.connections[peerId1]);
+      assert(meshRoom.connections[peerId2]);
+    });
+  });
+
+  describe('makeDCs', () => {
+    it('should create DataConnections according to given peerIds', () => {
+      const peerId1 = 'peerId1';
+      const peerId2 = 'peerId1';
+      const peerIds = [peerId1, peerId2];
+      meshRoom.makeDCs(peerIds);
+
+      assert.equal(dcStub.callCount, 2);
+      assert.equal(dcStub.args[0][0], peerId1);
+      assert.equal(dcStub.args[1][0], peerId2);
       assert(meshRoom.connections[peerId1]);
       assert(meshRoom.connections[peerId2]);
     });
