@@ -39,7 +39,7 @@ class Room extends EventEmitter {
 
     this.open = false;
     this.members = [];
-    this._msidMap = [];
+    this._msidMap = {};
     this._unknownStreams = {};
   }
 
