@@ -6,9 +6,6 @@ const Enum              = require('enum');
 const shim              = require('../src/webrtcShim');
 const RTCPeerConnection = shim.RTCPeerConnection;
 
-const Events = [
-];
-
 const MessageEvents = [
   'offerRequest',
   'broadcast'
