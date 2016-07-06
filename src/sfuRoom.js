@@ -14,7 +14,7 @@ const MessageEvents = [
   'broadcast'
 ];
 
-const SFUEvents = new Enum(Events);
+const SFUEvents = new Enum([]);
 SFUEvents.extend(Room.EVENTS.enums);
 const SFUMessageEvents = new Enum(MessageEvents);
 SFUMessageEvents.extend(Room.MESSAGE_EVENTS.enums);
@@ -53,7 +53,7 @@ class SFURoom extends Room {
       );
     }
 
-    this.localStream = stream;
+    this._localStream = stream;
 
     const data = {
       roomName: this.name
@@ -89,8 +89,8 @@ class SFURoom extends Room {
 
       this._setupPCListeners();
 
-      if (this.localStream) {
-        this._pc.addStream(this.localStream);
+      if (this._localStream) {
+        this._pc.addStream(this._localStream);
       }
 
       this._pc.setRemoteDescription(description, () => {

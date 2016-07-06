@@ -59,7 +59,7 @@ class MeshRoom extends Room {
       );
     }
 
-    this.localStream = stream;
+    this._localStream = stream;
 
     const data = {
       roomName: this.name,
@@ -89,7 +89,7 @@ class MeshRoom extends Room {
    * @param {Object} [options] - Optional arguments for the MediaConnection.
    */
   makeMCs(peerIds, options = {}) {
-    options.stream = this.localStream;
+    options.stream = this._localStream;
 
     peerIds.forEach(peerId => {
       if (this._peerId !== peerId) {
@@ -361,7 +361,6 @@ class MeshRoom extends Room {
 
   /**
    * Get all peer's peerId joining in the room.
-   *
    * @event MeshRoom#getPeers
    * @type {object}
    * @property {string} roomName - The Room name.
