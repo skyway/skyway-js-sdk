@@ -115,7 +115,7 @@ class Peer extends EventEmitter {
     }
 
     options = options || {};
-    options._stream = stream;
+    options.stream = stream;
     options.pcConfig = this._pcConfig;
     const mc = new MediaConnection(peerId, options);
     util.log('MediaConnection created in call method');
@@ -204,10 +204,14 @@ class Peer extends EventEmitter {
       this.socket.send(util.MESSAGE_TYPES.ROOM_DATA.key, sendMessage);
     });
     room.on(Room.MESSAGE_EVENTS.leave.key, leaveMessage => {
+      delete this.rooms[room.name];
       this.socket.send(util.MESSAGE_TYPES.ROOM_LEAVE.key, leaveMessage);
     });
     room.on(Room.MESSAGE_EVENTS.answer.key, answerMessage => {
       this.socket.send(util.MESSAGE_TYPES.ROOM_ANSWER.key, answerMessage);
+    });
+    room.on(Room.MESSAGE_EVENTS.getLog.key, getLogMessage => {
+      this.socket.send(util.MESSAGE_TYPES.ROOM_LOG.key, getLogMessage);
     });
   }
 
@@ -360,11 +364,11 @@ class Peer extends EventEmitter {
         connection = new MediaConnection(
           offerMessage.src,
           {
-            connectionId:    connectionId,
-            _payload:        offerMessage,
-            metadata:        offerMessage.metadata,
-            _queuedMessages: this._queuedMessages[connectionId],
-            pcConfig:        this._pcConfig
+            connectionId:   connectionId,
+            payload:        offerMessage,
+            metadata:       offerMessage.metadata,
+            queuedMessages: this._queuedMessages[connectionId],
+            pcConfig:       this._pcConfig
           }
         );
 
@@ -375,13 +379,13 @@ class Peer extends EventEmitter {
         connection = new DataConnection(
           offerMessage.src,
           {
-            connectionId:    connectionId,
-            _payload:        offerMessage,
-            metadata:        offerMessage.metadata,
-            label:           offerMessage.label,
-            serialization:   offerMessage.serialization,
-            _queuedMessages: this._queuedMessages[connectionId],
-            pcConfig:        this._pcConfig
+            connectionId:   connectionId,
+            payload:        offerMessage,
+            metadata:       offerMessage.metadata,
+            label:          offerMessage.label,
+            serialization:  offerMessage.serialization,
+            queuedMessages: this._queuedMessages[connectionId],
+            pcConfig:       this._pcConfig
           }
         );
 
@@ -447,6 +451,13 @@ class Peer extends EventEmitter {
       const room = this.rooms[roomDataMessage.roomName];
       if (room) {
         room.handleData(roomDataMessage);
+      }
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.ROOM_LOG.key, roomLogMessage => {
+      const room = this.rooms[roomLogMessage.roomName];
+      if (room) {
+        room.handleLog(roomLogMessage.log);
       }
     });
   }

@@ -15,13 +15,15 @@ const RoomEvents = new Enum([
   'peerJoin',
   'peerLeave',
   'error',
-  'data'
+  'data',
+  'log'
 ]);
 
 const RoomMessageEvents = new Enum([
   'broadcast',
   'leave',
-  'answer'
+  'answer',
+  'getLog'
 ]);
 
 class Room extends EventEmitter {
@@ -77,6 +79,10 @@ class Room extends EventEmitter {
     this.emit(Room.EVENTS.data.key, message);
   }
 
+  handleLog(log) {
+    this.emit(Room.EVENTS.log.key, log);
+  }
+
   send(data) {
     if (!this.open) {
       return;
@@ -87,6 +93,13 @@ class Room extends EventEmitter {
       data:     data
     };
     this.emit(Room.MESSAGE_EVENTS.broadcast.key, message);
+  }
+
+  getLog() {
+    const message = {
+      roomName: this.name
+    };
+    this.emit(Room.MESSAGE_EVENTS.getLog.key, message);
   }
 
   close() {
