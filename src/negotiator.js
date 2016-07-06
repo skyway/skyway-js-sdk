@@ -21,13 +21,28 @@ const NegotiatorEvents = new Enum([
   'error'
 ]);
 
+/**
+ * Class that manages RCPPeerConnection and SDP exchange.
+ * @extends EventEmitter
+ */
 class Negotiator extends EventEmitter {
+
+  /**
+   * Class that manages RCPPeerConnection and SDP exchange.
+   * @param {object} [options] - Optional arguments for starting connection.
+   * @param {string} [options.type] - Type of connection. One of 'media' or 'data'.
+   * @param {MediaStream} [options._stream] - The MediaStream to send to the remote peer.
+   * @param {string} [options.label] - Label to easily identify the connection on either peer.
+   * @param {boolean} [options.originator] - true means the peer is the originator of the connection.
+   * @param {RTCSessionDescription} [options.offer] - The local description. If the peer is originator, handleOffer is callled with it.
+   * @param {object} [pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
+   */
   startConnection(options, pcConfig) {
     this._pc = this._createPeerConnection(pcConfig);
     this._setupPCListeners();
 
-    if (options.type === 'media' && options._stream) {
-      this._pc.addStream(options._stream);
+    if (options.type === 'media' && options.stream) {
+      this._pc.addStream(options.stream);
     }
 
     if (options.originator) {
@@ -41,6 +56,12 @@ class Negotiator extends EventEmitter {
     }
   }
 
+  /**
+   * Create new RTCPeerConnection.
+   * @param {object} pcConfig - A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @return {RTCPeerConnection} An instance of RTCPeerConnection.
+   * @private
+   */
   _createPeerConnection(pcConfig) {
     util.log('Creating RTCPeerConnection');
 
@@ -49,6 +70,10 @@ class Negotiator extends EventEmitter {
     return new RTCPeerConnection(pcConfig);
   }
 
+  /**
+   * Set up event handlers of RTCPeerConnection events.
+   * @private
+   */
   _setupPCListeners() {
     this._pc.onaddstream = evt => {
       util.log('Received remote media stream');
@@ -143,10 +168,13 @@ class Negotiator extends EventEmitter {
           break;
       }
     };
-
-    return this._pc;
   }
 
+  /**
+   * Create Offer SDP.
+   * @return {Promise} A promise that resolves with Offer SDP.
+   * @private
+   */
   _makeOfferSdp() {
     return new Promise((resolve, reject) => {
       this._pc.createOffer(offer => {
@@ -160,6 +188,12 @@ class Negotiator extends EventEmitter {
     });
   }
 
+  /**
+   * Set local description with Offer SDP and emit offerCreated event.
+   * @param {RTCSessionDescription} offer - Offer SDP.
+   * @return {Promise} A promise that resolves with Offer SDP.
+   * @private
+   */
   _setLocalDescription(offer) {
     return new Promise((resolve, reject) => {
       this._pc.setLocalDescription(offer, () => {
@@ -174,6 +208,9 @@ class Negotiator extends EventEmitter {
     });
   }
 
+  /**
+   * Close a PeerConnection.
+   */
   cleanup() {
     util.log('Cleaning up PeerConnection');
 
@@ -183,6 +220,10 @@ class Negotiator extends EventEmitter {
     }
   }
 
+  /**
+   * Set remote description with remote Offer SDP, then create Answer SDP and emit it.
+   * @param {object} offerSdp - An object containing Offer SDP.
+   */
   handleOffer(offerSdp) {
     this._setRemoteDescription(offerSdp)
       .then(() => {
@@ -192,15 +233,29 @@ class Negotiator extends EventEmitter {
       });
   }
 
+  /**
+   * Set remote description with Answer SDP.
+   * @param {object} answerSdp - An object containing Answer SDP.
+   */
   handleAnswer(answerSdp) {
     this._setRemoteDescription(answerSdp);
   }
 
+  /**
+   * Set Ice Candidate with Candidate SDP.
+   * @param {object} candidate - An object containing Candidate SDP.
+   */
   handleCandidate(candidate) {
     this._pc.addIceCandidate(new RTCIceCandidate(candidate));
     util.log('Added ICE candidate');
   }
 
+  /**
+   * Set remote SDP.
+   * @param {object} sdp - An object containing remote SDP.
+   * @return {Promise} A promise that is resolved when setting remote SDP is completed.
+   * @private
+   */
   _setRemoteDescription(sdp) {
     util.log(`Setting remote description ${JSON.stringify(sdp)}`);
     return new Promise(resolve => {
@@ -214,6 +269,11 @@ class Negotiator extends EventEmitter {
     });
   }
 
+  /**
+   * Make Answer SDP and set it as local description.
+   * @return {Promise} A promise that is resolved when setting local SDP is completed.
+   * @private
+   */
   _makeAnswerSdp() {
     return new Promise(resolve => {
       this._pc.createAnswer(answer => {
@@ -233,6 +293,12 @@ class Negotiator extends EventEmitter {
     });
   }
 
+  /**
+   * Emit Error.
+   * @param {string} type - The type of error.
+   * @param {Error} err - An Error instance.
+   * @private
+   */
   emitError(type, err) {
     util.error('Error:', err);
     if (typeof err === 'string') {
@@ -243,9 +309,62 @@ class Negotiator extends EventEmitter {
     this.emit(Negotiator.EVENTS.error.key, err);
   }
 
+  /**
+   * Events the Negotiator class can emit.
+   * @type {Enum}
+   */
   static get EVENTS() {
     return NegotiatorEvents;
   }
+
+  /**
+   * Remote media stream received.
+   *
+   * @event Negotiator#addStream
+   * @type {MediaStream}
+   */
+
+  /**
+   * DataConnection is ready.
+   *
+   * @event Negotiator#dcReady
+   * @type {DataConnection}
+   */
+
+  /**
+   * Offer SDP created.
+   *
+   * @event Negotiator#offerCreated
+   * @type {RTCSessionDescription}
+   */
+
+  /**
+   * Answer SDP created.
+   *
+   * @event Negotiator#answerCreated
+   * @type {RTCSessionDescription}
+   */
+
+  /**
+   * Ice Candieate received from peer.
+   *
+   * @event Negotiator#iceCandidate
+   * @type {RTCIceCandidate}
+   */
+
+  /**
+   * Ice connection disconnected.
+   *
+   * @event Negotiator#iceConnectionDisconnected
+   */
+
+  /**
+   * Error occurred.
+   *
+   * @event Negotiator#error
+   * @type {Error}
+   */
+
 }
 
 module.exports = Negotiator;

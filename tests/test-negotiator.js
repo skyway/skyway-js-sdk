@@ -70,7 +70,7 @@ describe('Negotiator', () => {
         it('should call pc.addStream', () => {
           const options = {
             type:       'media',
-            _stream:    {},
+            stream:     {},
             originator: true
           };
           const pcConfig = {};
@@ -89,7 +89,7 @@ describe('Negotiator', () => {
         it('should call pc.addStream and handleOffer', () => {
           const options = {
             type:       'media',
-            _stream:    {},
+            stream:     {},
             originator: false
           };
           const pcConfig = {};
