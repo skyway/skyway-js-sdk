@@ -22,16 +22,16 @@ const NegotiatorEvents = new Enum([
 ]);
 
 /**
- * Class that manages RCPPeerConnection and SDP exchange.
+ * Class that manages RTCPeerConnection and SDP exchange.
  * @extends EventEmitter
  */
 class Negotiator extends EventEmitter {
 
   /**
-   * Class that manages RCPPeerConnection and SDP exchange.
+   * Class that manages RTCPeerConnection and SDP exchange.
    * @param {object} [options] - Optional arguments for starting connection.
    * @param {string} [options.type] - Type of connection. One of 'media' or 'data'.
-   * @param {MediaStream} [options._stream] - The MediaStream to send to the remote peer.
+   * @param {MediaStream} [options._stream] - The MediaStream to be sent to the remote peer.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
    * @param {boolean} [options.originator] - true means the peer is the originator of the connection.
    * @param {RTCSessionDescription} [options.offer] - The local description. If the peer is originator, handleOffer is callled with it.
@@ -191,7 +191,7 @@ class Negotiator extends EventEmitter {
   /**
    * Set local description with Offer SDP and emit offerCreated event.
    * @param {RTCSessionDescription} offer - Offer SDP.
-   * @return {Promise} A promise that resolves with Offer SDP.
+   * @return {Promise} A promise that is resolved with Offer SDP.
    * @private
    */
   _setLocalDescription(offer) {
@@ -242,7 +242,7 @@ class Negotiator extends EventEmitter {
   }
 
   /**
-   * Set Ice Candidate with Candidate SDP.
+   * Set ice candidate with Candidate SDP.
    * @param {object} candidate - An object containing Candidate SDP.
    */
   handleCandidate(candidate) {
