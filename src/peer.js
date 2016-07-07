@@ -403,6 +403,7 @@ class Peer extends EventEmitter {
       // We want the Room class to handle this instead
       // The Room class acts as RoomConnection
       this.rooms[offerMessage.roomName].handleOffer(offerMessage.offer);
+      this.rooms[offerMessage.roomName].updateMsidMap(offerMessage.msids);
       // NOTE: Room has already been created and added to this.rooms
     });
 

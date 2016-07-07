@@ -10,6 +10,7 @@ const sinon      = require('sinon');
 
 describe('Room', () => {
   const roomName = 'testRoom';
+  const peerId   = 'testId';
 
   describe('Constructor', () => {
     it('should create a Room Object', () => {
@@ -21,7 +22,6 @@ describe('Room', () => {
     });
 
     it('should create a Room Object with a peerId', () => {
-      const peerId = 'testId';
       const room = new Room(roomName, {peerId: peerId});
 
       assert(room);
@@ -31,7 +31,6 @@ describe('Room', () => {
 
   describe('Send', () => {
     it('should emit a send event when sending data', () => {
-      const peerId = 'testId';
       const data = 'foobar';
 
       const room = new Room(roomName, {peerId: peerId});
@@ -70,8 +69,6 @@ describe('Room', () => {
     });
 
     it('should emit an open event and not add to the members array when src peerId is own', () => {
-      const peerId = 'peerId';
-
       const room = new Room(roomName, {peerId: peerId});
       room.open = true;
       assert.equal(room.members.length, 0);
@@ -107,8 +104,6 @@ describe('Room', () => {
     });
 
     it('should emit to client when receiving data', () => {
-      const peerId = 'peer';
-
       const data = 'foobar';
       const message = {roomName, data};
 
@@ -127,7 +122,6 @@ describe('Room', () => {
 
   describe('JVB', () => {
     it('should setup a new PC when an offer is first handled', () => {
-      const peerId = 'peer';
       const offer = {};
 
       const room = new Room(roomName, {peerId: peerId});
@@ -140,7 +134,6 @@ describe('Room', () => {
 
     it('should call setRemoteDescription on the PC when an offer is handled', () => {
       const offer = {};
-      const peerId = 'peer';
 
       const spy = sinon.spy();
       const pc = {setRemoteDescription: spy};
@@ -154,7 +147,6 @@ describe('Room', () => {
 
     it('should call createAnswer when setRemoteDescription completes', () => {
       const offer = {};
-      const peerId = 'peer';
 
       const setRemoteDescription = (description, callback) => {
         callback();
@@ -172,7 +164,6 @@ describe('Room', () => {
 
     it('should call setLocalDescription when createAnswer completes', () => {
       const offer = {};
-      const peerId = 'peer';
 
       const setRemoteDescription = (description, callback) => {
         callback();
@@ -197,7 +188,6 @@ describe('Room', () => {
   describe('_setupPCListeners', () => {
     it('should set up PeerConnection listeners', () => {
       const offer = {};
-      const peerId = 'peer';
 
       const room = new Room(roomName, {peerId: peerId});
       room.open = true;
@@ -214,7 +204,6 @@ describe('Room', () => {
 
     describe('RTCPeerConnection\'s event listeners', () => {
       const offer = {};
-      const peerId = 'peer';
       let room;
       let pc;
       let ev;
@@ -229,9 +218,11 @@ describe('Room', () => {
       });
 
       describe('onaddstream', () => {
-        it('should set remote stream and emit on a onaddstream event', () => {
+        it('should set remote stream and emit stream with peerId on a onaddstream event', () => {
           const spy = sinon.spy();
+          const remotePeerId = 'remotePeerId';
           room.emit = spy;
+          room._msidMap[ev.stream.id] = remotePeerId;
 
           pc.onaddstream(ev);
 
@@ -239,6 +230,17 @@ describe('Room', () => {
           assert(spy.calledOnce);
           assert.equal(spy.args[0][0], Room.EVENTS.stream.key);
           assert.equal(spy.args[0][1], ev.stream);
+          assert.equal(ev.stream.peerId, remotePeerId);
+        });
+
+        it('should store the stream and not emit if the msid isn\'t in _msidMap', () => {
+          const spy = sinon.spy();
+          room.emit = spy;
+
+          pc.onaddstream(ev);
+
+          assert.equal(spy.callCount, 0);
+          assert.equal(room._unknownStreams[ev.stream.id], ev.stream);
         });
       });
 
@@ -287,7 +289,6 @@ describe('Room', () => {
 
   describe('Close', () => {
     it('should emit close and leave events when close() is called', () => {
-      const peerId = 'peer';
       const message = {roomName: roomName};
 
       const room = new Room(roomName, {peerId: peerId});
@@ -302,6 +303,39 @@ describe('Room', () => {
       assert.equal(spy.args[0][0], Room.MESSAGE_EVENTS.leave.key);
       assert.deepEqual(spy.args[0][1], message);
       assert.equal(spy.args[1][0], Room.EVENTS.close.key);
+    });
+  });
+
+  describe('updateMsidMap', () => {
+    it('should update room._msidMap', () => {
+      const room = new Room(roomName, {peerId: peerId});
+      const newMsidMap = {stream1: {}, stream2: {}};
+
+      assert.deepEqual(room._msidMap, {});
+      room.updateMsidMap(newMsidMap);
+      assert.equal(room._msidMap, newMsidMap);
+    });
+
+    it('should emit stream if previously unknown stream is in msidMap', () => {
+      const remotePeerId = 'remotePeerId';
+      const room = new Room(roomName, {peerId: peerId});
+      const stream = {id: 'streamId'};
+
+      const newMsidMap = {};
+      newMsidMap[stream.id] = remotePeerId;
+
+      room._unknownStreams[stream.id] = stream;
+
+      const spy = sinon.spy(room, 'emit');
+
+      room.updateMsidMap(newMsidMap);
+
+      assert(spy.calledOnce);
+      assert.equal(spy.args[0][0], Room.EVENTS.stream.key);
+
+      assert.equal(spy.args[0][1], stream);
+      console.log(stream);
+      assert.equal(stream.peerId, remotePeerId);
     });
   });
 });
