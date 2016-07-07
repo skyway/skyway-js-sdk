@@ -276,7 +276,7 @@ class Util {
 
   /**
    * Convert Blob to ArrayBuffer.
-   * @param {Blob} blob - The Blob that read as ArrayBuffer.
+   * @param {Blob} blob - The Blob to be read as ArrayBuffer.
    * @param {Function} cb - Callback function that called after load event fired.
    */
   blobToArrayBuffer(blob, cb) {
@@ -289,7 +289,7 @@ class Util {
 
   /**
    * Convert Blob to BinaryString.
-   * @param {Blob} blob - The Blob that read as BinaryString.
+   * @param {Blob} blob - The Blob to be read as BinaryString.
    * @param {Function} cb - Callback function that called after load event fired.
    */
   blobToBinaryString(blob, cb) {
@@ -302,7 +302,7 @@ class Util {
 
   /**
    * Convert Blob to text.
-   * @param {Blob} blob - The Blob that read as text.
+   * @param {Blob} blob - The Blob to be read as text.
    * @param {Function} cb - Callback function that called after load event fired.
    */
   blobToString(blob, cb) {
@@ -327,8 +327,8 @@ class Util {
   }
 
   /**
-   * Make random ID.
-   * @return {string} A text consisting of 16 random alphabet and integer.
+   * Return random ID.
+   * @return {string} A text consisting of 16 chars.
    */
   randomId() {
     const keyLength = 16;
