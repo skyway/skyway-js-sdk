@@ -24,7 +24,6 @@ describe('Peer', () => {
     ioStub = sinon.stub(SocketIO, 'Socket');
     ioSpy = sinon.spy();
     onStub = sinon.stub();
-
     ioStub.returns(
       {
         on:         onStub,
@@ -762,7 +761,9 @@ describe('Peer', () => {
   describe('SFURoom API', () => {
     const serverPort = 5080;
     const timeoutVal = 500;
+    const roomName = 'testRoom';
     let peer;
+
     beforeEach(() => {
       peer = new Peer({
         secure: false,
@@ -811,22 +812,74 @@ describe('Peer', () => {
         peer.joinRoom(roomName, {mode: 'sfu'});
       });
 
-      it('should create a new room and emit from Socket when joining a room', done => {
-        const roomName = 'testRoom';
-
-        let spy = sinon.spy();
-        peer.socket._io.emit = spy;
-        peer.socket._isOpen = true;
-
-        assert.deepEqual(peer.rooms, {});
-        const room = peer.joinRoom(roomName, {mode: 'sfu'});
-
-        assert.deepEqual(peer.rooms[roomName], room);
+      it('should call _initSfuRoom', done => {
+        let spy = sinon.spy(peer, '_initSfuRoom');
+        peer.joinRoom(roomName, {mode: 'sfu'});
 
         setTimeout(() => {
-          assert(spy.calledWith(util.MESSAGE_TYPES.SFU_JOIN.key));
+          assert.deepEqual(spy.args[0][0], roomName);
+          assert(spy.args[0][1].mode, 'sfu');
+          assert(Object.keys(spy.args[0][1]), ['mode', 'pcConfig', 'peerId']);
           done();
         }, timeoutVal);
+      });
+    });
+
+    describe('Init', () => {
+      let sfuStub;
+      let callSpy;
+      let setupSpy;
+
+      beforeEach(() => {
+        sfuStub = sinon.stub();
+        callSpy = sinon.spy();
+        sfuStub.returns({
+          call: callSpy
+        });
+
+        const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+        let Peer = proxyquire('../src/peer', {'./socket': Socket, './util': util, './sfuRoom': sfuStub});
+        peer = new Peer({
+          secure: false,
+          host:   'localhost',
+          port:   serverPort,
+          key:    apiKey
+        });
+        setupSpy = sinon.stub(peer, '_setupSFURoomMessageHandlers');
+      });
+
+      afterEach(() => {
+        peer.destroy();
+        sfuStub.reset();
+        callSpy.reset();
+        setupSpy.restore();
+      });
+
+      it('should create a new room and emit from Socket when joining a room', () => {
+        let emitSpy = sinon.spy();
+        peer.socket._io.emit = emitSpy;
+        peer.socket._isOpen = true;
+
+        const room = peer.joinRoom(roomName, {mode: 'sfu'});
+
+        assert(emitSpy.calledWith(util.MESSAGE_TYPES.SFU_JOIN.key));
+        assert(setupSpy.calledWith(room));
+      });
+
+      describe('when the stream is given', () => {
+        it('shoud call sfuRoom.call', () => {
+          peer._initSfuRoom(roomName, {stream: 'stream'});
+
+          assert(callSpy.calledOnce);
+        });
+      });
+
+      describe('when the stream is not given', () => {
+        it('shoud not call sfuRoom.call', () => {
+          peer._initSfuRoom(roomName);
+
+          assert(callSpy.notCalled);
+        });
       });
     });
 
@@ -955,7 +1008,9 @@ describe('Peer', () => {
   describe('MeshRoom API', () => {
     const serverPort = 5080;
     const timeoutVal = 500;
+    const roomName = 'testRoom';
     let peer;
+
     beforeEach(() => {
       peer = new Peer({
         secure: false,
@@ -1005,28 +1060,82 @@ describe('Peer', () => {
       });
 
       it('should create a new meshRoom when mode is empty', () => {
-        const roomName = 'testRoom';
+        const Peer = require('../src/peer');
+        const peer = new Peer({
+          key: apiKey
+        });
         const room = peer.joinRoom(roomName);
 
         assert.equal(room.constructor.name, 'MeshRoom');
       });
 
-      it('should create a new room and emit from Socket when joining a room', done => {
-        const roomName = 'testRoom';
-
-        let spy = sinon.spy();
-        peer.socket._io.emit = spy;
-        peer.socket._isOpen = true;
-
-        assert.deepEqual(peer.rooms, {});
-        const room = peer.joinRoom(roomName);
-
-        assert.deepEqual(peer.rooms[roomName], room);
+      it('should call _initFullMeshRoom', done => {
+        let spy = sinon.spy(peer, '_initFullMeshRoom');
+        peer.joinRoom(roomName);
 
         setTimeout(() => {
-          assert(spy.calledWith(util.MESSAGE_TYPES.MESH_JOIN.key));
+          assert.deepEqual(spy.args[0][0], roomName);
+          assert(Object.keys(spy.args[0][1]), ['pcConfig', 'peerId']);
           done();
         }, timeoutVal);
+      });
+    });
+
+    describe('Init', () => {
+      let meshStub;
+      let callSpy;
+      let setupSpy;
+
+      beforeEach(() => {
+        meshStub = sinon.stub();
+        callSpy = sinon.spy();
+        meshStub.returns({
+          call: callSpy
+        });
+
+        const Socket = proxyquire('../src/socket', {'socket.io-client': ioStub});
+        let Peer = proxyquire('../src/peer', {'./socket': Socket, './util': util, './meshRoom': meshStub});
+        peer = new Peer({
+          secure: false,
+          host:   'localhost',
+          port:   serverPort,
+          key:    apiKey
+        });
+        setupSpy = sinon.stub(peer, '_setupMeshRoomMessageHandlers');
+      });
+
+      afterEach(() => {
+        peer.destroy();
+        meshStub.reset();
+        callSpy.reset();
+        setupSpy.restore();
+      });
+
+      it('should create a new room and emit from Socket when joining a room', () => {
+        let emitSpy = sinon.spy();
+        peer.socket._io.emit = emitSpy;
+        peer.socket._isOpen = true;
+
+        const room = peer.joinRoom(roomName);
+
+        assert(emitSpy.calledWith(util.MESSAGE_TYPES.MESH_JOIN.key));
+        assert(setupSpy.calledWith(room));
+      });
+
+      describe('when the stream is given', () => {
+        it('shoud call sfuRoom.call', () => {
+          peer._initFullMeshRoom(roomName, {stream: 'stream'});
+
+          assert(callSpy.calledOnce);
+        });
+      });
+
+      describe('when the stream is not given', () => {
+        it('shoud not call sfuRoom.call', () => {
+          peer._initFullMeshRoom(roomName);
+
+          assert(callSpy.notCalled);
+        });
       });
     });
 
