@@ -160,7 +160,7 @@ class Peer extends EventEmitter {
    * @param {MesiaStream} [roomOptions.stream] - Media stream user wants to emit.
    * @return {SFURoom} - An instance of SFURoom.
    */
-  _initSfuRoom(roomName, roomOptions) {
+  _initSfuRoom(roomName, roomOptions = {}) {
     if (this.rooms[roomName]) {
       return this.rooms[roomName];
     }
@@ -176,7 +176,7 @@ class Peer extends EventEmitter {
     this.socket.send(util.MESSAGE_TYPES.SFU_JOIN.key, data);
 
     if (roomOptions.stream) {
-      sfuRoom.call(sfuRoom.localStream);
+      sfuRoom.call();
     }
     return sfuRoom;
   }
@@ -192,7 +192,7 @@ class Peer extends EventEmitter {
    * @param {MesiaStream} [roomOptions.stream] - Media stream user wants to emit.
    * @return {SFURoom} - An instance of MeshRoom.
    */
-  _initFullMeshRoom(roomName, roomOptions) {
+  _initFullMeshRoom(roomName, roomOptions = {}) {
     if (this.rooms[roomName]) {
       return this.rooms[roomName];
     }
@@ -208,7 +208,7 @@ class Peer extends EventEmitter {
     this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
 
     if (roomOptions.stream) {
-      meshRoom.call(meshRoom.localStream);
+      meshRoom.call();
     }
     return meshRoom;
   }

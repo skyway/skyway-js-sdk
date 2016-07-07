@@ -50,7 +50,7 @@ class Room extends EventEmitter {
     this.name = name;
     this._options = options;
     this._peerId = peerId;
-    this.localStream = this._options.stream;
+    this._localStream = this._options.stream;
   }
 
   /**

@@ -40,17 +40,12 @@ class SFURoom extends Room {
 
   /**
    * Send Offer request message to SFU server.
-   * @param {MediaStream} stream - A media stream to send.
+   * @param {MediaStream} [stream] - A media stream to send.
    */
   call(stream) {
-    if (!stream) {
-      util.error(
-        'To call a peer, you must provide ' +
-        'a stream from your browser\'s `getUserMedia`.'
-      );
+    if (stream) {
+      this._localStream = stream;
     }
-
-    this._localStream = stream;
 
     const data = {
       roomName: this.name

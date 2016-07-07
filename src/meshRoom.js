@@ -49,17 +49,12 @@ class MeshRoom extends Room {
    * Called by client app to create MediaConnections.
    * It emit getPeers event for getting peerIds of all of room participant.
    * After getting peerIds, makeMCs is called.
-   * @param {MediaStream} stream - The MediaStream to send to the remote peer.
+   * @param {MediaStream} [stream] - The MediaStream to send to the remote peer.
    */
   call(stream) {
-    if (!stream) {
-      util.error(
-        'To call a peer, you must provide ' +
-        'a stream from your browser\'s `getUserMedia`.'
-      );
+    if (stream) {
+      this._localStream = stream;
     }
-
-    this._localStream = stream;
 
     const data = {
       roomName: this.name,
