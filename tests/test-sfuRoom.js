@@ -10,6 +10,8 @@ const sinon      = require('sinon');
 
 describe('SFURoom', () => {
   const sfuRoomName = 'testSFURoom';
+  const peerId   = 'testId';
+
   describe('Constructor', () => {
     it('should create a SFURoom Object with a peerId', () => {
       const peerId = 'testId';
@@ -22,7 +24,6 @@ describe('SFURoom', () => {
 
   describe('Send', () => {
     it('should emit a send event when sending data', () => {
-      const peerId = 'testId';
       const data = 'foobar';
 
       const sfuRoom = new SFURoom(sfuRoomName, peerId);
@@ -98,8 +99,6 @@ describe('SFURoom', () => {
     });
 
     it('should emit to client when receiving data', () => {
-      const peerId = 'peer';
-
       const data = 'foobar';
       const message = {sfuRoomName, data};
 
@@ -118,7 +117,6 @@ describe('SFURoom', () => {
 
   describe('JVB', () => {
     it('should setup a new PC when an offer is first handled', () => {
-      const peerId = 'peer';
       const offer = {};
 
       const sfuRoom = new SFURoom(sfuRoomName, peerId);
@@ -131,7 +129,6 @@ describe('SFURoom', () => {
 
     it('should call setRemoteDescription on the PC when an offer is handled', () => {
       const offer = {};
-      const peerId = 'peer';
 
       const spy = sinon.spy();
       const pc = {setRemoteDescription: spy};
@@ -145,7 +142,6 @@ describe('SFURoom', () => {
 
     it('should call createAnswer when setRemoteDescription completes', () => {
       const offer = {};
-      const peerId = 'peer';
 
       const setRemoteDescription = (description, callback) => {
         callback();
@@ -163,7 +159,6 @@ describe('SFURoom', () => {
 
     it('should call setLocalDescription when createAnswer completes', () => {
       const offer = {};
-      const peerId = 'peer';
 
       const setRemoteDescription = (description, callback) => {
         callback();
@@ -188,7 +183,6 @@ describe('SFURoom', () => {
   describe('_setupPCListeners', () => {
     it('should set up PeerConnection listeners', () => {
       const offer = {};
-      const peerId = 'peer';
 
       const sfuRoom = new SFURoom(sfuRoomName, peerId);
       sfuRoom.open = true;
@@ -220,9 +214,11 @@ describe('SFURoom', () => {
       });
 
       describe('onaddstream', () => {
-        it('should set remote stream and emit on a onaddstream event', () => {
+        it('should set remote stream and emit stream with peerId on a onaddstream event', () => {
           const spy = sinon.spy();
+          const remotePeerId = 'remotePeerId';
           sfuRoom.emit = spy;
+          sfuRoom._msidMap[ev.stream.id] = remotePeerId;
 
           pc.onaddstream(ev);
 
@@ -230,6 +226,17 @@ describe('SFURoom', () => {
           assert(spy.calledOnce);
           assert.equal(spy.args[0][0], SFURoom.EVENTS.stream.key);
           assert.equal(spy.args[0][1], ev.stream);
+          assert.equal(ev.stream.peerId, remotePeerId);
+        });
+
+        it('should store the stream and not emit if the msid isn\'t in _msidMap', () => {
+          const spy = sinon.spy();
+          sfuRoom.emit = spy;
+
+          pc.onaddstream(ev);
+
+          assert.equal(spy.callCount, 0);
+          assert.equal(sfuRoom._unknownStreams[ev.stream.id], ev.stream);
         });
       });
 
@@ -293,6 +300,38 @@ describe('SFURoom', () => {
       assert.equal(spy.args[0][0], SFURoom.MESSAGE_EVENTS.leave.key);
       assert.deepEqual(spy.args[0][1], message);
       assert.equal(spy.args[1][0], SFURoom.EVENTS.close.key);
+    });
+  });
+
+  describe('updateMsidMap', () => {
+    it('should update room._msidMap', () => {
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
+      const newMsidMap = {stream1: {}, stream2: {}};
+
+      assert.deepEqual(sfuRoom._msidMap, {});
+      sfuRoom.updateMsidMap(newMsidMap);
+      assert.equal(sfuRoom._msidMap, newMsidMap);
+    });
+
+    it('should emit stream if previously unknown stream is in msidMap', () => {
+      const remotePeerId = 'remotePeerId';
+      const sfuRoom = new SFURoom(sfuRoomName, peerId);
+      const stream = {id: 'streamId'};
+
+      const newMsidMap = {};
+      newMsidMap[stream.id] = remotePeerId;
+
+      sfuRoom._unknownStreams[stream.id] = stream;
+
+      const spy = sinon.spy(sfuRoom, 'emit');
+
+      sfuRoom.updateMsidMap(newMsidMap);
+
+      assert(spy.calledOnce);
+      assert.equal(spy.args[0][0], SFURoom.EVENTS.stream.key);
+
+      assert.equal(spy.args[0][1], stream);
+      assert.equal(stream.peerId, remotePeerId);
     });
   });
 });

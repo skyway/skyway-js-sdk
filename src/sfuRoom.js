@@ -36,6 +36,8 @@ class SFURoom extends Room {
     this._pcAvailable = false;
     this.open = false;
     this.members = [];
+    this._msidMap = {};
+    this._unknownStreams = {};
   }
 
   /**
@@ -176,6 +178,26 @@ class SFURoom extends Room {
     this.emit(SFURoom.EVENTS.close.key);
   }
 
+  updateMsidMap(msids) {
+    this._msidMap = msids;
+
+    for (let msid of Object.keys(this._unknownStreams)) {
+      if (this._msidMap[msid]) {
+        const remoteStream = this._unknownStreams[msid];
+        remoteStream.peerId = this._msidMap[remoteStream.id];
+
+        delete this._unknownStreams[msid];
+
+        if (remoteStream.peerId === this._peerId) {
+          return;
+        }
+
+        this.remoteStreams[remoteStream.id] = remoteStream;
+        this.emit(Room.EVENTS.stream.key, remoteStream);
+      }
+    }
+  }
+
   /**
    * Set up PeerConnection event message handlers.
    * @private
@@ -185,9 +207,17 @@ class SFURoom extends Room {
       util.log('Received remote media stream');
       const remoteStream = evt.stream;
 
-      // TODO: filter out unnecessary streams (streamUpdated()?)
-      this.remoteStreams[remoteStream.id] = remoteStream;
-      this.emit(SFURoom.EVENTS.stream.key, remoteStream);
+      if (this._msidMap[remoteStream.id]) {
+        remoteStream.peerId = this._msidMap[remoteStream.id];
+
+        if (remoteStream.peerId === this._peerId) {
+          return;
+        }
+        this.remoteStreams[remoteStream.id] = remoteStream;
+        this.emit(Room.EVENTS.stream.key, remoteStream);
+      } else {
+        this._unknownStreams[remoteStream.id] = remoteStream;
+      }
     };
 
     this._pc.onicecandidate = evt => {

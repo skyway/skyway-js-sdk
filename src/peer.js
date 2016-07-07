@@ -525,6 +525,7 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.SFU_OFFER.key, offerMessage => {
       const room = this.rooms[offerMessage.roomName];
       if (room) {
+        room.updateMsidMap(offerMessage.msids);
         room.handleOffer(offerMessage.offer);
       }
     });
