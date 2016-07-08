@@ -20,7 +20,25 @@ const PeerEvents = new Enum([
   'disconnected'
 ]);
 
+/**
+ * Class that manages all p2p connections and rooms.
+ * This class contains socket.io message handlers.
+ * @extends EventEmitter
+ */
 class Peer extends EventEmitter {
+
+  /**
+   * Create new Peer instance. This is called by user application.
+   * @param {string} [id] - User's peerId.
+   * @param {Object} options - Optional arguments for the connection.
+   * @param {string} options.key - SkyWay API key.
+   * @param {Integer} [options.debug=0] - Log level. NONE:0, ERROR:1, WARN:2, FULL:3.
+   * @param {string} [options.host='skyway.io'] - The host name of signaling server.
+   * @param {Integer} [options.port=443] - The port number of signaling server.
+   * @param {string} [options.token=util.randomToken()] - The token used to authorize Peer.
+   * @param {object} [options.config=util.defaultConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @param {boolean} [options.turn=true] - Whether using TURN or not.
+   */
   constructor(id, options) {
     super();
 
@@ -75,6 +93,17 @@ class Peer extends EventEmitter {
     this._initializeServerConnection(id);
   }
 
+  /**
+   * Creates new DataConnection.
+   * @param {string} peerId - User's peerId.
+   * @param {Object} [options] - Optional arguments for DataConnection.
+   * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
+   * @param {string} [options.label] - Label to easily identify the connection on either peer.
+   * @param {string} [options.serialization] - How to serialize data when sending. One of 'binary', 'json' or 'none'.
+   * @param {string} [options.queuedMessages] - An array of messages that were already received before the connection was created.
+   * @param {string} [options.payload] - An offer message that triggered creating this object.
+   * @return {DataConnection} An instance of DataConnection.
+   */
   connect(peerId, options) {
     if (this._disconnectCalled) {
       util.warn('You cannot connect to a new Peer because you called ' +
@@ -96,6 +125,17 @@ class Peer extends EventEmitter {
     return connection;
   }
 
+  /**
+   * Creates new MediaConnection.
+   * @param {string} peerId - The peerId of the peer you are connecting to.
+   * @param {MediaStream} stream - The MediaStream to send to the remote peer. Set only when on the caller side.
+   * @param {object} [options] - Optional arguments for the connection.
+   * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
+   * @param {string} [options.label] - Label to easily identify the connection on either peer.
+   * @param {string} [options.queuedMessages] - An array of messages that were already received before the connection was created.
+   * @param {string} [options.payload] - An offer message that triggered creating this object.
+   * @return {MediaConnection} An instance of MediaConnection.
+   */
   call(peerId, stream, options) {
     if (this._disconnectCalled) {
       util.warn('You cannot connect to a new Peer because you called ' +
@@ -213,6 +253,12 @@ class Peer extends EventEmitter {
     return meshRoom;
   }
 
+  /**
+   * Returns a connection according to given peerId and connectionId.
+   * @param {string} peerId - The peerId of the connection to be searched.
+   * @param {Object} connectionId - An ID to uniquely identify the connection.
+   * @return {MediaConnection|DataConnection} Search result.
+   */
   getConnection(peerId, connectionId) {
     if (this.connections[peerId]) {
       for (let connection of this.connections[peerId]) {
@@ -224,6 +270,12 @@ class Peer extends EventEmitter {
     return null;
   }
 
+  /**
+   * Emit Error.
+   * @param {string} type - The type of error.
+   * @param {Error} err - An Error instance or error description.
+   * @private
+   */
   emitError(type, err) {
     util.error('Error:', err);
     if (typeof err === 'string') {
@@ -234,6 +286,9 @@ class Peer extends EventEmitter {
     this.emit(Peer.EVENTS.error.key, err);
   }
 
+  /**
+   * Close all connections and disconnect socket.
+   */
   destroy() {
     if (!this._destroyCalled) {
       this._destroyCalled = true;
@@ -242,6 +297,9 @@ class Peer extends EventEmitter {
     }
   }
 
+  /**
+   * Close socket and clean up some properties, then emit disconnect event.
+   */
   disconnect() {
     setTimeout(() => {
       if (!this._disconnectCalled) {
@@ -303,9 +361,16 @@ class Peer extends EventEmitter {
     });
   }
 
+  /**
+   * Reconnect to SkyWay server.
+   */
   reconnect() {
   }
 
+  /**
+   * Call Rest API and get the list of peerIds assciated with API key.
+   * @param {function} cb - The callback function that is called after XHR.
+   */
   listAllPeers(cb) {
     cb = cb || function() {};
     const self = this;
@@ -340,18 +405,35 @@ class Peer extends EventEmitter {
     http.send(null);
   }
 
+  /**
+   * Disconnect the socket and emit error.
+   * @param {string} type - The type of error.
+   * @param {string} message - Error description.
+   * @private
+   */
   _abort(type, message) {
     util.error('Aborting!');
     this.disconnect();
     this.emitError(type, message);
   }
 
+  /**
+   * Abort in a moment.
+   * @param {string} type - The type of error.
+   * @param {string} message - Error description.
+   * @private
+   */
   _delayedAbort(type, message) {
     setTimeout(() => {
       this._abort(type, message);
     }, 0);
   }
 
+  /**
+   * Creates new Socket and initalize its message handlers.
+   * @param {string} id - User's peerId.
+   * @private
+   */
   _initializeServerConnection(id) {
     this.socket = new Socket(
       this.options.secure,
@@ -381,6 +463,10 @@ class Peer extends EventEmitter {
     };
   }
 
+  /**
+   * Set up socket's message handlers.
+   * @private
+   */
   _setupMessageHandlers() {
     this.socket.on(util.MESSAGE_TYPES.OPEN.key, openMessage => {
       this.id = openMessage.peerId;
@@ -612,6 +698,12 @@ class Peer extends EventEmitter {
     });
   }
 
+  /**
+   * Add connection to connections property and set up message handlers.
+   * @param {string} peerId - User's peerId.
+   * @param {MediaConnection|DataConnection} connection - The connection to be added.
+   * @private
+   */
   _addConnection(peerId, connection) {
     if (!this.connections[peerId]) {
       this.connections[peerId] = [];
@@ -621,6 +713,11 @@ class Peer extends EventEmitter {
     this._setupConnectionMessageHandlers(connection);
   }
 
+  /**
+   * Set up connection's event handlers.
+   * @param {MediaConnection|DataConnection} connection - The connection to be set up.
+   * @private
+   */
   _setupConnectionMessageHandlers(connection) {
     connection.on(Connection.EVENTS.candidate.key, candidateMessage => {
       this.socket.send(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage);
@@ -633,6 +730,12 @@ class Peer extends EventEmitter {
     });
   }
 
+  /**
+   * Store a message until the connection is ready.
+   * @param {string} type - The type of message. One of 'ANSWER' or 'CANDIDATE'.
+   * @param {object} message - The object containing the message from remote peer.
+   * @private
+   */
   _storeMessage(type, message) {
     if (!this._queuedMessages[message.connectionId]) {
       this._queuedMessages[message.connectionId] = [];
@@ -641,6 +744,10 @@ class Peer extends EventEmitter {
       .push({type: type, payload: message});
   }
 
+  /**
+   * Close all connections and emit close event.
+   * @private
+   */
   _cleanup() {
     if (this.connections) {
       for (let peer of Object.keys(this.connections)) {
@@ -650,6 +757,11 @@ class Peer extends EventEmitter {
     this.emit(Peer.EVENTS.close.key);
   }
 
+  /**
+   * Close the connection.
+   * @param {string} peer - The peerId of the peer to be closed.
+   * @private
+   */
   _cleanupPeer(peer) {
     if (this.connections[peer]) {
       for (let connection of this.connections[peer]) {
@@ -658,9 +770,55 @@ class Peer extends EventEmitter {
     }
   }
 
+  /**
+   * Events the Peer class can emit.
+   * @type {Enum}
+   */
   static get EVENTS() {
     return PeerEvents;
   }
+
+  /**
+   * Successfully connected to signaling server.
+   *
+   * @event Peer#open
+   * @type {string}
+   */
+
+  /**
+   * Error occurred.
+   *
+   * @event Peer#error
+   * @type {MediaStream}
+   */
+
+  /**
+   * Received a call from peer.
+   *
+   * @event Peer#call
+   * @type {MediaConnection}
+   */
+
+  /**
+   * Received a connection from peer.
+   *
+   * @event Peer#connection
+   * @type {DataConnection}
+   */
+
+  /**
+   * Finished closing all connections to peers.
+   *
+   * @event Peer#close
+   */
+
+  /**
+   * Disconnected from the signalling server.
+   *
+   * @event Peer#disconnected
+   * @type {string}
+   */
+
 }
 
 module.exports = Peer;
