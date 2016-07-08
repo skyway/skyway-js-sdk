@@ -176,7 +176,7 @@ class Util {
   }
 
   /**
-   * Output a error message to the Web Console.
+   * Output an error message to the Web Console.
    */
   error() {
     if (this._logLevel >= LogLevel.ERROR.value) {
@@ -218,7 +218,7 @@ class Util {
   }
 
   /**
-   * Validate the API key.
+   * Generate random token.
    * @return {string} A token consisting of random alphabet and integer.
    */
   randomToken() {

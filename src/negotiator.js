@@ -34,7 +34,7 @@ class Negotiator extends EventEmitter {
    * @param {MediaStream} [options._stream] - The MediaStream to be sent to the remote peer.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
    * @param {boolean} [options.originator] - true means the peer is the originator of the connection.
-   * @param {RTCSessionDescription} [options.offer] - The local description. If the peer is originator, handleOffer is callled with it.
+   * @param {RTCSessionDescription} [options.offer] - The local description. If the peer is originator, handleOffer is called with it.
    * @param {object} [pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    */
   startConnection(options, pcConfig) {
