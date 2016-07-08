@@ -34,7 +34,7 @@
     peer.on('connection', connect);
     peer.on('error', function(err) {
       console.log(err);
-    })
+    });
     // Handle a connection object.
     function connect(room) {
       // Handle a chat connection.
@@ -104,7 +104,7 @@
         e.originalEvent.preventDefault();
         var file = e.originalEvent.dataTransfer.files[0];
         eachActiveRoom(function(room, $c) {
-          room.send(file);
+          room.sendByWS(file);
           $c.find('.messages').append('<div><span class="file">You sent a file.</span></div>');
         });
       });
@@ -136,7 +136,7 @@
         // For each active connection, send the message.
         var msg = $('#text').val();
         eachActiveRoom(function(room, $c) {
-          room.send(msg);
+          room.sendByWS(msg);
           $c.find('.messages').append('<div><span class="you">You: </span>' + msg
             + '</div>');
         });
