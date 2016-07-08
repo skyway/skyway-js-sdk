@@ -21,7 +21,7 @@ const PeerEvents = new Enum([
 
 /**
  * Class that manages all p2p connections and rooms.
- * This class conatains socket.io message handlers.
+ * This class contains socket.io message handlers.
  * @extends EventEmitter
  */
 class Peer extends EventEmitter {
@@ -34,7 +34,7 @@ class Peer extends EventEmitter {
    * @param {Integer} [options.debug=0] - Log level. NONE:0, ERROR:1, WARN:2, FULL:3.
    * @param {string} [options.host='skyway.io'] - The host name of signaling server.
    * @param {Integer} [options.port=443] - The port number of signaling server.
-   * @param {string} [options.token=util.randomToken()] - The token that is used authorization.
+   * @param {string} [options.token=util.randomToken()] - The token used to authorize Peer.
    * @param {object} [options.config=util.defaultConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    * @param {boolean} [options.turn=true] - Whether using TURN or not.
    */
@@ -228,9 +228,10 @@ class Peer extends EventEmitter {
   }
 
   /**
-   * Creates new MeshRoom or SFURoom. If roomOptions has a stream, it calls callRoom.
+   * Creates new MeshRoom or SFURoom. If roomOptions has a stream, it calls room.call.
    * @param {string} roomName - The name or room.
-   * @param {Object} roomOptions - @@@@
+   * @param {Object} [roomOptions] - Optional arguments for the room.
+   * @param {MediaStream} [roomOptions.stream] - The MediaStream to send to the remote peer.
    * @return {Room} An instance of SFURoom or MeshRoom.
    */
   joinRoom(roomName, roomOptions) {
