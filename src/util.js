@@ -46,7 +46,13 @@ const MessageTypes = new Enum([
   'MESH_USER_LEAVE'
 ]);
 
+/**
+ * Class that contains utility functions.
+ */
 class Util {
+  /**
+   * Create a Util instance.
+   */
   constructor() {
     this.CLOUD_HOST = 'skyway.io';
     this.CLOUD_PORT = 443;
@@ -139,6 +145,10 @@ class Util {
     this._logLevel = LogLevel.NONE.value;
   }
 
+  /**
+   * Set the level of log.
+   * @param {Integer} [level=0] The log level. 0: NONE, 1: ERROR, 2: WARN, 3:FULL.
+   */
   setLogLevel(level) {
     if (level.value) {
       level = level.value;
@@ -166,6 +176,9 @@ class Util {
     }
   }
 
+  /**
+   * Output a warning message to the Web Console.
+   */
   warn() {
     if (this._logLevel >= LogLevel.WARN.value) {
       let copy = Array.prototype.slice.call(arguments);
@@ -174,6 +187,9 @@ class Util {
     }
   }
 
+  /**
+   * Output an error message to the Web Console.
+   */
   error() {
     if (this._logLevel >= LogLevel.ERROR.value) {
       let copy = Array.prototype.slice.call(arguments);
@@ -182,6 +198,9 @@ class Util {
     }
   }
 
+  /**
+   * Output a log message to the Web Console.
+   */
   log() {
     if (this._logLevel >= LogLevel.FULL.value) {
       let copy = Array.prototype.slice.call(arguments);
@@ -190,46 +209,39 @@ class Util {
     }
   }
 
+  /**
+   * Validate the Peer ID format.
+   * @param {string} [id] - A Peer ID.
+   * @return {boolean} True if the peerId format is valid. False if not.
+   */
   validateId(id) {
     // Allow empty ids
     return !id || /^[A-Za-z0-9_-]+(?:[ _-][A-Za-z0-9]+)*$/.exec(id);
   }
 
+  /**
+   * Validate the API key.
+   * @param {string} [key] A SkyWay API key.
+   * @return {boolean} True if the API key format is valid. False if not.
+   */
   validateKey(key) {
     // Allow empty keys
     return !key || /^[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}$/.exec(key);
   }
 
+  /**
+   * Generate random token.
+   * @return {string} A token consisting of random alphabet and integer.
+   */
   randomToken() {
     return Math.random().toString(36).substr(2);
   }
 
-  chunk(blob) {
-    let chunks = [];
-    let size = blob.size;
-    let start = 0;
-    let index = 0;
-    let total = Math.ceil(size / this.chunkedMTU);
-    while (start < size) {
-      let end = Math.min(size, start + this.chunkedMTU);
-      let blobSlice = blob.slice(start, end);
-
-      let chunk = {
-        parentMsgId: this.chunkedCount,
-        chunkIndex:  index,
-        chunkData:   blobSlice,
-        totalChunks: total
-      };
-
-      chunks.push(chunk);
-
-      start = end;
-      index++;
-    }
-    this.chunkedCount++;
-    return chunks;
-  }
-
+  /**
+   * Combine the sliced ArrayBuffers.
+   * @param {Array} buffers - An Array of ArrayBuffer.
+   * @return {ArrayBuffer} The combined ArrayBuffer.
+   */
   joinArrayBuffers(buffers) {
     let size = buffers.reduce((sum, buffer) => {
       return sum + buffer.byteLength;
@@ -240,10 +252,14 @@ class Util {
       tmpArray.set(new Uint8Array(buffer), currPos);
       currPos += buffer.byteLength;
     }
-
     return tmpArray.buffer;
   }
 
+  /**
+   * Convert Blob to ArrayBuffer.
+   * @param {Blob} blob - The Blob to be read as ArrayBuffer.
+   * @param {Function} cb - Callback function that called after load event fired.
+   */
   blobToArrayBuffer(blob, cb) {
     let fr = new FileReader();
     fr.onload = event => {
@@ -252,6 +268,11 @@ class Util {
     fr.readAsArrayBuffer(blob);
   }
 
+  /**
+   * Convert Blob to BinaryString.
+   * @param {Blob} blob - The Blob to be read as BinaryString.
+   * @param {Function} cb - Callback function that called after load event fired.
+   */
   blobToBinaryString(blob, cb) {
     let fr = new FileReader();
     fr.onload = event => {
@@ -260,6 +281,11 @@ class Util {
     fr.readAsBinaryString(blob);
   }
 
+  /**
+   * Convert Blob to text.
+   * @param {Blob} blob - The Blob to be read as text.
+   * @param {Function} cb - Callback function that called after load event fired.
+   */
   blobToString(blob, cb) {
     let fr = new FileReader();
     fr.onload = event => {
@@ -268,6 +294,11 @@ class Util {
     fr.readAsText(blob);
   }
 
+  /**
+   * Convert BinaryString to ArrayBuffer.
+   * @param {BinaryString} binary - The BinaryString that is converted to ArrayBuffer.
+   * @return {string} An ArrayBuffer.
+   */
   binaryStringToArrayBuffer(binary) {
     let byteArray = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) {
@@ -276,6 +307,10 @@ class Util {
     return byteArray.buffer;
   }
 
+  /**
+   * Return random ID.
+   * @return {string} A text consisting of 16 chars.
+   */
   randomId() {
     const keyLength = 16;
     // '36' means that we want to convert the number to a string using chars in
@@ -285,6 +320,10 @@ class Util {
     return randString.substr(2, keyLength);
   }
 
+  /**
+   * Whether the protocol is https or not.
+   * @return {boolean} Whether the protocol is https or not.
+   */
   isSecure() {
     return location.protocol === 'https:';
   }
