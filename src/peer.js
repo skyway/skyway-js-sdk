@@ -102,7 +102,7 @@ class Peer extends EventEmitter {
    * @param {string} [options.serialization] - How to serialize data when sending. One of 'binary', 'json' or 'none'.
    * @param {string} [options.queuedMessages] - An array of messages that were already received before the connection was created.
    * @param {string} [options.payload] - An offer message that triggered creating this object.
-   * @return {Connection} An instance of DataConnection.
+   * @return {DataConnection} An instance of DataConnection.
    */
   connect(peerId, options) {
     if (this._disconnectCalled) {
@@ -134,7 +134,7 @@ class Peer extends EventEmitter {
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
    * @param {string} [options.queuedMessages] - An array of messages that were already received before the connection was created.
    * @param {string} [options.payload] - An offer message that triggered creating this object.
-   * @return {Connection} An instance of MediaConnection.
+   * @return {MediaConnection} An instance of MediaConnection.
    */
   call(peerId, stream, options) {
     if (this._disconnectCalled) {
@@ -779,7 +779,7 @@ class Peer extends EventEmitter {
   }
 
   /**
-   * Socket opened.
+   * Successfully connected to signaling server.
    *
    * @event Peer#open
    * @type {string}
@@ -793,27 +793,27 @@ class Peer extends EventEmitter {
    */
 
   /**
-   * MediaConnection created.
+   * Received a call from peer.
    *
    * @event Peer#call
    * @type {MediaConnection}
    */
 
   /**
-   * DataConnection created.
+   * Received a connection from peer.
    *
    * @event Peer#connection
    * @type {DataConnection}
    */
 
   /**
-   * All connections closed.
+   * Finished closing all connections to peers.
    *
    * @event Peer#close
    */
 
   /**
-   * Socket closed.
+   * Disconnected from the signalling server.
    *
    * @event Peer#disconnected
    * @type {string}
