@@ -210,9 +210,9 @@ class Util {
   }
 
   /**
-   * Validate the Peer ID.
+   * Validate the Peer ID format.
    * @param {string} [id] - A Peer ID.
-   * @return {boolean} Whether the is is proper or not.
+   * @return {boolean} True if the peerId format is valid. False if not.
    */
   validateId(id) {
     // Allow empty ids
@@ -222,7 +222,7 @@ class Util {
   /**
    * Validate the API key.
    * @param {string} [key] A SkyWay API key.
-   * @return {boolean} Whether the key is proper or not.
+   * @return {boolean} True if the API key format is valid. False if not.
    */
   validateKey(key) {
     // Allow empty keys
@@ -238,40 +238,9 @@ class Util {
   }
 
   /**
-   * Slice the Blob.
-   * @param {Blob} blob - The Blob that is sliced some Blobs.
-   * @return {Array} A Array of Blobs.
-   */
-  chunk(blob) {
-    let chunks = [];
-    let size = blob.size;
-    let start = 0;
-    let index = 0;
-    let total = Math.ceil(size / this.chunkedMTU);
-    while (start < size) {
-      let end = Math.min(size, start + this.chunkedMTU);
-      let blobSlice = blob.slice(start, end);
-
-      let chunk = {
-        parentMsgId: this.chunkedCount,
-        chunkIndex:  index,
-        chunkData:   blobSlice,
-        totalChunks: total
-      };
-
-      chunks.push(chunk);
-
-      start = end;
-      index++;
-    }
-    this.chunkedCount++;
-    return chunks;
-  }
-
-  /**
    * Combine the sliced ArrayBuffers.
    * @param {Array} buffers - An Array of ArrayBuffer.
-   * @return {ArrayBuffer} A ArrayBuffer consisting of given ArrayBuffers.
+   * @return {ArrayBuffer} The combined ArrayBuffer.
    */
   joinArrayBuffers(buffers) {
     let size = buffers.reduce((sum, buffer) => {
@@ -353,7 +322,7 @@ class Util {
 
   /**
    * Whether the protocol is https or not.
-   * @return {boolean} Whether the protocol is https of not.
+   * @return {boolean} Whether the protocol is https or not.
    */
   isSecure() {
     return location.protocol === 'https:';
