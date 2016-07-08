@@ -26,8 +26,8 @@ class Negotiator extends EventEmitter {
     this._pc = this._createPeerConnection(pcConfig);
     this._setupPCListeners();
 
-    if (options.type === 'media' && options._stream) {
-      this._pc.addStream(options._stream);
+    if (options.type === 'media' && options.stream) {
+      this._pc.addStream(options.stream);
     }
 
     if (options.originator) {

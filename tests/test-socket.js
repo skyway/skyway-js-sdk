@@ -230,7 +230,7 @@ describe('Socket', () => {
     });
   });
 
-  describe('Room API', () => {
+  describe('SFURoom API', () => {
     describe('Join', () => {
       let emitSpy;
       let socket;
@@ -248,16 +248,16 @@ describe('Socket', () => {
         emitSpy.restore();
       });
 
-      it('should emit a message to the Peer upon a ROOM_USER_JOIN acknowledgement', () => {
+      it('should emit a message to the Peer upon a SFU_USER_JOIN acknowledgement', () => {
         const data = {roomName: 'testRoom'};
 
         socket.start(peerId, token);
 
         assert.equal(emitSpy.callCount, 0);
 
-        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_JOIN.key](data);
+        socket._io._fakeMessage[util.MESSAGE_TYPES.SFU_USER_JOIN.key](data);
 
-        assert(emitSpy.calledWith(util.MESSAGE_TYPES.ROOM_USER_JOIN.key, data));
+        assert(emitSpy.calledWith(util.MESSAGE_TYPES.SFU_USER_JOIN.key, data));
         assert.equal(emitSpy.callCount, 1);
       });
     });
@@ -279,16 +279,15 @@ describe('Socket', () => {
         emitSpy.restore();
       });
 
-      it('should emit a message to the Peer upon a ROOM_DATA message', () => {
+      it('should emit a message to the Peer upon a SFU_DATA message', () => {
         const data = {roomName: 'testRoom', payload: 'foobar'};
-
         socket.start(peerId, token);
 
         assert.equal(emitSpy.callCount, 0);
 
-        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_DATA.key](data);
+        socket._io._fakeMessage[util.MESSAGE_TYPES.SFU_DATA.key](data);
 
-        assert(emitSpy.calledWith(util.MESSAGE_TYPES.ROOM_DATA.key, data));
+        assert(emitSpy.calledWith(util.MESSAGE_TYPES.SFU_DATA.key, data));
       });
     });
 
@@ -309,17 +308,79 @@ describe('Socket', () => {
         emitSpy.restore();
       });
 
-      it('should emit a message to the Peer upon a ROOM_USER_LEAVE acknowledgement', () => {
+      it('should emit a message to the Peer upon a SFU_USER_LEAVE acknowledgement', () => {
         const data = {roomName: 'testRoom'};
 
         socket.start(peerId, token);
 
         assert.equal(emitSpy.callCount, 0);
 
-        socket._io._fakeMessage[util.MESSAGE_TYPES.ROOM_USER_LEAVE.key](data);
+        socket._io._fakeMessage[util.MESSAGE_TYPES.SFU_USER_LEAVE.key](data);
 
-        assert(emitSpy.calledWith(util.MESSAGE_TYPES.ROOM_USER_LEAVE.key, data));
+        assert(emitSpy.calledWith(util.MESSAGE_TYPES.SFU_USER_LEAVE.key, data));
         assert.equal(emitSpy.callCount, 1);
+      });
+    });
+  });
+
+  describe('MeshRoom API', () => {
+    describe('Join', () => {
+      let emitSpy;
+      let socket;
+      let peerId = 'peerId';
+      let token = 'token';
+
+      beforeEach(() => {
+        let apiKey = 'apiKey';
+
+        socket = new Socket(false, 'localhost', serverPort, apiKey);
+        emitSpy = sinon.spy(socket, 'emit');
+      });
+
+      afterEach(() => {
+        emitSpy.restore();
+      });
+
+      it('should emit a message to the Peer upon a MESH_USER_JOIN acknowledgement', () => {
+        const data = {roomName: 'testRoom'};
+
+        socket.start(peerId, token);
+
+        assert.equal(emitSpy.callCount, 0);
+
+        socket._io._fakeMessage[util.MESSAGE_TYPES.MESH_USER_JOIN.key](data);
+
+        assert(emitSpy.calledWith(util.MESSAGE_TYPES.MESH_USER_JOIN.key, data));
+        assert.equal(emitSpy.callCount, 1);
+      });
+    });
+
+    describe('Send', () => {
+      let emitSpy;
+      let socket;
+      let peerId = 'peerId';
+      let token = 'token';
+
+      beforeEach(() => {
+        let apiKey = 'apiKey';
+
+        socket = new Socket(false, 'localhost', serverPort, apiKey);
+        emitSpy = sinon.spy(socket, 'emit');
+      });
+
+      afterEach(() => {
+        emitSpy.restore();
+      });
+
+      it('should emit a message to the Peer upon a MESH_DATA message', () => {
+        const data = {roomName: 'testRoom', payload: 'foobar'};
+        socket.start(peerId, token);
+
+        assert.equal(emitSpy.callCount, 0);
+
+        socket._io._fakeMessage[util.MESSAGE_TYPES.MESH_DATA.key](data);
+
+        assert(emitSpy.calledWith(util.MESSAGE_TYPES.MESH_DATA.key, data));
       });
     });
   });
