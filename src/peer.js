@@ -64,6 +64,10 @@ class Peer extends EventEmitter {
       id = id.toString();
     }
 
+    if (options.host === util.CLOUD_HOST) {
+      options.secure = true;
+    }
+
     const defaultOptions = {
       debug:  util.LOG_LEVELS.NONE,
       host:   util.CLOUD_HOST,
