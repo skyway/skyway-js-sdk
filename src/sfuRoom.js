@@ -202,6 +202,12 @@ class SFURoom extends Room {
    */
   _setupPCListeners() {
     this._pc.onaddstream = evt => {
+      // The SFU specific stream arrives at first.
+      // The traffic of stream is empty and we silently ignore this.
+      if (evt.stream.id === 'mixedmslabel') {
+        return;
+      }
+
       util.log('Received remote media stream');
       const remoteStream = evt.stream;
 
@@ -258,8 +264,9 @@ class SFURoom extends Room {
       }
     };
 
-    this._pc.onremovestream = () => {
-      util.log('`removestream` triggered');
+    this._pc.onremovestream = evt => {
+      util.log('`removestream` triggered', evt.stream);
+      this.emit(SFURoom.EVENTS.removeStream.key, evt.stream);
     };
 
     this._pc.onsignalingstatechange = () => {

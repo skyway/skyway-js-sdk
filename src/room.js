@@ -5,6 +5,7 @@ const Enum            = require('enum');
 
 const Events = [
   'stream',
+  'removeStream',
   'open',
   'close',
   'peerJoin',
