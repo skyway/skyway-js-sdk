@@ -514,7 +514,7 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(util.MESSAGE_TYPES.ERROR.key, error => {
-      this._abort('server-error', error);
+      this._abort(error.type, error.message);
     });
 
     this.socket.on(util.MESSAGE_TYPES.LEAVE.key, peerId => {

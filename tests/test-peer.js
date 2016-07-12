@@ -415,13 +415,15 @@ describe('Peer', () => {
     });
 
     it('should abort with server-error on ERROR events', () => {
-      const errMsg = 'Error message';
+      const error = {
+        type:    'error-type',
+        message: 'error message'
+      };
       try {
-        peer.socket.emit(util.MESSAGE_TYPES.ERROR.key, errMsg);
+        peer.socket.emit(util.MESSAGE_TYPES.ERROR.key, error);
       } catch (e) {
-        assert(e.type === 'server-error');
-        assert(e.message === errMsg);
-
+        assert.equal(e.type, error.type);
+        assert.equal(e.message, error.message);
         return;
       }
 
