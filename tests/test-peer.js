@@ -1062,10 +1062,6 @@ describe('Peer', () => {
       });
 
       it('should create a new meshRoom when mode is empty', () => {
-        const Peer = require('../src/peer');
-        const peer = new Peer({
-          key: apiKey
-        });
         const room = peer.joinRoom(roomName);
 
         assert.equal(room.constructor.name, 'MeshRoom');
