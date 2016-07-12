@@ -156,7 +156,14 @@ class MeshRoom extends Room {
       this.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
     });
     connection.on(MediaConnection.EVENTS.stream.key, remoteStream => {
-      this.emit(MediaConnection.EVENTS.stream.key, remoteStream);
+      if (this._msidMap[remoteStream.id]) {
+        remoteStream.peerId = this._msidMap[remoteStream.id];
+
+        this.remoteStreams[remoteStream.id] = remoteStream;
+        this.emit(Room.EVENTS.stream.key, remoteStream);
+      } else {
+        this._unknownStreams[remoteStream.id] = remoteStream;
+      }
     });
   }
 
@@ -285,6 +292,12 @@ class MeshRoom extends Room {
     if (connection) {
       connection.handleCandidate(candidateMessage);
     }
+  }
+
+  updateMsidMap(peerId, sdp) {
+    let msid = sdp.split(/WMS /)[1];
+    msid = msid.split('m=')[0].replace(/[\n\r]+$/g,'');
+    this._msidMap[msid] = peerId;
   }
 
   /**

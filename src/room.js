@@ -51,6 +51,9 @@ class Room extends EventEmitter {
     this._options = options;
     this._peerId = peerId;
     this._localStream = this._options.stream;
+
+    this._msidMap = {};
+    this._unknownStreams = {};
   }
 
   /**
@@ -86,26 +89,6 @@ class Room extends EventEmitter {
       roomName: this.name
     };
     this.emit(Room.MESSAGE_EVENTS.getLog.key, message);
-  }
-
-  updateMsidMap(msids) {
-    this._msidMap = msids;
-
-    for (let msid of Object.keys(this._unknownStreams)) {
-      if (this._msidMap[msid]) {
-        const remoteStream = this._unknownStreams[msid];
-        remoteStream.peerId = this._msidMap[remoteStream.id];
-
-        delete this._unknownStreams[msid];
-
-        if (remoteStream.peerId === this._peerId) {
-          return;
-        }
-
-        this.remoteStreams[remoteStream.id] = remoteStream;
-        this.emit(Room.EVENTS.stream.key, remoteStream);
-      }
-    }
   }
 
   /**
