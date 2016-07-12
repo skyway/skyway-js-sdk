@@ -41,7 +41,6 @@ class MeshRoom extends Room {
 
     this._pcConfig = this._options.pcConfig;
 
-    this.remoteStreams = {};
     this.connections = {};
   }
 
@@ -156,14 +155,8 @@ class MeshRoom extends Room {
       this.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
     });
     connection.on(MediaConnection.EVENTS.stream.key, remoteStream => {
-      if (this._msidMap[remoteStream.id]) {
-        remoteStream.peerId = this._msidMap[remoteStream.id];
-
-        this.remoteStreams[remoteStream.id] = remoteStream;
-        this.emit(Room.EVENTS.stream.key, remoteStream);
-      } else {
-        this._unknownStreams[remoteStream.id] = remoteStream;
-      }
+      remoteStream.peerId = this._msidMap[remoteStream.id];
+      this.emit(Room.EVENTS.stream.key, remoteStream);
     });
   }
 
@@ -295,9 +288,10 @@ class MeshRoom extends Room {
   }
 
   updateMsidMap(peerId, sdp) {
-    let msid = sdp.split(/WMS /)[1];
-    msid = msid.split('m=')[0].replace(/[\n\r]+$/g,'');
-    this._msidMap[msid] = peerId;
+    if (sdp) {
+      const msid = sdp.split(/WMS /)[1].split('m=')[0].replace(/[\n\r]+$/g, '');
+      this._msidMap[msid] = peerId;
+    }
   }
 
   /**
