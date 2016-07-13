@@ -274,6 +274,8 @@ class Peer extends EventEmitter {
     return null;
   }
 
+  // TODO: match to negotiator._emitError or extract both to util
+  //       do this when refactoring peer.js
   /**
    * Emit Error.
    * @param {string} type - The type of error.

@@ -6,6 +6,7 @@ const sinonStubPromise = require('sinon-stub-promise');
 const proxyquire       = require('proxyquireify')(require);
 
 const Negotiator       = require('../src/negotiator');
+const util             = require('../src/util');
 
 sinonStubPromise(sinon);
 
@@ -20,49 +21,54 @@ describe('Negotiator', () => {
   });
 
   describe('startConnection', () => {
+    let newPcStub;
     let pcStub;
     let addStreamSpy;
     let createDCSpy;
     let negotiator;
     let handleOfferSpy;
+    let createPCStub;
 
     beforeEach(() => {
-      pcStub = sinon.stub();
+      newPcStub = sinon.stub();
       addStreamSpy = sinon.spy();
       createDCSpy = sinon.spy();
-
-      pcStub.returns({
+      pcStub = {
         addStream:         addStreamSpy,
         createDataChannel: createDCSpy
-      });
+      };
+
+      newPcStub.returns(pcStub);
       const Negotiator = proxyquire('../src/negotiator', {
         '../src/webrtcShim': {
-          RTCPeerConnection: pcStub
+          RTCPeerConnection: newPcStub
         }
       });
 
       negotiator = new Negotiator();
-      handleOfferSpy = sinon.spy();
-      negotiator.handleOffer = handleOfferSpy;
+      handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
+      createPCStub = sinon.stub(negotiator, '_createPeerConnection');
+      createPCStub.returns(pcStub);
     });
 
     afterEach(() => {
+      newPcStub.reset();
       addStreamSpy.reset();
       createDCSpy.reset();
       handleOfferSpy.reset();
     });
 
-    it('should create a _pc property of type RTCPeerConnection', () => {
+    it('should call _createPeerConnection pcConfig and set _pc to the result', () => {
       const options = {
-        originator: true
+        originator: true,
+        pcConfig:   {}
       };
 
-      // not stub
-      const negotiator = new Negotiator();
       negotiator.startConnection(options);
 
-      assert(negotiator._pc);
-      assert.equal(negotiator._pc.constructor.name, 'RTCPeerConnection');
+      assert.equal(createPCStub.callCount, 1);
+      assert(createPCStub.calledWith, options.pcConfig);
+      assert.equal(negotiator._pc, pcStub);
     });
 
     describe('when type is \'media\'', () => {
@@ -71,17 +77,17 @@ describe('Negotiator', () => {
           const options = {
             type:       'media',
             stream:     {},
-            originator: true
+            originator: true,
+            pcConfig:   {}
           };
-          const pcConfig = {};
 
-          assert(addStreamSpy.callCount === 0);
-          assert(handleOfferSpy.callCount === 0);
+          assert.equal(addStreamSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 0);
 
-          negotiator.startConnection(options, pcConfig);
+          negotiator.startConnection(options);
 
-          assert(addStreamSpy.callCount === 1);
-          assert(handleOfferSpy.callCount === 0);
+          assert.equal(addStreamSpy.callCount, 1);
+          assert.equal(handleOfferSpy.callCount, 0);
         });
       });
 
@@ -90,41 +96,124 @@ describe('Negotiator', () => {
           const options = {
             type:       'media',
             stream:     {},
-            originator: false
+            originator: false,
+            pcConfig:   {},
+            offer:      {}
           };
-          const pcConfig = {};
 
-          assert(addStreamSpy.callCount === 0);
-          assert(handleOfferSpy.callCount === 0);
+          assert.equal(addStreamSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 0);
 
-          negotiator.startConnection(options, pcConfig);
+          negotiator.startConnection(options);
 
-          assert(addStreamSpy.callCount === 1);
-          assert(handleOfferSpy.callCount === 1);
+          assert.equal(addStreamSpy.callCount, 1);
+          assert.equal(handleOfferSpy.callCount, 1);
+          assert(handleOfferSpy.calledWith(options.offer));
+        });
+      });
+
+      describe('when originator is undefined', () => {
+        it('should call pc.addStream and handleOffer', () => {
+          const options = {
+            type:     'media',
+            stream:   {},
+            pcConfig: {},
+            offer:    {}
+          };
+
+          assert.equal(addStreamSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 0);
+
+          negotiator.startConnection(options);
+
+          assert.equal(addStreamSpy.callCount, 1);
+          assert.equal(handleOfferSpy.callCount, 1);
+          assert(handleOfferSpy.calledWith(options.offer));
         });
       });
     });
 
     describe('when type is \'data\'', () => {
       describe('when originator is true', () => {
-        it('should call createDataChannel and emit \'dataChannel\'', done => {
+        it('should call createDataChannel and emit \'dcCreated\'', done => {
           const options = {
             type:       'data',
-            originator: true
+            originator: true,
+            pcConfig:   {}
           };
-          const pcConfig = {};
 
-          negotiator.on(Negotiator.EVENTS.dcReady.key, () => {
+          negotiator.on(Negotiator.EVENTS.dcCreated.key, () => {
             done();
           });
 
-          assert(createDCSpy.callCount === 0);
-          assert(handleOfferSpy.callCount === 0);
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 0);
 
-          negotiator.startConnection(options, pcConfig);
+          negotiator.startConnection(options);
 
-          assert(createDCSpy.callCount === 1);
-          assert(handleOfferSpy.callCount === 0);
+          assert.equal(createDCSpy.callCount, 1);
+          assert.equal(handleOfferSpy.callCount, 0);
+        });
+      });
+
+      describe('when originator is false', () => {
+        it('should call handleOffer with options.offer', () => {
+          const options = {
+            type:       'data',
+            originator: false,
+            pcConfig:   {},
+            offer:      {}
+          };
+
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 0);
+
+          negotiator.startConnection(options);
+
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 1);
+          assert(handleOfferSpy.calledWith(options.offer));
+        });
+      });
+
+      describe('when originator is undefined', () => {
+        it('should call handleOffer with options.offer', () => {
+          const options = {
+            type:       'data',
+            originator: false,
+            pcConfig:   {},
+            offer:      {}
+          };
+
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 0);
+
+          negotiator.startConnection(options);
+
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 1);
+          assert(handleOfferSpy.calledWith(options.offer));
+        });
+      });
+    });
+
+    describe('when type is undefined', () => {
+      describe('when originator is true', () => {
+        it('shouldn\'t call createDataConnection or addStream', () => {
+          const options = {
+            originator: true,
+            pcConfig:   {}
+          };
+
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(addStreamSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 0);
+
+          negotiator.startConnection(options);
+
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(addStreamSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 0);
         });
       });
 
@@ -132,30 +221,40 @@ describe('Negotiator', () => {
         it('should call handleOffer', () => {
           const options = {
             type:       'data',
-            originator: false
+            originator: false,
+            pcConfig:   {}
           };
-          const pcConfig = {};
 
-          assert(createDCSpy.callCount === 0);
-          assert(handleOfferSpy.callCount === 0);
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 0);
 
-          negotiator.startConnection(options, pcConfig);
+          negotiator.startConnection(options);
 
-          assert(createDCSpy.callCount === 0);
-          assert(handleOfferSpy.callCount === 1);
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 1);
+        });
+      });
+
+      describe('when originator is undefined', () => {
+        it('should call handleOffer', () => {
+          const options = {
+            type:     'data',
+            pcConfig: {}
+          };
+
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 0);
+
+          negotiator.startConnection(options);
+
+          assert.equal(createDCSpy.callCount, 0);
+          assert.equal(handleOfferSpy.callCount, 1);
         });
       });
     });
   });
 
   describe('_createPeerConnection', () => {
-    it('should return RTCPeerConnection object', () => {
-      const negotiator = new Negotiator();
-      const pc = negotiator._createPeerConnection();
-
-      assert.equal(pc.constructor.name, 'RTCPeerConnection');
-    });
-
     it('should call RTCPeerConnection with pcConfig', () => {
       const pcStub = sinon.stub();
       const Negotiator = proxyquire('../src/negotiator', {
@@ -177,19 +276,18 @@ describe('Negotiator', () => {
       const pc = negotiator._pc = negotiator._createPeerConnection();
 
       negotiator._setupPCListeners(pc);
-      assert(pc.onaddstream);
-      assert(pc.ondatachannel);
-      assert(pc.onicecandidate);
-      assert(pc.oniceconnectionstatechange);
-      assert(pc.onnegotiationneeded);
-      assert(pc.onremovestream);
-      assert(pc.onsignalingstatechange);
+      assert.equal(typeof pc.onaddstream, 'function');
+      assert.equal(typeof pc.ondatachannel, 'function');
+      assert.equal(typeof pc.onicecandidate, 'function');
+      assert.equal(typeof pc.oniceconnectionstatechange, 'function');
+      assert.equal(typeof pc.onnegotiationneeded, 'function');
+      assert.equal(typeof pc.onremovestream, 'function');
+      assert.equal(typeof pc.onsignalingstatechange, 'function');
     });
 
     describe('RTCPeerConnection\'s event listeners', () => {
       let negotiator;
       let pc;
-      let ev;
 
       beforeEach(() => {
         negotiator = new Negotiator();
@@ -197,13 +295,9 @@ describe('Negotiator', () => {
         negotiator._setupPCListeners(pc);
       });
 
-      beforeEach(() => {
-        ev = {};
-      });
-
       describe('onaddstream', () => {
         it('should emit \'addStream\' with remote stream', done => {
-          ev.stream = 'stream';
+          let ev = {stream: 'stream'};
           negotiator.on(Negotiator.EVENTS.addStream.key, stream => {
             assert.equal(stream, ev.stream);
             done();
@@ -214,9 +308,9 @@ describe('Negotiator', () => {
       });
 
       describe('ondatachannel', () => {
-        it('should emit \'dcReady\' with datachannel', done => {
-          ev.channel = 'dc';
-          negotiator.on(Negotiator.EVENTS.dcReady.key, dc => {
+        it('should emit \'dcCreated\' with datachannel', done => {
+          let ev = {channel: 'dc'};
+          negotiator.on(Negotiator.EVENTS.dcCreated.key, dc => {
             assert(dc, ev.channel);
             done();
           });
@@ -227,13 +321,25 @@ describe('Negotiator', () => {
 
       describe('onicecandidate', () => {
         it('should emit \'iceCandidate\' with ice candidate', done => {
-          ev.candidate = 'candidate';
+          let ev = {candidate: 'candidate'};
           negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
             assert(candidate, ev.candidate);
             done();
           });
 
           pc.onicecandidate(ev);
+        });
+
+        it('should not emit \'iceCandidate\' when out of candidates', done => {
+          let ev = {};
+          negotiator.on(Negotiator.EVENTS.iceCandidate.key, () => {
+            assert.fail('Should not emit iceCandidate event');
+          });
+
+          pc.onicecandidate(ev);
+
+          // let other async events run before finishing
+          setTimeout(done);
         });
       });
 
@@ -259,8 +365,7 @@ describe('Negotiator', () => {
 
         describe('when pc.iceConnectionState is \'disconnected\'', () => {
           it('should emit \'iceConnectionDisconnected\'', done => {
-            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key,
-            () => {
+            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key, () => {
               done();
             });
             pc.iceConnectionState = 'disconnected';
@@ -287,7 +392,7 @@ describe('Negotiator', () => {
             pc.onicecandidate = 'string';
 
             pc.oniceconnectionstatechange();
-            assert(typeof pc.onicecandidate === 'function');
+            assert.equal(typeof pc.onicecandidate, 'function');
           });
         });
       });
@@ -296,9 +401,9 @@ describe('Negotiator', () => {
         it('should call _makeOfferSdp', () => {
           const spy = sinon.spy(negotiator, '_makeOfferSdp');
 
-          assert(spy.callCount === 0);
+          assert.equal(spy.callCount, 0);
           pc.onnegotiationneeded();
-          assert(spy.callCount === 1);
+          assert.equal(spy.callCount, 1);
         });
 
         it('should emit \'offerCreated\'', done => {
@@ -314,45 +419,191 @@ describe('Negotiator', () => {
           pc.onnegotiationneeded();
         });
       });
+
+      describe('onremovestream', () => {
+        let logSpy;
+        beforeEach(() => {
+          logSpy = sinon.spy(util, 'log');
+        });
+
+        afterEach(() => {
+          logSpy.restore();
+        });
+
+        it('should log the event', () => {
+          pc.onremovestream();
+          logSpy.calledWith('`removestream` triggered');
+        });
+      });
     });
   });
 
   describe('_makeOfferSdp', () => {
     let negotiator;
     let pc;
-    let promiseStub;
+    let createOfferStub;
 
     beforeEach(() => {
       negotiator = new Negotiator();
       pc = negotiator._pc = negotiator._createPeerConnection();
       negotiator._setupPCListeners(pc);
-      promiseStub = sinon.stub().returnsPromise();
+
+      createOfferStub = sinon.stub(pc, 'createOffer');
     });
 
     it('should call pc.createOffer', () => {
-      const offer = 'offer';
-      pc.createOffer = promiseStub.resolves(offer);
-
-      assert(promiseStub.callCount === 0);
+      assert.equal(createOfferStub.callCount, 0);
       negotiator._makeOfferSdp();
-      assert(promiseStub.callCount === 1);
+      assert.equal(createOfferStub.callCount, 1);
+      assert.equal(typeof createOfferStub.args[0][0], 'function');
+      assert.equal(typeof createOfferStub.args[0][1], 'function');
     });
 
-    it('should return offer when createOffer resolved', done => {
+    it('should return offer when createOffer succeeds', done => {
+      const fakeOffer = 'offer';
+      createOfferStub.callsArgWith(0, fakeOffer);
       negotiator._makeOfferSdp()
-      .then(offer => {
-        assert(offer);
-        assert(offer instanceof RTCSessionDescription);
+        .then(offer => {
+          assert.equal(offer, fakeOffer);
+          done();
+        }).catch(() => {
+          assert.fail();
+        });
+    });
+
+    it('should emit Error when createOffer fails', done => {
+      const fakeError = 'fakeError';
+      createOfferStub.callsArgWith(1, fakeError);
+
+      negotiator.on(Negotiator.EVENTS.error.key, err => {
+        assert(err instanceof Error);
+        assert.equal(err.type, 'webrtc');
+        assert.equal(err.message, fakeError);
         done();
-      }).catch(() => {
-        assert.fail();
+      });
+
+      negotiator._makeOfferSdp()
+        .then(() => {
+          assert.fail();
+        });
+    });
+  });
+
+  describe('_makeAnswerSdp', () => {
+    let negotiator;
+    let pc;
+    let createAnswerStub;
+    let setLocalDescriptionStub;
+
+    beforeEach(() => {
+      negotiator = new Negotiator();
+      pc = negotiator._pc = negotiator._createPeerConnection();
+      negotiator._setupPCListeners(pc);
+
+      createAnswerStub = sinon.stub(pc, 'createAnswer');
+      setLocalDescriptionStub = sinon.stub(pc, 'setLocalDescription');
+    });
+
+    it('should call pc.createAnswer', () => {
+      assert.equal(createAnswerStub.callCount, 0);
+      negotiator._makeAnswerSdp();
+      assert.equal(createAnswerStub.callCount, 1);
+      assert.equal(typeof createAnswerStub.args[0][0], 'function');
+      assert.equal(typeof createAnswerStub.args[0][1], 'function');
+    });
+
+    describe('when createAnswer succeeds', () => {
+      it('should return answer when setLocalDescription succeeds', done => {
+        const fakeAnswer = 'answer';
+        createAnswerStub.callsArgWith(0, fakeAnswer);
+        setLocalDescriptionStub.callsArg(1);
+
+        negotiator._makeAnswerSdp()
+          .then(answer => {
+            assert.equal(answer, fakeAnswer);
+            done();
+          }).catch(() => {
+            assert.fail();
+          });
+      });
+
+      it('should emit Error when setLocalDescription fails', done => {
+        const fakeAnswer = 'answer';
+        const fakeError = 'fakeError';
+        createAnswerStub.callsArgWith(0, fakeAnswer);
+        setLocalDescriptionStub.callsArgWith(2, fakeError);
+
+        negotiator.on(Negotiator.EVENTS.error.key, err => {
+          assert(err instanceof Error);
+          assert.equal(err.type, 'webrtc');
+          assert.equal(err.message, fakeError);
+          done();
+        });
+
+        negotiator._makeAnswerSdp()
+          .then(() => {
+            assert.fail();
+          });
       });
     });
 
-    it('should emit Error when createOffer rejected', done => {
+    it('should emit Error when createAnswer fails', done => {
       const fakeError = 'fakeError';
-      const stub = sinon.stub(pc, 'createOffer');
-      stub.callsArgWith(1, fakeError);
+      createAnswerStub.callsArgWith(1, fakeError);
+
+      negotiator.on(Negotiator.EVENTS.error.key, err => {
+        assert(err instanceof Error);
+        assert.equal(err.type, 'webrtc');
+        assert.equal(err.message, fakeError);
+        done();
+      });
+
+      negotiator._makeAnswerSdp()
+        .then(() => {
+          assert.fail();
+        });
+    });
+  });
+
+  describe('_setRemoteDescription', () => {
+    let negotiator;
+    let pc;
+    let setRemoteDescriptionStub;
+
+    const sdp = {
+      type: 'offer',
+      sdp:  'sdp'
+    };
+
+    beforeEach(() => {
+      negotiator = new Negotiator();
+      pc = negotiator._pc = negotiator._createPeerConnection();
+      negotiator._setupPCListeners();
+
+      setRemoteDescriptionStub = sinon.stub(pc, 'setRemoteDescription');
+    });
+
+    it('should call pc.setRemoteDescription', () => {
+      assert.equal(setRemoteDescriptionStub.callCount, 0);
+      negotiator._setRemoteDescription(sdp);
+      assert.equal(setRemoteDescriptionStub.callCount, 1);
+      assert.equal(setRemoteDescriptionStub.args[0][0].type, sdp.type);
+      assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
+      assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
+    });
+
+    it('should resolve if setRemoteDescription succeeds', done => {
+      setRemoteDescriptionStub.callsArg(1);
+
+      negotiator._setRemoteDescription(sdp)
+        .then(() => {
+          done();
+        });
+    });
+
+    it('should emit Error if setRemoteDescription fails', done => {
+      const fakeError = 'fakeError';
+      setRemoteDescriptionStub.callsArgWith(2, fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
@@ -360,71 +611,56 @@ describe('Negotiator', () => {
         done();
       });
 
-      negotiator._makeOfferSdp()
-      .then(() => {
-        assert.fail();
-      })
-      .catch(error => {
-        assert(error);
-        assert.equal(error, fakeError);
-      });
-
-      assert(stub.callCount === 1);
+      negotiator._setRemoteDescription(sdp);
     });
   });
 
   describe('_setLocalDescription', () => {
     let negotiator;
     let pc;
+    let setLocalDescriptionStub;
 
     beforeEach(() => {
       negotiator = new Negotiator();
       pc = negotiator._pc = negotiator._createPeerConnection();
       negotiator._setupPCListeners();
+
+      setLocalDescriptionStub = sinon.stub(pc, 'setLocalDescription');
     });
 
     it('should call pc.setLocalDescription', () => {
       const offer = 'offer';
-      const promiseStub = sinon.stub().returnsPromise();
-      pc.setLocalDescription = promiseStub.resolves(offer);
 
-      assert(promiseStub.callCount === 0);
+      assert.equal(setLocalDescriptionStub.callCount, 0);
       negotiator._setLocalDescription(offer);
-      assert(promiseStub.callCount === 1);
+      assert(setLocalDescriptionStub.calledWith(offer));
+      assert.equal(setLocalDescriptionStub.callCount, 1);
     });
 
-    describe('when setLocalDescription resolved', () => {
-      it('should emit \'offerCreated\'', done => {
-        const offer = 'offer';
-        const cbStub = sinon.stub(pc, 'setLocalDescription');
-        cbStub.callsArgWith(1, offer);
+    it('should emit \'offerCreated\' if setLocalDescription succeeds', done => {
+      const offer = 'offer';
+      setLocalDescriptionStub.callsArgWith(1, offer);
 
-        negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
-          assert(offer);
-          done();
-        });
-
-        negotiator._setLocalDescription(offer);
+      negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
+        assert(offer);
+        done();
       });
+
+      negotiator._setLocalDescription(offer);
     });
 
-    describe('when setLocalDescription rejected', () => {
-      it('should emit Error', done => {
-        const offer = 'offer';
-        const fakeError = 'fakeError';
-        const cbStub = sinon.stub(pc, 'setLocalDescription');
-        cbStub.callsArgWith(2, fakeError);
+    it('should emit Error if setLocalDescription fails', done => {
+      const offer = 'offer';
+      const fakeError = 'fakeError';
+      setLocalDescriptionStub.callsArgWith(2, fakeError);
 
-        negotiator.on(Negotiator.EVENTS.error.key, err => {
-          assert(err instanceof Error);
-          assert.equal(err.type, 'webrtc');
-          done();
-        });
-
-        negotiator._setLocalDescription(offer);
-
-        assert(cbStub.callCount === 1);
+      negotiator.on(Negotiator.EVENTS.error.key, err => {
+        assert(err instanceof Error);
+        assert.equal(err.type, 'webrtc');
+        done();
       });
+
+      negotiator._setLocalDescription(offer);
     });
   });
 
@@ -445,26 +681,29 @@ describe('Negotiator', () => {
 
       const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
 
-      assert(addIceStub.callCount === 0);
+      assert.equal(addIceStub.callCount, 0);
 
       negotiator.handleCandidate(candidate);
 
-      assert(addIceStub.callCount === 1);
+      assert.equal(addIceStub.callCount, 1);
 
       const addIceArg = addIceStub.args[0][0];
-      assert(addIceArg.constructor.name === 'RTCIceCandidate');
-      assert(candidate.candidate === addIceArg.candidate);
-      assert(candidate.sdpMLineIndex === addIceArg.sdpMLineIndex);
-      assert(candidate.sdpMid === addIceArg.sdpMid);
+      assert.equal(addIceArg.constructor.name, 'RTCIceCandidate');
+      assert.equal(candidate.candidate, addIceArg.candidate);
+      assert.equal(candidate.sdpMLineIndex, addIceArg.sdpMLineIndex);
+      assert.equal(candidate.sdpMid, addIceArg.sdpMid);
     });
   });
 
   describe('handleOffer', () => {
-    const waitForAsync = 100;
-    it('should setRemoteDescription', done => {
-      const negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection();
+    let negotiator;
 
+    beforeEach(() => {
+      negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection();
+    });
+
+    it('should setRemoteDescription', done => {
       const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
 
       negotiator._pc.createOffer(offer => {
@@ -475,44 +714,31 @@ describe('Negotiator', () => {
 
         negotiator.handleOffer(offerObject);
 
+        // let other async events run
         setTimeout(() => {
-          assert(setRemoteSpy.callCount === 1);
+          assert.equal(setRemoteSpy.callCount, 1);
           assert(setRemoteSpy.calledWith(offer));
           done();
-        }, waitForAsync);
+        });
       }, err => {
         assert.fail(err);
       });
     });
 
     it('should emit answerCreated', done => {
-      const negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection();
-
-      const emitSpy = sinon.spy(negotiator, 'emit');
-
       negotiator._pc.createOffer(offer => {
         const offerObject = {
           sdp:  offer.sdp,
           type: offer.type
         };
 
-        assert(emitSpy.callCount === 0);
-
         negotiator.handleOffer(offerObject);
 
-        setTimeout(() => {
-          assert(emitSpy.callCount === 1);
-
-          const eventName = emitSpy.args[0][0];
-          const answer = emitSpy.args[0][1];
-
-          assert(eventName, Negotiator.EVENTS.answerCreated.key);
+        negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
           assert.equal(answer.type, 'answer');
           assert.equal(answer.constructor.name, 'RTCSessionDescription');
-
           done();
-        }, waitForAsync);
+        });
       }, err => {
         assert.fail(err);
       });
@@ -520,7 +746,6 @@ describe('Negotiator', () => {
   });
 
   describe('handleAnswer', () => {
-    const waitForAsync = 100;
     it('should setRemoteDescription', done => {
       const negotiator = new Negotiator();
       negotiator._pc = negotiator._createPeerConnection();
@@ -533,30 +758,96 @@ describe('Negotiator', () => {
           type: 'answer'
         };
 
-        assert(setRemoteStub.callCount === 0);
+        assert.equal(setRemoteStub.callCount, 0);
 
         negotiator.handleAnswer(answerObject);
 
+        // let other async events run
         setTimeout(() => {
-          assert(setRemoteStub.callCount === 1);
+          assert.equal(setRemoteStub.callCount, 1);
           assert(setRemoteStub.calledWith(
             new RTCSessionDescription(answerObject))
           );
           done();
-        }, waitForAsync);
+        });
       }, err => {
         assert.fail(err);
       });
     });
+  });
 
-    describe('cleanup', () => {
-      it('should close and remove PC upon cleanup()', () => {
-        const negotiator = new Negotiator();
-        negotiator._pc = negotiator._createPeerConnection();
+  describe('cleanup', () => {
+    it('should close and remove PC upon cleanup()', () => {
+      const negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection();
 
-        assert(negotiator._pc);
-        negotiator.cleanup();
-        assert.equal(negotiator._pc, null);
+      assert(negotiator._pc);
+      negotiator.cleanup();
+      assert.equal(negotiator._pc, null);
+    });
+  });
+
+  describe('_emitError', () => {
+    const errorMessage = 'Error message';
+    const errorType = 'error-type';
+    let errorStub;
+    let negotiator;
+
+    beforeEach(() => {
+      errorStub = sinon.stub(util, 'error');
+      negotiator = new Negotiator();
+    });
+
+    afterEach(() => {
+      errorStub.restore();
+    });
+
+    describe('when error is an Error object', () => {
+      let error;
+      beforeEach(() => {
+        error = new Error(errorMessage);
+      });
+
+      it('should log the error', () => {
+        sinon.stub(negotiator, 'emit');
+        negotiator._emitError(errorType, error);
+
+        assert(errorStub.calledWith(error));
+      });
+
+      it('should emit the error in an \'error\' event', done => {
+        negotiator.on(Negotiator.EVENTS.error.key, err => {
+          assert(err instanceof Error);
+          assert.equal(err.message, errorMessage);
+          assert.equal(err.type, errorType);
+          done();
+        });
+
+        negotiator._emitError(errorType, error);
+      });
+    });
+
+    describe('when error is an string', () => {
+      it('should log the error', () => {
+        sinon.stub(negotiator, 'emit');
+        negotiator._emitError(errorType, errorMessage);
+
+        assert(errorStub.calledOnce);
+
+        const loggedError = errorStub.args[0][0];
+        assert.equal(loggedError.message, errorMessage);
+        assert.equal(loggedError.type, errorType);
+      });
+
+      it('should emit the error in an \'error\' event', done => {
+        negotiator.on(Negotiator.EVENTS.error.key, err => {
+          assert(err instanceof Error);
+          assert.equal(err.message, errorMessage);
+          assert.equal(err.type, errorType);
+          done();
+        });
+
+        negotiator._emitError(errorType, errorMessage);
       });
     });
   });
