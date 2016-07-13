@@ -124,6 +124,75 @@ describe('MeshRoom', () => {
     });
   });
 
+  describe('connection\'s event listeners', () => {
+    let MediaConnection = require('../src/mediaConnection');
+    const remoteId = 'remoteId';
+    let mc;
+
+    beforeEach(() => {
+      mc = new MediaConnection(remoteId);
+      meshRoom._setupMessageHandlers(mc);
+    });
+
+    describe('offer', () => {
+      it('should emit offer message including room name', () => {
+        const offerMessage = {
+          offer: 'offer'
+        };
+
+        mc.emit(Connection.EVENTS.offer.key, offerMessage);
+
+        assert(emitSpy.calledOnce);
+        assert.equal(emitSpy.args[0][0], MeshRoom.MESSAGE_EVENTS.offer.key);
+        offerMessage.roomName = meshRoomName;
+        assert.deepEqual(emitSpy.args[0][1], offerMessage);
+      });
+    });
+
+    describe('answer', () => {
+      it('should emit answer message including room name', () => {
+        const answerMessage = {
+          answer: 'answer'
+        };
+
+        mc.emit(Connection.EVENTS.answer.key, answerMessage);
+
+        assert(emitSpy.calledOnce);
+        assert.equal(emitSpy.args[0][0], MeshRoom.MESSAGE_EVENTS.answer.key);
+        answerMessage.roomName = meshRoomName;
+        assert.deepEqual(emitSpy.args[0][1], answerMessage);
+      });
+    });
+
+    describe('candidate', () => {
+      it('should emit candidate message including room name', () => {
+        const candidateMessage = {
+          candidate: 'candidate'
+        };
+
+        mc.emit(Connection.EVENTS.candidate.key, candidateMessage);
+
+        assert(emitSpy.calledOnce);
+        assert.equal(emitSpy.args[0][0], MeshRoom.MESSAGE_EVENTS.candidate.key);
+        candidateMessage.roomName = meshRoomName;
+        assert.deepEqual(emitSpy.args[0][1], candidateMessage);
+      });
+    });
+
+    describe('stream', () => {
+      it('should emit stream with peerId', () => {
+        const stream = {};
+
+        mc.emit(MediaConnection.EVENTS.stream.key, stream);
+
+        assert(emitSpy.calledOnce);
+        assert.equal(emitSpy.args[0][0], MeshRoom.EVENTS.stream.key);
+        stream.peerId = remoteId;
+        assert.deepEqual(emitSpy.args[0][1], stream);
+      });
+    });
+  });
+
   describe('_getConnection', () => {
     it('should get a connection according to given peerId and connectionId', () => {
       const peerId1 = 'peerId1';

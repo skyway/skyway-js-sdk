@@ -41,7 +41,6 @@ class MeshRoom extends Room {
 
     this._pcConfig = this._options.pcConfig;
 
-    this.remoteStreams = {};
     this.connections = {};
   }
 
@@ -156,7 +155,8 @@ class MeshRoom extends Room {
       this.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
     });
     connection.on(MediaConnection.EVENTS.stream.key, remoteStream => {
-      this.emit(MediaConnection.EVENTS.stream.key, remoteStream);
+      remoteStream.peerId = connection.remoteId;
+      this.emit(MeshRoom.EVENTS.stream.key, remoteStream);
     });
   }
 

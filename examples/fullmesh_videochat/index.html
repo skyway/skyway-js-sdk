@@ -63,10 +63,19 @@
     function step3 (room) {
       // Wait for stream on the call, then set peer video display
       room.on('stream', function(stream){
-        $('#their-videos').append($('<video autoplay class="remoteVideos">').prop('src', URL.createObjectURL(stream)));
+        const streamURL = URL.createObjectURL(stream);
+        const peerId = stream.peerId;
+        $('#their-videos').append($(
+          '<div id="video_' + peerId + '">' +
+            '<label>' + stream.peerId + ':' + stream.id + '</label>' +
+            '<video autoplay class="remoteVideos" src="' + streamURL + '">' +
+          '</div>'));
       });
       // UI stuff
       room.on('close', step2);
+      room.on('peerLeave', function(src){
+        $('#video_' + src).remove();
+      });
       $('#step1, #step2').hide();
       $('#step3').show();
     }
