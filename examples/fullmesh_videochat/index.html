@@ -74,7 +74,7 @@
       // UI stuff
       room.on('close', step2);
       room.on('peerLeave', function(src){
-        $('#video_'+src).remove();
+        $('#video_' + src).remove();
       });
       $('#step1, #step2').hide();
       $('#step3').show();
