@@ -52,9 +52,6 @@ class Room extends EventEmitter {
     this._options = options;
     this._peerId = peerId;
     this._localStream = this._options.stream;
-
-    this._msidMap = {};
-    this._unknownStreams = {};
   }
 
   /**

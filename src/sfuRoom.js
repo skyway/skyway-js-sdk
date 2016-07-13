@@ -36,6 +36,9 @@ class SFURoom extends Room {
     this._pcAvailable = false;
     this.open = false;
     this.members = [];
+
+    this._msidMap = {};
+    this._unknownStreams = {};
   }
 
   /**

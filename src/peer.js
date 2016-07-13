@@ -666,14 +666,12 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage => {
       const room = this.rooms[offerMessage.roomName];
       if (room) {
-        room.updateMsidMap(offerMessage.src, offerMessage.offer.sdp);
         room.handleOffer(offerMessage);
       }
     });
 
     this.socket.on(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage => {
       const room = this.rooms[answerMessage.roomName];
-      room.updateMsidMap(answerMessage.src, answerMessage.answer.sdp);
       room.handleAnswer(answerMessage);
     });
 
