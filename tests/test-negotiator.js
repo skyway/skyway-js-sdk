@@ -453,6 +453,16 @@ describe('Negotiator', () => {
           pc.onicecandidate(ev);
         });
 
+        it('should emit \'iceCandidatesComplete\' when out of candidates', done => {
+          let ev = {};
+          negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, description => {
+            assert(description instanceof RTCSessionDescription);
+            done();
+          });
+
+          pc.onicecandidate(ev);
+        });
+
         it('should not emit \'iceCandidate\' when out of candidates', done => {
           let ev = {};
           negotiator.on(Negotiator.EVENTS.iceCandidate.key, () => {
@@ -544,7 +554,9 @@ describe('Negotiator', () => {
       });
 
       describe('onremovestream', () => {
+        const evt = {stream: 'stream'};
         let logSpy;
+
         beforeEach(() => {
           logSpy = sinon.spy(util, 'log');
         });
@@ -554,8 +566,17 @@ describe('Negotiator', () => {
         });
 
         it('should log the event', () => {
-          pc.onremovestream();
+          pc.onremovestream(evt);
           logSpy.calledWith('`removestream` triggered');
+        });
+
+        it('should emit \'removeStream\'', done => {
+          negotiator.on(Negotiator.EVENTS.removeStream.key, stream => {
+            assert.equal(stream, evt.stream);
+            done();
+          });
+
+          pc.onremovestream(evt);
         });
       });
     });

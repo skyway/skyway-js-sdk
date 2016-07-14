@@ -13,10 +13,12 @@ const util = require('./util');
 
 const NegotiatorEvents = new Enum([
   'addStream',
+  'removeStream',
   'dcCreated',
   'offerCreated',
   'answerCreated',
   'iceCandidate',
+  'iceCandidatesComplete',
   'iceConnectionDisconnected',
   'error'
 ]);
@@ -95,8 +97,8 @@ class Negotiator extends EventEmitter {
 
     if (this._pc && (this._pc.readyState !== 'closed' || this._pc.signalingState !== 'closed')) {
       this._pc.close();
-      this._pc = null;
     }
+    this._pc = null;
   }
 
   /**
@@ -136,7 +138,8 @@ class Negotiator extends EventEmitter {
         util.log('Generated ICE candidate for:', candidate);
         this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
       } else {
-        util.log('ICE canddidates gathering complete');
+        util.log('ICE candidates gathering complete');
+        this.emit(Negotiator.EVENTS.iceCandidatesComplete.key, this._pc.localDescription);
       }
     };
 
@@ -170,8 +173,9 @@ class Negotiator extends EventEmitter {
       }
     };
 
-    this._pc.onremovestream = () => {
+    this._pc.onremovestream = evt => {
       util.log('`removestream` triggered');
+      this.emit(Negotiator.EVENTS.removeStream.key, evt.stream);
     };
 
     this._pc.onsignalingstatechange = () => {
@@ -312,10 +316,17 @@ class Negotiator extends EventEmitter {
    */
 
   /**
-   * Ice Candieate received from peer.
+   * Ice Candidate created.
    *
    * @event Negotiator#iceCandidate
    * @type {RTCIceCandidate}
+   */
+
+  /**
+   * Ice Candidate collection finished. Emits localDescription.
+   *
+   * @event Negotiator#iceCandidate
+   * @type {RTCSessionDescription}
    */
 
   /**
