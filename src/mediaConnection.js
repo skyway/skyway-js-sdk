@@ -47,9 +47,9 @@ class MediaConnection extends Connection {
         {
           type:       'media',
           stream:     this.localStream,
-          originator: true
-        },
-        this._options.pcConfig
+          originator: true,
+          pcConfig:   this._options.pcConfig
+        }
       );
       this._pcAvailable = true;
       this._handleQueuedMessages();

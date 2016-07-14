@@ -1,7 +1,9 @@
 'use strict';
 
 const Connection = require('./connection');
+const Negotiator = require('./negotiator');
 const util       = require('./util');
+
 const Enum       = require('enum');
 const sizeof     = require('object-sizeof');
 
@@ -68,7 +70,7 @@ class DataConnection extends Connection {
     }
 
     // This replaces the PeerJS 'initialize' method
-    this._negotiator.on('dcReady', dc => {
+    this._negotiator.on(Negotiator.EVENTS.dcCreated.key, dc => {
       this._dc = dc;
       this._dc.binaryType = 'arraybuffer';
       this._setupMessageHandlers();
@@ -78,7 +80,8 @@ class DataConnection extends Connection {
       this._options.payload || {
         originator: true,
         type:       'data',
-        label:      this.label
+        label:      this.label,
+        pcConfig:   this._options.pcConfig
       }
     );
     this._pcAvailable = true;

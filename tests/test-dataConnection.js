@@ -98,7 +98,7 @@ describe('DataConnection', () => {
       const dcObj = {test: 'foobar'};
 
       const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', dcObj);
+      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, dcObj);
 
       assert(dc._dc === dcObj);
       assert(dc._dc.onopen);
@@ -168,7 +168,7 @@ describe('DataConnection', () => {
 
     it('should open the DataConnection and emit upon _dc.onopen()', () => {
       const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {});
+      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
       let spy = sinon.spy(dc, 'emit');
 
@@ -184,7 +184,7 @@ describe('DataConnection', () => {
       const message = 'foobar';
 
       const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {});
+      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
       let spy = sinon.spy(dc, '_handleDataMessage');
 
@@ -197,7 +197,7 @@ describe('DataConnection', () => {
 
     it('should close the DataConnection upon _dc.onclose()', () => {
       const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {});
+      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
       let spy = sinon.spy(dc, 'close');
       dc._dc.onclose();
@@ -282,7 +282,7 @@ describe('DataConnection', () => {
         };
 
         const dc = new DataConnection('remoteId');
-        dc._negotiator.emit('dcReady', {});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
         dc.on(DataConnection.EVENTS.data.key, data => {
           assert.equal(data, message);
@@ -305,7 +305,7 @@ describe('DataConnection', () => {
         };
 
         const dc = new DataConnection('remoteId');
-        dc._negotiator.emit('dcReady', {});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
         dc.on(DataConnection.EVENTS.data.key, data => {
           assert.equal(data, message);
@@ -331,7 +331,7 @@ describe('DataConnection', () => {
         };
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
         dc.on(DataConnection.EVENTS.data.key, data => {
           assert.deepEqual(data, jsonObj);
@@ -356,7 +356,7 @@ describe('DataConnection', () => {
         };
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
         dc.on(DataConnection.EVENTS.data.key, data => {
           // We want to check that the received data is an ArrayBuffer
@@ -382,7 +382,7 @@ describe('DataConnection', () => {
         };
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
         dc.on(DataConnection.EVENTS.data.key, data => {
           // We want to check that the received data is an ArrayBuffer
@@ -421,7 +421,7 @@ describe('DataConnection', () => {
         };
 
         const dc = new DataConnection('remoteId');
-        dc._negotiator.emit('dcReady', {});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
         dc.on(DataConnection.EVENTS.data.key, data => {
           // Receives the reconstructed string after all chunks have been handled
@@ -443,7 +443,7 @@ describe('DataConnection', () => {
         const jsonObj = {name: 'testObject'};
 
         const dc = new DataConnection('remoteId', {serialization: 'json'});
-        dc._negotiator.emit('dcReady', {});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
         dc.on(DataConnection.EVENTS.data.key, data => {
           assert.deepEqual(data, jsonObj);
@@ -459,7 +459,7 @@ describe('DataConnection', () => {
         const message = Symbol();
 
         const dc = new DataConnection('remoteId', {serialization: 'none'});
-        dc._negotiator.emit('dcReady', {});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
         dc.on(DataConnection.EVENTS.data.key, data => {
           assert.equal(data, message);
@@ -488,7 +488,7 @@ describe('DataConnection', () => {
       let sendSpy = sinon.spy();
 
       const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit('dcReady', {send: sendSpy});
+      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
       dc._dc.onopen();
 
       setTimeout(() => {
@@ -507,7 +507,7 @@ describe('DataConnection', () => {
         let sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -527,7 +527,7 @@ describe('DataConnection', () => {
         let sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -547,7 +547,7 @@ describe('DataConnection', () => {
         let sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -568,7 +568,7 @@ describe('DataConnection', () => {
         let sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -588,7 +588,7 @@ describe('DataConnection', () => {
         let sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -611,7 +611,7 @@ describe('DataConnection', () => {
         let sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -632,7 +632,7 @@ describe('DataConnection', () => {
         let sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -657,7 +657,7 @@ describe('DataConnection', () => {
         let sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {serialization: 'json'});
-        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -678,7 +678,7 @@ describe('DataConnection', () => {
         let sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {serialization: 'none'});
-        dc._negotiator.emit('dcReady', {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
         dc._dc.onopen();
 
         setTimeout(() => {

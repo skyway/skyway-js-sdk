@@ -13,7 +13,7 @@ const util = require('./util');
 
 const NegotiatorEvents = new Enum([
   'addStream',
-  'dcReady',
+  'dcCreated',
   'offerCreated',
   'answerCreated',
   'iceCandidate',
@@ -34,11 +34,12 @@ class Negotiator extends EventEmitter {
    * @param {MediaStream} [options._stream] - The MediaStream to be sent to the remote peer.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
    * @param {boolean} [options.originator] - true means the peer is the originator of the connection.
-   * @param {RTCSessionDescription} [options.offer] - The local description. If the peer is originator, handleOffer is called with it.
-   * @param {object} [pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @param {RTCSessionDescription} [options.offer]
+   *        - The local description. If the peer is originator, handleOffer is called with it.
+   * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    */
-  startConnection(options, pcConfig) {
-    this._pc = this._createPeerConnection(pcConfig);
+  startConnection(options = {}) {
+    this._pc = this._createPeerConnection(options.pcConfig);
     this._setupPCListeners();
 
     if (options.type === 'media' && options.stream) {
@@ -49,174 +50,10 @@ class Negotiator extends EventEmitter {
       if (options.type === 'data') {
         const label = options.label || '';
         const dc = this._pc.createDataChannel(label);
-        this.emit(Negotiator.EVENTS.dcReady.key, dc);
+        this.emit(Negotiator.EVENTS.dcCreated.key, dc);
       }
     } else {
       this.handleOffer(options.offer);
-    }
-  }
-
-  /**
-   * Create new RTCPeerConnection.
-   * @param {object} pcConfig - A RTCConfiguration dictionary for the RTCPeerConnection.
-   * @return {RTCPeerConnection} An instance of RTCPeerConnection.
-   * @private
-   */
-  _createPeerConnection(pcConfig) {
-    util.log('Creating RTCPeerConnection');
-
-    // Calling RTCPeerConnection with an empty object causes an error
-    // Either give it a proper pcConfig or undefined
-    return new RTCPeerConnection(pcConfig);
-  }
-
-  /**
-   * Set up event handlers of RTCPeerConnection events.
-   * @private
-   */
-  _setupPCListeners() {
-    this._pc.onaddstream = evt => {
-      util.log('Received remote media stream');
-      const stream = evt.stream;
-      this.emit(Negotiator.EVENTS.addStream.key, stream);
-    };
-
-    this._pc.ondatachannel = evt => {
-      util.log('Received data channel');
-      const dc = evt.channel;
-      this.emit(Negotiator.EVENTS.dcReady.key, dc);
-    };
-
-    this._pc.onicecandidate = evt => {
-      const candidate = evt.candidate;
-      if (candidate) {
-        util.log('Generated ICE candidate for:', candidate);
-        this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
-      } else {
-        util.log('ICE canddidates gathering complete');
-      }
-    };
-
-    this._pc.oniceconnectionstatechange = () => {
-      switch (this._pc.iceConnectionState) {
-        case 'new':
-          util.log('iceConnectionState is new');
-          break;
-        case 'checking':
-          util.log('iceConnectionState is checking');
-          break;
-        case 'connected':
-          util.log('iceConnectionState is connected');
-          break;
-        case 'completed':
-          util.log('iceConnectionState is completed');
-          this._pc.onicecandidate = () => {};
-          break;
-        case 'failed':
-          util.log('iceConnectionState is failed, closing connection');
-          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
-          break;
-        case 'disconnected':
-          util.log('iceConnectionState is disconnected, closing connection');
-          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
-          break;
-        case 'closed':
-          util.log('iceConnectionState is closed');
-          break;
-        default:
-          break;
-      }
-    };
-
-    this._pc.onnegotiationneeded = () => {
-      util.log('`negotiationneeded` triggered');
-
-      // don't make a new offer if it's not stable
-      if (this._pc.signalingState === 'stable') {
-        this._makeOfferSdp()
-          .then(offer => {
-            this._setLocalDescription(offer);
-          });
-      }
-    };
-
-    this._pc.onremovestream = () => {
-      util.log('`removestream` triggered');
-    };
-
-    this._pc.onsignalingstatechange = () => {
-      switch (this._pc.signalingState) {
-        case 'stable':
-          util.log('signalingState is stable');
-          break;
-        case 'have-local-offer':
-          util.log('signalingState is have-local-offer');
-          break;
-        case 'have-remote-offer':
-          util.log('signalingState is have-remote-offer');
-          break;
-        case 'have-local-pranswer':
-          util.log('signalingState is have-local-pranswer');
-          break;
-        case 'have-remote-pranswer':
-          util.log('signalingState is have-remote-pranswer');
-          break;
-        case 'closed':
-          util.log('signalingState is closed');
-          break;
-        default:
-          break;
-      }
-    };
-  }
-
-  /**
-   * Create Offer SDP.
-   * @return {Promise} A promise that resolves with Offer SDP.
-   * @private
-   */
-  _makeOfferSdp() {
-    return new Promise((resolve, reject) => {
-      this._pc.createOffer(offer => {
-        util.log('Created offer.');
-        resolve(offer);
-      }, error => {
-        this.emitError('webrtc', error);
-        util.log('Failed to createOffer, ', error);
-        reject(error);
-      });
-    });
-  }
-
-  /**
-   * Set local description with Offer SDP and emit offerCreated event.
-   * @param {RTCSessionDescription} offer - Offer SDP.
-   * @return {Promise} A promise that is resolved with Offer SDP.
-   * @private
-   */
-  _setLocalDescription(offer) {
-    return new Promise((resolve, reject) => {
-      this._pc.setLocalDescription(offer, () => {
-        util.log('Set localDescription: offer');
-        this.emit(Negotiator.EVENTS.offerCreated.key, offer);
-        resolve(offer);
-      }, error => {
-        this.emitError('webrtc', error);
-        util.log('Failed to setLocalDescription, ', error);
-        reject(error);
-      });
-    });
-  }
-
-  /**
-   * Close a PeerConnection.
-   */
-  cleanup() {
-    util.log('Cleaning up PeerConnection');
-
-    if (this._pc && (this._pc.readyState !== 'closed' || this._pc.signalingState !== 'closed')) {
-      this._pc.close();
-      this._pc = null;
     }
   }
 
@@ -251,20 +88,110 @@ class Negotiator extends EventEmitter {
   }
 
   /**
-   * Set remote SDP.
-   * @param {object} sdp - An object containing remote SDP.
-   * @return {Promise} A promise that is resolved when setting remote SDP is completed.
+   * Close a PeerConnection.
+   */
+  cleanup() {
+    util.log('Cleaning up PeerConnection');
+
+    if (this._pc && (this._pc.readyState !== 'closed' || this._pc.signalingState !== 'closed')) {
+      this._pc.close();
+      this._pc = null;
+    }
+  }
+
+  /**
+   * Create new RTCPeerConnection.
+   * @param {object} pcConfig - A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @return {RTCPeerConnection} An instance of RTCPeerConnection.
    * @private
    */
-  _setRemoteDescription(sdp) {
-    util.log(`Setting remote description ${JSON.stringify(sdp)}`);
+  _createPeerConnection(pcConfig) {
+    util.log('Creating RTCPeerConnection');
+
+    // Calling RTCPeerConnection with an empty object causes an error
+    // Either give it a proper pcConfig or undefined
+    return new RTCPeerConnection(pcConfig);
+  }
+
+  /**
+   * Set up event handlers of RTCPeerConnection events.
+   * @private
+   */
+  _setupPCListeners() {
+    this._pc.onaddstream = evt => {
+      util.log('Received remote media stream');
+      const stream = evt.stream;
+      this.emit(Negotiator.EVENTS.addStream.key, stream);
+    };
+
+    this._pc.ondatachannel = evt => {
+      util.log('Received data channel');
+      const dc = evt.channel;
+      this.emit(Negotiator.EVENTS.dcCreated.key, dc);
+    };
+
+    this._pc.onicecandidate = evt => {
+      const candidate = evt.candidate;
+      if (candidate) {
+        util.log('Generated ICE candidate for:', candidate);
+        this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
+      } else {
+        util.log('ICE canddidates gathering complete');
+      }
+    };
+
+    this._pc.oniceconnectionstatechange = () => {
+      switch (this._pc.iceConnectionState) {
+        case 'completed':
+          util.log('iceConnectionState is completed');
+          // istanbul ignore next
+          this._pc.onicecandidate = () => {};
+          break;
+        case 'failed':
+        case 'disconnected':
+          util.log(`iceConnectionState is ${this._pc.oniceconnectionstatechange}, closing connection`);
+          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
+          break;
+        default:
+          util.log(`iceConnectionState is ${this._pc.iceConnectionState}`);
+          break;
+      }
+    };
+
+    this._pc.onnegotiationneeded = () => {
+      util.log('`negotiationneeded` triggered');
+
+      // don't make a new offer if it's not stable
+      if (this._pc.signalingState === 'stable') {
+        this._makeOfferSdp()
+          .then(offer => {
+            this._setLocalDescription(offer);
+          });
+      }
+    };
+
+    this._pc.onremovestream = () => {
+      util.log('`removestream` triggered');
+    };
+
+    this._pc.onsignalingstatechange = () => {
+      util.log(`signalingState is ${this._pc.onsignalingstatechange}`);
+    };
+  }
+
+  /**
+   * Create Offer SDP.
+   * @return {Promise} A promise that resolves with Offer SDP.
+   * @private
+   */
+  _makeOfferSdp() {
     return new Promise(resolve => {
-      this._pc.setRemoteDescription(new RTCSessionDescription(sdp), () => {
-        util.log('Set remoteDescription:', sdp.type);
-        resolve();
-      }, err => {
-        this.emitError('webrtc', err);
-        util.log('Failed to setRemoteDescription: ', err);
+      this._pc.createOffer(offer => {
+        util.log('Created offer.');
+        resolve(offer);
+      }, error => {
+        this._emitError('webrtc', error);
+        util.log('Failed to createOffer, ', error);
       });
     });
   }
@@ -283,12 +210,51 @@ class Negotiator extends EventEmitter {
           util.log('Set localDescription: answer');
           resolve(answer);
         }, err => {
-          this.emitError('webrtc', err);
+          this._emitError('webrtc', err);
           util.log('Failed to setLocalDescription, ', err);
         });
       }, err => {
-        this.emitError('webrtc', err);
+        this._emitError('webrtc', err);
         util.log('Failed to createAnswer, ', err);
+      });
+    });
+  }
+
+  /**
+   * Set local description with Offer SDP and emit offerCreated event.
+   * @param {RTCSessionDescription} offer - Offer SDP.
+   * @return {Promise} A promise that is resolved with Offer SDP.
+   * @private
+   */
+  _setLocalDescription(offer) {
+    return new Promise((resolve, reject) => {
+      this._pc.setLocalDescription(offer, () => {
+        util.log('Set localDescription: offer');
+        this.emit(Negotiator.EVENTS.offerCreated.key, offer);
+        resolve(offer);
+      }, error => {
+        this._emitError('webrtc', error);
+        util.log('Failed to setLocalDescription, ', error);
+        reject(error);
+      });
+    });
+  }
+
+  /**
+   * Set remote SDP.
+   * @param {object} sdp - An object containing remote SDP.
+   * @return {Promise} A promise that is resolved when setting remote SDP is completed.
+   * @private
+   */
+  _setRemoteDescription(sdp) {
+    util.log(`Setting remote description ${JSON.stringify(sdp)}`);
+    return new Promise(resolve => {
+      this._pc.setRemoteDescription(new RTCSessionDescription(sdp), () => {
+        util.log('Set remoteDescription:', sdp.type);
+        resolve();
+      }, err => {
+        this._emitError('webrtc', err);
+        util.log('Failed to setRemoteDescription: ', err);
       });
     });
   }
@@ -296,16 +262,16 @@ class Negotiator extends EventEmitter {
   /**
    * Emit Error.
    * @param {string} type - The type of error.
-   * @param {Error} err - An Error instance.
+   * @param {Error|string} err - An Error instance or the error message.
    * @private
    */
-  emitError(type, err) {
-    util.error('Error:', err);
+  _emitError(type, err) {
     if (typeof err === 'string') {
       err = new Error(err);
     }
-
     err.type = type;
+
+    util.error(err);
     this.emit(Negotiator.EVENTS.error.key, err);
   }
 
@@ -327,7 +293,7 @@ class Negotiator extends EventEmitter {
   /**
    * DataConnection is ready.
    *
-   * @event Negotiator#dcReady
+   * @event Negotiator#dcCreated
    * @type {DataConnection}
    */
 
