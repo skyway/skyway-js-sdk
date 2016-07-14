@@ -254,6 +254,129 @@ describe('Negotiator', () => {
     });
   });
 
+  describe('handleOffer', () => {
+    let negotiator;
+
+    beforeEach(() => {
+      negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection();
+    });
+
+    it('should setRemoteDescription', done => {
+      const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+
+      negotiator._pc.createOffer(offer => {
+        const offerObject = {
+          sdp:  offer.sdp,
+          type: offer.type
+        };
+
+        negotiator.handleOffer(offerObject);
+
+        // let other async events run
+        setTimeout(() => {
+          assert.equal(setRemoteSpy.callCount, 1);
+          assert(setRemoteSpy.calledWith(offer));
+          done();
+        });
+      }, err => {
+        assert.fail(err);
+      });
+    });
+
+    it('should emit answerCreated', done => {
+      negotiator._pc.createOffer(offer => {
+        const offerObject = {
+          sdp:  offer.sdp,
+          type: offer.type
+        };
+
+        negotiator.handleOffer(offerObject);
+
+        negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
+          assert.equal(answer.type, 'answer');
+          assert.equal(answer.constructor.name, 'RTCSessionDescription');
+          done();
+        });
+      }, err => {
+        assert.fail(err);
+      });
+    });
+  });
+
+  describe('handleAnswer', () => {
+    it('should setRemoteDescription', done => {
+      const negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection();
+      const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription');
+
+      negotiator._pc.createOffer(offer => {
+        // creating an answer is complicated so just use an offer
+        const answerObject = {
+          sdp:  offer.sdp,
+          type: 'answer'
+        };
+
+        assert.equal(setRemoteStub.callCount, 0);
+
+        negotiator.handleAnswer(answerObject);
+
+        // let other async events run
+        setTimeout(() => {
+          assert.equal(setRemoteStub.callCount, 1);
+          assert(setRemoteStub.calledWith(
+            new RTCSessionDescription(answerObject))
+          );
+          done();
+        });
+      }, err => {
+        assert.fail(err);
+      });
+    });
+  });
+
+  describe('handleCandidate', () => {
+    it('should call _pc.addIceCandidate with an RTCIceCandidate', () => {
+      const negotiator = new Negotiator();
+      const options = {
+        type:       'data',
+        originator: false
+      };
+      negotiator.startConnection(options);
+
+      const candidate = {
+        candidate:     'candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0',
+        sdpMLineIndex: 0,
+        sdpMid:        'data'
+      };
+
+      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
+
+      assert.equal(addIceStub.callCount, 0);
+
+      negotiator.handleCandidate(candidate);
+
+      assert.equal(addIceStub.callCount, 1);
+
+      const addIceArg = addIceStub.args[0][0];
+      assert.equal(addIceArg.constructor.name, 'RTCIceCandidate');
+      assert.equal(candidate.candidate, addIceArg.candidate);
+      assert.equal(candidate.sdpMLineIndex, addIceArg.sdpMLineIndex);
+      assert.equal(candidate.sdpMid, addIceArg.sdpMid);
+    });
+  });
+
+  describe('cleanup', () => {
+    it('should close and remove PC upon cleanup()', () => {
+      const negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection();
+
+      assert(negotiator._pc);
+      negotiator.cleanup();
+      assert.equal(negotiator._pc, null);
+    });
+  });
+
   describe('_createPeerConnection', () => {
     it('should call RTCPeerConnection with pcConfig', () => {
       const pcStub = sinon.stub();
@@ -565,56 +688,6 @@ describe('Negotiator', () => {
     });
   });
 
-  describe('_setRemoteDescription', () => {
-    let negotiator;
-    let pc;
-    let setRemoteDescriptionStub;
-
-    const sdp = {
-      type: 'offer',
-      sdp:  'sdp'
-    };
-
-    beforeEach(() => {
-      negotiator = new Negotiator();
-      pc = negotiator._pc = negotiator._createPeerConnection();
-      negotiator._setupPCListeners();
-
-      setRemoteDescriptionStub = sinon.stub(pc, 'setRemoteDescription');
-    });
-
-    it('should call pc.setRemoteDescription', () => {
-      assert.equal(setRemoteDescriptionStub.callCount, 0);
-      negotiator._setRemoteDescription(sdp);
-      assert.equal(setRemoteDescriptionStub.callCount, 1);
-      assert.equal(setRemoteDescriptionStub.args[0][0].type, sdp.type);
-      assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
-      assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
-    });
-
-    it('should resolve if setRemoteDescription succeeds', done => {
-      setRemoteDescriptionStub.callsArg(1);
-
-      negotiator._setRemoteDescription(sdp)
-        .then(() => {
-          done();
-        });
-    });
-
-    it('should emit Error if setRemoteDescription fails', done => {
-      const fakeError = 'fakeError';
-      setRemoteDescriptionStub.callsArgWith(2, fakeError);
-
-      negotiator.on(Negotiator.EVENTS.error.key, err => {
-        assert(err instanceof Error);
-        assert.equal(err.type, 'webrtc');
-        done();
-      });
-
-      negotiator._setRemoteDescription(sdp);
-    });
-  });
-
   describe('_setLocalDescription', () => {
     let negotiator;
     let pc;
@@ -664,126 +737,53 @@ describe('Negotiator', () => {
     });
   });
 
-  describe('handleCandidate', () => {
-    it('should call _pc.addIceCandidate with an RTCIceCandidate', () => {
-      const negotiator = new Negotiator();
-      const options = {
-        type:       'data',
-        originator: false
-      };
-      negotiator.startConnection(options);
-
-      const candidate = {
-        candidate:     'candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0',
-        sdpMLineIndex: 0,
-        sdpMid:        'data'
-      };
-
-      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
-
-      assert.equal(addIceStub.callCount, 0);
-
-      negotiator.handleCandidate(candidate);
-
-      assert.equal(addIceStub.callCount, 1);
-
-      const addIceArg = addIceStub.args[0][0];
-      assert.equal(addIceArg.constructor.name, 'RTCIceCandidate');
-      assert.equal(candidate.candidate, addIceArg.candidate);
-      assert.equal(candidate.sdpMLineIndex, addIceArg.sdpMLineIndex);
-      assert.equal(candidate.sdpMid, addIceArg.sdpMid);
-    });
-  });
-
-  describe('handleOffer', () => {
+  describe('_setRemoteDescription', () => {
     let negotiator;
+    let pc;
+    let setRemoteDescriptionStub;
+
+    const sdp = {
+      type: 'offer',
+      sdp:  'sdp'
+    };
 
     beforeEach(() => {
       negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection();
+      pc = negotiator._pc = negotiator._createPeerConnection();
+      negotiator._setupPCListeners();
+
+      setRemoteDescriptionStub = sinon.stub(pc, 'setRemoteDescription');
     });
 
-    it('should setRemoteDescription', done => {
-      const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+    it('should call pc.setRemoteDescription', () => {
+      assert.equal(setRemoteDescriptionStub.callCount, 0);
+      negotiator._setRemoteDescription(sdp);
+      assert.equal(setRemoteDescriptionStub.callCount, 1);
+      assert.equal(setRemoteDescriptionStub.args[0][0].type, sdp.type);
+      assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
+      assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
+    });
 
-      negotiator._pc.createOffer(offer => {
-        const offerObject = {
-          sdp:  offer.sdp,
-          type: offer.type
-        };
+    it('should resolve if setRemoteDescription succeeds', done => {
+      setRemoteDescriptionStub.callsArg(1);
 
-        negotiator.handleOffer(offerObject);
-
-        // let other async events run
-        setTimeout(() => {
-          assert.equal(setRemoteSpy.callCount, 1);
-          assert(setRemoteSpy.calledWith(offer));
+      negotiator._setRemoteDescription(sdp)
+        .then(() => {
           done();
         });
-      }, err => {
-        assert.fail(err);
-      });
     });
 
-    it('should emit answerCreated', done => {
-      negotiator._pc.createOffer(offer => {
-        const offerObject = {
-          sdp:  offer.sdp,
-          type: offer.type
-        };
+    it('should emit Error if setRemoteDescription fails', done => {
+      const fakeError = 'fakeError';
+      setRemoteDescriptionStub.callsArgWith(2, fakeError);
 
-        negotiator.handleOffer(offerObject);
-
-        negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
-          assert.equal(answer.type, 'answer');
-          assert.equal(answer.constructor.name, 'RTCSessionDescription');
-          done();
-        });
-      }, err => {
-        assert.fail(err);
+      negotiator.on(Negotiator.EVENTS.error.key, err => {
+        assert(err instanceof Error);
+        assert.equal(err.type, 'webrtc');
+        done();
       });
-    });
-  });
 
-  describe('handleAnswer', () => {
-    it('should setRemoteDescription', done => {
-      const negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection();
-      const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription');
-
-      negotiator._pc.createOffer(offer => {
-        // creating an answer is complicated so just use an offer
-        const answerObject = {
-          sdp:  offer.sdp,
-          type: 'answer'
-        };
-
-        assert.equal(setRemoteStub.callCount, 0);
-
-        negotiator.handleAnswer(answerObject);
-
-        // let other async events run
-        setTimeout(() => {
-          assert.equal(setRemoteStub.callCount, 1);
-          assert(setRemoteStub.calledWith(
-            new RTCSessionDescription(answerObject))
-          );
-          done();
-        });
-      }, err => {
-        assert.fail(err);
-      });
-    });
-  });
-
-  describe('cleanup', () => {
-    it('should close and remove PC upon cleanup()', () => {
-      const negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection();
-
-      assert(negotiator._pc);
-      negotiator.cleanup();
-      assert.equal(negotiator._pc, null);
+      negotiator._setRemoteDescription(sdp);
     });
   });
 

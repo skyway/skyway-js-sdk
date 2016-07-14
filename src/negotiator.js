@@ -58,6 +58,48 @@ class Negotiator extends EventEmitter {
   }
 
   /**
+   * Set remote description with remote Offer SDP, then create Answer SDP and emit it.
+   * @param {object} offerSdp - An object containing Offer SDP.
+   */
+  handleOffer(offerSdp) {
+    this._setRemoteDescription(offerSdp)
+      .then(() => {
+        return this._makeAnswerSdp();
+      }).then(answer => {
+        this.emit(Negotiator.EVENTS.answerCreated.key, answer);
+      });
+  }
+
+  /**
+   * Set remote description with Answer SDP.
+   * @param {object} answerSdp - An object containing Answer SDP.
+   */
+  handleAnswer(answerSdp) {
+    this._setRemoteDescription(answerSdp);
+  }
+
+  /**
+   * Set ice candidate with Candidate SDP.
+   * @param {object} candidate - An object containing Candidate SDP.
+   */
+  handleCandidate(candidate) {
+    this._pc.addIceCandidate(new RTCIceCandidate(candidate));
+    util.log('Added ICE candidate');
+  }
+
+  /**
+   * Close a PeerConnection.
+   */
+  cleanup() {
+    util.log('Cleaning up PeerConnection');
+
+    if (this._pc && (this._pc.readyState !== 'closed' || this._pc.signalingState !== 'closed')) {
+      this._pc.close();
+      this._pc = null;
+    }
+  }
+
+  /**
    * Create new RTCPeerConnection.
    * @param {object} pcConfig - A RTCConfiguration dictionary for the RTCPeerConnection.
    * @return {RTCPeerConnection} An instance of RTCPeerConnection.
@@ -155,6 +197,30 @@ class Negotiator extends EventEmitter {
   }
 
   /**
+   * Make Answer SDP and set it as local description.
+   * @return {Promise} A promise that is resolved when setting local SDP is completed.
+   * @private
+   */
+  _makeAnswerSdp() {
+    return new Promise(resolve => {
+      this._pc.createAnswer(answer => {
+        util.log('Created answer.');
+
+        this._pc.setLocalDescription(answer, () => {
+          util.log('Set localDescription: answer');
+          resolve(answer);
+        }, err => {
+          this._emitError('webrtc', err);
+          util.log('Failed to setLocalDescription, ', err);
+        });
+      }, err => {
+        this._emitError('webrtc', err);
+        util.log('Failed to createAnswer, ', err);
+      });
+    });
+  }
+
+  /**
    * Set local description with Offer SDP and emit offerCreated event.
    * @param {RTCSessionDescription} offer - Offer SDP.
    * @return {Promise} A promise that is resolved with Offer SDP.
@@ -175,48 +241,6 @@ class Negotiator extends EventEmitter {
   }
 
   /**
-   * Close a PeerConnection.
-   */
-  cleanup() {
-    util.log('Cleaning up PeerConnection');
-
-    if (this._pc && (this._pc.readyState !== 'closed' || this._pc.signalingState !== 'closed')) {
-      this._pc.close();
-      this._pc = null;
-    }
-  }
-
-  /**
-   * Set remote description with remote Offer SDP, then create Answer SDP and emit it.
-   * @param {object} offerSdp - An object containing Offer SDP.
-   */
-  handleOffer(offerSdp) {
-    this._setRemoteDescription(offerSdp)
-      .then(() => {
-        return this._makeAnswerSdp();
-      }).then(answer => {
-        this.emit(Negotiator.EVENTS.answerCreated.key, answer);
-      });
-  }
-
-  /**
-   * Set remote description with Answer SDP.
-   * @param {object} answerSdp - An object containing Answer SDP.
-   */
-  handleAnswer(answerSdp) {
-    this._setRemoteDescription(answerSdp);
-  }
-
-  /**
-   * Set ice candidate with Candidate SDP.
-   * @param {object} candidate - An object containing Candidate SDP.
-   */
-  handleCandidate(candidate) {
-    this._pc.addIceCandidate(new RTCIceCandidate(candidate));
-    util.log('Added ICE candidate');
-  }
-
-  /**
    * Set remote SDP.
    * @param {object} sdp - An object containing remote SDP.
    * @return {Promise} A promise that is resolved when setting remote SDP is completed.
@@ -231,30 +255,6 @@ class Negotiator extends EventEmitter {
       }, err => {
         this._emitError('webrtc', err);
         util.log('Failed to setRemoteDescription: ', err);
-      });
-    });
-  }
-
-  /**
-   * Make Answer SDP and set it as local description.
-   * @return {Promise} A promise that is resolved when setting local SDP is completed.
-   * @private
-   */
-  _makeAnswerSdp() {
-    return new Promise(resolve => {
-      this._pc.createAnswer(answer => {
-        util.log('Created answer.');
-
-        this._pc.setLocalDescription(answer, () => {
-          util.log('Set localDescription: answer');
-          resolve(answer);
-        }, err => {
-          this._emitError('webrtc', err);
-          util.log('Failed to setLocalDescription, ', err);
-        });
-      }, err => {
-        this._emitError('webrtc', err);
-        util.log('Failed to createAnswer, ', err);
       });
     });
   }
