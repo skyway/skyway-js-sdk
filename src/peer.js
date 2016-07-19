@@ -648,12 +648,10 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.MESH_USER_LIST.key, roomUserListMessage => {
       const room = this.rooms[roomUserListMessage.roomName];
       if (room) {
-        let options = {};
-        options.pcConfig = this._pcConfig;
         if (roomUserListMessage.type === 'media') {
-          room.makeMCs(roomUserListMessage.userList, options);
+          room.makeMediaConnections(roomUserListMessage.userList);
         } else {
-          room.makeDCs(roomUserListMessage.userList, options);
+          room.makeDataConnections(roomUserListMessage.userList);
         }
       }
     });

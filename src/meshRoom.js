@@ -39,8 +39,6 @@ class MeshRoom extends Room {
   constructor(name, peerId, options) {
     super(name, peerId, options);
 
-    this._pcConfig = this._options.pcConfig;
-
     this.connections = {};
   }
 
@@ -80,101 +78,26 @@ class MeshRoom extends Room {
   /**
    * Start video call to all participants in the room.
    * @param {Array} peerIds - Array of peerIds you are calling to.
-   * @param {Object} [options] - Optional arguments for the MediaConnection.
    */
-  makeMCs(peerIds, options = {}) {
-    options.stream = this._localStream;
+  makeMediaConnections(peerIds) {
+    const options = {
+      stream:   this._localStream,
+      pcConfig: this._pcConfig
+    };
 
-    peerIds.forEach(peerId => {
-      if (this._peerId !== peerId) {
-        const mc = new MediaConnection(peerId, options);
-        util.log('MediaConnection to ${peerId} created in makeMCs method');
-        this._addConnection(peerId, mc);
-        this._setupMessageHandlers(mc);
-      }
-    });
+    this._makeConnections(peerIds, 'media', options);
   }
 
   /**
    * Start data connection to all participants in the room.
-   * @param {Array} peerIds - Array of peerIds you are calling to.
-   * @param {Object} [options] - Optional arguments for the DataConnection.
+   * @param {Array} peerIds - Array of peerIds you are connecting to.
    */
-  makeDCs(peerIds, options = {}) {
-    for (let i = 0; i < peerIds.length; i++) {
-      let peerId = peerIds[i];
-      if (this._peerId !== peerId) {
-        const dc = new DataConnection(peerId, options);
-        util.log('DataConnection created in makeDCs method');
-        this._addConnection(peerId, dc);
-        this._setupMessageHandlers(dc);
-      }
-    }
-  }
+  makeDataConnections(peerIds) {
+    const options = {
+      pcConfig: this._pcConfig
+    };
 
-  /**
-   * Add a connection to room's connections property.
-   * @param {string} peerId - User's peerID.
-   * @param {MediaConnection|DataConnection} connection - An instance of MediaConneciton or DataConnection.
-   * @private
-   */
-  _addConnection(peerId, connection) {
-    if (!this.connections[peerId]) {
-      this.connections[peerId] = [];
-    }
-    this.connections[peerId].push(connection);
-  }
-
-  /**
-   * Delete a connections according to given peerId.
-   * @param {string} peerId - An id of the peer that will be deleted.
-   * @private
-   */
-  _deleteConnections(peerId) {
-    if (this.connections[peerId]) {
-      delete this.connections[peerId];
-    }
-  }
-
-  /**
-   * Set up connection event and message handlers.
-   * @param {MediaConnection|DataConnection} connection - An instance of MediaConneciton or DataConnection.
-   * @private
-   */
-  _setupMessageHandlers(connection) {
-    connection.on(Connection.EVENTS.offer.key, offerMessage => {
-      offerMessage.roomName = this.name;
-      this.emit(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage);
-    });
-    connection.on(Connection.EVENTS.answer.key, answerMessage => {
-      answerMessage.roomName = this.name;
-      this.emit(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage);
-    });
-    connection.on(Connection.EVENTS.candidate.key, candidateMessage => {
-      candidateMessage.roomName = this.name;
-      this.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
-    });
-    connection.on(MediaConnection.EVENTS.stream.key, remoteStream => {
-      remoteStream.peerId = connection.remoteId;
-      this.emit(MeshRoom.EVENTS.stream.key, remoteStream);
-    });
-  }
-
-  /**
-   * Return a connection according to given peerId and connectionId.
-   * @param {string} peerId - User's PeerId.
-   * @param {string} connectionId - An ID to uniquely identify the connection.
-   * @return  {Connection} A connection according to given peerId and connectionId.
-   * @private
-   */
-  _getConnection(peerId, connectionId) {
-    if (this.connections && this.connections[peerId]) {
-      let conn = this.connections[peerId].filter(connection => {
-        return connection.id === connectionId;
-      });
-      return conn[0];
-    }
-    return null;
+    this._makeConnections(peerIds, 'data', options);
   }
 
   /**
@@ -190,6 +113,7 @@ class MeshRoom extends Room {
       this.emit(MeshRoom.EVENTS.open.key);
       return;
     }
+
     this.emit(MeshRoom.EVENTS.peerJoin.key, src);
   }
 
@@ -221,7 +145,7 @@ class MeshRoom extends Room {
     let connection = this._getConnection(offerMessage.src, connectionId);
 
     if (connection) {
-      util.warn('Offer received for existing Connection ID:', connectionId);
+      util.warn(`Offer received for existing Connection ID: ${connectionId}`);
       return;
     }
 
@@ -241,7 +165,7 @@ class MeshRoom extends Room {
 
       this.emit(MeshRoom.EVENTS.call.key, connection);
     } else {
-      util.warn('Received malformed connection type: ', offerMessage.connectionType);
+      util.warn(`Received malformed connection type: ${offerMessage.connectionType}`);
     }
   }
 
@@ -257,9 +181,9 @@ class MeshRoom extends Room {
    */
   handleAnswer(answerMessage) {
     const connection = this._getConnection(
-                          answerMessage.src,
-                          answerMessage.connectionId
-                        );
+      answerMessage.src,
+      answerMessage.connectionId
+    );
 
     if (connection) {
       connection.handleAnswer(answerMessage);
@@ -278,9 +202,9 @@ class MeshRoom extends Room {
    */
   handleCandidate(candidateMessage) {
     const connection = this._getConnection(
-                          candidateMessage.src,
-                          candidateMessage.connectionId
-                        );
+      candidateMessage.src,
+      candidateMessage.connectionId
+    );
 
     if (connection) {
       connection.handleCandidate(candidateMessage);
@@ -329,6 +253,107 @@ class MeshRoom extends Room {
     };
     this.emit(MeshRoom.MESSAGE_EVENTS.leave.key, message);
     this.emit(MeshRoom.EVENTS.close.key);
+  }
+
+  /**
+   * Append a connection to peer's array of connections, stored in room.connections.
+   * @param {string} peerId - User's peerID.
+   * @param {MediaConnection|DataConnection} connection - An instance of MediaConnection or DataConnection.
+   * @private
+   */
+  _addConnection(peerId, connection) {
+    if (!this.connections[peerId]) {
+      this.connections[peerId] = [];
+    }
+    this.connections[peerId].push(connection);
+  }
+
+  /**
+   * Start connections and add handlers.
+   * @param {Array} peerIds - Array of peerIds you are creating connections for.
+   * @param {string} type - Either 'data' or 'media'.
+   * @param {Object} options - Options to pass to the connection constructor.
+   * @private
+   */
+  _makeConnections(peerIds, type, options) {
+    peerIds.filter(peerId => {
+      return peerId !== this._peerId;
+    }).forEach(peerId => {
+      let connection;
+
+      switch (type) {
+        case 'data':
+          connection = new DataConnection(peerId, options);
+          break;
+        case 'media':
+          connection = new MediaConnection(peerId, options);
+          break;
+        default:
+          return;
+      }
+
+      this._addConnection(peerId, connection);
+      this._setupMessageHandlers(connection);
+
+      util.log(`${type} connection to ${peerId} created in ${this.name}`);
+    });
+  }
+
+  /**
+   * Delete a connection according to given peerId.
+   * @param {string} peerId - The id of the peer that will be deleted.
+   * @private
+   */
+  _deleteConnections(peerId) {
+    if (this.connections[peerId]) {
+      delete this.connections[peerId];
+    }
+  }
+
+  /**
+   * Return a connection according to given peerId and connectionId.
+   * @param {string} peerId - User's PeerId.
+   * @param {string} connectionId - An ID to uniquely identify the connection.
+   * @return {Connection} A connection according to given peerId and connectionId.
+   * @private
+   */
+  _getConnection(peerId, connectionId) {
+    if (this.connections && this.connections[peerId]) {
+      let conn = this.connections[peerId].filter(connection => {
+        return connection.id === connectionId;
+      });
+      return conn[0];
+    }
+    return null;
+  }
+
+  /**
+   * Set up connection event and message handlers.
+   * @param {MediaConnection|DataConnection} connection - An instance of MediaConnection or DataConnection.
+   * @private
+   */
+  _setupMessageHandlers(connection) {
+    connection.on(Connection.EVENTS.offer.key, offerMessage => {
+      offerMessage.roomName = this.name;
+      this.emit(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage);
+    });
+
+    connection.on(Connection.EVENTS.answer.key, answerMessage => {
+      answerMessage.roomName = this.name;
+      this.emit(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage);
+    });
+
+    connection.on(Connection.EVENTS.candidate.key, candidateMessage => {
+      candidateMessage.roomName = this.name;
+      this.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
+    });
+
+    if (connection.type === 'media') {
+      connection.on(MediaConnection.EVENTS.stream.key, remoteStream => {
+        remoteStream.peerId = connection.remoteId;
+        this.emit(MeshRoom.EVENTS.stream.key, remoteStream);
+      });
+    }
   }
 
   /**
