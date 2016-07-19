@@ -39,6 +39,7 @@ class Room extends EventEmitter {
    * @param {string} peerId - User's peerId.
    * @param {object} [options] - Optional arguments for the connection.
    * @param {object} [options.stream] - User's medias stream to send other participants.
+   * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    */
   constructor(name, peerId, options = {}) {
     super();
@@ -52,6 +53,8 @@ class Room extends EventEmitter {
     this._options = options;
     this._peerId = peerId;
     this._localStream = this._options.stream;
+
+    this._pcConfig = this._options.pcConfig;
   }
 
   /**

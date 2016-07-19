@@ -1,10 +1,10 @@
 'use strict';
 
-const util              = require('./util');
-const Room              = require('./room');
-const Enum              = require('enum');
-const shim              = require('../src/webrtcShim');
-const RTCPeerConnection = shim.RTCPeerConnection;
+const Room       = require('./room');
+const Negotiator = require('./negotiator');
+const util       = require('./util');
+
+const Enum = require('enum');
 
 const MessageEvents = [
   'offerRequest',
@@ -33,12 +33,13 @@ class SFURoom extends Room {
     super(name, peerId, options);
 
     this.remoteStreams = {};
-    this._pcAvailable = false;
     this.open = false;
     this.members = [];
 
     this._msidMap = {};
     this._unknownStreams = {};
+
+    this._negotiator = new Negotiator();
   }
 
   /**
@@ -64,44 +65,60 @@ class SFURoom extends Room {
    */
   handleOffer(offer) {
     // Handle SFU Offer and send Answer to Server
-    let description = new RTCSessionDescription(offer);
-    if (this._pc) {
-      this._pc.setRemoteDescription(description, () => {
-        this._pc.createAnswer(answer => {
-          this._pc.setLocalDescription(answer,
-            () => {},
-            e => {
-              util.error('Problem setting localDescription', e);
-            });
-        }, e => {
-          util.error('Problem creating answer', e);
-        });
-      }, e => {
-        util.error('Problem setting remote offer', e);
+    if (!this._connectionStarted) {
+      this._negotiator.startConnection({
+        type:     'media',
+        stream:   this._localStream,
+        pcConfig: this._options.pcConfig,
+        offer:    offer
       });
-    } else {
-      this._pc = new RTCPeerConnection(this._options.pcConfig);
-
-      this._setupPCListeners();
-
-      if (this._localStream) {
-        this._pc.addStream(this._localStream);
-      }
-
-      this._pc.setRemoteDescription(description, () => {
-        this._pc.createAnswer(answer => {
-          this._pc.setLocalDescription(answer,
-            () => {},
-            e => {
-              util.error('Problem setting localDescription', e);
-            });
-        }, e => {
-          util.error('Problem creating answer', e);
-        });
-      }, e => {
-        util.error('Problem setting remote offer', e);
-      });
+      this._setupNegotiatorMessageHandlers();
+      this._connectionStarted = true;
     }
+  }
+
+  /**
+   * Handle messages from the negotiator.
+   * @private
+   */
+  _setupNegotiatorMessageHandlers() {
+    this._negotiator.on(Negotiator.EVENTS.addStream.key, stream => {
+      const remoteStream = stream;
+
+      if (this._msidMap[remoteStream.id]) {
+        remoteStream.peerId = this._msidMap[remoteStream.id];
+
+        if (remoteStream.peerId === this._peerId) {
+          return;
+        }
+        this.remoteStreams[remoteStream.id] = remoteStream;
+        this.emit(SFURoom.EVENTS.stream.key, remoteStream);
+
+        util.log(`Received remote media stream for ${remoteStream.peerId} in ${this.name}`);
+      } else {
+        this._unknownStreams[remoteStream.id] = remoteStream;
+      }
+    });
+
+    this._negotiator.on(Negotiator.EVENTS.removeStream.key, stream => {
+      delete this.remoteStreams[stream.id];
+      delete this._msidMap[stream.id];
+      delete this._unknownStreams[stream.id];
+
+      this.emit(SFURoom.EVENTS.removeStream.key, stream);
+    });
+
+    this._negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, answer => {
+      const answerMessage = {
+        roomName: this.name,
+        answer:   answer
+      };
+      this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
+    });
+
+    this._negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key, () => {
+      this.close();
+    });
   }
 
   /**
@@ -139,7 +156,10 @@ class SFURoom extends Room {
     const src = leaveMessage.src;
 
     const index = this.members.indexOf(src);
-    this.members.splice(index, 1);
+    if (index >= 0) {
+      this.members.splice(index, 1);
+    }
+
     this.emit(SFURoom.EVENTS.peerLeave.key, src);
   }
 
@@ -168,8 +188,8 @@ class SFURoom extends Room {
       return;
     }
 
-    if (this._pc) {
-      this._pc.close();
+    if (this._negotiator) {
+      this._negotiator.cleanup();
     }
 
     const message = {
@@ -179,7 +199,11 @@ class SFURoom extends Room {
     this.emit(SFURoom.EVENTS.close.key);
   }
 
-  updateMsidMap(msids) {
+  /**
+   * Update the entries in the msid to peerId map.
+   * @param {Object} msids - Object with msids as the key and peerIds as the values.
+   */
+  updateMsidMap(msids = {}) {
     this._msidMap = msids;
 
     for (let msid of Object.keys(this._unknownStreams)) {
@@ -194,108 +218,9 @@ class SFURoom extends Room {
         }
 
         this.remoteStreams[remoteStream.id] = remoteStream;
-        this.emit(Room.EVENTS.stream.key, remoteStream);
+        this.emit(SFURoom.EVENTS.stream.key, remoteStream);
       }
     }
-  }
-
-  /**
-   * Set up PeerConnection event message handlers.
-   * @private
-   */
-  _setupPCListeners() {
-    this._pc.onaddstream = evt => {
-      // The SFU specific stream arrives at first.
-      // The traffic of stream is empty and we silently ignore this.
-      if (evt.stream.id === 'mixedmslabel') {
-        return;
-      }
-
-      util.log('Received remote media stream');
-      const remoteStream = evt.stream;
-
-      if (this._msidMap[remoteStream.id]) {
-        remoteStream.peerId = this._msidMap[remoteStream.id];
-
-        if (remoteStream.peerId === this._peerId) {
-          return;
-        }
-        this.remoteStreams[remoteStream.id] = remoteStream;
-        this.emit(Room.EVENTS.stream.key, remoteStream);
-      } else {
-        this._unknownStreams[remoteStream.id] = remoteStream;
-      }
-    };
-
-    this._pc.onicecandidate = evt => {
-      if (!evt.candidate) {
-        util.log('ICE canddidates gathering complete');
-        this._pc.onicecandidate = () => {};
-        const answerMessage = {
-          roomName: this.name,
-          answer:   this._pc.localDescription
-        };
-        this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
-      }
-    };
-
-    this._pc.oniceconnectionstatechange = () => {
-      switch (this._pc.iceConnectionState) {
-        case 'new':
-          util.log('iceConnectionState is new');
-          break;
-        case 'checking':
-          util.log('iceConnectionState is checking');
-          break;
-        case 'connected':
-          util.log('iceConnectionState is connected');
-          break;
-        case 'completed':
-          util.log('iceConnectionState is completed');
-          break;
-        case 'failed':
-          util.log('iceConnectionState is failed, closing connection');
-          break;
-        case 'disconnected':
-          util.log('iceConnectionState is disconnected, closing connection');
-          break;
-        case 'closed':
-          util.log('iceConnectionState is closed');
-          break;
-        default:
-          break;
-      }
-    };
-
-    this._pc.onremovestream = evt => {
-      util.log('`removestream` triggered', evt.stream);
-      this.emit(SFURoom.EVENTS.removeStream.key, evt.stream);
-    };
-
-    this._pc.onsignalingstatechange = () => {
-      switch (this._pc.signalingState) {
-        case 'stable':
-          util.log('signalingState is stable');
-          break;
-        case 'have-local-offer':
-          util.log('signalingState is have-local-offer');
-          break;
-        case 'have-remote-offer':
-          util.log('signalingState is have-remote-offer');
-          break;
-        case 'have-local-pranswer':
-          util.log('signalingState is have-local-pranswer');
-          break;
-        case 'have-remote-pranswer':
-          util.log('signalingState is have-remote-pranswer');
-          break;
-        case 'closed':
-          util.log('signalingState is closed');
-          break;
-        default:
-          break;
-      }
-    };
   }
 
   /**
