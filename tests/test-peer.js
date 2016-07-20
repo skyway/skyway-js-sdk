@@ -912,7 +912,7 @@ describe('Peer', () => {
         peer.socket._isOpen = true;
 
         const room = peer.joinRoom(roomName, {mode: 'sfu'});
-        room.open = true;
+        room._open = true;
 
         assert(ioSpy.calledWith(util.MESSAGE_TYPES.SFU_JOIN.key));
         room.emit(SFURoom.MESSAGE_EVENTS.answer.key, 'foobar');
@@ -933,7 +933,7 @@ describe('Peer', () => {
         peer.socket._isOpen = true;
 
         const room = peer.joinRoom(roomName, {mode: 'sfu'});
-        room.open = true;
+        room._open = true;
         room.send('foobar');
 
         setTimeout(() => {
@@ -952,7 +952,7 @@ describe('Peer', () => {
         peer.socket._isOpen = true;
 
         const room = peer.joinRoom(roomName, {mode: 'sfu'});
-        room.open = true;
+        room._open = true;
         room.getLog();
 
         setTimeout(() => {
@@ -992,7 +992,7 @@ describe('Peer', () => {
         peer.socket._isOpen = true;
 
         const room = peer.joinRoom(roomName, {mode: 'sfu'});
-        room.open = true;
+        room._open = true;
 
         setTimeout(() => {
           assert(spy.calledWith(util.MESSAGE_TYPES.SFU_JOIN.key));
@@ -1164,7 +1164,7 @@ describe('Peer', () => {
         peer.socket._isOpen = true;
 
         const room = peer.joinRoom(roomName);
-        room.open = true;
+        room._open = true;
 
         assert(ioSpy.calledWith(util.MESSAGE_TYPES.MESH_JOIN.key));
         room.emit(SFURoom.MESSAGE_EVENTS.answer.key, 'foobar');
@@ -1185,7 +1185,7 @@ describe('Peer', () => {
         peer.socket._isOpen = true;
 
         const room = peer.joinRoom(roomName);
-        room.open = true;
+        room._open = true;
         room.sendByWS('foobar');
 
         setTimeout(() => {
@@ -1204,7 +1204,7 @@ describe('Peer', () => {
         peer.socket._isOpen = true;
 
         const room = peer.joinRoom(roomName);
-        room.open = true;
+        room._open = true;
         room.getLog();
 
         setTimeout(() => {

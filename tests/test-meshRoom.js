@@ -556,8 +556,6 @@ describe('MeshRoom', () => {
     it('should emit a log event', done => {
       const testLog = Symbol();
 
-      meshRoom.open = true;
-
       meshRoom.on('log', log => {
         assert.equal(log, testLog);
         done();
@@ -568,8 +566,6 @@ describe('MeshRoom', () => {
 
   describe('getLog', () => {
     it('should emit a getLog event', done => {
-      meshRoom.open = true;
-
       meshRoom.on(MeshRoom.MESSAGE_EVENTS.getLog.key, () => {
         done();
       });
