@@ -327,6 +327,28 @@ class Util {
   isSecure() {
     return location.protocol === 'https:';
   }
+
+  /**
+   * Emit Error.
+   * @param {string} type - The type of error.
+   * @param {Error|string} err - An Error instance or the error message.
+   * @param {Object} context - The object on which to emit the error.
+   * @private
+   */
+  emitError(type, err, context) {
+    if (typeof err === 'string') {
+      err = new Error(err);
+    }
+    err.type = type;
+
+    this.error(err);
+
+    if (context && context.emit &&
+      context.constructor.EVENTS && context.constructor.EVENTS.error) {
+      context.emit(context.constructor.EVENTS.error.key, err);
+    }
+  }
+
 }
 
 module.exports = new Util();
