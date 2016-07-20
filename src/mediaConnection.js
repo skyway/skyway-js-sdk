@@ -10,6 +10,8 @@ const MCEvents = new Enum([
   'stream'
 ]);
 
+MCEvents.extend(Connection.EVENTS.enums);
+
 /**
  * Class that manages data connections to other peers.
  * @extends Connection

@@ -13,6 +13,8 @@ const DCEvents = new Enum([
   'error'
 ]);
 
+DCEvents.extend(Connection.EVENTS.enums);
+
 const DCSerializations = new Enum([
   'binary',
   'binary-utf8',

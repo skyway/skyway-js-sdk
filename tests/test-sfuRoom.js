@@ -251,11 +251,11 @@ describe('SFURoom', () => {
       });
 
       it('should set open to true', () => {
-        assert.equal(sfuRoom.open, false);
+        assert.equal(sfuRoom._open, false);
 
         sfuRoom.handleJoin(joinMessage);
 
-        assert.equal(sfuRoom.open, true);
+        assert.equal(sfuRoom._open, true);
       });
 
       it('should not emit a peerJoin event', done => {
@@ -303,7 +303,7 @@ describe('SFURoom', () => {
 
     describe('when room is open', () => {
       beforeEach(() => {
-        sfuRoom.open = true;
+        sfuRoom._open = true;
       });
 
       it('should remove the user from members', () => {
@@ -379,7 +379,7 @@ describe('SFURoom', () => {
       const data = 'foobar';
 
       const sfuRoom = new SFURoom(sfuRoomName, peerId);
-      sfuRoom.open = true;
+      sfuRoom._open = true;
 
       sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, message => {
         assert.equal(message.roomName, sfuRoomName);
@@ -394,7 +394,7 @@ describe('SFURoom', () => {
       const data = 'foobar';
 
       const sfuRoom = new SFURoom(sfuRoomName, peerId);
-      sfuRoom.open = false;
+      sfuRoom._open = false;
 
       sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, () => {
         assert.fail(undefined, undefined, 'Should not have emitted a broadcast event');
@@ -410,7 +410,7 @@ describe('SFURoom', () => {
   describe('close', () => {
     it('should emit close and leave events when close() is called', () => {
       const message = {roomName: sfuRoomName};
-      sfuRoom.open = true;
+      sfuRoom._open = true;
 
       const emitSpy = sinon.spy(sfuRoom, 'emit');
 
@@ -473,7 +473,7 @@ describe('SFURoom', () => {
     it('should emit a log event', done => {
       const testLog = Symbol();
 
-      sfuRoom.open = true;
+      sfuRoom._open = true;
 
       sfuRoom.on('log', log => {
         assert.equal(log, testLog);
@@ -485,7 +485,7 @@ describe('SFURoom', () => {
 
   describe('getLog', () => {
     it('should emit a getLog event', done => {
-      sfuRoom.open = true;
+      sfuRoom._open = true;
 
       sfuRoom.on(SFURoom.MESSAGE_EVENTS.getLog.key, () => {
         done();

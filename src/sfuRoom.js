@@ -33,9 +33,9 @@ class SFURoom extends Room {
     super(name, peerId, options);
 
     this.remoteStreams = {};
-    this.open = false;
     this.members = [];
 
+    this._open = false;
     this._msidMap = {};
     this._unknownStreams = {};
 
@@ -132,7 +132,7 @@ class SFURoom extends Room {
     const src = joinMessage.src;
 
     if (src === this._peerId) {
-      this.open = true;
+      this._open = true;
       this.emit(SFURoom.EVENTS.open.key);
 
       // At this stage the Server has acknowledged us joining a room
@@ -149,7 +149,7 @@ class SFURoom extends Room {
    * @param {Object} leaveMessage - Message from SFU server.
    */
   handleLeave(leaveMessage) {
-    if (!this.open) {
+    if (!this._open) {
       return;
     }
 
@@ -169,7 +169,7 @@ class SFURoom extends Room {
    * @param {*} data - The data to send.
    */
   send(data) {
-    if (!this.open) {
+    if (!this._open) {
       return;
     }
 
@@ -184,13 +184,15 @@ class SFURoom extends Room {
    * Close PeerConnection and emit leave and close event.
    */
   close() {
-    if (!this.open) {
+    if (!this._open) {
       return;
     }
 
     if (this._negotiator) {
       this._negotiator.cleanup();
     }
+
+    this._open = false;
 
     const message = {
       roomName: this.name
