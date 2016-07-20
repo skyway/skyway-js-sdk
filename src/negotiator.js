@@ -152,7 +152,7 @@ class Negotiator extends EventEmitter {
           break;
         case 'failed':
         case 'disconnected':
-          util.log(`iceConnectionState is ${this._pc.oniceconnectionstatechange}, closing connection`);
+          util.log(`iceConnectionState is ${this._pc.iceConnectionState}, closing connection`);
           this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
           break;
         default:
@@ -179,7 +179,7 @@ class Negotiator extends EventEmitter {
     };
 
     this._pc.onsignalingstatechange = () => {
-      util.log(`signalingState is ${this._pc.onsignalingstatechange}`);
+      util.log(`signalingState is ${this._pc.signalingState}`);
     };
   }
 
