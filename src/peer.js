@@ -114,10 +114,10 @@ class Peer extends EventEmitter {
         '.disconnect() on this Peer and ended your connection with the ' +
         'server. You can create a new Peer to reconnect, or call reconnect ' +
         'on this peer if you believe its ID to still be available.');
-      util.emitError(
+      util.emitError.call(
+        this,
         'disconnected',
-        'Cannot connect to new Peer after disconnecting from server.',
-        this
+        'Cannot connect to new Peer after disconnecting from server.'
       );
       return null;
     }
@@ -147,10 +147,10 @@ class Peer extends EventEmitter {
         '.disconnect() on this Peer and ended your connection with the ' +
         'server. You can create a new Peer to reconnect, or call reconnect ' +
         'on this peer if you believe its ID to still be available.');
-      util.emitError(
+      util.emitError.call(
+        this,
         'disconnected',
-        'Cannot connect to new Peer after disconnecting from server.',
-        this);
+        'Cannot connect to new Peer after disconnecting from server.');
       return null;
     }
     if (!stream) {
@@ -180,7 +180,7 @@ class Peer extends EventEmitter {
    */
   joinRoom(roomName, roomOptions = {}) {
     if (!roomName) {
-      util.emitError('room-error', 'Room name must be defined.', this);
+      util.emitError.call(this, 'room-error', 'Room name must be defined.');
       return null;
     }
 
@@ -404,7 +404,7 @@ class Peer extends EventEmitter {
   _abort(type, message) {
     util.error('Aborting!');
     this.disconnect();
-    util.emitError(type, message, this);
+    util.emitError.call(this, type, message);
   }
 
   /**
@@ -442,7 +442,7 @@ class Peer extends EventEmitter {
       // If we haven't explicitly disconnected, emit error and disconnect.
       if (!this._disconnectCalled) {
         this.disconnect();
-        util.emitError('socket-error', 'Lost connection to server.', this);
+        util.emitError.call(this, 'socket-error', 'Lost connection to server.');
       }
     });
 
@@ -509,10 +509,10 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(util.MESSAGE_TYPES.EXPIRE.key, peerId => {
-      util.emitError(
+      util.emitError.call(
+        this,
         'peer-unavailable',
-        `Could not connect to peer ${peerId}`,
-        this
+        `Could not connect to peer ${peerId}`
       );
     });
 

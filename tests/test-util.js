@@ -1,8 +1,11 @@
 'use strict';
 
-const assert    = require('power-assert');
-const sinon     = require('sinon');
-const util      = require('../src/util');
+const util = require('../src/util');
+
+const assert       = require('power-assert');
+const sinon        = require('sinon');
+const EventEmitter = require('events');
+const Enum         = require('enum');
 
 describe('Util', () => {
   before(() => {
@@ -209,14 +212,21 @@ describe('Util', () => {
     });
   });
 
-  /**
   describe('emitError', () => {
     const errorMessage = 'Error message';
     const errorType = 'error-type';
     let errorStub;
-    let negotiator;
+    let emitter;
+
+    class DummyEmitter extends EventEmitter {
+      static get EVENTS() {
+        return new Enum(['error']);
+      }
+    }
 
     beforeEach(() => {
+      emitter = new DummyEmitter();
+
       errorStub = sinon.stub(util, 'error');
     });
 
@@ -231,46 +241,58 @@ describe('Util', () => {
       });
 
       it('should log the error', () => {
-        sinon.stub(negotiator, 'emit');
-        negotiator._emitError(errorType, error);
+        sinon.stub(emitter, 'emit');
+        util.emitError.call(emitter, errorType, error);
 
+        assert.equal(errorStub.callCount, 1);
+        assert(errorStub.calledWith(error));
+      });
+
+      it('should log and not throw an error when not called using call', () => {
+        util.emitError(errorType, error);
+
+        assert.equal(errorStub.callCount, 1);
         assert(errorStub.calledWith(error));
       });
 
       it('should emit the error in an \'error\' event', done => {
-        negotiator.on(Negotiator.EVENTS.error.key, err => {
+        emitter.on(DummyEmitter.EVENTS.error.key, err => {
           assert(err instanceof Error);
           assert.equal(err.message, errorMessage);
           assert.equal(err.type, errorType);
           done();
         });
 
-        negotiator._emitError(errorType, error);
+        util.emitError.call(emitter, errorType, error);
       });
     });
 
     describe('when error is an string', () => {
       it('should log the error', () => {
-        sinon.stub(negotiator, 'emit');
-        negotiator._emitError(errorType, errorMessage);
+        sinon.stub(emitter, 'emit');
+        util.emitError.call(emitter, errorType, errorMessage);
 
-        assert(errorStub.calledOnce);
+        assert.equal(errorStub.callCount, 1);
+        assert(errorStub.calledWithMatch({type: errorType, message: errorMessage}));
+      });
 
-        const loggedError = errorStub.args[0][0];
-        assert.equal(loggedError.message, errorMessage);
-        assert.equal(loggedError.type, errorType);
+      it('should log and not throw an error when not called using call', () => {
+        util.emitError(errorType, errorMessage);
+
+        assert.equal(errorStub.callCount, 1);
+        assert(errorStub.calledWithMatch({type: errorType, message: errorMessage}));
       });
 
       it('should emit the error in an \'error\' event', done => {
-        negotiator.on(Negotiator.EVENTS.error.key, err => {
+        emitter.on(DummyEmitter.EVENTS.error.key, err => {
           assert(err instanceof Error);
           assert.equal(err.message, errorMessage);
           assert.equal(err.type, errorType);
           done();
         });
 
-        negotiator._emitError(errorType, errorMessage);
+        util.emitError.call(emitter, errorType, errorMessage);
       });
     });
-  });*/
+  });
 });

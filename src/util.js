@@ -46,6 +46,8 @@ const MessageTypes = new Enum([
   'MESH_USER_LEAVE'
 ]);
 
+let utilInstance;
+
 /**
  * Class that contains utility functions.
  */
@@ -329,26 +331,26 @@ class Util {
   }
 
   /**
-   * Emit Error.
+   * Log and emit Error.
+   * Should be called using 'call' or 'apply' for to provide the object to emit the error on.
+   * e.g. util.emitError.call(negotiator, errorType, errorMessage);
    * @param {string} type - The type of error.
    * @param {Error|string} err - An Error instance or the error message.
-   * @param {Object} context - The object on which to emit the error.
-   * @private
    */
-  emitError(type, err, context) {
+  emitError(type, err) {
     if (typeof err === 'string') {
       err = new Error(err);
     }
     err.type = type;
 
-    this.error(err);
+    utilInstance.error(err);
 
-    if (context && context.emit &&
-      context.constructor.EVENTS && context.constructor.EVENTS.error) {
-      context.emit(context.constructor.EVENTS.error.key, err);
+    if (this && this.emit &&
+      this.constructor.EVENTS && this.constructor.EVENTS.error) {
+      this.emit(this.constructor.EVENTS.error.key, err);
     }
   }
-
 }
 
-module.exports = new Util();
+utilInstance = new Util();
+module.exports = utilInstance;

@@ -194,7 +194,7 @@ class Negotiator extends EventEmitter {
         util.log('Created offer.');
         resolve(offer);
       }, error => {
-        util.emitError('webrtc', error, this);
+        util.emitError.call(this, 'webrtc', error);
         util.log('Failed to createOffer, ', error);
       });
     });
@@ -214,11 +214,11 @@ class Negotiator extends EventEmitter {
           util.log('Set localDescription: answer');
           resolve(answer);
         }, err => {
-          util.emitError('webrtc', err, this);
+          util.emitError.call(this, 'webrtc', err);
           util.log('Failed to setLocalDescription, ', err);
         });
       }, err => {
-        util.emitError('webrtc', err, this);
+        util.emitError.call(this, 'webrtc', err);
         util.log('Failed to createAnswer, ', err);
       });
     });
@@ -237,7 +237,7 @@ class Negotiator extends EventEmitter {
         this.emit(Negotiator.EVENTS.offerCreated.key, offer);
         resolve(offer);
       }, error => {
-        util.emitError('webrtc', error, this);
+        util.emitError.call(this, 'webrtc', error);
         util.log('Failed to setLocalDescription, ', error);
         reject(error);
       });
@@ -257,7 +257,7 @@ class Negotiator extends EventEmitter {
         util.log('Set remoteDescription:', sdp.type);
         resolve();
       }, err => {
-        util.emitError('webrtc', err, this);
+        util.emitError.call(this, 'webrtc', err);
         util.log('Failed to setRemoteDescription: ', err);
       });
     });
