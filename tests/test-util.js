@@ -1,8 +1,11 @@
 'use strict';
 
-const assert    = require('power-assert');
-const sinon     = require('sinon');
-const util      = require('../src/util');
+const util = require('../src/util');
+
+const assert       = require('power-assert');
+const sinon        = require('sinon');
+const EventEmitter = require('events');
+const Enum         = require('enum');
 
 describe('Util', () => {
   before(() => {
@@ -206,6 +209,90 @@ describe('Util', () => {
     // Test only 'HTTP' becauuse Karma only runs on 'HTTP'
     it('should return false if HTTP', () => {
       assert(util.isSecure(location.protocol) === false);
+    });
+  });
+
+  describe('emitError', () => {
+    const errorMessage = 'Error message';
+    const errorType = 'error-type';
+    let errorStub;
+    let emitter;
+
+    class DummyEmitter extends EventEmitter {
+      static get EVENTS() {
+        return new Enum(['error']);
+      }
+    }
+
+    beforeEach(() => {
+      emitter = new DummyEmitter();
+
+      errorStub = sinon.stub(util, 'error');
+    });
+
+    afterEach(() => {
+      errorStub.restore();
+    });
+
+    describe('when error is an Error object', () => {
+      let error;
+      beforeEach(() => {
+        error = new Error(errorMessage);
+      });
+
+      it('should log the error', () => {
+        sinon.stub(emitter, 'emit');
+        util.emitError.call(emitter, errorType, error);
+
+        assert.equal(errorStub.callCount, 1);
+        assert(errorStub.calledWith(error));
+      });
+
+      it('should log and not throw an error when not called using call', () => {
+        util.emitError(errorType, error);
+
+        assert.equal(errorStub.callCount, 1);
+        assert(errorStub.calledWith(error));
+      });
+
+      it('should emit the error in an \'error\' event', done => {
+        emitter.on(DummyEmitter.EVENTS.error.key, err => {
+          assert(err instanceof Error);
+          assert.equal(err.message, errorMessage);
+          assert.equal(err.type, errorType);
+          done();
+        });
+
+        util.emitError.call(emitter, errorType, error);
+      });
+    });
+
+    describe('when error is an string', () => {
+      it('should log the error', () => {
+        sinon.stub(emitter, 'emit');
+        util.emitError.call(emitter, errorType, errorMessage);
+
+        assert.equal(errorStub.callCount, 1);
+        assert(errorStub.calledWithMatch({type: errorType, message: errorMessage}));
+      });
+
+      it('should log and not throw an error when not called using call', () => {
+        util.emitError(errorType, errorMessage);
+
+        assert.equal(errorStub.callCount, 1);
+        assert(errorStub.calledWithMatch({type: errorType, message: errorMessage}));
+      });
+
+      it('should emit the error in an \'error\' event', done => {
+        emitter.on(DummyEmitter.EVENTS.error.key, err => {
+          assert(err instanceof Error);
+          assert.equal(err.message, errorMessage);
+          assert.equal(err.type, errorType);
+          done();
+        });
+
+        util.emitError.call(emitter, errorType, errorMessage);
+      });
     });
   });
 });

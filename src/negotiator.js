@@ -194,7 +194,7 @@ class Negotiator extends EventEmitter {
         util.log('Created offer.');
         resolve(offer);
       }, error => {
-        this._emitError('webrtc', error);
+        util.emitError.call(this, 'webrtc', error);
         util.log('Failed to createOffer, ', error);
       });
     });
@@ -214,11 +214,11 @@ class Negotiator extends EventEmitter {
           util.log('Set localDescription: answer');
           resolve(answer);
         }, err => {
-          this._emitError('webrtc', err);
+          util.emitError.call(this, 'webrtc', err);
           util.log('Failed to setLocalDescription, ', err);
         });
       }, err => {
-        this._emitError('webrtc', err);
+        util.emitError.call(this, 'webrtc', err);
         util.log('Failed to createAnswer, ', err);
       });
     });
@@ -237,7 +237,7 @@ class Negotiator extends EventEmitter {
         this.emit(Negotiator.EVENTS.offerCreated.key, offer);
         resolve(offer);
       }, error => {
-        this._emitError('webrtc', error);
+        util.emitError.call(this, 'webrtc', error);
         util.log('Failed to setLocalDescription, ', error);
         reject(error);
       });
@@ -257,26 +257,10 @@ class Negotiator extends EventEmitter {
         util.log('Set remoteDescription:', sdp.type);
         resolve();
       }, err => {
-        this._emitError('webrtc', err);
+        util.emitError.call(this, 'webrtc', err);
         util.log('Failed to setRemoteDescription: ', err);
       });
     });
-  }
-
-  /**
-   * Emit Error.
-   * @param {string} type - The type of error.
-   * @param {Error|string} err - An Error instance or the error message.
-   * @private
-   */
-  _emitError(type, err) {
-    if (typeof err === 'string') {
-      err = new Error(err);
-    }
-    err.type = type;
-
-    util.error(err);
-    this.emit(Negotiator.EVENTS.error.key, err);
   }
 
   /**

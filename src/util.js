@@ -46,6 +46,8 @@ const MessageTypes = new Enum([
   'MESH_USER_LEAVE'
 ]);
 
+let utilInstance;
+
 /**
  * Class that contains utility functions.
  */
@@ -327,6 +329,28 @@ class Util {
   isSecure() {
     return location.protocol === 'https:';
   }
+
+  /**
+   * Log and emit Error.
+   * Should be called using 'call' or 'apply' for to provide the object to emit the error on.
+   * e.g. util.emitError.call(negotiator, errorType, errorMessage);
+   * @param {string} type - The type of error.
+   * @param {Error|string} err - An Error instance or the error message.
+   */
+  emitError(type, err) {
+    if (typeof err === 'string') {
+      err = new Error(err);
+    }
+    err.type = type;
+
+    utilInstance.error(err);
+
+    if (this && this.emit &&
+      this.constructor.EVENTS && this.constructor.EVENTS.error) {
+      this.emit(this.constructor.EVENTS.error.key, err);
+    }
+  }
 }
 
-module.exports = new Util();
+utilInstance = new Util();
+module.exports = utilInstance;
