@@ -202,9 +202,9 @@ class Peer extends EventEmitter {
    * Create and setup a SFURoom instance and emit SFU_JOIN message to SkyWay server.
    * If user called joinRoom with a MediaStream, it call sfuRoom.call with it.
    * @param {string} roomName - The name of the room user is joining to.
-   * @param {object} roomOptions - Optional arguments for the RTCPeerConnection.
-   * @param {string} roomOptions.pcConfig -  A RTCConfiguration dictionary for the RTCPeerConnection.
-   * @param {string} roomOptions.peerId - User's peerId.
+   * @param {object} [roomOptions] - Optional arguments for the RTCPeerConnection.
+   * @param {object} [roomOptions.pcConfig] -  A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @param {string} [roomOptions.peerId] - User's peerId.
    * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
    * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
    * @return {SFURoom} - An instance of SFURoom.
@@ -365,12 +365,12 @@ class Peer extends EventEmitter {
   }
 
   /**
-   * Reconnect to SkyWay server.
+   * Reconnect to SkyWay server. Does not work after a peer.destroy().
    */
   reconnect() {
     if (this._disconnectCalled && !this._destroyCalled) {
       this._disconnectCalled = false;
-      this._socket.reconnect();
+      this.socket.reconnect();
     }
   }
 
@@ -662,12 +662,16 @@ class Peer extends EventEmitter {
 
     this.socket.on(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage => {
       const room = this.rooms[answerMessage.roomName];
-      room.handleAnswer(answerMessage);
+      if (room) {
+        room.handleAnswer(answerMessage);
+      }
     });
 
     this.socket.on(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage => {
       const room = this.rooms[candidateMessage.roomName];
-      room.handleCandidate(candidateMessage);
+      if (room) {
+        room.handleCandidate(candidateMessage);
+      }
     });
 
     this.socket.on(util.MESSAGE_TYPES.MESH_DATA.key, roomDataMessage => {
