@@ -26,7 +26,11 @@
     $(function(){
       $('#make-call').click(function(){
         // Initiate a call!
-        room = peer.joinRoom($('#join-room').val(), {mode: 'sfu'});
+        var roomName = $('#join-room').val();
+        if (!roomName) {
+          return;
+        }
+        room = peer.joinRoom('sfu_video_' + roomName, {mode: 'sfu'});
         room.call(window.localStream);
 
         $('#room-id').text(room.name);

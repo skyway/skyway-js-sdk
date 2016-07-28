@@ -26,7 +26,11 @@
     $(function(){
       $('#make-call').click(function(){
         // Initiate a call!
-        room = peer.joinRoom($('#join-room').val(), {stream: window.localStream});
+        var roomName = $('#join-room').val();
+        if (!roomName) {
+          return;
+        }
+        room = peer.joinRoom('mesh_video_' + roomName);
 
         room.on('call', function(call){
           call.answer(window.localStream);

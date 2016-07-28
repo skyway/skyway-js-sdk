@@ -115,9 +115,12 @@
       // Connect to a room
       $('#connect').click(function() {
         var roomName = $('#rid').val();
+        if (!roomName) {
+          return;
+        }
         if (!connectedPeers[roomName]) {
           // Create 2 connections, one labelled chat and another labelled file.
-          var room = peer.joinRoom(roomName, {mode: 'sfu'});
+          room = peer.joinRoom('sfu_text_' + roomName, {mode: 'sfu'});
           room.on('open', function() {
             connect(room);
           });
