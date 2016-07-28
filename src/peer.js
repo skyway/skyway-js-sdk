@@ -368,7 +368,7 @@ class Peer extends EventEmitter {
     const protocol = this.options.secure ? 'https://' : 'http://';
 
     const url = `${protocol}${this.options.host}:` +
-              `${this.options.port}/active/list/${this.options.key}`;
+              `${this.options.port}/api/apikeys/${this.options.key}/clients/`;
 
     // If there's no ID we need to wait for one before trying to init socket.
     http.open('get', url, true);
