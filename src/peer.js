@@ -32,9 +32,9 @@ class Peer extends EventEmitter {
    * @param {string} [id] - User's peerId.
    * @param {Object} options - Optional arguments for the connection.
    * @param {string} options.key - SkyWay API key.
-   * @param {Integer} [options.debug=0] - Log level. NONE:0, ERROR:1, WARN:2, FULL:3.
+   * @param {number} [options.debug=0] - Log level. NONE:0, ERROR:1, WARN:2, FULL:3.
    * @param {string} [options.host='skyway.io'] - The host name of signaling server.
-   * @param {Integer} [options.port=443] - The port number of signaling server.
+   * @param {number} [options.port=443] - The port number of signaling server.
    * @param {string} [options.token=util.randomToken()] - The token used to authorize Peer.
    * @param {object} [options.config=util.defaultConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    * @param {boolean} [options.turn=true] - Whether using TURN or not.
@@ -103,8 +103,10 @@ class Peer extends EventEmitter {
    * @param {Object} [options] - Optional arguments for DataConnection.
    * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
-   * @param {string} [options.serialization] - How to serialize data when sending. One of 'binary', 'json' or 'none'.
-   * @param {string} [options.queuedMessages] - An array of messages that were already received before the connection was created.
+   * @param {string} [options.serialization] - How to serialize data when sending.
+   *                  One of 'binary', 'json' or 'none'.
+   * @param {string} [options.queuedMessages] - An array of messages that were already
+   *                  received before the connection was created.
    * @param {string} [options.payload] - An offer message that triggered creating this object.
    * @return {DataConnection} An instance of DataConnection.
    */
@@ -137,7 +139,8 @@ class Peer extends EventEmitter {
    * @param {object} [options] - Optional arguments for the connection.
    * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
-   * @param {string} [options.queuedMessages] - An array of messages that were already received before the connection was created.
+   * @param {string} [options.queuedMessages] - An array of messages that were already
+   *                  received before the connection was created.
    * @param {string} [options.payload] - An offer message that triggered creating this object.
    * @return {MediaConnection} An instance of MediaConnection.
    */
@@ -199,11 +202,11 @@ class Peer extends EventEmitter {
    * Create and setup a SFURoom instance and emit SFU_JOIN message to SkyWay server.
    * If user called joinRoom with a MediaStream, it call sfuRoom.call with it.
    * @param {string} roomName - The name of the room user is joining to.
-   * @param {object} roomOptions- Optional arguments for the RTCPeerConnection.
+   * @param {object} roomOptions - Optional arguments for the RTCPeerConnection.
    * @param {string} roomOptions.pcConfig -  A RTCConfiguration dictionary for the RTCPeerConnection.
    * @param {string} roomOptions.peerId - User's peerId.
    * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
-   * @param {MesiaStream} [roomOptions.stream] - Media stream user wants to emit.
+   * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
    * @return {SFURoom} - An instance of SFURoom.
    */
   _initSfuRoom(roomName, roomOptions = {}) {
@@ -235,7 +238,7 @@ class Peer extends EventEmitter {
    * @param {string} roomOptions.pcConfig -  A RTCConfiguration dictionary for the RTCPeerConnection.
    * @param {string} roomOptions.peerId - User's peerId.
    * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
-   * @param {MesiaStream} [roomOptions.stream] - Media stream user wants to emit.
+   * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
    * @return {SFURoom} - An instance of MeshRoom.
    */
   _initFullMeshRoom(roomName, roomOptions = {}) {
@@ -307,6 +310,11 @@ class Peer extends EventEmitter {
     }, 0);
   }
 
+  /**
+   * Set up the message event handlers for an SFURoom
+   * @param {SFURoom} room - The room to be set up.
+   * @private
+   */
   _setupSFURoomMessageHandlers(room) {
     room.on(SFURoom.MESSAGE_EVENTS.offerRequest.key, sendMessage => {
       this.socket.send(util.MESSAGE_TYPES.SFU_OFFER_REQUEST.key, sendMessage);
@@ -326,6 +334,11 @@ class Peer extends EventEmitter {
     });
   }
 
+  /**
+   * Set up the message event handlers for a MeshRoom
+   * @param {MeshRoom} room - The room to be set up.
+   * @private
+   */
   _setupMeshRoomMessageHandlers(room) {
     room.on(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage => {
       this.socket.send(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage);
@@ -355,6 +368,10 @@ class Peer extends EventEmitter {
    * Reconnect to SkyWay server.
    */
   reconnect() {
+    if (this._disconnectCalled && !this._destroyCalled) {
+      this._disconnectCalled = false;
+      this._socket.reconnect();
+    }
   }
 
   /**
@@ -405,18 +422,6 @@ class Peer extends EventEmitter {
     util.error('Aborting!');
     this.disconnect();
     util.emitError.call(this, type, message);
-  }
-
-  /**
-   * Abort in a moment.
-   * @param {string} type - The type of error.
-   * @param {string} message - Error description.
-   * @private
-   */
-  _delayedAbort(type, message) {
-    setTimeout(() => {
-      this._abort(type, message);
-    }, 0);
   }
 
   /**
