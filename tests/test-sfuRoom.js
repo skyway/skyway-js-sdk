@@ -86,9 +86,14 @@ describe('SFURoom', () => {
       assert.equal(sfuRoom._connectionStarted, true);
     });
 
-    it('should do nothing if _connectionStarted is true', () => {
+    it('should call negotiator.handleOffer if _connectionStarted is true', () => {
+      const handleOfferStub = sinon.stub(sfuRoom._negotiator, 'handleOffer');
       sfuRoom._connectionStarted = true;
+
       sfuRoom.handleOffer(dummyOffer);
+
+      assert.equal(handleOfferStub.callCount, 1);
+      assert(handleOfferStub.calledWith(dummyOffer));
 
       assert.equal(setupNegotiatorSpy.called, false);
       assert.equal(startConnectionStub.called, false);
