@@ -26,7 +26,11 @@
     $(function(){
       $('#make-call').click(function(){
         // Initiate a call!
-        room = peer.joinRoom($('#join-room').val(), {mode: 'sfu'});
+        var roomName = $('#join-room').val();
+        if (!roomName) {
+          return;
+        }
+        room = peer.joinRoom('sfu_video_' + roomName, {mode: 'sfu'});
         room.call(window.localStream);
 
         $('#room-id').text(room.name);
@@ -67,7 +71,7 @@
         $('#their-videos').append($(
           '<div>' +
             '<label id="label_' + peerId + '">' + stream.peerId + ':' + stream.id + '</label>' +
-            '<video autoplay clavelass="remoteVideos" src="' + streamURL + '" id="video_' + peerId + '">' +
+            '<video autoplay class="remoteVideos" src="' + streamURL + '" id="video_' + peerId + '">' +
           '</div>'));
       });
 
@@ -106,6 +110,8 @@
     <!-- Get local audio/video stream -->
     <div id="step1">
       <p>Please click `allow` on the top of the screen so we can access your webcam and microphone for calls.</p>
+      <p><strong>Warning:</strong> You may connect with people you don't know if you both use the same room name.</p>
+      <p><strong>注意：</strong>同じルーム名を使用した場合知らない人と接続する可能性もあります。</p>
       <div id="step1-error">
         <p>Failed to access the webcam and microphone. Make sure to run this demo on an http server and click allow when asked for permission by the browser.</p>
         <a href="#" class="pure-button pure-button-error" id="step1-retry">Try again</a>
