@@ -65,7 +65,9 @@ class SFURoom extends Room {
    */
   handleOffer(offer) {
     // Handle SFU Offer and send Answer to Server
-    if (!this._connectionStarted) {
+    if (this._connectionStarted) {
+      this._negotiator.handleOffer(offer);
+    } else {
       this._negotiator.startConnection({
         type:     'media',
         stream:   this._localStream,
