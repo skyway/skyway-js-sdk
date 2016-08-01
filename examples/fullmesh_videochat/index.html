@@ -35,6 +35,7 @@
           return;
         }
         room = peer.joinRoom('mesh_video_' + roomName);
+        room.call(window.localStream);
 
         room.on('call', function(call){
           call.answer(window.localStream);
