@@ -17,6 +17,9 @@
     var room;
     peer.on('open', function(){
       $('#my-id').text(peer.id);
+
+      // Get things started
+      step1();
     });
     peer.on('error', function(err){
       alert(err.message);
@@ -49,8 +52,6 @@
         $('#step1-error').hide();
         step1();
       });
-      // Get things started
-      step1();
     });
     function step1 () {
       // Get audio/video stream
