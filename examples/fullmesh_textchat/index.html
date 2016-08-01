@@ -39,7 +39,8 @@
     function connect(room) {
       // Handle a chat connection.
         var chatbox = $('<div></div>').addClass('connection').addClass('active').attr('id', room.name);
-        var header = $('<h1></h1>').html('Room: <strong>' + room.name + '</strong>');
+        var roomName = room.name.replace('sfu_text_', '');
+        var header = $('<h1></h1>').html('Room: <strong>' + roomName + '</strong>');
         var messages = $('<div><em>Peer connected.</em></div>').addClass('messages');
         chatbox.append(header);
         chatbox.append(messages);
