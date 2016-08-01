@@ -120,52 +120,53 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _setupPCListeners() {
-    this._pc.onaddstream = evt => {
+    const pc = this._pc;
+    pc.onaddstream = evt => {
       util.log('Received remote media stream');
       const stream = evt.stream;
       this.emit(Negotiator.EVENTS.addStream.key, stream);
     };
 
-    this._pc.ondatachannel = evt => {
+    pc.ondatachannel = evt => {
       util.log('Received data channel');
       const dc = evt.channel;
       this.emit(Negotiator.EVENTS.dcCreated.key, dc);
     };
 
-    this._pc.onicecandidate = evt => {
+    pc.onicecandidate = evt => {
       const candidate = evt.candidate;
       if (candidate) {
         util.log('Generated ICE candidate for:', candidate);
         this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
       } else {
         util.log('ICE candidates gathering complete');
-        this.emit(Negotiator.EVENTS.iceCandidatesComplete.key, this._pc.localDescription);
+        this.emit(Negotiator.EVENTS.iceCandidatesComplete.key, pc.localDescription);
       }
     };
 
-    this._pc.oniceconnectionstatechange = () => {
-      switch (this._pc.iceConnectionState) {
+    pc.oniceconnectionstatechange = () => {
+      switch (pc.iceConnectionState) {
         case 'completed':
           util.log('iceConnectionState is completed');
           // istanbul ignore next
-          this._pc.onicecandidate = () => {};
+          pc.onicecandidate = () => {};
           break;
         case 'failed':
         case 'disconnected':
-          util.log(`iceConnectionState is ${this._pc.iceConnectionState}, closing connection`);
+          util.log(`iceConnectionState is ${pc.iceConnectionState}, closing connection`);
           this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
           break;
         default:
-          util.log(`iceConnectionState is ${this._pc.iceConnectionState}`);
+          util.log(`iceConnectionState is ${pc.iceConnectionState}`);
           break;
       }
     };
 
-    this._pc.onnegotiationneeded = () => {
+    pc.onnegotiationneeded = () => {
       util.log('`negotiationneeded` triggered');
 
       // don't make a new offer if it's not stable
-      if (this._pc.signalingState === 'stable') {
+      if (pc.signalingState === 'stable') {
         this._makeOfferSdp()
           .then(offer => {
             this._setLocalDescription(offer);
@@ -173,13 +174,13 @@ class Negotiator extends EventEmitter {
       }
     };
 
-    this._pc.onremovestream = evt => {
+    pc.onremovestream = evt => {
       util.log('`removestream` triggered');
       this.emit(Negotiator.EVENTS.removeStream.key, evt.stream);
     };
 
-    this._pc.onsignalingstatechange = () => {
-      util.log(`signalingState is ${this._pc.signalingState}`);
+    pc.onsignalingstatechange = () => {
+      util.log(`signalingState is ${pc.signalingState}`);
     };
   }
 
