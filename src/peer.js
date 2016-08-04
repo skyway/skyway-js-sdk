@@ -153,13 +153,6 @@ class Peer extends EventEmitter {
         'Cannot connect to new Peer after disconnecting from server.');
       return null;
     }
-    if (!stream) {
-      util.error(
-        'To call a peer, you must provide ' +
-        'a stream from your browser\'s `getUserMedia`.'
-      );
-      return null;
-    }
 
     options = options || {};
     options.stream = stream;
