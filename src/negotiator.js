@@ -43,12 +43,13 @@ class Negotiator extends EventEmitter {
   startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
     this._setupPCListeners();
+    this._originator = options.originator;
 
     if (options.type === 'media' && options.stream) {
       this._pc.addStream(options.stream);
     }
 
-    if (options.originator) {
+    if (this._originator) {
       if (options.type === 'data') {
         const label = options.label || '';
         const dc = this._pc.createDataChannel(label);
@@ -166,7 +167,7 @@ class Negotiator extends EventEmitter {
       util.log('`negotiationneeded` triggered');
 
       // don't make a new offer if it's not stable
-      if (pc.signalingState === 'stable') {
+      if (pc.signalingState === 'stable' && this._originator) {
         this._makeOfferSdp()
           .then(offer => {
             this._setLocalDescription(offer);

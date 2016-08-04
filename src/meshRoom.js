@@ -81,8 +81,9 @@ class MeshRoom extends Room {
    */
   makeMediaConnections(peerIds) {
     const options = {
-      stream:   this._localStream,
-      pcConfig: this._pcConfig
+      stream:     this._localStream,
+      pcConfig:   this._pcConfig,
+      originator: true
     };
 
     this._makeConnections(peerIds, 'media', options);

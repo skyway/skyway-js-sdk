@@ -25,6 +25,7 @@ class MediaConnection extends Connection {
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
    * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    * @param {object} [options.stream] - The MediaStream to send to the remote peer. Set only when on the caller side.
+   * @param {boolean} [options.originator] - true means the peer is the originator of the connection.
    * @param {string} [options.queuedMessages] - An array of messages that were already received before the connection was created.
    * @param {string} [options.payload] - An offer message that triggered creating this object.
    */
@@ -44,12 +45,12 @@ class MediaConnection extends Connection {
     this._queuedMessages = this._options.queuedMessages || [];
     this._pcAvailable = false;
 
-    if (this.localStream) {
+    if (this._options.originator) {
       this._negotiator.startConnection(
         {
           type:       'media',
           stream:     this.localStream,
-          originator: true,
+          originator: this._options.originator,
           pcConfig:   this._options.pcConfig
         }
       );

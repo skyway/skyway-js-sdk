@@ -156,6 +156,7 @@ class Peer extends EventEmitter {
     }
 
     options = options || {};
+    options.originator = true;
     options.stream = stream;
     options.pcConfig = this._pcConfig;
     const mc = new MediaConnection(peerId, options);
@@ -526,6 +527,7 @@ class Peer extends EventEmitter {
             connectionId:   connectionId,
             payload:        offerMessage,
             metadata:       offerMessage.metadata,
+            originator:     false,
             queuedMessages: this._queuedMessages[connectionId],
             pcConfig:       this._pcConfig
           }
