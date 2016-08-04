@@ -46,6 +46,7 @@ class Negotiator extends EventEmitter {
     this._originator = options.originator;
 
     if (options.type === 'media' && options.stream) {
+      // `addStream` will trigger onnegotiationneeded event.
       this._pc.addStream(options.stream);
     }
 
