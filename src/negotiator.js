@@ -48,6 +48,11 @@ class Negotiator extends EventEmitter {
     if (options.type === 'media' && options.stream) {
       // `addStream` will trigger onnegotiationneeded event.
       this._pc.addStream(options.stream);
+    } else if (options.type === 'media') {
+      // This means the peer wants to create offer SDP with `recvonly`
+      this._makeOfferSdp().then(offer => {
+        this._setLocalDescription(offer);
+      });
     }
 
     if (this._originator) {
@@ -192,6 +197,16 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _makeOfferSdp() {
+    let options;
+    if (this._pc.getLocalStreams().length === 0) {
+      options = {
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true
+      };
+    } else {
+      options = undefined;
+    }
+
     return new Promise(resolve => {
       this._pc.createOffer(offer => {
         util.log('Created offer.');
@@ -199,7 +214,7 @@ class Negotiator extends EventEmitter {
       }, error => {
         util.emitError.call(this, 'webrtc', error);
         util.log('Failed to createOffer, ', error);
-      });
+      }, options);
     });
   }
 
