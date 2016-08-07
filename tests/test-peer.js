@@ -638,7 +638,6 @@ describe('Peer', () => {
         peer.call('testId', {});
       }, timeForAsync);
     });
-
   });
 
   describe('connect', () => {
