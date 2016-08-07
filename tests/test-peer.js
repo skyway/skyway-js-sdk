@@ -639,14 +639,6 @@ describe('Peer', () => {
       }, timeForAsync);
     });
 
-    it('should log an error if stream is undefined', () => {
-      const spy = sinon.spy(util, 'error');
-
-      peer.call('testId', undefined);
-
-      assert(spy.calledOnce);
-      spy.restore();
-    });
   });
 
   describe('connect', () => {
