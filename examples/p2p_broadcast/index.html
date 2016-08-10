@@ -34,7 +34,7 @@
         e.preventDefault();
         navigator.getUserMedia({audio: true, video: true}, function(stream){
           // Set your video displays
-          $('#video').prop('src', URL.createObjectURL(stream));
+          $('#video').prop('src', URL.createObjectURL(stream)).prop('muted', true);
           window.localStream = stream;
         }, function(){ $('#step1-error').show(); });
       });
