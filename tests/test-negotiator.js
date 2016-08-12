@@ -73,7 +73,7 @@ describe('Negotiator', () => {
 
     describe('when type is \'media\'', () => {
       describe('when originator is true', () => {
-        it('should call pc.addStream', () => {
+        it('should call pc.addStream when stream exists', () => {
           const options = {
             type:       'media',
             stream:     {},
@@ -88,6 +88,22 @@ describe('Negotiator', () => {
 
           assert.equal(addStreamSpy.callCount, 1);
           assert.equal(handleOfferSpy.callCount, 0);
+        });
+
+        it('should call _makeOfferSdp when stream does not exist', () => {
+          const makeOfferStub = sinon.stub(negotiator, '_makeOfferSdp');
+          makeOfferStub.returns(Promise.resolve('offer'));
+
+          const options = {
+            type:       'media',
+            originator: true,
+            pcConfig:   {}
+          };
+
+          negotiator.startConnection(options);
+
+          assert.equal(makeOfferStub.callCount, 1);
+          makeOfferStub.restore();
         });
       });
 
@@ -533,6 +549,7 @@ describe('Negotiator', () => {
       describe('onnegotiationneeded', () => {
         it('should call _makeOfferSdp', () => {
           const spy = sinon.spy(negotiator, '_makeOfferSdp');
+          negotiator._originator = true;
 
           assert.equal(spy.callCount, 0);
           pc.onnegotiationneeded();
@@ -540,6 +557,8 @@ describe('Negotiator', () => {
         });
 
         it('should emit \'offerCreated\'', done => {
+          negotiator._originator = true;
+
           const offer = 'offer';
           const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
           cbStub.callsArgWith(1, offer);

@@ -43,12 +43,19 @@ class Negotiator extends EventEmitter {
   startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
     this._setupPCListeners();
+    this._originator = options.originator;
 
     if (options.type === 'media' && options.stream) {
+      // `addStream` will trigger onnegotiationneeded event.
       this._pc.addStream(options.stream);
+    } else if (options.type === 'media') {
+      // This means the peer wants to create offer SDP with `recvonly`
+      this._makeOfferSdp().then(offer => {
+        this._setLocalDescription(offer);
+      });
     }
 
-    if (options.originator) {
+    if (this._originator) {
       if (options.type === 'data') {
         const label = options.label || '';
         const dc = this._pc.createDataChannel(label);
@@ -166,7 +173,7 @@ class Negotiator extends EventEmitter {
       util.log('`negotiationneeded` triggered');
 
       // don't make a new offer if it's not stable
-      if (pc.signalingState === 'stable') {
+      if (pc.signalingState === 'stable' && this._originator) {
         this._makeOfferSdp()
           .then(offer => {
             this._setLocalDescription(offer);
@@ -190,6 +197,16 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _makeOfferSdp() {
+    let options;
+    if (this._pc.getLocalStreams().length === 0) {
+      options = {
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true
+      };
+    } else {
+      options = undefined;
+    }
+
     return new Promise(resolve => {
       this._pc.createOffer(offer => {
         util.log('Created offer.');
@@ -197,7 +214,7 @@ class Negotiator extends EventEmitter {
       }, error => {
         util.emitError.call(this, 'webrtc', error);
         util.log('Failed to createOffer, ', error);
-      });
+      }, options);
     });
   }
 
