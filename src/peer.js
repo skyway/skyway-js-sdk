@@ -384,6 +384,8 @@ class Peer extends EventEmitter {
 
     // If there's no ID we need to wait for one before trying to init socket.
     http.open('get', url, true);
+
+    /* istanbul ignore next */
     http.onerror = function() {
       self._abort('server-error', 'Could not get peers from the server.');
       cb([]);
