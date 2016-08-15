@@ -1,6 +1,7 @@
 <html>
 <head>
-  <title>PeerJS - Video chat example</title>
+  <meta charset="utf-8">
+  <title>SkyWay - Video chat example</title>
   <link rel="stylesheet" href="style.css">
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
   <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
@@ -8,7 +9,7 @@
   <script>
     // Compatibility shim
     navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-    // PeerJS object
+    // Peer object
     var peer = new Peer({
       key: 'yourkey0-a515-486b-8488-407b41150e43',
       debug: 3
@@ -16,6 +17,9 @@
     var room;
     peer.on('open', function(){
       $('#my-id').text(peer.id);
+
+      // Get things started
+      step1();
     });
     peer.on('error', function(err){
       alert(err.message);
@@ -24,15 +28,21 @@
     });
     // Click handlers setup
     $(function(){
-      $('#make-call').click(function(){
+      $('#make-call').submit(function(e){
+        e.preventDefault();
         // Initiate a call!
-        room = peer.joinRoom($('#join-room').val(), {stream: window.localStream});
+        var roomName = $('#join-room').val();
+        if (!roomName) {
+          return;
+        }
+        room = peer.joinRoom('mesh_video_' + roomName);
+        room.call(window.localStream);
 
         room.on('call', function(call){
           call.answer(window.localStream);
         });
 
-        $('#room-id').text(room.name);
+        $('#room-id').text(roomName);
         step3(room);
       });
       $('#end-call').click(function(){
@@ -44,8 +54,6 @@
         $('#step1-error').hide();
         step1();
       });
-      // Get things started
-      step1();
     });
     function step1 () {
       // Get audio/video stream
@@ -59,6 +67,7 @@
     function step2 () {
       $('#step1, #step3').hide();
       $('#step2').show();
+      $('#join-room').focus();
     }
     function step3 (room) {
       // Wait for stream on the call, then set peer video display
@@ -96,7 +105,7 @@
 
   <!-- Steps -->
   <div class="pure-u-1-3">
-    <h2>PeerJS Video Chat</h2>
+    <h2>SkyWay Video Chat</h2>
 
     <!-- Get local audio/video stream -->
     <div id="step1">
@@ -111,10 +120,12 @@
     <!-- Make calls to others -->
     <div id="step2">
       <h3>Make a call</h3>
-      <div class="pure-form">
+      <form id="make-call" class="pure-form">
         <input type="text" placeholder="Join room..." id="join-room">
-        <a href="#" class="pure-button pure-button-success" id="make-call">Join</a>
-      </div>
+        <button class="pure-button pure-button-success" type="submit">Join</button>
+      </form>
+      <p><strong>Warning:</strong> You may connect with people you don't know if you both use the same room name.</p>
+      <p><strong>注意：</strong>同じルーム名を使用した場合、知らない人と接続する可能性があります。</p>
     </div>
 
     <!-- Call in progress -->

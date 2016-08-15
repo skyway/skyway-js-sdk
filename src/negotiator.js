@@ -43,12 +43,19 @@ class Negotiator extends EventEmitter {
   startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
     this._setupPCListeners();
+    this._originator = options.originator;
 
     if (options.type === 'media' && options.stream) {
+      // `addStream` will trigger onnegotiationneeded event.
       this._pc.addStream(options.stream);
+    } else if (options.type === 'media') {
+      // This means the peer wants to create offer SDP with `recvonly`
+      this._makeOfferSdp().then(offer => {
+        this._setLocalDescription(offer);
+      });
     }
 
-    if (options.originator) {
+    if (this._originator) {
       if (options.type === 'data') {
         const label = options.label || '';
         const dc = this._pc.createDataChannel(label);
@@ -120,52 +127,53 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _setupPCListeners() {
-    this._pc.onaddstream = evt => {
+    const pc = this._pc;
+    pc.onaddstream = evt => {
       util.log('Received remote media stream');
       const stream = evt.stream;
       this.emit(Negotiator.EVENTS.addStream.key, stream);
     };
 
-    this._pc.ondatachannel = evt => {
+    pc.ondatachannel = evt => {
       util.log('Received data channel');
       const dc = evt.channel;
       this.emit(Negotiator.EVENTS.dcCreated.key, dc);
     };
 
-    this._pc.onicecandidate = evt => {
+    pc.onicecandidate = evt => {
       const candidate = evt.candidate;
       if (candidate) {
         util.log('Generated ICE candidate for:', candidate);
         this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
       } else {
         util.log('ICE candidates gathering complete');
-        this.emit(Negotiator.EVENTS.iceCandidatesComplete.key, this._pc.localDescription);
+        this.emit(Negotiator.EVENTS.iceCandidatesComplete.key, pc.localDescription);
       }
     };
 
-    this._pc.oniceconnectionstatechange = () => {
-      switch (this._pc.iceConnectionState) {
+    pc.oniceconnectionstatechange = () => {
+      switch (pc.iceConnectionState) {
         case 'completed':
           util.log('iceConnectionState is completed');
           // istanbul ignore next
-          this._pc.onicecandidate = () => {};
+          pc.onicecandidate = () => {};
           break;
         case 'failed':
         case 'disconnected':
-          util.log(`iceConnectionState is ${this._pc.iceConnectionState}, closing connection`);
+          util.log(`iceConnectionState is ${pc.iceConnectionState}, closing connection`);
           this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
           break;
         default:
-          util.log(`iceConnectionState is ${this._pc.iceConnectionState}`);
+          util.log(`iceConnectionState is ${pc.iceConnectionState}`);
           break;
       }
     };
 
-    this._pc.onnegotiationneeded = () => {
+    pc.onnegotiationneeded = () => {
       util.log('`negotiationneeded` triggered');
 
       // don't make a new offer if it's not stable
-      if (this._pc.signalingState === 'stable') {
+      if (pc.signalingState === 'stable' && this._originator) {
         this._makeOfferSdp()
           .then(offer => {
             this._setLocalDescription(offer);
@@ -173,13 +181,13 @@ class Negotiator extends EventEmitter {
       }
     };
 
-    this._pc.onremovestream = evt => {
+    pc.onremovestream = evt => {
       util.log('`removestream` triggered');
       this.emit(Negotiator.EVENTS.removeStream.key, evt.stream);
     };
 
-    this._pc.onsignalingstatechange = () => {
-      util.log(`signalingState is ${this._pc.signalingState}`);
+    pc.onsignalingstatechange = () => {
+      util.log(`signalingState is ${pc.signalingState}`);
     };
   }
 
@@ -189,6 +197,16 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _makeOfferSdp() {
+    let options;
+    if (this._pc.getLocalStreams().length === 0) {
+      options = {
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true
+      };
+    } else {
+      options = undefined;
+    }
+
     return new Promise(resolve => {
       this._pc.createOffer(offer => {
         util.log('Created offer.');
@@ -196,7 +214,7 @@ class Negotiator extends EventEmitter {
       }, error => {
         util.emitError.call(this, 'webrtc', error);
         util.log('Failed to createOffer, ', error);
-      });
+      }, options);
     });
   }
 

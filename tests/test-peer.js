@@ -1097,15 +1097,6 @@ describe('Peer', () => {
         peer.call(peerId, {});
       });
     });
-
-    it('should log an error if stream is undefined', () => {
-      const errorSpy = sinon.spy(util, 'error');
-
-      peer.call(peerId, undefined);
-
-      assert.equal(errorSpy.callCount, 1);
-      errorSpy.restore();
-    });
   });
 
   describe('connect', () => {

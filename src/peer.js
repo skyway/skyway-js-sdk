@@ -135,7 +135,8 @@ class Peer extends EventEmitter {
   /**
    * Creates new MediaConnection.
    * @param {string} peerId - The peerId of the peer you are connecting to.
-   * @param {MediaStream} stream - The MediaStream to send to the remote peer. Set only when on the caller side.
+   * @param {MediaStream} stream - The MediaStream to send to the remote peer.
+   *                               If not set, the caller creates offer SDP with `sendonly` attribute.
    * @param {object} [options] - Optional arguments for the connection.
    * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
@@ -156,15 +157,9 @@ class Peer extends EventEmitter {
         'Cannot connect to new Peer after disconnecting from server.');
       return null;
     }
-    if (!stream) {
-      util.error(
-        'To call a peer, you must provide ' +
-        'a stream from your browser\'s `getUserMedia`.'
-      );
-      return null;
-    }
 
     options = options || {};
+    options.originator = true;
     options.stream = stream;
     options.pcConfig = this._pcConfig;
     const mc = new MediaConnection(peerId, options);
@@ -537,6 +532,7 @@ class Peer extends EventEmitter {
             connectionId:   connectionId,
             payload:        offerMessage,
             metadata:       offerMessage.metadata,
+            originator:     false,
             queuedMessages: this._queuedMessages[connectionId],
             pcConfig:       this._pcConfig
           }

@@ -206,7 +206,7 @@ class Room extends EventEmitter {
   /**
    * Left the room.
    *
-   * @event Room#candidate
+   * @event Room#peerLeave
    * @type {object}
    * @property {string} roomName - The room name.
    */
@@ -214,7 +214,7 @@ class Room extends EventEmitter {
   /**
    * Get room log from SkyWay server.
    *
-   * @event Room#candidate
+   * @event Room#log
    * @type {object}
    * @property {string} roomName - The room name.
    */

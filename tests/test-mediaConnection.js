@@ -55,12 +55,18 @@ describe('MediaConnection', () => {
   });
 
   describe('Constructor', () => {
-    it('should call negotiator\'s startConnection method when created', () => {
-      const mc = new MediaConnection('remoteId', {stream: {}});
-
+    it('should call negotiator\'s startConnection method when created and originator', () => {
+      const mc = new MediaConnection('remoteId', {stream: {}, originator: true});
       assert(mc);
       assert(startSpy.calledOnce);
     });
+
+    it('should not call negotiator\'s startConnection method when created and not originator', () => {
+      const mc = new MediaConnection('remoteId', {stream: {}});
+      assert(mc);
+      assert(startSpy.notCalled);
+    });
+
     it('should store any messages passed in when created', () => {
       const mc = new MediaConnection('remoteId',
         {stream: {}, queuedMessages: ['message']}
@@ -175,6 +181,8 @@ describe('MediaConnection', () => {
       const answer = 'message';
 
       const mc = new MediaConnection('remoteId', {stream: {}});
+      mc._pcAvailable = true;
+
       assert(answerSpy.called === false);
 
       mc.handleAnswer(answer);
@@ -185,6 +193,8 @@ describe('MediaConnection', () => {
       const candidate = 'message';
 
       const mc = new MediaConnection('remoteId', {stream: {}});
+      mc._pcAvailable = true;
+
       assert(candidateSpy.called === false);
 
       mc.handleCandidate(candidate);
