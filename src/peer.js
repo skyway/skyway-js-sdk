@@ -98,41 +98,6 @@ class Peer extends EventEmitter {
   }
 
   /**
-   * Creates new DataConnection.
-   * @param {string} peerId - User's peerId.
-   * @param {Object} [options] - Optional arguments for DataConnection.
-   * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
-   * @param {string} [options.label] - Label to easily identify the connection on either peer.
-   * @param {string} [options.serialization] - How to serialize data when sending.
-   *                  One of 'binary', 'json' or 'none'.
-   * @param {string} [options.queuedMessages] - An array of messages that were already
-   *                  received before the connection was created.
-   * @param {string} [options.payload] - An offer message that triggered creating this object.
-   * @return {DataConnection} An instance of DataConnection.
-   */
-  connect(peerId, options) {
-    if (this._disconnectCalled) {
-      util.warn('You cannot connect to a new Peer because you called ' +
-        '.disconnect() on this Peer and ended your connection with the ' +
-        'server. You can create a new Peer to reconnect, or call reconnect ' +
-        'on this peer if you believe its ID to still be available.');
-      util.emitError.call(
-        this,
-        'disconnected',
-        'Cannot connect to new Peer after disconnecting from server.'
-      );
-      return null;
-    }
-
-    options = options || {};
-    options.pcConfig = this._pcConfig;
-    const connection = new DataConnection(peerId, options);
-    util.log('DataConnection created in connect method');
-    this._addConnection(peerId, connection);
-    return connection;
-  }
-
-  /**
    * Creates new MediaConnection.
    * @param {string} peerId - The peerId of the peer you are connecting to.
    * @param {MediaStream} stream - The MediaStream to send to the remote peer.
@@ -169,6 +134,41 @@ class Peer extends EventEmitter {
   }
 
   /**
+   * Creates new DataConnection.
+   * @param {string} peerId - User's peerId.
+   * @param {Object} [options] - Optional arguments for DataConnection.
+   * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
+   * @param {string} [options.label] - Label to easily identify the connection on either peer.
+   * @param {string} [options.serialization] - How to serialize data when sending.
+   *                  One of 'binary', 'json' or 'none'.
+   * @param {string} [options.queuedMessages] - An array of messages that were already
+   *                  received before the connection was created.
+   * @param {string} [options.payload] - An offer message that triggered creating this object.
+   * @return {DataConnection} An instance of DataConnection.
+   */
+  connect(peerId, options) {
+    if (this._disconnectCalled) {
+      util.warn('You cannot connect to a new Peer because you called ' +
+        '.disconnect() on this Peer and ended your connection with the ' +
+        'server. You can create a new Peer to reconnect, or call reconnect ' +
+        'on this peer if you believe its ID to still be available.');
+      util.emitError.call(
+        this,
+        'disconnected',
+        'Cannot connect to new Peer after disconnecting from server.'
+      );
+      return null;
+    }
+
+    options = options || {};
+    options.pcConfig = this._pcConfig;
+    const connection = new DataConnection(peerId, options);
+    util.log('DataConnection created in connect method');
+    this._addConnection(peerId, connection);
+    return connection;
+  }
+
+  /**
    * Join fullmesh type or SFU type room that two or more users can join.
    * @param {string} roomName - The name of the room user is joining to.
    * @param {object} [roomOptions]- Optional arguments for the RTCPeerConnection.
@@ -186,75 +186,11 @@ class Peer extends EventEmitter {
     roomOptions.peerId = this.id;
 
     if (roomOptions.mode === 'sfu') {
-      return this._initSfuRoom(roomName, roomOptions);
+      return this._initializeSfuRoom(roomName, roomOptions);
     }
 
     // mode is blank or 'mesh'
-    return this._initFullMeshRoom(roomName, roomOptions);
-  }
-
-  /**
-   * Create and setup a SFURoom instance and emit SFU_JOIN message to SkyWay server.
-   * If user called joinRoom with a MediaStream, it call sfuRoom.call with it.
-   * @param {string} roomName - The name of the room user is joining to.
-   * @param {object} [roomOptions] - Optional arguments for the RTCPeerConnection.
-   * @param {object} [roomOptions.pcConfig] -  A RTCConfiguration dictionary for the RTCPeerConnection.
-   * @param {string} [roomOptions.peerId] - User's peerId.
-   * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
-   * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
-   * @return {SFURoom} - An instance of SFURoom.
-   */
-  _initSfuRoom(roomName, roomOptions = {}) {
-    if (this.rooms[roomName]) {
-      return this.rooms[roomName];
-    }
-    const sfuRoom = new SFURoom(roomName, this.id, roomOptions);
-    this.rooms[roomName] = sfuRoom;
-    this._setupSFURoomMessageHandlers(sfuRoom);
-
-    const data = {
-      roomName:    roomName,
-      roomOptions: roomOptions
-    };
-
-    this.socket.send(util.MESSAGE_TYPES.SFU_JOIN.key, data);
-
-    if (roomOptions.stream) {
-      sfuRoom.call();
-    }
-    return sfuRoom;
-  }
-
-  /**
-   * Create and setup a MeshRoom instance and emit MESH_JOIN message to SkyWay server.
-   * If user called joinRoom with a MediaStream, it call meshRoom.call with it.
-   * @param {string} roomName - The name of the room user is joining to.
-   * @param {object} roomOptions - Optional arguments for the RTCPeerConnection.
-   * @param {string} roomOptions.pcConfig -  A RTCConfiguration dictionary for the RTCPeerConnection.
-   * @param {string} roomOptions.peerId - User's peerId.
-   * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
-   * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
-   * @return {SFURoom} - An instance of MeshRoom.
-   */
-  _initFullMeshRoom(roomName, roomOptions = {}) {
-    if (this.rooms[roomName]) {
-      return this.rooms[roomName];
-    }
-    const meshRoom = new MeshRoom(roomName, this.id, roomOptions);
-    this.rooms[roomName] = meshRoom;
-    this._setupMeshRoomMessageHandlers(meshRoom);
-
-    const data = {
-      roomName:    roomName,
-      roomOptions: roomOptions
-    };
-
-    this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
-
-    if (roomOptions.stream) {
-      meshRoom.call();
-    }
-    return meshRoom;
+    return this._initializeFullMeshRoom(roomName, roomOptions);
   }
 
   /**
@@ -303,60 +239,6 @@ class Peer extends EventEmitter {
         this.id = null;
       }
     }, 0);
-  }
-
-  /**
-   * Set up the message event handlers for an SFURoom
-   * @param {SFURoom} room - The room to be set up.
-   * @private
-   */
-  _setupSFURoomMessageHandlers(room) {
-    room.on(SFURoom.MESSAGE_EVENTS.offerRequest.key, sendMessage => {
-      this.socket.send(util.MESSAGE_TYPES.SFU_OFFER_REQUEST.key, sendMessage);
-    });
-    room.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.SFU_ANSWER.key, answerMessage);
-    });
-    room.on(SFURoom.MESSAGE_EVENTS.broadcast.key, sendMessage => {
-      this.socket.send(util.MESSAGE_TYPES.SFU_DATA.key, sendMessage);
-    });
-    room.on(SFURoom.MESSAGE_EVENTS.getLog.key, getLogMessage => {
-      this.socket.send(util.MESSAGE_TYPES.SFU_LOG.key, getLogMessage);
-    });
-    room.on(SFURoom.MESSAGE_EVENTS.leave.key, leaveMessage => {
-      delete this.rooms[room.name];
-      this.socket.send(util.MESSAGE_TYPES.SFU_LEAVE.key, leaveMessage);
-    });
-  }
-
-  /**
-   * Set up the message event handlers for a MeshRoom
-   * @param {MeshRoom} room - The room to be set up.
-   * @private
-   */
-  _setupMeshRoomMessageHandlers(room) {
-    room.on(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage);
-    });
-    room.on(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage);
-    });
-    room.on(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
-      this.socket.send(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage);
-    });
-    room.on(MeshRoom.MESSAGE_EVENTS.getPeers.key, requestMessage => {
-      this.socket.send(util.MESSAGE_TYPES.MESH_USER_LIST_REQUEST.key, requestMessage);
-    });
-    room.on(MeshRoom.MESSAGE_EVENTS.broadcastByWS.key, sendMessage => {
-      this.socket.send(util.MESSAGE_TYPES.MESH_DATA.key, sendMessage);
-    });
-    room.on(MeshRoom.MESSAGE_EVENTS.getLog.key, getLogMessage => {
-      this.socket.send(util.MESSAGE_TYPES.MESH_LOG.key, getLogMessage);
-    });
-    room.on(MeshRoom.MESSAGE_EVENTS.leave.key, leaveMessage => {
-      delete this.rooms[room.name];
-      this.socket.send(util.MESSAGE_TYPES.MESH_LEAVE.key, leaveMessage);
-    });
   }
 
   /**
@@ -410,18 +292,6 @@ class Peer extends EventEmitter {
   }
 
   /**
-   * Disconnect the socket and emit error.
-   * @param {string} type - The type of error.
-   * @param {string} message - Error description.
-   * @private
-   */
-  _abort(type, message) {
-    util.error('Aborting!');
-    this.disconnect();
-    util.emitError.call(this, type, message);
-  }
-
-  /**
    * Creates new Socket and initalize its message handlers.
    * @param {string} id - User's peerId.
    * @private
@@ -453,6 +323,70 @@ class Peer extends EventEmitter {
     window.onbeforeunload = () => {
       this.destroy();
     };
+  }
+
+  /**
+   * Create and setup a SFURoom instance and emit SFU_JOIN message to SkyWay server.
+   * If user called joinRoom with a MediaStream, it call sfuRoom.call with it.
+   * @param {string} roomName - The name of the room user is joining to.
+   * @param {object} [roomOptions] - Optional arguments for the RTCPeerConnection.
+   * @param {object} [roomOptions.pcConfig] -  A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @param {string} [roomOptions.peerId] - User's peerId.
+   * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
+   * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
+   * @return {SFURoom} - An instance of SFURoom.
+   */
+  _initializeSfuRoom(roomName, roomOptions = {}) {
+    if (this.rooms[roomName]) {
+      return this.rooms[roomName];
+    }
+    const sfuRoom = new SFURoom(roomName, this.id, roomOptions);
+    this.rooms[roomName] = sfuRoom;
+    this._setupSFURoomMessageHandlers(sfuRoom);
+
+    const data = {
+      roomName:    roomName,
+      roomOptions: roomOptions
+    };
+
+    this.socket.send(util.MESSAGE_TYPES.SFU_JOIN.key, data);
+
+    if (roomOptions.stream) {
+      sfuRoom.call();
+    }
+    return sfuRoom;
+  }
+
+  /**
+   * Create and setup a MeshRoom instance and emit MESH_JOIN message to SkyWay server.
+   * If user called joinRoom with a MediaStream, it call meshRoom.call with it.
+   * @param {string} roomName - The name of the room user is joining to.
+   * @param {object} roomOptions - Optional arguments for the RTCPeerConnection.
+   * @param {string} roomOptions.pcConfig -  A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @param {string} roomOptions.peerId - User's peerId.
+   * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
+   * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
+   * @return {SFURoom} - An instance of MeshRoom.
+   */
+  _initializeFullMeshRoom(roomName, roomOptions = {}) {
+    if (this.rooms[roomName]) {
+      return this.rooms[roomName];
+    }
+    const meshRoom = new MeshRoom(roomName, this.id, roomOptions);
+    this.rooms[roomName] = meshRoom;
+    this._setupMeshRoomMessageHandlers(meshRoom);
+
+    const data = {
+      roomName:    roomName,
+      roomOptions: roomOptions
+    };
+
+    this.socket.send(util.MESSAGE_TYPES.MESH_JOIN.key, data);
+
+    if (roomOptions.stream) {
+      meshRoom.call();
+    }
+    return meshRoom;
   }
 
   /**
@@ -569,9 +503,9 @@ class Peer extends EventEmitter {
 
     this.socket.on(util.MESSAGE_TYPES.ANSWER.key, answerMessage => {
       const connection = this.getConnection(
-                            answerMessage.src,
-                            answerMessage.connectionId
-                          );
+        answerMessage.src,
+        answerMessage.connectionId
+      );
 
       if (connection) {
         connection.handleAnswer(answerMessage);
@@ -582,9 +516,9 @@ class Peer extends EventEmitter {
 
     this.socket.on(util.MESSAGE_TYPES.CANDIDATE.key, candidateMessage => {
       const connection = this.getConnection(
-                            candidateMessage.src,
-                            candidateMessage.connectionId
-                          );
+        candidateMessage.src,
+        candidateMessage.connectionId
+      );
 
       if (connection) {
         connection.handleCandidate(candidateMessage);
@@ -695,21 +629,6 @@ class Peer extends EventEmitter {
   }
 
   /**
-   * Add connection to connections property and set up message handlers.
-   * @param {string} peerId - User's peerId.
-   * @param {MediaConnection|DataConnection} connection - The connection to be added.
-   * @private
-   */
-  _addConnection(peerId, connection) {
-    if (!this.connections[peerId]) {
-      this.connections[peerId] = [];
-    }
-    this.connections[peerId].push(connection);
-
-    this._setupConnectionMessageHandlers(connection);
-  }
-
-  /**
    * Set up connection's event handlers.
    * @param {MediaConnection|DataConnection} connection - The connection to be set up.
    * @private
@@ -724,6 +643,87 @@ class Peer extends EventEmitter {
     connection.on(Connection.EVENTS.offer.key, offerMessage => {
       this.socket.send(util.MESSAGE_TYPES.OFFER.key, offerMessage);
     });
+  }
+
+  /**
+   * Set up the message event handlers for an SFURoom
+   * @param {SFURoom} room - The room to be set up.
+   * @private
+   */
+  _setupSFURoomMessageHandlers(room) {
+    room.on(SFURoom.MESSAGE_EVENTS.offerRequest.key, sendMessage => {
+      this.socket.send(util.MESSAGE_TYPES.SFU_OFFER_REQUEST.key, sendMessage);
+    });
+    room.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
+      this.socket.send(util.MESSAGE_TYPES.SFU_ANSWER.key, answerMessage);
+    });
+    room.on(SFURoom.MESSAGE_EVENTS.broadcast.key, sendMessage => {
+      this.socket.send(util.MESSAGE_TYPES.SFU_DATA.key, sendMessage);
+    });
+    room.on(SFURoom.MESSAGE_EVENTS.getLog.key, getLogMessage => {
+      this.socket.send(util.MESSAGE_TYPES.SFU_LOG.key, getLogMessage);
+    });
+    room.on(SFURoom.MESSAGE_EVENTS.leave.key, leaveMessage => {
+      delete this.rooms[room.name];
+      this.socket.send(util.MESSAGE_TYPES.SFU_LEAVE.key, leaveMessage);
+    });
+  }
+
+  /**
+   * Set up the message event handlers for a MeshRoom
+   * @param {MeshRoom} room - The room to be set up.
+   * @private
+   */
+  _setupMeshRoomMessageHandlers(room) {
+    room.on(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage => {
+      this.socket.send(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage);
+    });
+    room.on(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage => {
+      this.socket.send(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage);
+    });
+    room.on(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
+      this.socket.send(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage);
+    });
+    room.on(MeshRoom.MESSAGE_EVENTS.getPeers.key, requestMessage => {
+      this.socket.send(util.MESSAGE_TYPES.MESH_USER_LIST_REQUEST.key, requestMessage);
+    });
+    room.on(MeshRoom.MESSAGE_EVENTS.broadcastByWS.key, sendMessage => {
+      this.socket.send(util.MESSAGE_TYPES.MESH_DATA.key, sendMessage);
+    });
+    room.on(MeshRoom.MESSAGE_EVENTS.getLog.key, getLogMessage => {
+      this.socket.send(util.MESSAGE_TYPES.MESH_LOG.key, getLogMessage);
+    });
+    room.on(MeshRoom.MESSAGE_EVENTS.leave.key, leaveMessage => {
+      delete this.rooms[room.name];
+      this.socket.send(util.MESSAGE_TYPES.MESH_LEAVE.key, leaveMessage);
+    });
+  }
+
+  /**
+   * Disconnect the socket and emit error.
+   * @param {string} type - The type of error.
+   * @param {string} message - Error description.
+   * @private
+   */
+  _abort(type, message) {
+    util.error('Aborting!');
+    this.disconnect();
+    util.emitError.call(this, type, message);
+  }
+
+  /**
+   * Add connection to connections property and set up message handlers.
+   * @param {string} peerId - User's peerId.
+   * @param {MediaConnection|DataConnection} connection - The connection to be added.
+   * @private
+   */
+  _addConnection(peerId, connection) {
+    if (!this.connections[peerId]) {
+      this.connections[peerId] = [];
+    }
+    this.connections[peerId].push(connection);
+
+    this._setupConnectionMessageHandlers(connection);
   }
 
   /**

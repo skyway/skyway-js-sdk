@@ -35,12 +35,12 @@ describe('Peer', () => {
     socketInstanceStub = sinon.createStubInstance(Socket);
     SocketConstructorStub.returns(socketInstanceStub);
 
-    // new SFURoom should return a stubbed socket object
+    // new SFURoom should return a stubbed sfuRoom object
     SFURoomConstructorStub = sinon.stub(SFURoom, 'constructor');
     sfuRoomInstanceStub = sinon.createStubInstance(SFURoom);
     SFURoomConstructorStub.returns(sfuRoomInstanceStub);
 
-    // new MeshRoom should return a stubbed socket object
+    // new MeshRoom should return a stubbed meshRoom object
     MeshRoomConstructorStub = sinon.stub(MeshRoom, 'constructor');
     meshRoomInstanceStub = sinon.createStubInstance(MeshRoom);
     MeshRoomConstructorStub.returns(meshRoomInstanceStub);
@@ -224,6 +224,237 @@ describe('Peer', () => {
     });
   });
 
+  describe('call', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should create a new MediaConnection, add it, and return it', () => {
+      const _addConnectionSpy = sinon.spy(peer, '_addConnection');
+
+      const conn = peer.call(peerId, new MediaStream());
+
+      assert.equal(conn.constructor.name, 'MediaConnection');
+      assert.equal(_addConnectionSpy.callCount, 1);
+      assert(_addConnectionSpy.calledWith(peerId, conn));
+
+      _addConnectionSpy.restore();
+    });
+
+    it('should emit an error if disconnected', done => {
+      peer.on('error', e => {
+        assert.equal(e.type, 'disconnected');
+        done();
+      });
+
+      peer.disconnect();
+
+      setTimeout(() => {
+        peer.call(peerId, {});
+      });
+    });
+  });
+
+  describe('connect', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should create a new DataConnection, add it, and return it', () => {
+      const addConnectionSpy = sinon.spy(peer, '_addConnection');
+
+      const conn = peer.connect(peerId, {});
+
+      assert.equal(conn.constructor.name, 'DataConnection');
+      assert.equal(addConnectionSpy.callCount, 1);
+      assert(addConnectionSpy.calledWith(peerId, conn));
+
+      addConnectionSpy.restore();
+    });
+
+    it('should emit an error if disconnected', done => {
+      peer.on('error', e => {
+        assert.equal(e.type, 'disconnected');
+        done();
+      });
+
+      peer.disconnect();
+
+      setTimeout(() => {
+        peer.connect(peerId);
+      });
+    });
+  });
+
+  describe('joinRoom', () => {
+    const roomName = 'testRoomName';
+
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    it('should call _initializeSfuRoom if mode is \'sfu\'', () => {
+      const initSfuRoomStub = sinon.stub(peer, '_initializeSfuRoom');
+      const options = {mode: 'sfu'};
+
+      peer.joinRoom(roomName, options);
+
+      assert.equal(initSfuRoomStub.callCount, 1);
+      assert(initSfuRoomStub.calledWith(roomName, options));
+    });
+
+    it('should call _initializeFullMeshRoom if mode is \'mesh\'', () => {
+      const initMeshRoomStub = sinon.stub(peer, '_initializeFullMeshRoom');
+      const options = {mode: 'mesh'};
+
+      peer.joinRoom(roomName, options);
+
+      assert.equal(initMeshRoomStub.callCount, 1);
+      assert(initMeshRoomStub.calledWith(roomName, options));
+    });
+
+    it('should call _initializeFullMeshRoom if mode is not set', () => {
+      const initMeshRoomStub = sinon.stub(peer, '_initializeFullMeshRoom');
+      const options = {};
+
+      peer.joinRoom(roomName, options);
+
+      assert.equal(initMeshRoomStub.callCount, 1);
+      assert(initMeshRoomStub.calledWith(roomName, options));
+    });
+
+    it('should emit an error if roomName isn\'t defined', done => {
+      const options = {};
+
+      peer.on('error', err => {
+        assert.equal(err.type, 'room-error');
+        done();
+      });
+
+      peer.joinRoom(undefined, options);
+    });
+
+    it('should set roomOptions pcConfig and peerId', () => {
+      const initMeshRoomStub = sinon.stub(peer, '_initializeFullMeshRoom');
+      const options = {};
+
+      peer.joinRoom(roomName, options);
+
+      const roomOptions = initMeshRoomStub.args[0][1];
+      assert.equal(roomOptions.pcConfig, peer._pcConfig);
+      assert.equal(roomOptions.peerId, peer.id);
+    });
+  });
+
+  describe('getConnection', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.disconnect();
+    });
+
+    it('should get a connection if peerId and connId match', () => {
+      const peerId = 'testId';
+      const connection = new DataConnection(peerId, {});
+
+      peer._addConnection(peerId, connection);
+
+      assert.equal(peer.getConnection(peerId, connection.id), connection);
+    });
+
+    it('should return null if connection doesn\'t exist', () => {
+      const peerId = 'testId';
+      const connection = new DataConnection(peerId, {});
+
+      assert.equal(peer.getConnection(peerId, connection.id), null);
+    });
+  });
+
+  describe('destroy', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should call disconnect()', () => {
+      const spy = sinon.spy(peer, 'disconnect');
+
+      peer.destroy();
+
+      assert.equal(spy.callCount, 1);
+
+      spy.restore();
+    });
+
+    it('should set _destroyCalled to true', done => {
+      peer.destroy();
+
+      peer.on('disconnected', () => {
+        assert.equal(peer._destroyCalled, true);
+        done();
+      });
+    });
+
+    it('should not call disconnect() the second time you call it', () => {
+      const spy = sinon.spy(peer, 'disconnect');
+
+      peer.destroy();
+      peer.destroy();
+
+      assert.equal(spy.callCount, 1);
+
+      spy.restore();
+    });
+
+    it('should call _cleanupPeer for each peer in peer.connections', () => {
+      const peerIds = [];
+      const numPeers = 10;
+      for (let peerIndex = 0; peerIndex < numPeers; peerIndex++) {
+        const peerId = util.randomToken();
+        peerIds.push(peerId);
+        peer.connections[peerId] = [];
+      }
+
+      const stub = sinon.stub(peer, '_cleanupPeer');
+      peer.destroy();
+
+      assert.equal(stub.callCount, peerIds.length);
+      for (let peerId of peerIds) {
+        assert(stub.calledWith(peerId));
+      }
+
+      stub.restore();
+    });
+  });
+
   describe('disconnect', () => {
     let peer;
     beforeEach(() => {
@@ -292,7 +523,7 @@ describe('Peer', () => {
     });
   });
 
-  describe('destroy', () => {
+  describe('reconnect', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
@@ -300,121 +531,260 @@ describe('Peer', () => {
       });
     });
 
+    describe('disconnect was called but destroy wasn\'t', () => {
+      beforeEach(() => {
+        peer._disconnectCalled = true;
+      });
+
+      it('should call socket.reconnect', () => {
+        peer.reconnect();
+
+        assert.equal(peer.socket.reconnect.callCount, 1);
+      });
+
+      it('should set _disconnectCalled to false', () => {
+        peer.reconnect();
+
+        assert.equal(peer._disconnectCalled, false);
+      });
+    });
+
+    describe('disconnect was not called', () => {
+      it('should do nothing', () => {
+        assert.equal(peer.socket.reconnect.callCount, 0);
+      });
+    });
+
+    describe('destroy was called', () => {
+      beforeEach(() => {
+        peer._destroyCalled = true;
+      });
+
+      it('should do nothing', () => {
+        assert.equal(peer.socket.reconnect.callCount, 0);
+      });
+    });
+  });
+
+  describe('listAllPeers', () => {
+    let peer;
+    let requests = [];
+    let xhr;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+
+      xhr = sinon.useFakeXMLHttpRequest();
+      xhr.onCreate = function(request) {
+        requests.push(request);
+      };
+    });
+
     afterEach(() => {
+      xhr.restore();
+      requests = [];
+
       peer.destroy();
     });
 
-    it('should call disconnect()', () => {
-      const spy = sinon.spy(peer, 'disconnect');
+    it('should send a "GET" request to the right URL', () => {
+      peer.listAllPeers();
+      assert.equal(requests.length, 1);
 
-      peer.destroy();
+      const protocol = peer.options.secure ? 'https://' : 'http://';
+      const url = `${protocol}${peer.options.host}:` +
+        `${peer.options.port}/api/apikeys/${apiKey}/clients/`;
+      assert(requests[0].url === url);
+      assert(requests[0].method === 'get');
+    });
+
+    it('should call the callback with the response as the argument', () => {
+      const spy = sinon.spy();
+      peer.listAllPeers(spy);
+      assert.equal(requests.length, 1);
+
+      const peerList = ['peerId1', 'peerId2', 'peerId3'];
+      requests[0].respond(200, {}, JSON.stringify(peerList));
 
       assert.equal(spy.callCount, 1);
-
-      spy.restore();
+      assert(spy.calledWith(peerList));
     });
 
-    it('should set _destroyCalled to true', done => {
-      peer.destroy();
+    it('should throw an error when the status is 401', () => {
+      try {
+        peer.listAllPeers();
+        requests.respond(401);
+      } catch (e) {
+        assert(e instanceof Error);
+        return;
+      }
 
-      peer.on('disconnected', () => {
-        assert.equal(peer._destroyCalled, true);
+      assert.fail('Didn\'t throw an error');
+    });
+
+    it('should call the callback with an empty array any other status', () => {
+      const spy = sinon.spy();
+      const peerList = JSON.stringify(['peerId1', 'peerId2', 'peerId3']);
+      const responseCodes = [202, 400, 403, 404, 408, 500, 503];
+
+      for (let codeIndex = 0; codeIndex <= responseCodes.length; codeIndex++) {
+        peer.listAllPeers(spy);
+        requests[codeIndex].respond(responseCodes[codeIndex], {}, peerList);
+      }
+
+      assert.equal(spy.withArgs([]).callCount, responseCodes.length);
+    });
+
+    it('should not throw an error if cb isn\'t provided', () => {
+      try {
+        peer.listAllPeers();
+        requests[0].respond(200, {}, JSON.stringify([]));
+      } catch (e) {
+        assert.fail('Should not have thrown an error');
+      }
+    });
+
+    // onerror testing is unstable. Wait for sinonjs2 to be released
+    it.skip('should throw an error on peer if http request fails', done => {
+      peer.on('error', err => {
+        assert(err instanceof Error);
+        assert.equal(err.type, 'server-error');
         done();
       });
-    });
 
-    it('should not call disconnect() the second time you call it', () => {
-      const spy = sinon.spy(peer, 'disconnect');
-
-      peer.destroy();
-      peer.destroy();
-
-      assert.equal(spy.callCount, 1);
-
-      spy.restore();
-    });
-
-    it('should call _cleanupPeer for each peer in peer.connections', () => {
-      const peerIds = [];
-      const numPeers = 10;
-      for (let peerIndex = 0; peerIndex < numPeers; peerIndex++) {
-        const peerId = util.randomToken();
-        peerIds.push(peerId);
-        peer.connections[peerId] = [];
-      }
-
-      const stub = sinon.stub(peer, '_cleanupPeer');
-      peer.destroy();
-
-      assert.equal(stub.callCount, peerIds.length);
-      for (let peerId of peerIds) {
-        assert(stub.calledWith(peerId));
-      }
-
-      stub.restore();
+      peer.listAllPeers();
+      requests[0].abort();
     });
   });
 
-  describe('getConnection', () => {
+  describe('_initializeSfuRoom', () => {
+    const peerId = 'testPeerId';
+    const roomName = 'testRoomName';
+    const options = {};
     let peer;
+
     beforeEach(() => {
-      peer = new Peer({
+      peer = new Peer(peerId, {
         key: apiKey
       });
+      peer.id = peerId;
     });
 
-    afterEach(() => {
-      peer.disconnect();
+    it('should create and return SFURoom', () => {
+      const sfuRoom = peer._initializeSfuRoom(roomName, options);
+
+      assert.equal(SFURoomConstructorStub.callCount, 1);
+      assert(SFURoomConstructorStub.calledWith(roomName, peerId, options));
+
+      assert.equal(sfuRoom.constructor.name, 'SFURoom');
+      assert.equal(peer.rooms[roomName], sfuRoom);
     });
 
-    it('should get a connection if peerId and connId match', () => {
-      const peerId = 'testId';
-      const connection = new DataConnection(peerId, {});
+    it('should set call _setupSFURoomMessageHandlers', () => {
+      const setupSFUMessageHandlersSpy = sinon.spy(peer, '_setupSFURoomMessageHandlers');
+      const sfuRoom = peer._initializeSfuRoom(roomName, options);
 
-      peer._addConnection(peerId, connection);
-
-      assert.equal(peer.getConnection(peerId, connection.id), connection);
+      assert.equal(setupSFUMessageHandlersSpy.callCount, 1);
+      assert(setupSFUMessageHandlersSpy.calledWith(sfuRoom));
     });
 
-    it('should return null if connection doesn\'t exist', () => {
-      const peerId = 'testId';
-      const connection = new DataConnection(peerId, {});
+    it('should send a SFU_JOIN message', () => {
+      peer._initializeSfuRoom(roomName, options);
 
-      assert.equal(peer.getConnection(peerId, connection.id), null);
+      assert.equal(peer.socket.send.callCount, 1);
+      assert(peer.socket.send.calledWithMatch(
+        util.MESSAGE_TYPES.SFU_JOIN.key,
+        {roomName: roomName, roomOptions: options})
+      );
+    });
+
+    it('should call sfuRoom.call() if stream option is set', () => {
+      const optionsWithStream = {stream: {}};
+      const sfuRoom = peer._initializeSfuRoom(roomName, optionsWithStream);
+
+      assert.equal(sfuRoom.call.callCount, 1);
+    });
+
+    it('should not call sfuRoom.call() if stream option is not set', () => {
+      const sfuRoom = peer._initializeSfuRoom(roomName, options);
+
+      assert.equal(sfuRoom.call.callCount, 0);
+    });
+
+    it('should return the room if it exists', () => {
+      const dummyRoom = {};
+      peer.rooms[roomName] = dummyRoom;
+
+      const sfuRoom = peer._initializeSfuRoom(roomName, options);
+
+      assert.equal(sfuRoom, dummyRoom);
+      assert.equal(SFURoomConstructorStub.callCount, 0);
     });
   });
 
-  describe('_cleanupPeer', () => {
+  describe('_initializeFullMeshRoom', () => {
+    const peerId = 'testPeerId';
+    const roomName = 'testRoomName';
+    const options = {};
     let peer;
+
     beforeEach(() => {
-      peer = new Peer({
+      peer = new Peer(peerId, {
         key: apiKey
       });
+      peer.id = peerId;
     });
 
-    afterEach(() => {
-      peer.destroy();
+    it('should create and return MeshRoom', () => {
+      const meshRoom = peer._initializeFullMeshRoom(roomName, options);
+
+      assert.equal(MeshRoomConstructorStub.callCount, 1);
+      assert(MeshRoomConstructorStub.calledWith(roomName, peerId, options));
+
+      assert.equal(meshRoom.constructor.name, 'MeshRoom');
+      assert.equal(peer.rooms[roomName], meshRoom);
     });
 
-    it('should call close for each connection in the peer', () => {
-      const peerId = util.randomToken();
-      peer.connections[peerId] = [];
+    it('should set call _setupMeshRoomMessageHandlers', () => {
+      const setupSFUMessageHandlersSpy = sinon.spy(peer, '_setupMeshRoomMessageHandlers');
+      const meshRoom = peer._initializeFullMeshRoom(roomName, options);
 
-      const spies = [];
-      const numConns = 5;
-      for (let connIndex = 0; connIndex < numConns; connIndex++) {
-        const spy = sinon.spy();
-        spies.push(spy);
-        peer.connections[peerId].push({close: spy});
-      }
+      assert.equal(setupSFUMessageHandlersSpy.callCount, 1);
+      assert(setupSFUMessageHandlersSpy.calledWith(meshRoom));
+    });
 
-      assert.equal(spies.length, numConns);
-      assert.equal(peer.connections[peerId].length, numConns);
+    it('should send a MESH_JOIN message', () => {
+      peer._initializeFullMeshRoom(roomName, options);
 
-      peer._cleanupPeer(peerId);
-      for (let spy of spies) {
-        assert.equal(spy.callCount, 1);
-      }
+      assert.equal(peer.socket.send.callCount, 1);
+      assert(peer.socket.send.calledWithMatch(
+        util.MESSAGE_TYPES.MESH_JOIN.key,
+        {roomName: roomName, roomOptions: options})
+      );
+    });
+
+    it('should call meshRoom.call() if stream option is set', () => {
+      const optionsWithStream = {stream: {}};
+      const meshRoom = peer._initializeFullMeshRoom(roomName, optionsWithStream);
+
+      assert.equal(meshRoom.call.callCount, 1);
+    });
+
+    it('should not call meshRoom.call() if stream option is not set', () => {
+      const meshRoom = peer._initializeFullMeshRoom(roomName, options);
+
+      assert.equal(meshRoom.call.callCount, 0);
+    });
+
+    it('should return the room if it exists', () => {
+      const dummyRoom = {};
+      peer.rooms[roomName] = dummyRoom;
+
+      const meshRoom = peer._initializeFullMeshRoom(roomName, options);
+
+      assert.equal(meshRoom, dummyRoom);
+      assert.equal(MeshRoomConstructorStub.callCount, 0);
     });
   });
 
@@ -1061,364 +1431,49 @@ describe('Peer', () => {
     });
   });
 
-  describe('call', () => {
+  describe('_setupConnectionMessageHandlers', () => {
+    const message = {};
     let peer;
+    let connectionStub;
+
     beforeEach(() => {
-      peer = new Peer({
-        key: apiKey
-      });
-    });
+      connectionStub = new EventEmitter();
 
-    afterEach(() => {
-      peer.destroy();
-    });
+      sinon.spy(connectionStub, 'on');
+      sinon.spy(connectionStub, 'emit');
 
-    it('should create a new MediaConnection, add it, and return it', () => {
-      const _addConnectionSpy = sinon.spy(peer, '_addConnection');
-
-      const conn = peer.call(peerId, new MediaStream());
-
-      assert.equal(conn.constructor.name, 'MediaConnection');
-      assert.equal(_addConnectionSpy.callCount, 1);
-      assert(_addConnectionSpy.calledWith(peerId, conn));
-
-      _addConnectionSpy.restore();
-    });
-
-    it('should emit an error if disconnected', done => {
-      peer.on('error', e => {
-        assert.equal(e.type, 'disconnected');
-        done();
-      });
-
-      peer.disconnect();
-
-      setTimeout(() => {
-        peer.call(peerId, {});
-      });
-    });
-  });
-
-  describe('connect', () => {
-    let peer;
-    beforeEach(() => {
-      peer = new Peer({
-        key: apiKey
-      });
-    });
-
-    afterEach(() => {
-      peer.destroy();
-    });
-
-    it('should create a new DataConnection, add it, and return it', () => {
-      const addConnectionSpy = sinon.spy(peer, '_addConnection');
-
-      const conn = peer.connect(peerId, {});
-
-      assert.equal(conn.constructor.name, 'DataConnection');
-      assert.equal(addConnectionSpy.callCount, 1);
-      assert(addConnectionSpy.calledWith(peerId, conn));
-
-      addConnectionSpy.restore();
-    });
-
-    it('should emit an error if disconnected', done => {
-      peer.on('error', e => {
-        assert.equal(e.type, 'disconnected');
-        done();
-      });
-
-      peer.disconnect();
-
-      setTimeout(() => {
-        peer.connect(peerId);
-      });
-    });
-  });
-
-  describe('joinRoom', () => {
-    const roomName = 'testRoomName';
-
-    let peer;
-    beforeEach(() => {
-      peer = new Peer({
-        key: apiKey
-      });
-    });
-
-    it('should call _initSfuRoom if mode is \'sfu\'', () => {
-      const initSfuRoomStub = sinon.stub(peer, '_initSfuRoom');
-      const options = {mode: 'sfu'};
-
-      peer.joinRoom(roomName, options);
-
-      assert.equal(initSfuRoomStub.callCount, 1);
-      assert(initSfuRoomStub.calledWith(roomName, options));
-    });
-
-    it('should call _initFullMeshRoom if mode is \'mesh\'', () => {
-      const initMeshRoomStub = sinon.stub(peer, '_initFullMeshRoom');
-      const options = {mode: 'mesh'};
-
-      peer.joinRoom(roomName, options);
-
-      assert.equal(initMeshRoomStub.callCount, 1);
-      assert(initMeshRoomStub.calledWith(roomName, options));
-    });
-
-    it('should call _initFullMeshRoom if mode is not set', () => {
-      const initMeshRoomStub = sinon.stub(peer, '_initFullMeshRoom');
-      const options = {};
-
-      peer.joinRoom(roomName, options);
-
-      assert.equal(initMeshRoomStub.callCount, 1);
-      assert(initMeshRoomStub.calledWith(roomName, options));
-    });
-
-    it('should emit an error if roomName isn\'t defined', done => {
-      const options = {};
-
-      peer.on('error', err => {
-        assert.equal(err.type, 'room-error');
-        done();
-      });
-
-      peer.joinRoom(undefined, options);
-    });
-
-    it('should set roomOptions pcConfig and peerId', () => {
-      const initMeshRoomStub = sinon.stub(peer, '_initFullMeshRoom');
-      const options = {};
-
-      peer.joinRoom(roomName, options);
-
-      const roomOptions = initMeshRoomStub.args[0][1];
-      assert.equal(roomOptions.pcConfig, peer._pcConfig);
-      assert.equal(roomOptions.peerId, peer.id);
-    });
-  });
-
-  describe('listAllPeers', () => {
-    let peer;
-    let requests = [];
-    let xhr;
-    beforeEach(() => {
       peer = new Peer({
         key: apiKey
       });
 
-      xhr = sinon.useFakeXMLHttpRequest();
-      xhr.onCreate = function(request) {
-        requests.push(request);
-      };
+      peer._setupConnectionMessageHandlers(connectionStub);
     });
 
-    afterEach(() => {
-      xhr.restore();
-      requests = [];
-
-      peer.destroy();
+    it('should set up handlers for Connection Message events', () => {
+      assert(connectionStub.on.calledWith(MediaConnection.EVENTS.offer.key, sinon.match.func));
+      assert(connectionStub.on.calledWith(MediaConnection.EVENTS.answer.key, sinon.match.func));
+      assert(connectionStub.on.calledWith(MediaConnection.EVENTS.candidate.key, sinon.match.func));
     });
 
-    it('should send a "GET" request to the right URL', () => {
-      peer.listAllPeers();
-      assert.equal(requests.length, 1);
-
-      const protocol = peer.options.secure ? 'https://' : 'http://';
-      const url = `${protocol}${peer.options.host}:` +
-        `${peer.options.port}/api/apikeys/${apiKey}/clients/`;
-      assert(requests[0].url === url);
-      assert(requests[0].method === 'get');
-    });
-
-    it('should call the callback with the response as the argument', () => {
-      const spy = sinon.spy();
-      peer.listAllPeers(spy);
-      assert.equal(requests.length, 1);
-
-      const peerList = ['peerId1', 'peerId2', 'peerId3'];
-      requests[0].respond(200, {}, JSON.stringify(peerList));
-
-      assert.equal(spy.callCount, 1);
-      assert(spy.calledWith(peerList));
-    });
-
-    it('should throw an error when the status is 401', () => {
-      try {
-        peer.listAllPeers();
-        requests.respond(401);
-      } catch (e) {
-        assert(e instanceof Error);
-        return;
-      }
-
-      assert.fail('Didn\'t throw an error');
-    });
-
-    it('should call the callback with an empty array any other status', () => {
-      const spy = sinon.spy();
-      const peerList = JSON.stringify(['peerId1', 'peerId2', 'peerId3']);
-      const responseCodes = [202, 400, 403, 404, 408, 500, 503];
-
-      for (let codeIndex = 0; codeIndex <= responseCodes.length; codeIndex++) {
-        peer.listAllPeers(spy);
-        requests[codeIndex].respond(responseCodes[codeIndex], {}, peerList);
-      }
-
-      assert.equal(spy.withArgs([]).callCount, responseCodes.length);
-    });
-
-    it('should not throw an error if cb isn\'t provided', () => {
-      try {
-        peer.listAllPeers();
-        requests[0].respond(200, {}, JSON.stringify([]));
-      } catch (e) {
-        assert.fail('Should not have thrown an error');
-      }
-    });
-
-    // onerror testing is unstable. Wait for sinonjs2 to be released
-    it.skip('should throw an error on peer if http request fails', done => {
-      peer.on('error', err => {
-        assert(err instanceof Error);
-        assert.equal(err.type, 'server-error');
-        done();
+    describe('offer', () => {
+      it('should send OFFER message', () => {
+        connectionStub.emit(MediaConnection.EVENTS.offer.key, message);
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.OFFER.key, message));
       });
-
-      peer.listAllPeers();
-      requests[0].abort();
     });
-  });
 
-  describe('_initSfuRoom', () => {
-    const peerId = 'testPeerId';
-    const roomName = 'testRoomName';
-    const options = {};
-    let peer;
-
-    beforeEach(() => {
-      peer = new Peer(peerId, {
-        key: apiKey
+    describe('answer', () => {
+      it('should send ANSWER message', () => {
+        connectionStub.emit(MediaConnection.EVENTS.answer.key, message);
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.ANSWER.key, message));
       });
-      peer.id = peerId;
     });
 
-    it('should create and return SFURoom', () => {
-      const sfuRoom = peer._initSfuRoom(roomName, options);
-
-      assert.equal(SFURoomConstructorStub.callCount, 1);
-      assert(SFURoomConstructorStub.calledWith(roomName, peerId, options));
-
-      assert.equal(sfuRoom.constructor.name, 'SFURoom');
-      assert.equal(peer.rooms[roomName], sfuRoom);
-    });
-
-    it('should set call _setupSFURoomMessageHandlers', () => {
-      const setupSFUMessageHandlersSpy = sinon.spy(peer, '_setupSFURoomMessageHandlers');
-      const sfuRoom = peer._initSfuRoom(roomName, options);
-
-      assert.equal(setupSFUMessageHandlersSpy.callCount, 1);
-      assert(setupSFUMessageHandlersSpy.calledWith(sfuRoom));
-    });
-
-    it('should send a SFU_JOIN message', () => {
-      peer._initSfuRoom(roomName, options);
-
-      assert.equal(peer.socket.send.callCount, 1);
-      assert(peer.socket.send.calledWithMatch(
-        util.MESSAGE_TYPES.SFU_JOIN.key,
-        {roomName: roomName, roomOptions: options})
-      );
-    });
-
-    it('should call sfuRoom.call() if stream option is set', () => {
-      const optionsWithStream = {stream: {}};
-      const sfuRoom = peer._initSfuRoom(roomName, optionsWithStream);
-
-      assert.equal(sfuRoom.call.callCount, 1);
-    });
-
-    it('should not call sfuRoom.call() if stream option is not set', () => {
-      const sfuRoom = peer._initSfuRoom(roomName, options);
-
-      assert.equal(sfuRoom.call.callCount, 0);
-    });
-
-    it('should return the room if it exists', () => {
-      const dummyRoom = {};
-      peer.rooms[roomName] = dummyRoom;
-
-      const sfuRoom = peer._initSfuRoom(roomName, options);
-
-      assert.equal(sfuRoom, dummyRoom);
-      assert.equal(SFURoomConstructorStub.callCount, 0);
-    });
-  });
-
-  describe('_initFullMeshRoom', () => {
-    const peerId = 'testPeerId';
-    const roomName = 'testRoomName';
-    const options = {};
-    let peer;
-
-    beforeEach(() => {
-      peer = new Peer(peerId, {
-        key: apiKey
+    describe('candidate', () => {
+      it('should send CANDIDATE message', () => {
+        connectionStub.emit(MediaConnection.EVENTS.candidate.key, message);
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CANDIDATE.key, message));
       });
-      peer.id = peerId;
-    });
-
-    it('should create and return MeshRoom', () => {
-      const meshRoom = peer._initFullMeshRoom(roomName, options);
-
-      assert.equal(MeshRoomConstructorStub.callCount, 1);
-      assert(MeshRoomConstructorStub.calledWith(roomName, peerId, options));
-
-      assert.equal(meshRoom.constructor.name, 'MeshRoom');
-      assert.equal(peer.rooms[roomName], meshRoom);
-    });
-
-    it('should set call _setupMeshRoomMessageHandlers', () => {
-      const setupSFUMessageHandlersSpy = sinon.spy(peer, '_setupMeshRoomMessageHandlers');
-      const meshRoom = peer._initFullMeshRoom(roomName, options);
-
-      assert.equal(setupSFUMessageHandlersSpy.callCount, 1);
-      assert(setupSFUMessageHandlersSpy.calledWith(meshRoom));
-    });
-
-    it('should send a MESH_JOIN message', () => {
-      peer._initFullMeshRoom(roomName, options);
-
-      assert.equal(peer.socket.send.callCount, 1);
-      assert(peer.socket.send.calledWithMatch(
-        util.MESSAGE_TYPES.MESH_JOIN.key,
-        {roomName: roomName, roomOptions: options})
-      );
-    });
-
-    it('should call meshRoom.call() if stream option is set', () => {
-      const optionsWithStream = {stream: {}};
-      const meshRoom = peer._initFullMeshRoom(roomName, optionsWithStream);
-
-      assert.equal(meshRoom.call.callCount, 1);
-    });
-
-    it('should not call meshRoom.call() if stream option is not set', () => {
-      const meshRoom = peer._initFullMeshRoom(roomName, options);
-
-      assert.equal(meshRoom.call.callCount, 0);
-    });
-
-    it('should return the room if it exists', () => {
-      const dummyRoom = {};
-      peer.rooms[roomName] = dummyRoom;
-
-      const meshRoom = peer._initFullMeshRoom(roomName, options);
-
-      assert.equal(meshRoom, dummyRoom);
-      assert.equal(MeshRoomConstructorStub.callCount, 0);
     });
   });
 
@@ -1584,128 +1639,6 @@ describe('Peer', () => {
     });
   });
 
-  describe('_setupConnectionMessageHandlers', () => {
-    const message = {};
-    let peer;
-    let connectionStub;
-
-    beforeEach(() => {
-      connectionStub = new EventEmitter();
-
-      sinon.spy(connectionStub, 'on');
-      sinon.spy(connectionStub, 'emit');
-
-      peer = new Peer({
-        key: apiKey
-      });
-
-      peer._setupConnectionMessageHandlers(connectionStub);
-    });
-
-    it('should set up handlers for Connection Message events', () => {
-      assert(connectionStub.on.calledWith(MediaConnection.EVENTS.offer.key, sinon.match.func));
-      assert(connectionStub.on.calledWith(MediaConnection.EVENTS.answer.key, sinon.match.func));
-      assert(connectionStub.on.calledWith(MediaConnection.EVENTS.candidate.key, sinon.match.func));
-    });
-
-    describe('offer', () => {
-      it('should send OFFER message', () => {
-        connectionStub.emit(MediaConnection.EVENTS.offer.key, message);
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.OFFER.key, message));
-      });
-    });
-
-    describe('answer', () => {
-      it('should send ANSWER message', () => {
-        connectionStub.emit(MediaConnection.EVENTS.answer.key, message);
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.ANSWER.key, message));
-      });
-    });
-
-    describe('candidate', () => {
-      it('should send CANDIDATE message', () => {
-        connectionStub.emit(MediaConnection.EVENTS.candidate.key, message);
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CANDIDATE.key, message));
-      });
-    });
-  });
-
-  describe('_storeMessage', () => {
-    const connectionId = 'testConnectionId';
-    const message = {connectionId: connectionId};
-    const type = 'testType';
-
-    let peer;
-    beforeEach(() => {
-      peer = new Peer({
-        key: apiKey
-      });
-    });
-
-    it('should create an array in _queuedMessages for the connection if it doesn\'t exist', () => {
-      assert.equal(peer._queuedMessages[connectionId], undefined);
-
-      peer._storeMessage(type, message);
-
-      assert.equal(peer._queuedMessages[connectionId].constructor.name, 'Array');
-      assert.equal(peer._queuedMessages[connectionId].length, 1);
-      assert.deepEqual(peer._queuedMessages[connectionId][0], {type: type, payload: message});
-    });
-
-    it('should append an entry to _queuedMessages if the array exists', () => {
-      peer._queuedMessages[connectionId] = [{}];
-
-      peer._storeMessage(type, message);
-
-      assert.equal(peer._queuedMessages[connectionId].constructor.name, 'Array');
-      assert.equal(peer._queuedMessages[connectionId].length, 2);
-      assert.deepEqual(peer._queuedMessages[connectionId][1], {type: type, payload: message});
-    });
-  });
-
-  describe('reconnect', () => {
-    let peer;
-    beforeEach(() => {
-      peer = new Peer({
-        key: apiKey
-      });
-    });
-
-    describe('disconnect was called but destroy wasn\'t', () => {
-      beforeEach(() => {
-        peer._disconnectCalled = true;
-      });
-
-      it('should call socket.reconnect', () => {
-        peer.reconnect();
-
-        assert.equal(peer.socket.reconnect.callCount, 1);
-      });
-
-      it('should set _disconnectCalled to false', () => {
-        peer.reconnect();
-
-        assert.equal(peer._disconnectCalled, false);
-      });
-    });
-
-    describe('disconnect was not called', () => {
-      it('should do nothing', () => {
-        assert.equal(peer.socket.reconnect.callCount, 0);
-      });
-    });
-
-    describe('destroy was called', () => {
-      beforeEach(() => {
-        peer._destroyCalled = true;
-      });
-
-      it('should do nothing', () => {
-        assert.equal(peer.socket.reconnect.callCount, 0);
-      });
-    });
-  });
-
   describe('_abort', () => {
     let type = 'testType';
     let message = 'testMessage';
@@ -1752,39 +1685,6 @@ describe('Peer', () => {
     });
   });
 
-  describe('_cleanup', () => {
-    let peer;
-    beforeEach(() => {
-      peer = new Peer({
-        key: apiKey
-      });
-    });
-
-    it('should call cleanupPeer for all connections', () => {
-      const cleanupPeerStub = sinon.stub(peer, '_cleanupPeer');
-      const peers = ['peer1', 'peer2', 'peer3'];
-
-      for (let peerId of peers) {
-        peer.connections[peerId] = {};
-      }
-
-      peer._cleanup();
-
-      assert.equal(cleanupPeerStub.callCount, peers.length);
-      for (let peerId of peers) {
-        assert(cleanupPeerStub.calledWith(peerId));
-      }
-    });
-
-    it('should emit a close event', done => {
-      peer.on(Peer.EVENTS.close.key, () => {
-        done();
-      });
-
-      peer._cleanup();
-    });
-  });
-
   describe('_addConnection', () => {
     describe('_storeMessage', () => {
       const connection = {};
@@ -1825,6 +1725,106 @@ describe('Peer', () => {
         assert.equal(setupConnectionMessageHandlerStub.callCount, 1);
         assert(setupConnectionMessageHandlerStub.calledWith(connection));
       });
+    });
+  });
+
+  describe('_storeMessage', () => {
+    const connectionId = 'testConnectionId';
+    const message = {connectionId: connectionId};
+    const type = 'testType';
+
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    it('should create an array in _queuedMessages for the connection if it doesn\'t exist', () => {
+      assert.equal(peer._queuedMessages[connectionId], undefined);
+
+      peer._storeMessage(type, message);
+
+      assert.equal(peer._queuedMessages[connectionId].constructor.name, 'Array');
+      assert.equal(peer._queuedMessages[connectionId].length, 1);
+      assert.deepEqual(peer._queuedMessages[connectionId][0], {type: type, payload: message});
+    });
+
+    it('should append an entry to _queuedMessages if the array exists', () => {
+      peer._queuedMessages[connectionId] = [{}];
+
+      peer._storeMessage(type, message);
+
+      assert.equal(peer._queuedMessages[connectionId].constructor.name, 'Array');
+      assert.equal(peer._queuedMessages[connectionId].length, 2);
+      assert.deepEqual(peer._queuedMessages[connectionId][1], {type: type, payload: message});
+    });
+  });
+
+  describe('_cleanup', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    it('should call cleanupPeer for all connections', () => {
+      const cleanupPeerStub = sinon.stub(peer, '_cleanupPeer');
+      const peers = ['peer1', 'peer2', 'peer3'];
+
+      for (let peerId of peers) {
+        peer.connections[peerId] = {};
+      }
+
+      peer._cleanup();
+
+      assert.equal(cleanupPeerStub.callCount, peers.length);
+      for (let peerId of peers) {
+        assert(cleanupPeerStub.calledWith(peerId));
+      }
+    });
+
+    it('should emit a close event', done => {
+      peer.on(Peer.EVENTS.close.key, () => {
+        done();
+      });
+
+      peer._cleanup();
+    });
+  });
+
+  describe('_cleanupPeer', () => {
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+    });
+
+    afterEach(() => {
+      peer.destroy();
+    });
+
+    it('should call close for each connection in the peer', () => {
+      const peerId = util.randomToken();
+      peer.connections[peerId] = [];
+
+      const spies = [];
+      const numConns = 5;
+      for (let connIndex = 0; connIndex < numConns; connIndex++) {
+        const spy = sinon.spy();
+        spies.push(spy);
+        peer.connections[peerId].push({close: spy});
+      }
+
+      assert.equal(spies.length, numConns);
+      assert.equal(peer.connections[peerId].length, numConns);
+
+      peer._cleanupPeer(peerId);
+      for (let spy of spies) {
+        assert.equal(spy.callCount, 1);
+      }
     });
   });
 });
