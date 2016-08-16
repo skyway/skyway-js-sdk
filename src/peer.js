@@ -100,7 +100,7 @@ class Peer extends EventEmitter {
   /**
    * Creates new MediaConnection.
    * @param {string} peerId - The peerId of the peer you are connecting to.
-   * @param {MediaStream} stream - The MediaStream to send to the remote peer.
+   * @param {MediaStream} [stream] - The MediaStream to send to the remote peer.
    *                               If not set, the caller creates offer SDP with `sendonly` attribute.
    * @param {object} [options] - Optional arguments for the connection.
    * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
