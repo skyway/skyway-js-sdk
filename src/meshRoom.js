@@ -7,17 +7,13 @@ const Connection      = require('./connection');
 const MediaConnection = require('./mediaConnection');
 const DataConnection = require('./dataConnection');
 
-const Events = [
-  'call'
-];
-
 const MessageEvents = [
   'broadcastByWS',
   'broadcastByDC',
   'getPeers'
 ];
 
-const MeshEvents = new Enum(Events);
+const MeshEvents = new Enum([]);
 MeshEvents.extend(Room.EVENTS.enums);
 const MeshMessageEvents = new Enum(MessageEvents);
 MeshMessageEvents.extend(Room.MESSAGE_EVENTS.enums);
@@ -164,7 +160,7 @@ class MeshRoom extends Room {
       this._addConnection(offerMessage.src, connection);
       this._setupMessageHandlers(connection);
 
-      this.emit(MeshRoom.EVENTS.call.key, connection);
+      connection.answer(this._localStream);
     } else {
       util.warn(`Received malformed connection type: ${offerMessage.connectionType}`);
     }
@@ -364,13 +360,6 @@ class MeshRoom extends Room {
   static get EVENTS() {
     return MeshEvents;
   }
-
-  /**
-   * Offer SDP received and MediaConnection instance created event.
-   *
-   * @event MeshRoom#call
-   * @type {MediaConnection}
-   */
 
   /**
    * Message events the MeshRoom class can emit.
