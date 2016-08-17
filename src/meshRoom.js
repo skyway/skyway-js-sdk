@@ -213,7 +213,7 @@ class MeshRoom extends Room {
    * It emits broadcastByWS event.
    * @param {*} data - The data to send.
    */
-  sendByWS(data) {
+  send(data) {
     const message = {
       roomName: this.name,
       data:     data

@@ -258,7 +258,7 @@ describe('MeshRoom', () => {
     });
   });
 
-  describe('sendByWS', () => {
+  describe('send', () => {
     it('should emit a broadcastByWS event', done => {
       const data = 'foobar';
 
@@ -267,7 +267,7 @@ describe('MeshRoom', () => {
         done();
       });
 
-      meshRoom.sendByWS(data);
+      meshRoom.send(data);
     });
   });
 

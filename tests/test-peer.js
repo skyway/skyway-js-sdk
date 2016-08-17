@@ -1177,7 +1177,7 @@ describe('Peer', () => {
 
         const room = peer.joinRoom(roomName);
         room._open = true;
-        room.sendByWS('foobar');
+        room.send('foobar');
 
         setTimeout(() => {
           assert(spy.calledWith(util.MESSAGE_TYPES.MESH_DATA.key));
