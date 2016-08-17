@@ -85,9 +85,9 @@ class MediaConnection extends Connection {
         type:       'media',
         stream:     this.localStream,
         originator: false,
-        offer:      this._options.payload.offer
-      },
-      this._options.pcConfig
+        offer:      this._options.payload.offer,
+        pcConfig:   this._options.pcConfig
+      }
     );
     this._pcAvailable = true;
 
