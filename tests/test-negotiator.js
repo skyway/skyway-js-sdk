@@ -321,32 +321,72 @@ describe('Negotiator', () => {
   });
 
   describe('handleAnswer', () => {
-    it('should setRemoteDescription', done => {
-      const negotiator = new Negotiator();
+    let negotiator;
+    beforeEach(() => {
+      negotiator = new Negotiator();
       negotiator._pc = negotiator._createPeerConnection();
-      const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription');
+    });
+    describe('when _isExpectingAnswer is true', () => {
+      beforeEach(() => {
+        negotiator._isExpectingAnswer = true;
+      });
 
-      negotiator._pc.createOffer(offer => {
-        // creating an answer is complicated so just use an offer
-        const answerObject = {
-          sdp:  offer.sdp,
-          type: 'answer'
-        };
+      it('should setRemoteDescription', done => {
+        const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription');
 
-        assert.equal(setRemoteStub.callCount, 0);
+        negotiator._pc.createOffer(offer => {
+          // creating an answer is complicated so just use an offer
+          const answerObject = {
+            sdp:  offer.sdp,
+            type: 'answer'
+          };
 
-        negotiator.handleAnswer(answerObject);
+          assert.equal(setRemoteStub.callCount, 0);
 
-        // let other async events run
-        setTimeout(() => {
-          assert.equal(setRemoteStub.callCount, 1);
-          assert(setRemoteStub.calledWith(
-            new RTCSessionDescription(answerObject))
-          );
-          done();
+          negotiator.handleAnswer(answerObject);
+
+          // let other async events run
+          setTimeout(() => {
+            assert.equal(setRemoteStub.callCount, 1);
+            assert(setRemoteStub.calledWith(
+              new RTCSessionDescription(answerObject))
+            );
+            done();
+          });
+        }, err => {
+          assert.fail(err);
         });
-      }, err => {
-        assert.fail(err);
+      });
+
+      it('should set isExpectingAnswer to false', () => {
+        sinon.stub(negotiator._pc, 'setRemoteDescription');
+
+        negotiator._pc.createOffer(offer => {
+          // creating an answer is complicated so just use an offer
+          const answerObject = {
+            sdp:  offer.sdp,
+            type: 'answer'
+          };
+
+          negotiator.handleAnswer(answerObject);
+
+          assert.equal(negotiator._isExpectingAnswer, false);
+        });
+      });
+    });
+
+    describe('when _isExpectingAnswer is false', () => {
+      beforeEach(() => {
+        negotiator._isExpectingAnswer = false;
+      });
+
+      it('should trigger onnegotiationneeded', () => {
+        const negotiationNeededSpy = sinon.spy();
+        negotiator._pc.onnegotiationneeded = negotiationNeededSpy;
+
+        negotiator.handleAnswer({});
+
+        assert.equal(negotiationNeededSpy.callCount, 1);
       });
     });
   });
@@ -757,6 +797,19 @@ describe('Negotiator', () => {
 
       negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
         assert(offer);
+        done();
+      });
+
+      negotiator._setLocalDescription(offer);
+    });
+
+    it('should set _isExpectingAnswer to true if setLocalDescription succeeds', done => {
+      const offer = 'offer';
+      setLocalDescriptionStub.callsArgWith(1, offer);
+
+      assert.equal(negotiator._isExpectingAnswer, false);
+      negotiator.on(Negotiator.EVENTS.offerCreated.key, () => {
+        assert.equal(negotiator._isExpectingAnswer, true);
         done();
       });
 

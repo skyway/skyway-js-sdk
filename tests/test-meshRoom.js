@@ -182,13 +182,16 @@ describe('MeshRoom', () => {
         assert(addConnectionStub.calledWith(remotePeerId, mcStub.returnValues[0]));
       });
 
-      it('should return without creating a connection if the id already exists', () => {
-        meshRoom._addConnection(remotePeerId, {id: connId1});
+      it('should call updateOffer if connection already exists', () => {
+        const updateOfferSpy = sinon.spy();
 
+        meshRoom._addConnection(remotePeerId, {id: connId1, updateOffer: updateOfferSpy});
         meshRoom.handleOffer(data);
 
         assert.equal(mcStub.callCount, 0);
-        assert.equal(answerSpy.callCount, 0);
+
+        assert.equal(updateOfferSpy.callCount, 1);
+        assert(updateOfferSpy.calledWith(data));
       });
 
       it('should answer with localStream', () => {

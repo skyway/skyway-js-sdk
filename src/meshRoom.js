@@ -142,7 +142,7 @@ class MeshRoom extends Room {
     let connection = this._getConnection(offerMessage.src, connectionId);
 
     if (connection) {
-      util.warn(`Offer received for existing Connection ID: ${connectionId}`);
+      connection.updateOffer(offerMessage);
       return;
     }
 

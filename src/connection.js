@@ -22,7 +22,8 @@ class Connection extends EventEmitter {
    * Create a connection to another peer. Cannot be called directly. Must be called by a subclass.
    * @param {string} remoteId - The peerId of the peer you are connecting to.
    * @param {object} [options] - Optional arguments for the connection.
-   * @param {string} [options.connectionId] - An ID to uniquely identify the connection. Defaults to random string if not specified.
+   * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
+   *                                          Defaults to random string if not specified.
    */
   constructor(remoteId, options) {
     super();
@@ -60,7 +61,7 @@ class Connection extends EventEmitter {
      */
     this.remoteId = remoteId;
 
-    this._negotiator = new Negotiator(this);
+    this._negotiator = new Negotiator(this._options);
 
     this._idPrefix = 'c_';
     this._randomIdSuffix = util.randomToken();
@@ -100,6 +101,14 @@ class Connection extends EventEmitter {
       util.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
       this._queuedMessages.push({type: util.MESSAGE_TYPES.CANDIDATE.key, payload: candidateMessage});
     }
+  }
+
+  /**
+   * Handle an offer message from the remote peer. Allows an offer to be updated.
+   * @param {object} offerMessage - Message object containing an offer.
+   */
+  updateOffer(offerMessage) {
+    this._negotiator.handleOffer(offerMessage.offer);
   }
 
   /**

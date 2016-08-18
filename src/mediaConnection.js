@@ -97,6 +97,15 @@ class MediaConnection extends Connection {
   }
 
   /**
+   * Replace the stream being sent with a new one.
+   * @param {MediaStream} newStream - The stream to replace the old stream with.
+   */
+  replaceStream(newStream) {
+    this._negotiator.replaceStream(newStream);
+    this.localStream = newStream;
+  }
+
+  /**
    * Events the MediaConnection class can emit.
    * @type {Enum}
    */
