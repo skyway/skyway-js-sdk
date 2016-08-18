@@ -20,16 +20,19 @@ describe('MeshRoom', () => {
   let dcStub;
   let onSpy;
   let closeSpy;
+  let answerSpy;
 
   beforeEach(() => {
     mcStub = sinon.stub();
     dcStub = sinon.stub();
     onSpy = sinon.spy();
     closeSpy = sinon.spy();
+    answerSpy = sinon.spy();
 
     mcStub.returns({
-      on:    onSpy,
-      close: closeSpy
+      on:     onSpy,
+      close:  closeSpy,
+      answer: answerSpy
     });
 
     dcStub.returns({
@@ -45,6 +48,7 @@ describe('MeshRoom', () => {
     dcStub.reset();
     onSpy.reset();
     closeSpy.reset();
+    answerSpy.reset();
   });
 
   describe('Constructor', () => {
@@ -178,26 +182,20 @@ describe('MeshRoom', () => {
         assert(addConnectionStub.calledWith(remotePeerId, mcStub.returnValues[0]));
       });
 
-      it('should emit a call event', done => {
-        meshRoom.on(MeshRoom.EVENTS.call.key, call => {
-          assert.equal(call, mcStub.returnValues[0]);
-
-          done();
-        });
-
-        meshRoom.handleOffer(data);
-      });
-
       it('should return without creating a connection if the id already exists', () => {
-        meshRoom.on(MeshRoom.EVENTS.call.key, () => {
-          assert.fail(undefined, undefined, 'Should not have emitted a call event');
-        });
-
         meshRoom._addConnection(remotePeerId, {id: connId1});
 
         meshRoom.handleOffer(data);
 
         assert.equal(mcStub.callCount, 0);
+        assert.equal(answerSpy.callCount, 0);
+      });
+
+      it('should answer with localStream', () => {
+        meshRoom.handleOffer(data);
+
+        assert.equal(answerSpy.callCount, 1);
+        assert(answerSpy.calledWith(meshRoom._localStream));
       });
     });
 
@@ -260,7 +258,7 @@ describe('MeshRoom', () => {
     });
   });
 
-  describe('sendByWS', () => {
+  describe('send', () => {
     it('should emit a broadcastByWS event', done => {
       const data = 'foobar';
 
@@ -269,7 +267,7 @@ describe('MeshRoom', () => {
         done();
       });
 
-      meshRoom.sendByWS(data);
+      meshRoom.send(data);
     });
   });
 

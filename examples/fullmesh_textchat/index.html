@@ -103,7 +103,7 @@
         e.originalEvent.preventDefault();
         var file = e.originalEvent.dataTransfer.files[0];
         eachActiveRoom(function(room, $c) {
-          room.sendByWS(file);
+          room.send(file);
           $c.find('.messages').append('<div><span class="file">You sent a file.</span></div>');
         });
       });
@@ -140,7 +140,7 @@
         // For each active connection, send the message.
         var msg = $('#text').val();
         eachActiveRoom(function(room, $c) {
-          room.sendByWS(msg);
+          room.send(msg);
           $c.find('.messages').append('<div><span class="you">You: </span>' + msg
             + '</div>');
         });
@@ -179,7 +179,7 @@
 
 <div id="actions">
   Your Peer ID is <span id="pid"></span><br>
-  Connect to a room: 
+  Connect to a room:
   <form id="connect">
     <input type="text" id="roomName" placeholder="Room name">
     <input class="button" type="submit" value="Connect">
