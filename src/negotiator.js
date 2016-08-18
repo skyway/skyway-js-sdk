@@ -111,7 +111,9 @@ class Negotiator extends EventEmitter {
       this._pc.addStream(newStream);
     }, 0);
 
+    /* istanbul ignore next function */
     this._pc.onnegotiationneeded = () => {};
+
     const remoteStreams = this._pc.getRemoteStreams();
     if (remoteStreams && remoteStreams[0]) {
       this._pc.removeStream(remoteStreams[0]);

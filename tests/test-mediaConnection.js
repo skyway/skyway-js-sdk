@@ -16,6 +16,7 @@ describe('MediaConnection', () => {
   let cleanupSpy;
   let answerSpy;
   let candidateSpy;
+  let replaceSpy;
 
   beforeEach(() => {
     stub = sinon.stub();
@@ -23,6 +24,7 @@ describe('MediaConnection', () => {
     cleanupSpy = sinon.spy();
     answerSpy = sinon.spy();
     candidateSpy = sinon.spy();
+    replaceSpy = sinon.spy();
 
     stub.returns({
       on: function(event, callback) {
@@ -34,7 +36,8 @@ describe('MediaConnection', () => {
       startConnection: startSpy,
       cleanup:         cleanupSpy,
       handleAnswer:    answerSpy,
-      handleCandidate: candidateSpy
+      handleCandidate: candidateSpy,
+      replaceStream:   replaceSpy
     });
 
     Connection = proxyquire(
@@ -52,6 +55,7 @@ describe('MediaConnection', () => {
     cleanupSpy.reset();
     answerSpy.reset();
     candidateSpy.reset();
+    replaceSpy.reset();
   });
 
   describe('Constructor', () => {
@@ -173,6 +177,18 @@ describe('MediaConnection', () => {
       assert(spy.calledWith(MediaConnection.EVENTS.stream.key, 'fakeStream') === true);
 
       spy.restore();
+    });
+  });
+
+  describe('replaceStream', () => {
+    it('should call negotiator.replaceStream', () => {
+      const mc = new MediaConnection('remoteId', {});
+      const newStream = {};
+
+      mc.replaceStream(newStream);
+
+      assert(replaceSpy.calledOnce);
+      assert(replaceSpy.calledWith(newStream));
     });
   });
 
