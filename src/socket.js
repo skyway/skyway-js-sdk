@@ -99,6 +99,10 @@ class Socket extends EventEmitter {
     }
   }
 
+  reconnect() {
+    this._io.connect();
+  }
+
   /**
    * Set up the signalling message handlers.
    * @private

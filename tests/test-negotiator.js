@@ -367,6 +367,7 @@ describe('Negotiator', () => {
       };
 
       const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
+      addIceStub.returns(Promise.resolve());
 
       assert.equal(addIceStub.callCount, 0);
 
