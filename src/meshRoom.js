@@ -253,6 +253,22 @@ class MeshRoom extends Room {
   }
 
   /**
+   * Replace the stream being sent on all MediaConnections   with a new one.
+   * @param {MediaStream} newStream - The stream to replace the old stream with.
+   */
+  replaceStream(newStream) {
+    for (let peerId in this.connections) {
+      if (this.connections.hasOwnProperty(peerId)) {
+        this.connections[peerId].forEach(connection => {
+          if (connection.type === 'media') {
+            connection.replaceStream(newStream);
+          }
+        });
+      }
+    }
+  }
+
+  /**
    * Append a connection to peer's array of connections, stored in room.connections.
    * @param {string} peerId - User's peerID.
    * @param {MediaConnection|DataConnection} connection - An instance of MediaConnection or DataConnection.
@@ -349,6 +365,10 @@ class MeshRoom extends Room {
       connection.on(MediaConnection.EVENTS.stream.key, remoteStream => {
         remoteStream.peerId = connection.remoteId;
         this.emit(MeshRoom.EVENTS.stream.key, remoteStream);
+      });
+
+      connection.on(MediaConnection.EVENTS.removeStream.key, remoteStream => {
+        this.emit(MeshRoom.EVENTS.removeStream.key, remoteStream);
       });
     }
   }
