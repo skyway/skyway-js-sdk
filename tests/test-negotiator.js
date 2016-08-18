@@ -367,8 +367,8 @@ describe('Negotiator', () => {
         negotiator._pc.removeStream = removeStreamSpy;
         negotiator._pc.addStream = addStreamSpy;
 
-        const getRemoteStreamStub = sinon.stub(negotiator._pc, 'getRemoteStreams');
-        getRemoteStreamStub.returns([remoteStream]);
+        const getLocalStreamsStub = sinon.stub(negotiator._pc, 'getLocalStreams');
+        getLocalStreamsStub.returns([remoteStream]);
 
         // disable getSenders if available
         negotiator._pc.getSenders = null;
