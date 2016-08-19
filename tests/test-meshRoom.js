@@ -21,6 +21,7 @@ describe('MeshRoom', () => {
   let onSpy;
   let closeSpy;
   let answerSpy;
+  let replaceStreamSpy;
 
   beforeEach(() => {
     mcStub = sinon.stub();
@@ -28,15 +29,19 @@ describe('MeshRoom', () => {
     onSpy = sinon.spy();
     closeSpy = sinon.spy();
     answerSpy = sinon.spy();
+    replaceStreamSpy = sinon.spy();
 
     mcStub.returns({
-      on:     onSpy,
-      close:  closeSpy,
-      answer: answerSpy
+      type:          'media',
+      on:            onSpy,
+      close:         closeSpy,
+      answer:        answerSpy,
+      replaceStream: replaceStreamSpy
     });
 
     dcStub.returns({
-      on: onSpy
+      type: 'data',
+      on:   onSpy
     });
 
     MeshRoom = proxyquire('../src/meshRoom', {'./mediaConnection': mcStub, './dataConnection': dcStub});
@@ -49,6 +54,7 @@ describe('MeshRoom', () => {
     onSpy.reset();
     closeSpy.reset();
     answerSpy.reset();
+    replaceStreamSpy.reset();
   });
 
   describe('Constructor', () => {
@@ -238,7 +244,6 @@ describe('MeshRoom', () => {
       meshRoom.handleAnswer(answerMessage);
 
       assert.equal(handleSpy.callCount, 1);
-      console.log(handleSpy.args[0][0]);
       assert(handleSpy.calledWithMatch(answerMessage));
     });
   });
@@ -298,6 +303,34 @@ describe('MeshRoom', () => {
       meshRoom.close();
 
       assert(closeSpy.calledTwice);
+    });
+  });
+
+  describe('replaceStream', () => {
+    const peers = ['peerId1', 'peerId2', 'peerId3'];
+    const newStream = {};
+
+    it('should call replaceStream for each MediaConnection in connections', () => {
+      meshRoom.makeMediaConnections(peers);
+
+      meshRoom.replaceStream(newStream);
+
+      assert.equal(replaceStreamSpy.callCount, peers.length);
+      assert(replaceStreamSpy.alwaysCalledWith(newStream));
+
+      peers.forEach(peer => {
+        meshRoom.connections[peer].forEach(connection => {
+          assert(replaceStreamSpy.calledOn(connection));
+        });
+      });
+    });
+
+    it('should not call replaceStream for any DataConnections in connections', () => {
+      meshRoom.makeDataConnections(peers);
+
+      meshRoom.replaceStream(newStream);
+
+      assert.equal(replaceStreamSpy.callCount, 0);
     });
   });
 
@@ -449,10 +482,11 @@ describe('MeshRoom', () => {
       assert(onSpy.calledWith(Connection.EVENTS.candidate.key, sinon.match.func));
     });
 
-    it('should handle stream event if connection is a MediaConnection', () => {
+    it('should handle stream and removeStream events if connection is a MediaConnection', () => {
       meshRoom._setupMessageHandlers({on: onSpy, type: 'media'});
 
       assert(onSpy.calledWith(MediaConnection.EVENTS.stream.key, sinon.match.func));
+      assert(onSpy.calledWith(MediaConnection.EVENTS.removeStream.key, sinon.match.func));
     });
 
     describe('Event handlers', () => {
@@ -530,6 +564,20 @@ describe('MeshRoom', () => {
           });
 
           mc.emit(MediaConnection.EVENTS.stream.key, stream);
+        });
+      });
+
+      describe('removeStream', () => {
+        it('should emit stream', done => {
+          const stream = {};
+
+          meshRoom.on(MeshRoom.EVENTS.removeStream.key, emittedStream => {
+            assert.equal(emittedStream, stream);
+
+            done();
+          });
+
+          mc.emit(MediaConnection.EVENTS.removeStream.key, stream);
         });
       });
     });

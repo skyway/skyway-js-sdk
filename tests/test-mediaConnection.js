@@ -155,17 +155,15 @@ describe('MediaConnection', () => {
       assert(spy.calledOnce);
       assert.equal(mc.open, false);
     });
-  });
 
-  describe('Add Stream', () => {
-    it('should set remoteStream upon addStream being emitted', () => {
+    it('should set remoteStream on \'addStream\' being emitted', () => {
       const mc = new MediaConnection('remoteId', {stream: {}});
       mc._negotiator.emit(Negotiator.EVENTS.addStream.key, 'fakeStream');
 
       assert.equal(mc.remoteStream, 'fakeStream');
     });
 
-    it('should emit a \'stream\' event upon addStream being emitted', () => {
+    it('should emit a \'stream\' event upon \'addStream\' being emitted', () => {
       const mc = new MediaConnection('remoteId', {stream: {}});
 
       let spy = sinon.spy(mc, 'emit');
@@ -175,6 +173,40 @@ describe('MediaConnection', () => {
       assert(mc);
       assert(spy.calledOnce);
       assert(spy.calledWith(MediaConnection.EVENTS.stream.key, 'fakeStream') === true);
+
+      spy.restore();
+    });
+
+    it('should set remoteStream to null on \'removeStream\' being emitted', () => {
+      const remoteStream = {};
+      const mc = new MediaConnection('remoteId', {stream: {}});
+      mc.remoteStream = remoteStream;
+      mc._negotiator.emit(Negotiator.EVENTS.removeStream.key, remoteStream);
+
+      assert.equal(mc.remoteStream, null);
+    });
+
+    it('should not change remoteStream on \'removeStream\' being emitted if remoteStream is different', () => {
+      const origStream = {};
+      const removeStream = {};
+      const mc = new MediaConnection('remoteId', {stream: {}});
+      mc.remoteStream = origStream;
+      mc._negotiator.emit(Negotiator.EVENTS.removeStream.key, removeStream);
+
+      assert.equal(mc.remoteStream, origStream);
+    });
+
+    it('should emit a \'removeStream\' event upon \'removeStream\' being emitted', () => {
+      const remoteStream = {};
+      const mc = new MediaConnection('remoteId', {stream: {}});
+
+      let spy = sinon.spy(mc, 'emit');
+
+      mc._negotiator.emit(Negotiator.EVENTS.removeStream.key, remoteStream);
+
+      assert(mc);
+      assert(spy.calledOnce);
+      assert(spy.calledWith(MediaConnection.EVENTS.removeStream.key, remoteStream) === true);
 
       spy.restore();
     });
