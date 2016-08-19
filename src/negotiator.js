@@ -96,6 +96,10 @@ class Negotiator extends EventEmitter {
           this._pc.removeTrack(sender);
         }
       });
+
+      // We don't actually need to do renegotiation but force it in order to prevent
+      // problems with the stream.id being mismatched when renegotiation happens anyways
+      this._pc.onnegotiationneeded();
       return;
     }
 

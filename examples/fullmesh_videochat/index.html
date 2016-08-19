@@ -133,7 +133,7 @@
         const streamURL = URL.createObjectURL(stream);
         const peerId = stream.peerId;
         $('#their-videos').append($(
-          '<div id="video_' + peerId + '_' + stream.id + '">' +
+          '<div id="video_' + peerId + '_' + stream.id.replace('{', '').replace('}') + '">' +
             '<label>' + stream.peerId + ':' + stream.id + '</label>' +
             '<video autoplay class="remoteVideos" src="' + streamURL + '">' +
           '</div>'));
@@ -141,7 +141,7 @@
 
       room.on('removeStream', function(stream) {
         const peerId = stream.peerId;
-        $('#video_' + peerId + '_' + stream.id).remove();
+        $('#video_' + peerId + '_' + stream.id.replace('{', '').replace('}')).remove();
       });
 
       // UI stuff

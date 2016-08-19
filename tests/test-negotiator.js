@@ -283,6 +283,7 @@ describe('Negotiator', () => {
       let removeTrackStub;
       let getAudioTracksStub;
       let getVideoTracksStub;
+      let negotiationNeededStub;
 
       const videoTrack = {};
       const audioTrack = {};
@@ -294,8 +295,10 @@ describe('Negotiator', () => {
         // We stub everything directly as there is no guarantee that the browser will support them.
         getSendersStub = sinon.stub();
         removeTrackStub = sinon.stub();
+        negotiationNeededStub = sinon.spy();
         negotiator._pc.getSenders = getSendersStub;
         negotiator._pc.removeTrack = removeTrackStub;
+        negotiator._pc.onnegotiationneeded = negotiationNeededStub;
 
         audioSender = {
           track: {
@@ -335,6 +338,12 @@ describe('Negotiator', () => {
           assert.equal(videoSender.replaceTrack.callCount, 1);
           assert(videoSender.replaceTrack.calledWith(videoTrack));
         });
+
+        it('should call onnegotiationneeded', () => {
+          negotiator.replaceStream(newStream);
+
+          assert.equal(negotiationNeededStub.callCount, 1);
+        });
       });
 
       describe('new stream has fewer number of tracks', () => {
@@ -349,6 +358,12 @@ describe('Negotiator', () => {
           assert.equal(removeTrackStub.callCount, 2);
           assert(removeTrackStub.calledWith(audioSender));
           assert(removeTrackStub.calledWith(videoSender));
+        });
+
+        it('should call onnegotiationneeded', () => {
+          negotiator.replaceStream(newStream);
+
+          assert.equal(negotiationNeededStub.callCount, 1);
         });
       });
     });
