@@ -46,12 +46,14 @@
       // Retry if getUserMedia fails
       $('#step1-retry').click(function(){
         $('#step1-error').hide();
-        step0();
+        step1();
       });
       // Get things started
       step0();
     });
+
     function step0 () {
+      // set up audio and video input selectors
       var audioSelect = $('#audioSource');
       var videoSelect = $('#videoSource');
       var selectors = [audioSelect, videoSelect];

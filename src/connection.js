@@ -61,7 +61,7 @@ class Connection extends EventEmitter {
      */
     this.remoteId = remoteId;
 
-    this._negotiator = new Negotiator(this._options);
+    this._negotiator = new Negotiator();
 
     this._idPrefix = 'c_';
     this._randomIdSuffix = util.randomToken();

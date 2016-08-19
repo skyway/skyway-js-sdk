@@ -104,24 +104,23 @@ class Negotiator extends EventEmitter {
     }
 
     // Manually remove and readd the entire stream if senders aren't available.
-    // Save and unset onnegotiationneeded so that it doesn't trigger twice.
     const negotiationNeededHandler = this._pc.onnegotiationneeded;
 
-    // Run async to give onnegotiationneeded a chance to trigger (and do nothing) on removeStream.
-    // Set the timeout before calling removeStream just in case there's
-    // an error so we can restore the onnegotiationneeded handler.
-    setTimeout(() => {
-      this._pc.onnegotiationneeded = negotiationNeededHandler;
-      this._pc.addStream(newStream);
-    }, 0);
-
     /* istanbul ignore next function */
+    // Unset onnegotiationneeded so that it doesn't trigger on removeStream
     this._pc.onnegotiationneeded = () => {};
 
     const localStreams = this._pc.getLocalStreams();
     if (localStreams && localStreams[0]) {
       this._pc.removeStream(localStreams[0]);
     }
+
+    // Restore onnegotiationneeded and addStream asynchronously to give onnegotiationneeded
+    // a chance to trigger (and do nothing) on removeStream.
+    setTimeout(() => {
+      this._pc.onnegotiationneeded = negotiationNeededHandler;
+      this._pc.addStream(newStream);
+    });
   }
 
   /**

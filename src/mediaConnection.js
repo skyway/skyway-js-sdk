@@ -116,7 +116,6 @@ class MediaConnection extends Connection {
       if (this.remoteStream === remoteStream) {
         this.remoteStream = null;
       }
-      console.log(this.remoteStream);
       this.emit(MediaConnection.EVENTS.removeStream.key, remoteStream);
     });
   }
