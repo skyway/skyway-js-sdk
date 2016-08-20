@@ -7,7 +7,8 @@ const util = require('./util');
 const Enum = require('enum');
 
 const MCEvents = new Enum([
-  'stream'
+  'stream',
+  'removeStream'
 ]);
 
 MCEvents.extend(Connection.EVENTS.enums);
@@ -57,14 +58,6 @@ class MediaConnection extends Connection {
       this._pcAvailable = true;
       this._handleQueuedMessages();
     }
-
-    this._negotiator.on(Negotiator.EVENTS.addStream.key, remoteStream => {
-      util.log('Receiving stream', remoteStream);
-
-      this.remoteStream = remoteStream;
-      // Is 'stream' an appropriate emit message? PeerJS contemplated using 'open' instead
-      this.emit(MediaConnection.EVENTS.stream.key, remoteStream);
-    });
   }
 
   /**
@@ -97,6 +90,37 @@ class MediaConnection extends Connection {
   }
 
   /**
+   * Replace the stream being sent with a new one.
+   * @param {MediaStream} newStream - The stream to replace the old stream with.
+   */
+  replaceStream(newStream) {
+    this._negotiator.replaceStream(newStream);
+    this.localStream = newStream;
+  }
+
+  _setupNegotiatorMessageHandlers() {
+    super._setupNegotiatorMessageHandlers();
+
+    this._negotiator.on(Negotiator.EVENTS.addStream.key, remoteStream => {
+      util.log('Receiving stream', remoteStream);
+
+      this.remoteStream = remoteStream;
+
+      this.emit(MediaConnection.EVENTS.stream.key, remoteStream);
+    });
+
+    this._negotiator.on(Negotiator.EVENTS.removeStream.key, remoteStream => {
+      util.log('Stream removed', remoteStream);
+
+      // Don't unset if a new stream has already replaced the old one
+      if (this.remoteStream === remoteStream) {
+        this.remoteStream = null;
+      }
+      this.emit(MediaConnection.EVENTS.removeStream.key, remoteStream);
+    });
+  }
+
+  /**
    * Events the MediaConnection class can emit.
    * @type {Enum}
    */
@@ -108,6 +132,13 @@ class MediaConnection extends Connection {
    * MediaStream received from peer.
    *
    * @event MediaConnection#stream
+   * @type {MediaStream}
+   */
+
+  /**
+   * MediaStream from peer was removed.
+   *
+   * @event MediaConnection#removeStream
    * @type {MediaStream}
    */
 }

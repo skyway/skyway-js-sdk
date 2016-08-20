@@ -28,6 +28,14 @@ const NegotiatorEvents = new Enum([
  * @extends EventEmitter
  */
 class Negotiator extends EventEmitter {
+  /**
+   * Create a negotiator
+   * @param {string} name - Room name.
+   */
+  constructor() {
+    super();
+    this._isExpectingAnswer = false;
+  }
 
   /**
    * Class that manages RTCPeerConnection and SDP exchange.
@@ -67,6 +75,55 @@ class Negotiator extends EventEmitter {
   }
 
   /**
+   * Replace the stream being sent with a new one.
+   * @param {MediaStream} newStream - The stream to replace the old stream with.
+   */
+  replaceStream(newStream) {
+    // Replace the tracks in the rtpSenders if possible.
+    // This doesn't require renegotiation.
+    if (this._pc.getSenders) {
+      this._pc.getSenders().forEach(sender => {
+        let tracks;
+        if (sender.track.kind === 'audio') {
+          tracks = newStream.getAudioTracks();
+        } else if (sender.track.kind === 'video') {
+          tracks = newStream.getVideoTracks();
+        }
+
+        if (tracks && tracks[0]) {
+          sender.replaceTrack(tracks[0]);
+        } else {
+          this._pc.removeTrack(sender);
+        }
+      });
+
+      // We don't actually need to do renegotiation but force it in order to prevent
+      // problems with the stream.id being mismatched when renegotiation happens anyways
+      this._pc.onnegotiationneeded();
+      return;
+    }
+
+    // Manually remove and readd the entire stream if senders aren't available.
+    const negotiationNeededHandler = this._pc.onnegotiationneeded;
+
+    /* istanbul ignore next function */
+    // Unset onnegotiationneeded so that it doesn't trigger on removeStream
+    this._pc.onnegotiationneeded = () => {};
+
+    const localStreams = this._pc.getLocalStreams();
+    if (localStreams && localStreams[0]) {
+      this._pc.removeStream(localStreams[0]);
+    }
+
+    // Restore onnegotiationneeded and addStream asynchronously to give onnegotiationneeded
+    // a chance to trigger (and do nothing) on removeStream.
+    setTimeout(() => {
+      this._pc.onnegotiationneeded = negotiationNeededHandler;
+      this._pc.addStream(newStream);
+    });
+  }
+
+  /**
    * Set remote description with remote Offer SDP, then create Answer SDP and emit it.
    * @param {object} offerSdp - An object containing Offer SDP.
    */
@@ -84,7 +141,13 @@ class Negotiator extends EventEmitter {
    * @param {object} answerSdp - An object containing Answer SDP.
    */
   handleAnswer(answerSdp) {
-    this._setRemoteDescription(answerSdp);
+    if (this._isExpectingAnswer) {
+      this._setRemoteDescription(answerSdp);
+      this._isExpectingAnswer = false;
+    } else if (this._pc.onnegotiationneeded) {
+      // manually trigger negotiation
+      this._pc.onnegotiationneeded();
+    }
   }
 
   /**
@@ -176,11 +239,15 @@ class Negotiator extends EventEmitter {
       util.log('`negotiationneeded` triggered');
 
       // don't make a new offer if it's not stable
-      if (pc.signalingState === 'stable' && this._originator) {
-        this._makeOfferSdp()
-          .then(offer => {
-            this._setLocalDescription(offer);
-          });
+      if (pc.signalingState === 'stable') {
+        if (this._originator) {
+          this._makeOfferSdp()
+            .then(offer => {
+              this._setLocalDescription(offer);
+            });
+        } else {
+          this.handleOffer(this._pc.remoteDescription);
+        }
       }
     };
 
@@ -255,6 +322,7 @@ class Negotiator extends EventEmitter {
     return new Promise((resolve, reject) => {
       this._pc.setLocalDescription(offer, () => {
         util.log('Set localDescription: offer');
+        this._isExpectingAnswer = true;
         this.emit(Negotiator.EVENTS.offerCreated.key, offer);
         resolve(offer);
       }, error => {

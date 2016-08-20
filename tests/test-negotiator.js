@@ -270,6 +270,158 @@ describe('Negotiator', () => {
     });
   });
 
+  describe('replaceStream', () => {
+    let negotiator;
+
+    beforeEach(() => {
+      negotiator = new Negotiator();
+      negotiator._pc = negotiator._createPeerConnection();
+    });
+
+    describe('rtpSenders are supported', () => {
+      let getSendersStub;
+      let removeTrackStub;
+      let getAudioTracksStub;
+      let getVideoTracksStub;
+      let negotiationNeededStub;
+
+      const videoTrack = {};
+      const audioTrack = {};
+      let audioSender;
+      let videoSender;
+      let newStream;
+
+      beforeEach(() => {
+        // We stub everything directly as there is no guarantee that the browser will support them.
+        getSendersStub = sinon.stub();
+        removeTrackStub = sinon.stub();
+        negotiationNeededStub = sinon.spy();
+        negotiator._pc.getSenders = getSendersStub;
+        negotiator._pc.removeTrack = removeTrackStub;
+        negotiator._pc.onnegotiationneeded = negotiationNeededStub;
+
+        audioSender = {
+          track: {
+            kind: 'audio'
+          },
+          replaceTrack: sinon.stub()
+        };
+        videoSender = {
+          track: {
+            kind: 'video'
+          },
+          replaceTrack: sinon.stub()
+        };
+        getSendersStub.returns([audioSender, videoSender]);
+
+        getVideoTracksStub = sinon.stub();
+        getAudioTracksStub = sinon.stub();
+
+        newStream = {
+          getVideoTracks: getVideoTracksStub,
+          getAudioTracks: getAudioTracksStub
+        };
+      });
+
+      describe('new stream has same number of tracks as current stream', () => {
+        beforeEach(() => {
+          getVideoTracksStub.returns([videoTrack]);
+          getAudioTracksStub.returns([audioTrack]);
+        });
+
+        it('should call replaceTrack for each sender', () => {
+          negotiator.replaceStream(newStream);
+
+          assert.equal(audioSender.replaceTrack.callCount, 1);
+          assert(audioSender.replaceTrack.calledWith(audioTrack));
+
+          assert.equal(videoSender.replaceTrack.callCount, 1);
+          assert(videoSender.replaceTrack.calledWith(videoTrack));
+        });
+
+        it('should call onnegotiationneeded', () => {
+          negotiator.replaceStream(newStream);
+
+          assert.equal(negotiationNeededStub.callCount, 1);
+        });
+      });
+
+      describe('new stream has fewer number of tracks', () => {
+        beforeEach(() => {
+          getVideoTracksStub.returns([]);
+          getAudioTracksStub.returns([]);
+        });
+
+        it('should call removeTrack for each sender', () => {
+          negotiator.replaceStream(newStream);
+
+          assert.equal(removeTrackStub.callCount, 2);
+          assert(removeTrackStub.calledWith(audioSender));
+          assert(removeTrackStub.calledWith(videoSender));
+        });
+
+        it('should call onnegotiationneeded', () => {
+          negotiator.replaceStream(newStream);
+
+          assert.equal(negotiationNeededStub.callCount, 1);
+        });
+      });
+    });
+
+    describe('rtpSenders aren\'t supported', () => {
+      const remoteStream = {};
+      const newStream = {};
+
+      let removeStreamSpy;
+      let addStreamSpy;
+
+      beforeEach(() => {
+        // Stub directly so tests run after remove/addStream are removed.
+        removeStreamSpy = sinon.stub();
+        addStreamSpy = sinon.stub();
+        negotiator._pc.removeStream = removeStreamSpy;
+        negotiator._pc.addStream = addStreamSpy;
+
+        const getLocalStreamsStub = sinon.stub(negotiator._pc, 'getLocalStreams');
+        getLocalStreamsStub.returns([remoteStream]);
+
+        // disable getSenders if available
+        negotiator._pc.getSenders = null;
+      });
+
+      it('should call removeStream then addStream', done => {
+        negotiator.replaceStream(newStream);
+
+        // Use timeout as it runs asynchronously
+        setTimeout(() => {
+          assert.equal(removeStreamSpy.callCount, 1);
+          assert(removeStreamSpy.calledWith(remoteStream));
+
+          assert.equal(addStreamSpy.callCount, 1);
+          assert(addStreamSpy.calledWith(newStream));
+
+          done();
+        });
+      });
+
+      it('should disable then enable onnegotiationneeded', done => {
+        const negotiationHandler = () => {};
+
+        negotiator._pc.onnegotiationneeded = negotiationHandler;
+        negotiator.replaceStream(newStream);
+
+        assert.notEqual(negotiator._pc.onnegotiationneeded, negotiationHandler);
+
+        // Use timeout as it runs asynchronously
+        setTimeout(() => {
+          assert.equal(negotiator._pc.onnegotiationneeded, negotiationHandler);
+
+          done();
+        });
+      });
+    });
+  });
+
   describe('handleOffer', () => {
     let negotiator;
 
@@ -321,51 +473,95 @@ describe('Negotiator', () => {
   });
 
   describe('handleAnswer', () => {
-    it('should setRemoteDescription', done => {
-      const negotiator = new Negotiator();
+    let negotiator;
+    beforeEach(() => {
+      negotiator = new Negotiator();
       negotiator._pc = negotiator._createPeerConnection();
-      const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription');
+    });
+    describe('when _isExpectingAnswer is true', () => {
+      beforeEach(() => {
+        negotiator._isExpectingAnswer = true;
+      });
 
-      negotiator._pc.createOffer(offer => {
-        // creating an answer is complicated so just use an offer
-        const answerObject = {
-          sdp:  offer.sdp,
-          type: 'answer'
-        };
+      it('should setRemoteDescription', done => {
+        const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription');
 
-        assert.equal(setRemoteStub.callCount, 0);
+        negotiator._pc.createOffer(offer => {
+          // creating an answer is complicated so just use an offer
+          const answerObject = {
+            sdp:  offer.sdp,
+            type: 'answer'
+          };
 
-        negotiator.handleAnswer(answerObject);
+          assert.equal(setRemoteStub.callCount, 0);
 
-        // let other async events run
-        setTimeout(() => {
-          assert.equal(setRemoteStub.callCount, 1);
-          assert(setRemoteStub.calledWith(
-            new RTCSessionDescription(answerObject))
-          );
-          done();
+          negotiator.handleAnswer(answerObject);
+
+          // let other async events run
+          setTimeout(() => {
+            assert.equal(setRemoteStub.callCount, 1);
+            assert(setRemoteStub.calledWith(
+              new RTCSessionDescription(answerObject))
+            );
+            done();
+          });
+        }, err => {
+          assert.fail(err);
         });
-      }, err => {
-        assert.fail(err);
+      });
+
+      it('should set isExpectingAnswer to false', () => {
+        sinon.stub(negotiator._pc, 'setRemoteDescription');
+
+        negotiator._pc.createOffer(offer => {
+          // creating an answer is complicated so just use an offer
+          const answerObject = {
+            sdp:  offer.sdp,
+            type: 'answer'
+          };
+
+          negotiator.handleAnswer(answerObject);
+
+          assert.equal(negotiator._isExpectingAnswer, false);
+        });
+      });
+    });
+
+    describe('when _isExpectingAnswer is false', () => {
+      beforeEach(() => {
+        negotiator._isExpectingAnswer = false;
+      });
+
+      it('should trigger onnegotiationneeded', () => {
+        const negotiationNeededSpy = sinon.spy();
+        negotiator._pc.onnegotiationneeded = negotiationNeededSpy;
+
+        negotiator.handleAnswer({});
+
+        assert.equal(negotiationNeededSpy.callCount, 1);
       });
     });
   });
 
   describe('handleCandidate', () => {
-    it('should call _pc.addIceCandidate with an RTCIceCandidate', () => {
-      const negotiator = new Negotiator();
+    const candidate = {
+      candidate:     'candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0',
+      sdpMLineIndex: 0,
+      sdpMid:        'data'
+    };
+
+    let negotiator;
+
+    beforeEach(() => {
+      negotiator = new Negotiator();
       const options = {
         type:       'data',
         originator: false
       };
       negotiator.startConnection(options);
+    });
 
-      const candidate = {
-        candidate:     'candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0',
-        sdpMLineIndex: 0,
-        sdpMid:        'data'
-      };
-
+    it('should call _pc.addIceCandidate with an RTCIceCandidate', () => {
       const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
       addIceStub.returns(Promise.resolve());
 
@@ -380,6 +576,19 @@ describe('Negotiator', () => {
       assert.equal(candidate.candidate, addIceArg.candidate);
       assert.equal(candidate.sdpMLineIndex, addIceArg.sdpMLineIndex);
       assert.equal(candidate.sdpMid, addIceArg.sdpMid);
+    });
+
+    it('should call util.error if addIceCandidate fails', () => {
+      const errorStub = sinon.stub(util, 'error');
+      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
+      addIceStub.returns(Promise.reject());
+
+      negotiator.handleCandidate(candidate);
+
+      setTimeout(() => {
+        assert.equal(errorStub.callCount, 1);
+        errorStub.restore();
+      });
     });
   });
 
@@ -548,28 +757,40 @@ describe('Negotiator', () => {
       });
 
       describe('onnegotiationneeded', () => {
-        it('should call _makeOfferSdp', () => {
-          const spy = sinon.spy(negotiator, '_makeOfferSdp');
-          negotiator._originator = true;
-
-          assert.equal(spy.callCount, 0);
-          pc.onnegotiationneeded();
-          assert.equal(spy.callCount, 1);
+        describe('if originator', () => {
+          beforeEach(() => {
+            negotiator._originator = true;
+          });
+          it('should call _makeOfferSdp', () => {
+            const makeOfferSdpSpy = sinon.spy(negotiator, '_makeOfferSdp');
+            assert.equal(makeOfferSdpSpy.callCount, 0);
+            pc.onnegotiationneeded();
+            assert.equal(makeOfferSdpSpy.callCount, 1);
+          });
+          it('should emit \'offerCreated\'', done => {
+            const offer = 'offer';
+            const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
+            cbStub.callsArgWith(1, offer);
+            negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
+              assert(offer);
+              done();
+            });
+            pc.onnegotiationneeded();
+          });
         });
 
-        it('should emit \'offerCreated\'', done => {
-          negotiator._originator = true;
-
-          const offer = 'offer';
-          const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
-          cbStub.callsArgWith(1, offer);
-
-          negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
-            assert(offer);
-            done();
+        describe('if not originator', () => {
+          beforeEach(() => {
+            negotiator._originator = false;
           });
 
-          pc.onnegotiationneeded();
+          it('should call handleOffer', () => {
+            const handleOfferStub = sinon.stub(negotiator, 'handleOffer');
+            assert.equal(handleOfferStub.callCount, 0);
+            pc.onnegotiationneeded();
+            assert.equal(handleOfferStub.callCount, 1);
+            assert(handleOfferStub.calledWith(negotiator._pc.remoteDescription));
+          });
         });
       });
 
@@ -757,6 +978,19 @@ describe('Negotiator', () => {
 
       negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
         assert(offer);
+        done();
+      });
+
+      negotiator._setLocalDescription(offer);
+    });
+
+    it('should set _isExpectingAnswer to true if setLocalDescription succeeds', done => {
+      const offer = 'offer';
+      setLocalDescriptionStub.callsArgWith(1, offer);
+
+      assert.equal(negotiator._isExpectingAnswer, false);
+      negotiator.on(Negotiator.EVENTS.offerCreated.key, () => {
+        assert.equal(negotiator._isExpectingAnswer, true);
         done();
       });
 

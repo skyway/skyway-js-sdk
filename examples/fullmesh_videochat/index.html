@@ -50,15 +50,78 @@
         $('#step1-error').hide();
         step1();
       });
+      step0();
     });
+
+    function step0 () {
+      // set up audio and video input selectors
+      var audioSelect = $('#audioSource');
+      var videoSelect = $('#videoSource');
+      var selectors = [audioSelect, videoSelect];
+
+      navigator.mediaDevices.enumerateDevices()
+        .then(function(deviceInfos) {
+          var values = selectors.map(function(select) {
+            return select.val() || '';
+          });
+          selectors.forEach(function(select) {
+            const children = select.children(':first');
+            while (children.length) {
+              select.remove(children);
+            }
+          });
+
+          for (var i = 0; i !== deviceInfos.length; ++i) {
+            var deviceInfo = deviceInfos[i];
+            var option = $('<option>');
+            option.val(deviceInfo.deviceId);
+            if (deviceInfo.kind === 'audioinput') {
+              option.text(deviceInfo.label ||
+                'Microphone ' + (audioSelect.children().length + 1));
+              audioSelect.append(option);
+            } else if (deviceInfo.kind === 'videoinput') {
+              option.text(deviceInfo.label || 'Camera ' +
+                (videoSelect.children().length + 1));
+              videoSelect.append(option);
+            }
+          }
+          selectors.forEach(function(select, selectorIndex) {
+            if (Array.prototype.slice.call(select.children()).some(function(n) {
+                return n.value === values[selectorIndex];
+              })) {
+              select.val(values[selectorIndex]);
+            }
+          });
+
+          videoSelect.on('change', step1);
+          audioSelect.on('change', step1);
+
+          step1();
+        });
+    }
     function step1 () {
       // Get audio/video stream
-      navigator.getUserMedia({audio: true, video: true}, function(stream){
+      var audioSource = $('#audioSource').val();
+      var videoSource = $('#videoSource').val();
+      var constraints = {
+        audio: {deviceId: audioSource ? {exact: audioSource} : undefined},
+        video: {deviceId: videoSource ? {exact: videoSource} : undefined}
+      };
+      navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
         // Set your video displays
         $('#my-video').prop('src', URL.createObjectURL(stream));
         window.localStream = stream;
+
+        if (room) {
+          room.replaceStream(stream);
+          return;
+        }
+
         step2();
-      }, function(){ $('#step1-error').show(); });
+      }, function(err){
+        $('#step1-error').show();
+        console.error(err);
+      });
     }
     function step2 () {
       $('#step1, #step3').hide();
@@ -71,11 +134,17 @@
         const streamURL = URL.createObjectURL(stream);
         const peerId = stream.peerId;
         $('#their-videos').append($(
-          '<div id="video_' + peerId + '">' +
+          '<div id="video_' + peerId + '_' + stream.id.replace('{', '').replace('}') + '">' +
             '<label>' + stream.peerId + ':' + stream.id + '</label>' +
             '<video autoplay class="remoteVideos" src="' + streamURL + '">' +
           '</div>'));
       });
+
+      room.on('removeStream', function(stream) {
+        const peerId = stream.peerId;
+        $('#video_' + peerId + '_' + stream.id.replace('{', '').replace('}')).remove();
+      });
+
       // UI stuff
       room.on('close', step2);
       room.on('peerLeave', function(src){
@@ -102,6 +171,14 @@
   <!-- Steps -->
   <div class="pure-u-1-3">
     <h2>SkyWay Video Chat</h2>
+
+    <div class="select">
+      <label for="audioSource">Audio input source: </label><select id="audioSource"></select>
+    </div>
+
+    <div class="select">
+      <label for="videoSource">Video source: </label><select id="videoSource"></select>
+    </div>
 
     <!-- Get local audio/video stream -->
     <div id="step1">
