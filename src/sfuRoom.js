@@ -7,8 +7,7 @@ const util       = require('./util');
 const Enum = require('enum');
 
 const MessageEvents = [
-  'offerRequest',
-  'broadcast'
+  'offerRequest'
 ];
 
 const SFUEvents = new Enum([]);

@@ -21,7 +21,8 @@ const MessageEvents = [
   'candidate',
   'leave',
   'close',
-  'getLog'
+  'getLog',
+  'broadcast'
 ];
 
 const RoomEvents = new Enum(Events);

@@ -8,7 +8,6 @@ const MediaConnection = require('./mediaConnection');
 const DataConnection = require('./dataConnection');
 
 const MessageEvents = [
-  'broadcastByWS',
   'broadcastByDC',
   'getPeers'
 ];
@@ -210,7 +209,7 @@ class MeshRoom extends Room {
 
   /**
    * Send data to all participants in the room with WebSocket.
-   * It emits broadcastByWS event.
+   * It emits broadcast event.
    * @param {*} data - The data to send.
    */
   send(data) {
@@ -218,7 +217,7 @@ class MeshRoom extends Room {
       roomName: this.name,
       data:     data
     };
-    this.emit(MeshRoom.MESSAGE_EVENTS.broadcastByWS.key, message);
+    this.emit(MeshRoom.MESSAGE_EVENTS.broadcast.key, message);
   }
 
   /**

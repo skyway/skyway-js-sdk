@@ -15,35 +15,33 @@ const LogLevel = new Enum({
   FULL:  3
 });
 
-const MessageTypes = new Enum([
+const clientMessages = new Enum([
+  'SEND_OFFER',
+  'SEND_ANSWER',
+  'SEND_CANDIDATE',
+  'SEND_LEAVE',
+  'ROOM_JOIN',
+  'ROOM_LEAVE',
+  'ROOM_GET_LOGS',
+  'ROOM_GET_USERS',
+  'ROOM_SEND_DATA',
+  'SFU_GET_OFFER',
+  'SFU_ANSWER'
+]);
+
+const serverMessages = new Enum([
   'OPEN',
   'ERROR',
   'OFFER',
   'ANSWER',
-  'LEAVE',
-  'EXPIRE',
   'CANDIDATE',
-  'SFU_JOIN',
-  'SFU_OFFER_REQUEST',
-  'SFU_OFFER',
-  'SFU_ANSWER',
-  'SFU_LEAVE',
-  'SFU_ANSWER',
-  'SFU_USER_JOIN',
-  'SFU_USER_LEAVE',
-  'SFU_DATA',
-  'SFU_LOG',
-  'MESH_JOIN',
-  'MESH_USER_JOIN',
-  'MESH_USER_LIST_REQUEST',
-  'MESH_USER_LIST',
-  'MESH_OFFER',
-  'MESH_ANSWER',
-  'MESH_CANDIDATE',
-  'MESH_LEAVE',
-  'MESH_DATA',
-  'MESH_LOG',
-  'MESH_USER_LEAVE'
+  'LEAVE',
+  'ROOM_LOGS',
+  'ROOM_USERS',
+  'ROOM_DATA',
+  'ROOM_USER_JOIN',
+  'ROOM_USER_LEAVE',
+  'SFU_OFFER'
 ]);
 
 let utilInstance;
@@ -65,7 +63,10 @@ class Util {
     this.unpack = BinaryPack.unpack;
     this.setZeroTimeout = undefined;
     this.LOG_LEVELS = LogLevel;
-    this.MESSAGE_TYPES = MessageTypes;
+    this.MESSAGE_TYPES = {
+      CLIENT: clientMessages,
+      SERVER: serverMessages
+    };
 
     this.chunkedBrowsers = {Chrome: 1};
     // Current recommended maximum chunksize is 16KB (DataChannel spec)

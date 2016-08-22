@@ -117,8 +117,8 @@ class Socket extends EventEmitter {
    * @fires Socket#ROOM_DATA
    */
   _setupMessageHandlers() {
-    util.MESSAGE_TYPES.enums.forEach(type => {
-      if (type.key === util.MESSAGE_TYPES.OPEN.key) {
+    util.MESSAGE_TYPES.SERVER.enums.forEach(type => {
+      if (type.key === util.MESSAGE_TYPES.SERVER.OPEN.key) {
         this._io.on(type.key, openMessage => {
           if (!openMessage || !openMessage.peerId) {
             return;
