@@ -267,10 +267,10 @@ describe('MeshRoom', () => {
   });
 
   describe('send', () => {
-    it('should emit a broadcastByWS event', done => {
+    it('should emit a broadcast event', done => {
       const data = 'foobar';
 
-      meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcastByWS.key, dataMessage => {
+      meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, dataMessage => {
         assert.deepEqual(dataMessage, {roomName: meshRoomName, data: data});
         done();
       });

@@ -277,7 +277,7 @@ describe('MediaConnection', () => {
     });
 
     it('should process any queued messages after PeerConnection object is created', () => {
-      const messages = [{type: util.MESSAGE_TYPES.ANSWER.key, payload: 'message'}];
+      const messages = [{type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message'}];
 
       const mc = new MediaConnection('remoteId', {payload: {}, queuedMessages: messages});
 
@@ -315,8 +315,8 @@ describe('MediaConnection', () => {
     });
 
     it('should queue a message if handleMessage is called before PC is available', () => {
-      const message1 = {type: util.MESSAGE_TYPES.CANDIDATE.key, payload: 'message1'};
-      const message2 = {type: util.MESSAGE_TYPES.ANSWER.key, payload: 'message2'};
+      const message1 = {type: util.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: 'message1'};
+      const message2 = {type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message2'};
       const messages = [message1];
 
       const mc = new MediaConnection('remoteId', {payload: {}, queuedMessages: messages});
