@@ -257,6 +257,7 @@ class MeshRoom extends Room {
    * @param {MediaStream} newStream - The stream to replace the old stream with.
    */
   replaceStream(newStream) {
+    this._localStream = newStream;
     for (let peerId in this.connections) {
       if (this.connections.hasOwnProperty(peerId)) {
         this.connections[peerId].forEach(connection => {

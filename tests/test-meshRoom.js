@@ -310,6 +310,15 @@ describe('MeshRoom', () => {
     const peers = ['peerId1', 'peerId2', 'peerId3'];
     const newStream = {};
 
+    it('should change _localStream property with newStream', () => {
+      meshRoom.makeMediaConnections(peers);
+      assert.notEqual(meshRoom._localStream, newStream);
+
+      meshRoom.replaceStream(newStream);
+
+      assert.equal(meshRoom._localStream, newStream);
+    });
+
     it('should call replaceStream for each MediaConnection in connections', () => {
       meshRoom.makeMediaConnections(peers);
 
