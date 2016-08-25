@@ -222,6 +222,15 @@ describe('MediaConnection', () => {
       assert(replaceSpy.calledOnce);
       assert(replaceSpy.calledWith(newStream));
     });
+
+    it('should change localStream property with newStream', () => {
+      const mc = new MediaConnection('remoteId', {});
+      const newStream = {};
+
+      mc.replaceStream(newStream);
+
+      assert.equal(mc.localStream, newStream);
+    });
   });
 
   describe('Handling messages', () => {
