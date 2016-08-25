@@ -4,6 +4,7 @@ const MediaConnection = require('../src/mediaConnection');
 const DataConnection  = require('../src/dataConnection');
 const SFURoom         = require('../src/sfuRoom');
 const MeshRoom        = require('../src/meshRoom');
+const Room            = require('../src/room');
 const util            = require('../src/util');
 const Socket          = require('../src/socket');
 
@@ -689,13 +690,13 @@ describe('Peer', () => {
       assert(setupSFUMessageHandlersSpy.calledWith(sfuRoom));
     });
 
-    it('should send a SFU_JOIN message', () => {
+    it('should send a ROOM_JOIN message', () => {
       peer._initializeSfuRoom(roomName, options);
 
       assert.equal(peer.socket.send.callCount, 1);
       assert(peer.socket.send.calledWithMatch(
-        util.MESSAGE_TYPES.SFU_JOIN.key,
-        {roomName: roomName, roomOptions: options})
+        util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key,
+        {roomName: roomName, roomType: 'sfu'})
       );
     });
 
@@ -754,13 +755,13 @@ describe('Peer', () => {
       assert(setupSFUMessageHandlersSpy.calledWith(meshRoom));
     });
 
-    it('should send a MESH_JOIN message', () => {
+    it('should send a ROOM_JOIN message', () => {
       peer._initializeFullMeshRoom(roomName, options);
 
       assert.equal(peer.socket.send.callCount, 1);
       assert(peer.socket.send.calledWithMatch(
-        util.MESSAGE_TYPES.MESH_JOIN.key,
-        {roomName: roomName, roomOptions: options})
+        util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key,
+        {roomName: roomName, roomType: 'mesh'})
       );
     });
 
@@ -807,7 +808,7 @@ describe('Peer', () => {
 
           const peerId = 'testId';
           const openMessage = {peerId: peerId};
-          peer.socket.emit(util.MESSAGE_TYPES.OPEN.key, openMessage);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.OPEN.key, openMessage);
 
           assert.equal(peer.id, peerId);
           assert.equal(peer.open, true);
@@ -822,7 +823,7 @@ describe('Peer', () => {
           assert.equal(peer.options.config.iceServers.length, defaultIceServersLength);
           assert.equal(peer._pcConfig, undefined);
 
-          peer.socket.emit(util.MESSAGE_TYPES.OPEN.key, openMessage);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.OPEN.key, openMessage);
 
           // 3 servers added: 'turn-udp', 'turn-tcp', 'turns-tcp'
           assert.equal(peer._pcConfig.iceServers.length, defaultIceServersLength + 3);
@@ -837,7 +838,7 @@ describe('Peer', () => {
           assert.equal(peer.options.config.iceServers.length, defaultIceServersLength);
           assert.equal(peer._pcConfig, undefined);
 
-          peer.socket.emit(util.MESSAGE_TYPES.OPEN.key, openMessage);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.OPEN.key, openMessage);
 
           // 3 servers added: 'turn-udp', 'turn-tcp', 'turns-tcp'
           assert.equal(peer._pcConfig.iceServers.length, defaultIceServersLength);
@@ -850,7 +851,7 @@ describe('Peer', () => {
             done();
           });
 
-          peer.socket.emit(util.MESSAGE_TYPES.OPEN.key, openMessage);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.OPEN.key, openMessage);
         });
       });
 
@@ -862,14 +863,14 @@ describe('Peer', () => {
             type:    'error-type',
             message: 'error message'
           };
-          peer.socket.emit(util.MESSAGE_TYPES.ERROR.key, error);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ERROR.key, error);
 
           assert(abortStub.calledWith(error.type, error.message));
         });
       });
     });
 
-    describe('P2P messages', () => {
+    describe('signaling messages', () => {
       describe('LEAVE', () => {
         let logSpy;
 
@@ -881,7 +882,7 @@ describe('Peer', () => {
         });
 
         it('should log a message', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.LEAVE.key, peerId);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.LEAVE.key, peerId);
 
           assert.equal(logSpy.callCount, 1);
           assert(logSpy.calledWith(`Received leave message from ${peerId}`));
@@ -890,247 +891,396 @@ describe('Peer', () => {
         it('should call _cleanupPeer', () => {
           const cleanupStub = sinon.stub(peer, '_cleanupPeer');
 
-          peer.socket.emit(util.MESSAGE_TYPES.LEAVE.key, peerId);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.LEAVE.key, peerId);
 
           assert.equal(cleanupStub.callCount, 1);
           assert(cleanupStub.calledWith(peerId));
         });
       });
 
-      describe('EXPIRE', () => {
-        it('should emit a peer-unavailable error', done => {
-          // listen for event instead of stubbing util.emitError
-          // so we can make sure that using `call` to pass the context works
-          peer.on(Peer.EVENTS.error.key, e => {
-            assert.equal(e.type, 'peer-unavailable');
-            assert.equal(e.message, `Could not connect to peer ${peerId}`);
-            done();
-          });
-
-          peer.socket.emit(util.MESSAGE_TYPES.EXPIRE.key, peerId);
-        });
-      });
-
       describe('OFFER', () => {
-        it('should create MediaConnection on media OFFER events', done => {
-          const connectionId = util.randomToken();
-          peer.on(Peer.EVENTS.call.key, connection => {
-            assert(connection);
-            assert.equal(connection.constructor.name, 'MediaConnection');
-            assert.equal(connection._options.connectionId, connectionId);
-            assert.equal(Object.keys(peer.connections[peerId]).length, 1);
-            assert.equal(peer.getConnection(peerId, connection.id), connection);
-            done();
+        const roomName = 'testRoomName';
+        const offerMessage = {
+          roomName: roomName
+        };
+
+        describe('MeshRoom', () => {
+          it('should call handleOffer if room exists', () => {
+            peer.rooms[roomName] = meshRoomInstanceStub;
+
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMessage);
+
+            assert.equal(meshRoomInstanceStub.handleOffer.callCount, 1);
+            assert(meshRoomInstanceStub.handleOffer.calledWith(offerMessage));
           });
 
-          const offerMsg = {
-            connectionType: 'media',
-            connectionId:   connectionId,
-            src:            peerId,
-            metadata:       {}
-          };
-          peer.socket.emit(util.MESSAGE_TYPES.OFFER.key, offerMsg);
+          it('should not call handleOffer if room doesn\'t exist', () => {
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMessage);
+
+            assert.equal(meshRoomInstanceStub.handleOffer.callCount, 0);
+          });
         });
 
-        it('should create DataConnection on data OFFER events', done => {
-          const connectionId = util.randomToken();
-          peer.on(Peer.EVENTS.connection.key, connection => {
-            assert(connection);
-            assert.equal(connection.constructor.name, 'DataConnection');
-            assert.equal(connection._options.connectionId, connectionId);
-            assert.equal(Object.keys(peer.connections[peerId]).length, 1);
-            assert.equal(peer.getConnection(peerId, connection.id), connection);
+        describe('p2p', () => {
+          it('should create MediaConnection on media OFFER events', done => {
+            const connectionId = util.randomToken();
+            peer.on(Peer.EVENTS.call.key, connection => {
+              assert(connection);
+              assert.equal(connection.constructor.name, 'MediaConnection');
+              assert.equal(connection._options.connectionId, connectionId);
+              assert.equal(Object.keys(peer.connections[peerId]).length, 1);
+              assert.equal(peer.getConnection(peerId, connection.id), connection);
+              done();
+            });
 
-            done();
+            const offerMsg = {
+              connectionType: 'media',
+              connectionId:   connectionId,
+              src:            peerId,
+              metadata:       {}
+            };
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
           });
 
-          const offerMsg = {
-            connectionType: 'data',
-            connectionId:   connectionId,
-            src:            peerId,
-            metadata:       {}
-          };
-          peer.socket.emit(util.MESSAGE_TYPES.OFFER.key, offerMsg);
-        });
+          it('should create DataConnection on data OFFER events', done => {
+            const connectionId = util.randomToken();
+            peer.on(Peer.EVENTS.connection.key, connection => {
+              assert(connection);
+              assert.equal(connection.constructor.name, 'DataConnection');
+              assert.equal(connection._options.connectionId, connectionId);
+              assert.equal(Object.keys(peer.connections[peerId]).length, 1);
+              assert.equal(peer.getConnection(peerId, connection.id), connection);
 
-        it('should not create a connection if connectType is invalid', () => {
-          const connectionId = util.randomToken();
+              done();
+            });
 
-          const offerMsg = {
-            connectionType: undefined,
-            connectionId:   connectionId,
-            src:            peerId,
-            metadata:       {}
-          };
-          peer.socket.emit(util.MESSAGE_TYPES.OFFER.key, offerMsg);
+            const offerMsg = {
+              connectionType: 'data',
+              connectionId:   connectionId,
+              src:            peerId,
+              metadata:       {}
+            };
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
+          });
 
-          assert.equal(peer.connections[peerId], undefined);
-        });
+          it('should not create a connection if connectType is invalid', () => {
+            const connectionId = util.randomToken();
 
-        it('should not create a connection if connectionId already exists', done => {
-          const connectionId = util.randomToken();
+            const offerMsg = {
+              connectionType: undefined,
+              connectionId:   connectionId,
+              src:            peerId,
+              metadata:       {}
+            };
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
 
-          const offerMsg = {
-            connectionType: 'media',
-            connectionId:   connectionId,
-            src:            peerId,
-            metadata:       {}
-          };
-          peer.socket.emit(util.MESSAGE_TYPES.OFFER.key, offerMsg);
-          peer.socket.emit(util.MESSAGE_TYPES.OFFER.key, offerMsg);
+            assert.equal(peer.connections[peerId], undefined);
+          });
 
-          setTimeout(() => {
-            assert.equal(Object.keys(peer.connections[peerId]).length, 1);
-            done();
+          it('should not create a connection if connectionId already exists', done => {
+            const connectionId = util.randomToken();
+
+            const offerMsg = {
+              connectionType: 'media',
+              connectionId:   connectionId,
+              src:            peerId,
+              metadata:       {}
+            };
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
+
+            setTimeout(() => {
+              assert.equal(Object.keys(peer.connections[peerId]).length, 1);
+              done();
+            });
           });
         });
       });
 
       describe('ANSWER', () => {
-        it('should call handleAnswer if connection exists', () => {
-          // The connection type doesn't matter so just test one
-          const mediaConnection = new MediaConnection('remoteId', {});
-          const srcId  = 'srcId';
-          const mediaAnswerMessage = {
-            src:            srcId,
-            dst:            'remoteId',
-            answer:         {},
-            connectionId:   mediaConnection.id,
-            connectionType: 'media'
+        describe('MeshRoom', () => {
+          const roomName = 'testRoomName';
+          const answerMessage = {
+            roomName: roomName
           };
 
-          const stub = sinon.stub(mediaConnection, 'handleAnswer');
+          it('should call handleAnswer if room exists', () => {
+            peer.rooms[roomName] = meshRoomInstanceStub;
 
-          peer._addConnection(srcId, mediaConnection);
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.ANSWER.key, answerMessage);
 
-          peer.socket.emit(util.MESSAGE_TYPES.ANSWER.key, mediaAnswerMessage);
-          assert.equal(stub.callCount, 1);
-          assert(stub.calledWith(mediaAnswerMessage));
+            assert.equal(meshRoomInstanceStub.handleAnswer.callCount, 1);
+            assert(meshRoomInstanceStub.handleAnswer.calledWith(answerMessage));
+          });
+
+          it('should not call handleAnswer if room doesn\'t exist', () => {
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.ANSWER.key, answerMessage);
+
+            assert.equal(meshRoomInstanceStub.handleAnswer.callCount, 0);
+          });
         });
 
-        it('should queue ANSWERs if connection doesn\'t exist', () => {
-          const connId1 = 'connId1';
-          const connId2 = 'connId2';
-          const mediaAnswerMessage = {
-            src:            'id1',
-            dst:            'id2',
-            answer:         {},
-            connectionId:   connId1,
-            connectionType: 'media'
-          };
-          const dataAnswerMessage = {
-            src:            'id1',
-            dst:            'id2',
-            answer:         {},
-            connectionId:   connId2,
-            connectionType: 'data'
-          };
+        describe('p2p', () => {
+          it('should call handleAnswer if connection exists', () => {
+            // The connection type doesn't matter so just test one
+            const mediaConnection = new MediaConnection('remoteId', {});
+            const srcId  = 'srcId';
+            const mediaAnswerMessage = {
+              src:            srcId,
+              dst:            'remoteId',
+              answer:         {},
+              connectionId:   mediaConnection.id,
+              connectionType: 'media'
+            };
 
-          peer.socket.emit(
-            util.MESSAGE_TYPES.ANSWER.key,
-            mediaAnswerMessage);
-          peer.socket.emit(
-            util.MESSAGE_TYPES.ANSWER.key,
-            dataAnswerMessage);
+            const stub = sinon.stub(mediaConnection, 'handleAnswer');
 
-          const messages1 = peer._queuedMessages[connId1];
+            peer._addConnection(srcId, mediaConnection);
 
-          assert.equal(messages1[0].type, util.MESSAGE_TYPES.ANSWER.key);
-          assert.equal(messages1[0].payload, mediaAnswerMessage);
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.ANSWER.key, mediaAnswerMessage);
+            assert.equal(stub.callCount, 1);
+            assert(stub.calledWith(mediaAnswerMessage));
+          });
 
-          const messages2 = peer._queuedMessages[connId2];
+          it('should queue ANSWERs if connection doesn\'t exist', () => {
+            const connId1 = 'connId1';
+            const connId2 = 'connId2';
+            const mediaAnswerMessage = {
+              src:            'id1',
+              dst:            'id2',
+              answer:         {},
+              connectionId:   connId1,
+              connectionType: 'media'
+            };
+            const dataAnswerMessage = {
+              src:            'id1',
+              dst:            'id2',
+              answer:         {},
+              connectionId:   connId2,
+              connectionType: 'data'
+            };
 
-          assert.equal(messages2[0].type, util.MESSAGE_TYPES.ANSWER.key);
-          assert.equal(messages2[0].payload, dataAnswerMessage);
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.ANSWER.key, mediaAnswerMessage);
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.ANSWER.key, dataAnswerMessage);
+
+            const messages1 = peer._queuedMessages[connId1];
+
+            assert.equal(messages1[0].type, util.MESSAGE_TYPES.SERVER.ANSWER.key);
+            assert.equal(messages1[0].payload, mediaAnswerMessage);
+
+            const messages2 = peer._queuedMessages[connId2];
+
+            assert.equal(messages2[0].type, util.MESSAGE_TYPES.SERVER.ANSWER.key);
+            assert.equal(messages2[0].payload, dataAnswerMessage);
+          });
         });
       });
 
       describe('CANDIDATE', () => {
-        it('should call handleCandidate on CANDIDATE if connection exists', () => {
-          // The connection type doesn't matter so just test one
-          const dataConnection = new DataConnection('remoteId', {});
-          const srcId  = 'srcId';
-          const dataCandidateMessage = {
-            src:            srcId,
-            dst:            'remoteId',
-            candidate:      {},
-            connectionId:   dataConnection.id,
-            connectionType: 'data'
+        describe('MeshRoom', () => {
+          const roomName = 'testRoomName';
+          const candidateMessage = {
+            roomName: roomName
           };
+          it('should call handleCandidate if room exists', () => {
+            peer.rooms[roomName] = meshRoomInstanceStub;
 
-          const stub = sinon.stub(dataConnection, 'handleCandidate');
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.CANDIDATE.key, candidateMessage);
 
-          peer._addConnection(srcId, dataConnection);
+            assert.equal(meshRoomInstanceStub.handleCandidate.callCount, 1);
+            assert(meshRoomInstanceStub.handleCandidate.calledWith(candidateMessage));
+          });
 
-          peer.socket.emit(util.MESSAGE_TYPES.CANDIDATE.key, dataCandidateMessage);
-          assert.equal(stub.callCount, 1);
-          assert(stub.calledWith(dataCandidateMessage));
+          it('should not call handleCandidate if room doesn\'t exist', () => {
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.CANDIDATE.key, candidateMessage);
+
+            assert.equal(meshRoomInstanceStub.handleCandidate.callCount, 0);
+          });
         });
 
-        it('should queue CANDIDATEs if connection doesn\'t exist', () => {
-          const connId1 = 'connId1';
-          const connId2 = 'connId2';
-          const mediaCandidateMessage = {
-            src:            'id1',
-            dst:            'id2',
-            candidate:      {},
-            connectionId:   connId1,
-            connectionType: 'media'
-          };
-          const dataCandidateMessage = {
-            src:            'id1',
-            dst:            'id2',
-            candidate:      {},
-            connectionId:   connId2,
-            connectionType: 'data'
-          };
+        describe('p2p', () => {
+          it('should call handleCandidate on CANDIDATE if connection exists', () => {
+            // The connection type doesn't matter so just test one
+            const dataConnection = new DataConnection('remoteId', {});
+            const srcId  = 'srcId';
+            const dataCandidateMessage = {
+              src:            srcId,
+              dst:            'remoteId',
+              candidate:      {},
+              connectionId:   dataConnection.id,
+              connectionType: 'data'
+            };
 
-          peer.socket.emit(
-            util.MESSAGE_TYPES.CANDIDATE.key,
-            mediaCandidateMessage);
-          peer.socket.emit(
-            util.MESSAGE_TYPES.CANDIDATE.key,
-            dataCandidateMessage);
+            const stub = sinon.stub(dataConnection, 'handleCandidate');
 
-          const messages1 = peer._queuedMessages[connId1];
+            peer._addConnection(srcId, dataConnection);
 
-          assert.equal(messages1[0].type, util.MESSAGE_TYPES.CANDIDATE.key);
-          assert.equal(messages1[0].payload, mediaCandidateMessage);
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.CANDIDATE.key, dataCandidateMessage);
+            assert.equal(stub.callCount, 1);
+            assert(stub.calledWith(dataCandidateMessage));
+          });
 
-          const messages2 = peer._queuedMessages[connId2];
+          it('should queue CANDIDATEs if connection doesn\'t exist', () => {
+            const connId1 = 'connId1';
+            const connId2 = 'connId2';
+            const mediaCandidateMessage = {
+              src:            'id1',
+              dst:            'id2',
+              candidate:      {},
+              connectionId:   connId1,
+              connectionType: 'media'
+            };
+            const dataCandidateMessage = {
+              src:            'id1',
+              dst:            'id2',
+              candidate:      {},
+              connectionId:   connId2,
+              connectionType: 'data'
+            };
 
-          assert.equal(messages2[0].type, util.MESSAGE_TYPES.CANDIDATE.key);
-          assert.equal(messages2[0].payload, dataCandidateMessage);
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.CANDIDATE.key, mediaCandidateMessage);
+            peer.socket.emit(util.MESSAGE_TYPES.SERVER.CANDIDATE.key, dataCandidateMessage);
+
+            const messages1 = peer._queuedMessages[connId1];
+
+            assert.equal(messages1[0].type, util.MESSAGE_TYPES.SERVER.CANDIDATE.key);
+            assert.equal(messages1[0].payload, mediaCandidateMessage);
+
+            const messages2 = peer._queuedMessages[connId2];
+
+            assert.equal(messages2[0].type, util.MESSAGE_TYPES.SERVER.CANDIDATE.key);
+            assert.equal(messages2[0].payload, dataCandidateMessage);
+          });
         });
       });
     });
 
-    describe('SFU room messages', () => {
+    describe('Room specific messages', () => {
       const roomName = 'testroom';
-      let sfuRoomStub;
 
-      beforeEach(() => {
-        sfuRoomStub = sinon.createStubInstance(SFURoom);
-      });
-
-      describe('SFU_USER_JOIN', () => {
+      describe('ROOM_USER_JOIN', () => {
         const joinMessage = {
           roomName: roomName
         };
 
         it('should call handleJoin if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
+          peer.rooms[roomName] = sfuRoomInstanceStub;
 
-          peer.socket.emit(util.MESSAGE_TYPES.SFU_USER_JOIN.key, joinMessage);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_USER_JOIN.key, joinMessage);
 
-          assert.equal(sfuRoomStub.handleJoin.callCount, 1);
-          assert(sfuRoomStub.handleJoin.calledWith(joinMessage));
+          assert.equal(sfuRoomInstanceStub.handleJoin.callCount, 1);
+          assert(sfuRoomInstanceStub.handleJoin.calledWith(joinMessage));
         });
 
         it('should not call handleJoin if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.SFU_USER_JOIN.key, joinMessage);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_USER_JOIN.key, joinMessage);
 
-          assert.equal(sfuRoomStub.handleJoin.callCount, 0);
+          assert.equal(sfuRoomInstanceStub.handleJoin.callCount, 0);
+        });
+      });
+
+      describe('ROOM_USER_LEAVE', () => {
+        const leaveMessage = {
+          roomName: roomName
+        };
+        it('should call handleLeave if room exists', () => {
+          peer.rooms[roomName] = sfuRoomInstanceStub;
+
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_USER_LEAVE.key, leaveMessage);
+
+          assert.equal(sfuRoomInstanceStub.handleLeave.callCount, 1);
+          assert(sfuRoomInstanceStub.handleLeave.calledWith(leaveMessage));
+        });
+
+        it('should not call handleLeave if room doesn\'t exist', () => {
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_USER_LEAVE.key, leaveMessage);
+
+          assert.equal(sfuRoomInstanceStub.handleLeave.callCount, 0);
+        });
+      });
+
+      describe('ROOM_DATA', () => {
+        const dataMessage = {
+          roomName: roomName
+        };
+        it('should call handleData if room exists', () => {
+          peer.rooms[roomName] = sfuRoomInstanceStub;
+
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_DATA.key, dataMessage);
+
+          assert.equal(sfuRoomInstanceStub.handleData.callCount, 1);
+          assert(sfuRoomInstanceStub.handleData.calledWith(dataMessage));
+        });
+
+        it('should not call handleData if room doesn\'t exist', () => {
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_DATA.key, dataMessage);
+
+          assert.equal(sfuRoomInstanceStub.handleData.callCount, 0);
+        });
+      });
+
+      describe('ROOM_LOGS', () => {
+        const logMessage = {
+          roomName: roomName,
+          log:      []
+        };
+        it('should call handleLog if room exists', () => {
+          peer.rooms[roomName] = sfuRoomInstanceStub;
+
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_LOGS.key, logMessage);
+
+          assert.equal(sfuRoomInstanceStub.handleLog.callCount, 1);
+          assert(sfuRoomInstanceStub.handleLog.calledWith(logMessage.log));
+        });
+
+        it('should not call handleLog if room doesn\'t exist', () => {
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_LOGS.key, logMessage);
+
+          assert.equal(sfuRoomInstanceStub.handleLog.callCount, 0);
+        });
+      });
+
+      describe('ROOM_USERS', () => {
+        const userList = ['peer1', 'peer2', 'peer3'];
+        const mediaUsersMessage = {
+          roomName: roomName,
+          userList: userList,
+          type:     'media'
+        };
+        const dataUsersMessage = {
+          roomName: roomName,
+          userList: userList,
+          type:     'data'
+        };
+
+        it('should call makeMediaConnections if type is media', () => {
+          peer.rooms[roomName] = meshRoomInstanceStub;
+
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_USERS.key, mediaUsersMessage);
+
+          assert.equal(meshRoomInstanceStub.makeMediaConnections.callCount, 1);
+          assert(meshRoomInstanceStub.makeMediaConnections.calledWith(userList));
+
+          assert.equal(meshRoomInstanceStub.makeDataConnections.callCount, 0);
+        });
+
+        it('should call makeDataConnections if type is data', () => {
+          peer.rooms[roomName] = meshRoomInstanceStub;
+
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_USERS.key, dataUsersMessage);
+
+          assert.equal(meshRoomInstanceStub.makeDataConnections.callCount, 1);
+          assert(meshRoomInstanceStub.makeDataConnections.calledWith(userList));
+
+          assert.equal(meshRoomInstanceStub.makeMediaConnections.callCount, 0);
+        });
+
+        it('should not call makeMediaConnections or makeDataConnections if room doesn\'t exist', () => {
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_USERS.key, mediaUsersMessage);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.ROOM_USERS.key, dataUsersMessage);
+
+          assert.equal(meshRoomInstanceStub.makeMediaConnections.callCount, 0);
+          assert.equal(meshRoomInstanceStub.makeDataConnections.callCount, 0);
         });
       });
 
@@ -1142,290 +1292,22 @@ describe('Peer', () => {
         };
 
         it('should call handleOffer and updateMsidMap if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
+          peer.rooms[roomName] = sfuRoomInstanceStub;
 
-          peer.socket.emit(util.MESSAGE_TYPES.SFU_OFFER.key, offerMessage);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.SFU_OFFER.key, offerMessage);
 
-          assert.equal(sfuRoomStub.handleOffer.callCount, 1);
-          assert(sfuRoomStub.handleOffer.calledWith(offerMessage.offer));
+          assert.equal(sfuRoomInstanceStub.handleOffer.callCount, 1);
+          assert(sfuRoomInstanceStub.handleOffer.calledWith(offerMessage.offer));
 
-          assert.equal(sfuRoomStub.updateMsidMap.callCount, 1);
-          assert(sfuRoomStub.updateMsidMap.calledWith(offerMessage.msids));
+          assert.equal(sfuRoomInstanceStub.updateMsidMap.callCount, 1);
+          assert(sfuRoomInstanceStub.updateMsidMap.calledWith(offerMessage.msids));
         });
 
         it('should not call handleOffer and updateMsidMap if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.SFU_OFFER.key, offerMessage);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.SFU_OFFER.key, offerMessage);
 
-          assert.equal(sfuRoomStub.handleOffer.callCount, 0);
-          assert.equal(sfuRoomStub.updateMsidMap.callCount, 0);
-        });
-      });
-
-      describe('SFU_USER_LEAVE', () => {
-        const leaveMessage = {
-          roomName: roomName
-        };
-        it('should call handleLeave if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
-
-          peer.socket.emit(util.MESSAGE_TYPES.SFU_USER_LEAVE.key, leaveMessage);
-
-          assert.equal(sfuRoomStub.handleLeave.callCount, 1);
-          assert(sfuRoomStub.handleLeave.calledWith(leaveMessage));
-        });
-
-        it('should not call handleLeave if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.SFU_USER_LEAVE.key, leaveMessage);
-
-          assert.equal(sfuRoomStub.handleLeave.callCount, 0);
-        });
-      });
-
-      describe('SFU_DATA', () => {
-        const dataMessage = {
-          roomName: roomName
-        };
-        it('should call handleData if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
-
-          peer.socket.emit(util.MESSAGE_TYPES.SFU_DATA.key, dataMessage);
-
-          assert.equal(sfuRoomStub.handleData.callCount, 1);
-          assert(sfuRoomStub.handleData.calledWith(dataMessage));
-        });
-
-        it('should not call handleData if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.SFU_DATA.key, dataMessage);
-
-          assert.equal(sfuRoomStub.handleData.callCount, 0);
-        });
-      });
-
-      describe('SFU_LOG', () => {
-        const logMessage = {
-          roomName: roomName,
-          log:      []
-        };
-        it('should call handleLog if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
-
-          peer.socket.emit(util.MESSAGE_TYPES.SFU_LOG.key, logMessage);
-
-          assert.equal(sfuRoomStub.handleLog.callCount, 1);
-          assert(sfuRoomStub.handleLog.calledWith(logMessage.log));
-        });
-
-        it('should not call handleLog if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.SFU_LOG.key, logMessage);
-
-          assert.equal(sfuRoomStub.handleLog.callCount, 0);
-        });
-      });
-    });
-
-    describe('Mesh room messages', () => {
-      const roomName = 'testroom';
-      let sfuRoomStub;
-
-      beforeEach(() => {
-        sfuRoomStub = sinon.createStubInstance(MeshRoom);
-      });
-
-      describe('MESH_USER_LIST', () => {
-        describe('type is media', () => {
-          const listMessage = {
-            roomName: roomName,
-            userList: [],
-            type:     'media'
-          };
-
-          it('should call makeMediaConnections if room exists', () => {
-            peer.rooms[roomName] = sfuRoomStub;
-
-            peer.socket.emit(util.MESSAGE_TYPES.MESH_USER_LIST.key, listMessage);
-
-            assert.equal(sfuRoomStub.makeMediaConnections.callCount, 1);
-            assert(sfuRoomStub.makeMediaConnections.calledWith(listMessage.userList));
-          });
-
-          it('should not call makeMediaConnections if room doesn\'t exist', () => {
-            peer.socket.emit(util.MESSAGE_TYPES.MESH_USER_LIST.key, listMessage);
-
-            assert.equal(sfuRoomStub.makeMediaConnections.callCount, 0);
-            assert.equal(sfuRoomStub.makeDataConnections.callCount, 0);
-          });
-        });
-
-        describe('type is data', () => {
-          const listMessage = {
-            roomName: roomName,
-            userList: [],
-            type:     'data'
-          };
-
-          it('should call makeMediaConnections if room exists', () => {
-            peer.rooms[roomName] = sfuRoomStub;
-
-            peer.socket.emit(util.MESSAGE_TYPES.MESH_USER_LIST.key, listMessage);
-
-            assert.equal(sfuRoomStub.makeDataConnections.callCount, 1);
-            assert(sfuRoomStub.makeDataConnections.calledWith(listMessage.userList));
-          });
-
-          it('should not call makeMediaConnections if room doesn\'t exist', () => {
-            peer.socket.emit(util.MESSAGE_TYPES.MESH_USER_LIST.key, listMessage);
-
-            assert.equal(sfuRoomStub.makeMediaConnections.callCount, 0);
-            assert.equal(sfuRoomStub.makeDataConnections.callCount, 0);
-          });
-        });
-      });
-
-      describe('MESH_USER_JOIN', () => {
-        const joinMessage = {
-          roomName: roomName
-        };
-
-        it('should call handleJoin if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
-
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_USER_JOIN.key, joinMessage);
-
-          assert.equal(sfuRoomStub.handleJoin.callCount, 1);
-          assert(sfuRoomStub.handleJoin.calledWith(joinMessage));
-        });
-
-        it('should not call handleJoin if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_USER_JOIN.key, joinMessage);
-
-          assert.equal(sfuRoomStub.handleJoin.callCount, 0);
-        });
-      });
-
-      describe('MESH_OFFER', () => {
-        const offerMessage = {
-          roomName: roomName
-        };
-
-        it('should call handleOffer if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
-
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage);
-
-          assert.equal(sfuRoomStub.handleOffer.callCount, 1);
-          assert(sfuRoomStub.handleOffer.calledWith(offerMessage));
-        });
-
-        it('should not call handleOffer if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_OFFER.key, offerMessage);
-
-          assert.equal(sfuRoomStub.handleOffer.callCount, 0);
-        });
-      });
-
-      describe('MESH_ANSWER', () => {
-        const answerMessage = {
-          roomName: roomName
-        };
-
-        it('should call handleAnswer if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
-
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage);
-
-          assert.equal(sfuRoomStub.handleAnswer.callCount, 1);
-          assert(sfuRoomStub.handleAnswer.calledWith(answerMessage));
-        });
-
-        it('should not call handleAnswer if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_ANSWER.key, answerMessage);
-
-          assert.equal(sfuRoomStub.handleAnswer.callCount, 0);
-        });
-      });
-
-      describe('MESH_CANDIDATE', () => {
-        const candidateMessage = {
-          roomName: roomName
-        };
-
-        it('should call handleCandidate if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
-
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage);
-
-          assert.equal(sfuRoomStub.handleCandidate.callCount, 1);
-          assert(sfuRoomStub.handleCandidate.calledWith(candidateMessage));
-        });
-
-        it('should not call handleCandidate if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_CANDIDATE.key, candidateMessage);
-
-          assert.equal(sfuRoomStub.handleCandidate.callCount, 0);
-        });
-      });
-
-      describe('MESH_DATA', () => {
-        const dataMessage = {
-          roomName: roomName
-        };
-
-        it('should call handleData if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
-
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_DATA.key, dataMessage);
-
-          assert.equal(sfuRoomStub.handleData.callCount, 1);
-          assert(sfuRoomStub.handleData.calledWith(dataMessage));
-        });
-
-        it('should not call handleData if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_DATA.key, dataMessage);
-
-          assert.equal(sfuRoomStub.handleData.callCount, 0);
-        });
-      });
-
-      describe('MESH_LOG', () => {
-        const logMessage = {
-          roomName: roomName,
-          log:      []
-        };
-
-        it('should call handleLog if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
-
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_LOG.key, logMessage);
-
-          assert.equal(sfuRoomStub.handleLog.callCount, 1);
-          assert(sfuRoomStub.handleLog.calledWith(logMessage.log));
-        });
-
-        it('should not call handleLog if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_LOG.key, logMessage);
-
-          assert.equal(sfuRoomStub.handleLog.callCount, 0);
-        });
-      });
-
-      describe('MESH_USER_LEAVE', () => {
-        const leaveMessage = {
-          roomName: roomName
-        };
-
-        it('should call handleLeave if room exists', () => {
-          peer.rooms[roomName] = sfuRoomStub;
-
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_USER_LEAVE.key, leaveMessage);
-
-          assert.equal(sfuRoomStub.handleLeave.callCount, 1);
-          assert(sfuRoomStub.handleLeave.calledWith(leaveMessage));
-        });
-
-        it('should not call handleLeave if room doesn\'t exist', () => {
-          peer.socket.emit(util.MESSAGE_TYPES.MESH_USER_LEAVE.key, leaveMessage);
-
-          assert.equal(sfuRoomStub.handleLeave.callCount, 0);
+          assert.equal(sfuRoomInstanceStub.handleOffer.callCount, 0);
+          assert.equal(sfuRoomInstanceStub.updateMsidMap.callCount, 0);
         });
       });
     });
@@ -1458,21 +1340,73 @@ describe('Peer', () => {
     describe('offer', () => {
       it('should send OFFER message', () => {
         connectionStub.emit(MediaConnection.EVENTS.offer.key, message);
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.OFFER.key, message));
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.SEND_OFFER.key, message));
       });
     });
 
     describe('answer', () => {
       it('should send ANSWER message', () => {
         connectionStub.emit(MediaConnection.EVENTS.answer.key, message);
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.ANSWER.key, message));
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.SEND_ANSWER.key, message));
       });
     });
 
     describe('candidate', () => {
       it('should send CANDIDATE message', () => {
         connectionStub.emit(MediaConnection.EVENTS.candidate.key, message);
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CANDIDATE.key, message));
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.SEND_CANDIDATE.key, message));
+      });
+    });
+  });
+
+  describe('_setupRoomMessageHandlers', () => {
+    const roomName = 'testRoomName';
+    const message = {};
+
+    let peer;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey
+      });
+      sfuRoomInstanceStub.name = roomName;
+
+      peer.rooms[roomName] = sfuRoomInstanceStub;
+      peer._setupRoomMessageHandlers(sfuRoomInstanceStub);
+    });
+
+    it('should set up handlers for Room Message events', () => {
+      assert(sfuRoomInstanceStub.on.calledWith(Room.MESSAGE_EVENTS.broadcast.key, sinon.match.func));
+      assert(sfuRoomInstanceStub.on.calledWith(Room.MESSAGE_EVENTS.getLog.key, sinon.match.func));
+      assert(sfuRoomInstanceStub.on.calledWith(Room.MESSAGE_EVENTS.leave.key, sinon.match.func));
+    });
+
+    describe('broadcast', () => {
+      it('should send ROOM_SEND_DATA message', () => {
+        sfuRoomInstanceStub.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
+
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.ROOM_SEND_DATA.key, message));
+      });
+    });
+
+    describe('getLog', () => {
+      it('should send ROOM_GET_LOGS message', () => {
+        sfuRoomInstanceStub.emit(SFURoom.MESSAGE_EVENTS.getLog.key, message);
+
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.ROOM_GET_LOGS.key, message));
+      });
+    });
+
+    describe('leave', () => {
+      it('should send ROOM_LEAVE message', () => {
+        sfuRoomInstanceStub.emit(SFURoom.MESSAGE_EVENTS.leave.key, message);
+
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.ROOM_LEAVE.key, message));
+      });
+
+      it('should delete room from peer.rooms', () => {
+        sfuRoomInstanceStub.emit(SFURoom.MESSAGE_EVENTS.leave.key, message);
+
+        assert.equal(peer.rooms[roomName], undefined);
       });
     });
   });
@@ -1482,69 +1416,47 @@ describe('Peer', () => {
     const message = {};
 
     let peer;
-    let sfuRoom;
+    let roomMessageHandlerStub;
     beforeEach(() => {
       peer = new Peer({
         key: apiKey
       });
-      sfuRoom = new SFURoomConstructorStub();
-      sfuRoom.name = roomName;
+      sfuRoomInstanceStub.name = roomName;
 
-      peer.rooms[roomName] = sfuRoom;
-      peer._setupSFURoomMessageHandlers(sfuRoom);
+      peer.rooms[roomName] = sfuRoomInstanceStub;
+
+      roomMessageHandlerStub = sinon.stub(peer, '_setupRoomMessageHandlers');
+      peer._setupSFURoomMessageHandlers(sfuRoomInstanceStub);
+    });
+
+    it('should call _setupRoomMessageHandlers', () => {
+      assert.equal(roomMessageHandlerStub.callCount, 1);
+      assert(roomMessageHandlerStub.calledWith(sfuRoomInstanceStub));
     });
 
     it('should set up handlers for SFURoom Message events', () => {
-      assert(sfuRoom.on.calledWith(SFURoom.MESSAGE_EVENTS.offerRequest.key, sinon.match.func));
-      assert(sfuRoom.on.calledWith(SFURoom.MESSAGE_EVENTS.answer.key, sinon.match.func));
-      assert(sfuRoom.on.calledWith(SFURoom.MESSAGE_EVENTS.broadcast.key, sinon.match.func));
-      assert(sfuRoom.on.calledWith(SFURoom.MESSAGE_EVENTS.getLog.key, sinon.match.func));
-      assert(sfuRoom.on.calledWith(SFURoom.MESSAGE_EVENTS.leave.key, sinon.match.func));
+      peer._setupSFURoomMessageHandlers(sfuRoomInstanceStub);
+      assert(sfuRoomInstanceStub.on.calledWith(SFURoom.MESSAGE_EVENTS.offerRequest.key, sinon.match.func));
+      assert(sfuRoomInstanceStub.on.calledWith(SFURoom.MESSAGE_EVENTS.answer.key, sinon.match.func));
     });
 
     describe('offerRequest', () => {
-      it('should send SFU_OFFER_REQUEST message', () => {
-        sfuRoom.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, message);
+      it('should send SFU_GET_OFFER message', () => {
+        peer._setupSFURoomMessageHandlers(sfuRoomInstanceStub);
 
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.SFU_OFFER_REQUEST.key, message));
+        sfuRoomInstanceStub.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, message);
+
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.SFU_GET_OFFER.key, message));
       });
     });
 
     describe('answer', () => {
       it('should send SFU_ANSWER message', () => {
-        sfuRoom.emit(SFURoom.MESSAGE_EVENTS.answer.key, message);
+        peer._setupSFURoomMessageHandlers(sfuRoomInstanceStub);
 
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.SFU_ANSWER.key, message));
-      });
-    });
+        sfuRoomInstanceStub.emit(SFURoom.MESSAGE_EVENTS.answer.key, message);
 
-    describe('broadcast', () => {
-      it('should send SFU_DATA message', () => {
-        sfuRoom.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
-
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.SFU_DATA.key, message));
-      });
-    });
-
-    describe('getLog', () => {
-      it('should send SFU_LOG message', () => {
-        sfuRoom.emit(SFURoom.MESSAGE_EVENTS.getLog.key, message);
-
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.SFU_LOG.key, message));
-      });
-    });
-
-    describe('leave', () => {
-      it('should send SFU_LEAVE message', () => {
-        sfuRoom.emit(SFURoom.MESSAGE_EVENTS.leave.key, message);
-
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.SFU_LEAVE.key, message));
-      });
-
-      it('should delete room from peer.rooms', () => {
-        sfuRoom.emit(SFURoom.MESSAGE_EVENTS.leave.key, message);
-
-        assert.equal(peer.rooms[roomName], undefined);
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.SFU_ANSWER.key, message));
       });
     });
   });
@@ -1554,87 +1466,60 @@ describe('Peer', () => {
     const message = {};
 
     let peer;
-    let meshRoom;
+    let roomMessageHandlerStub;
     beforeEach(() => {
       peer = new Peer({
         key: apiKey
       });
-      meshRoom = new MeshRoomConstructorStub();
-      meshRoom.name = roomName;
+      meshRoomInstanceStub.name = roomName;
 
-      peer.rooms[roomName] = meshRoom;
-      peer._setupMeshRoomMessageHandlers(meshRoom);
+      peer.rooms[roomName] = meshRoomInstanceStub;
+
+      roomMessageHandlerStub = sinon.stub(peer, '_setupRoomMessageHandlers');
+      peer._setupMeshRoomMessageHandlers(meshRoomInstanceStub);
+    });
+
+    it('should call _setupRoomMessageHandlers', () => {
+      assert.equal(roomMessageHandlerStub.callCount, 1);
+      assert(roomMessageHandlerStub.calledWith(meshRoomInstanceStub));
     });
 
     it('should set up handlers for MeshRoom Message events', () => {
-      assert(meshRoom.on.calledWith(MeshRoom.MESSAGE_EVENTS.offer.key, sinon.match.func));
-      assert(meshRoom.on.calledWith(MeshRoom.MESSAGE_EVENTS.answer.key, sinon.match.func));
-      assert(meshRoom.on.calledWith(MeshRoom.MESSAGE_EVENTS.candidate.key, sinon.match.func));
-      assert(meshRoom.on.calledWith(MeshRoom.MESSAGE_EVENTS.getPeers.key, sinon.match.func));
-      assert(meshRoom.on.calledWith(MeshRoom.MESSAGE_EVENTS.broadcastByWS.key, sinon.match.func));
-      assert(meshRoom.on.calledWith(MeshRoom.MESSAGE_EVENTS.getLog.key, sinon.match.func));
-      assert(meshRoom.on.calledWith(MeshRoom.MESSAGE_EVENTS.leave.key, sinon.match.func));
+      assert(meshRoomInstanceStub.on.calledWith(MeshRoom.MESSAGE_EVENTS.offer.key, sinon.match.func));
+      assert(meshRoomInstanceStub.on.calledWith(MeshRoom.MESSAGE_EVENTS.answer.key, sinon.match.func));
+      assert(meshRoomInstanceStub.on.calledWith(MeshRoom.MESSAGE_EVENTS.candidate.key, sinon.match.func));
+      assert(meshRoomInstanceStub.on.calledWith(MeshRoom.MESSAGE_EVENTS.getPeers.key, sinon.match.func));
     });
 
     describe('offer', () => {
-      it('should send MESH_OFFER message', () => {
-        meshRoom.emit(MeshRoom.MESSAGE_EVENTS.offer.key, message);
+      it('should send OFFER message', () => {
+        meshRoomInstanceStub.emit(MeshRoom.MESSAGE_EVENTS.offer.key, message);
 
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.MESH_OFFER.key, message));
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.SEND_OFFER.key, message));
       });
     });
 
     describe('answer', () => {
-      it('should send MESH_ANSWER message', () => {
-        meshRoom.emit(MeshRoom.MESSAGE_EVENTS.answer.key, message);
+      it('should send ANSWER message', () => {
+        meshRoomInstanceStub.emit(MeshRoom.MESSAGE_EVENTS.answer.key, message);
 
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.MESH_ANSWER.key, message));
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.SEND_ANSWER.key, message));
       });
     });
 
     describe('candidate', () => {
-      it('should send MESH_CANDIDATE message', () => {
-        meshRoom.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, message);
+      it('should send CANDIDATE message', () => {
+        meshRoomInstanceStub.emit(MeshRoom.MESSAGE_EVENTS.candidate.key, message);
 
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.MESH_CANDIDATE.key, message));
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.SEND_CANDIDATE.key, message));
       });
     });
 
     describe('getPeers', () => {
       it('should send MESH_USER_LIST_REQUEST message', () => {
-        meshRoom.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, message);
+        meshRoomInstanceStub.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, message);
 
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.MESH_USER_LIST_REQUEST.key, message));
-      });
-    });
-
-    describe('broadcastByWS', () => {
-      it('should send MESH_DATA message', () => {
-        meshRoom.emit(MeshRoom.MESSAGE_EVENTS.broadcastByWS.key, message);
-
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.MESH_DATA.key, message));
-      });
-    });
-
-    describe('getLog', () => {
-      it('should send MESH_LOG message', () => {
-        meshRoom.emit(MeshRoom.MESSAGE_EVENTS.getLog.key, message);
-
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.MESH_LOG.key, message));
-      });
-    });
-
-    describe('leave', () => {
-      it('should send MESH_LEAVE message', () => {
-        meshRoom.emit(MeshRoom.MESSAGE_EVENTS.leave.key, message);
-
-        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.MESH_LEAVE.key, message));
-      });
-
-      it('should delete room from peer.rooms', () => {
-        meshRoom.emit(MeshRoom.MESSAGE_EVENTS.leave.key, message);
-
-        assert.equal(peer.rooms[roomName], undefined);
+        assert(peer.socket.send.calledWith(util.MESSAGE_TYPES.CLIENT.ROOM_GET_USERS.key, message));
       });
     });
   });

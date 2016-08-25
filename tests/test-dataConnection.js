@@ -123,7 +123,7 @@ describe('DataConnection', () => {
     });
 
     it('should process any queued messages after PeerConnection object is created', () => {
-      const messages = [{type: util.MESSAGE_TYPES.ANSWER.key, payload: 'message'}];
+      const messages = [{type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message'}];
 
       let spy = sinon.spy();
       sinon.stub(DataConnection.prototype, 'handleAnswer', spy);
@@ -136,8 +136,8 @@ describe('DataConnection', () => {
     });
 
     it('should correctly handle ALL of multiple queued messages', () => {
-      const messages = [{type: util.MESSAGE_TYPES.ANSWER.key, payload: 'message1'},
-                        {type: util.MESSAGE_TYPES.CANDIDATE.key, payload: 'message2'}];
+      const messages = [{type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message1'},
+                        {type: util.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: 'message2'}];
 
       let spy1 = sinon.spy();
       let spy2 = sinon.spy();
