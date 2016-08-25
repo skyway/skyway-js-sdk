@@ -349,9 +349,6 @@ class Peer extends EventEmitter {
 
     this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key, data);
 
-    if (roomOptions.stream) {
-      sfuRoom.call();
-    }
     return sfuRoom;
   }
 
@@ -381,9 +378,6 @@ class Peer extends EventEmitter {
 
     this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key, data);
 
-    if (roomOptions.stream) {
-      meshRoom.call();
-    }
     return meshRoom;
   }
 

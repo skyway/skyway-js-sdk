@@ -107,6 +107,7 @@ class MeshRoom extends Room {
     const src = joinMessage.src;
     if (src === this._peerId) {
       this.emit(MeshRoom.EVENTS.open.key);
+      this.call(this._localStream);
       return;
     }
 

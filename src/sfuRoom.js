@@ -134,7 +134,10 @@ class SFURoom extends Room {
 
     if (src === this._peerId) {
       this._open = true;
+
+      this.call(this._localStream);
       this.emit(SFURoom.EVENTS.open.key);
+      return;
 
       // At this stage the Server has acknowledged us joining a room
       return;
