@@ -128,17 +128,58 @@ describe('MeshRoom', () => {
   });
 
   describe('handleJoin', () => {
-    it('should emit peerJoin event', done => {
-      const peerId1 = 'peerId1';
-      const message = {src: peerId1};
+    describe('when message src is your peerId', () => {
+      const joinMessage = {
+        src: peerId
+      };
 
-      meshRoom.on(MeshRoom.EVENTS.peerJoin.key, peerId => {
-        assert.equal(peerId, peerId1);
+      it('should emit an open event', done => {
+        meshRoom.on(MeshRoom.EVENTS.open.key, () => {
+          done();
+        });
 
-        done();
+        meshRoom.handleJoin(joinMessage);
       });
 
-      meshRoom.handleJoin(message);
+      it('should not emit a peerJoin event', done => {
+        meshRoom.on(MeshRoom.EVENTS.peerJoin.key, () => {
+          assert.fail(undefined, undefined, 'Should not have emitted a peerJoin event');
+        });
+
+        meshRoom.handleJoin(joinMessage);
+
+        // let other async events run
+        setTimeout(done);
+      });
+
+      it('should call room.call', done => {
+        const callStub = sinon.stub(meshRoom, 'call');
+
+        meshRoom.on(MeshRoom.EVENTS.open.key, () => {
+          assert.equal(callStub.callCount, 1);
+
+          done();
+        });
+
+        assert.equal(callStub.callCount, 0);
+        meshRoom.handleJoin(joinMessage);
+      });
+    });
+
+    describe('when message src is not your peerId', () => {
+      const joinMessage = {
+        src: remotePeerId
+      };
+
+      it('should emit a peerJoin event', done => {
+        meshRoom.on(MeshRoom.EVENTS.peerJoin.key, joinedPeerId => {
+          assert.equal(joinedPeerId, remotePeerId);
+
+          done();
+        });
+
+        meshRoom.handleJoin(joinMessage);
+      });
     });
   });
 
