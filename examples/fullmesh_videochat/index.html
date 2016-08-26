@@ -35,8 +35,7 @@
         if (!roomName) {
           return;
         }
-        room = peer.joinRoom('mesh_video_' + roomName);
-        room.call(window.localStream);
+        room = peer.joinRoom('mesh_video_' + roomName, {stream: window.localStream});
 
         $('#room-id').text(roomName);
         step3(room);

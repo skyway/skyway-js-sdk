@@ -325,7 +325,6 @@ class Peer extends EventEmitter {
 
   /**
    * Create and setup a SFURoom instance and emit SFU_JOIN message to SkyWay server.
-   * If user called joinRoom with a MediaStream, it call sfuRoom.call with it.
    * @param {string} roomName - The name of the room user is joining to.
    * @param {object} [roomOptions] - Optional arguments for the RTCPeerConnection.
    * @param {object} [roomOptions.pcConfig] -  A RTCConfiguration dictionary for the RTCPeerConnection.
@@ -349,15 +348,11 @@ class Peer extends EventEmitter {
 
     this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key, data);
 
-    if (roomOptions.stream) {
-      sfuRoom.call();
-    }
     return sfuRoom;
   }
 
   /**
    * Create and setup a MeshRoom instance and emit MESH_JOIN message to SkyWay server.
-   * If user called joinRoom with a MediaStream, it call meshRoom.call with it.
    * @param {string} roomName - The name of the room user is joining to.
    * @param {object} roomOptions - Optional arguments for the RTCPeerConnection.
    * @param {string} roomOptions.pcConfig -  A RTCConfiguration dictionary for the RTCPeerConnection.
@@ -381,9 +376,6 @@ class Peer extends EventEmitter {
 
     this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key, data);
 
-    if (roomOptions.stream) {
-      meshRoom.call();
-    }
     return meshRoom;
   }
 

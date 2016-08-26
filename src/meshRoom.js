@@ -106,7 +106,10 @@ class MeshRoom extends Room {
   handleJoin(joinMessage) {
     const src = joinMessage.src;
     if (src === this._peerId) {
+      this.call(this._localStream);
       this.emit(MeshRoom.EVENTS.open.key);
+
+      // At this stage the Server has acknowledged us joining a room
       return;
     }
 

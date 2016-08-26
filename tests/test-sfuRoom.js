@@ -273,6 +273,19 @@ describe('SFURoom', () => {
         // let other async events run
         setTimeout(done);
       });
+
+      it('should call room.call', done => {
+        const callStub = sinon.stub(sfuRoom, 'call');
+
+        sfuRoom.on(SFURoom.EVENTS.open.key, () => {
+          assert.equal(callStub.callCount, 1);
+
+          done();
+        });
+
+        assert.equal(callStub.callCount, 0);
+        sfuRoom.handleJoin(joinMessage);
+      });
     });
 
     describe('when message src is not your peerId', () => {

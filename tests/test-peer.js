@@ -700,19 +700,6 @@ describe('Peer', () => {
       );
     });
 
-    it('should call sfuRoom.call() if stream option is set', () => {
-      const optionsWithStream = {stream: {}};
-      const sfuRoom = peer._initializeSfuRoom(roomName, optionsWithStream);
-
-      assert.equal(sfuRoom.call.callCount, 1);
-    });
-
-    it('should not call sfuRoom.call() if stream option is not set', () => {
-      const sfuRoom = peer._initializeSfuRoom(roomName, options);
-
-      assert.equal(sfuRoom.call.callCount, 0);
-    });
-
     it('should return the room if it exists', () => {
       const dummyRoom = {};
       peer.rooms[roomName] = dummyRoom;
@@ -763,19 +750,6 @@ describe('Peer', () => {
         util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key,
         {roomName: roomName, roomType: 'mesh'})
       );
-    });
-
-    it('should call meshRoom.call() if stream option is set', () => {
-      const optionsWithStream = {stream: {}};
-      const meshRoom = peer._initializeFullMeshRoom(roomName, optionsWithStream);
-
-      assert.equal(meshRoom.call.callCount, 1);
-    });
-
-    it('should not call meshRoom.call() if stream option is not set', () => {
-      const meshRoom = peer._initializeFullMeshRoom(roomName, options);
-
-      assert.equal(meshRoom.call.callCount, 0);
     });
 
     it('should return the room if it exists', () => {
