@@ -29,6 +29,8 @@ class MediaConnection extends Connection {
    * @param {boolean} [options.originator] - true means the peer is the originator of the connection.
    * @param {string} [options.queuedMessages] - An array of messages that were already received before the connection was created.
    * @param {string} [options.payload] - An offer message that triggered creating this object.
+   * @param {number} [options.videoBandwidth] - A max video bandwidth(kbps)
+   * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    */
   constructor(remoteId, options) {
     super(remoteId, options);
@@ -49,10 +51,12 @@ class MediaConnection extends Connection {
     if (this._options.originator) {
       this._negotiator.startConnection(
         {
-          type:       'media',
-          stream:     this.localStream,
-          originator: this._options.originator,
-          pcConfig:   this._options.pcConfig
+          type:           'media',
+          stream:         this.localStream,
+          originator:     this._options.originator,
+          pcConfig:       this._options.pcConfig,
+          videoBandwidth: this._options.videoBandwidth,
+          audioBandwidth: this._options.audioBandwidth
         }
       );
       this._pcAvailable = true;
@@ -63,8 +67,11 @@ class MediaConnection extends Connection {
   /**
    * Create and send an answer message.
    * @param {MediaStream} stream - The stream to send to the peer.
+   * @param {object} [options] - Optional arguments for the connection.
+   * @param {number} [options.videoBandwidth] - A max video bandwidth(kbps)
+   * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    */
-  answer(stream) {
+  answer(stream, options = {}) {
     if (this.localStream) {
       util.warn('localStream already exists on this MediaConnection. Are you answering a call twice?');
       return;
@@ -75,11 +82,13 @@ class MediaConnection extends Connection {
     this.localStream = stream;
     this._negotiator.startConnection(
       {
-        type:       'media',
-        stream:     this.localStream,
-        originator: false,
-        offer:      this._options.payload.offer,
-        pcConfig:   this._options.pcConfig
+        type:           'media',
+        stream:         this.localStream,
+        originator:     false,
+        offer:          this._options.payload.offer,
+        pcConfig:       this._options.pcConfig,
+        audioBandwidth: options.audioBandwidth,
+        videoBandwidth: options.videoBandwidth
       }
     );
     this._pcAvailable = true;
