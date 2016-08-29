@@ -413,7 +413,8 @@ a=setup:actpass
 a=ssrc:3344931084 cname:{71eaeac1-5ffa-184a-bdb6-96356857d252}
 `;
 
-  const testBandwidth = 200;
+  const testBandwidthKbps = 200;
+  const testBandwidthBps = 200 * 1000;
 
   describe('addVideoBandwidth', () => {
     it('should throw error when bandwidth is not Number', () => {
@@ -436,52 +437,58 @@ a=ssrc:3344931084 cname:{71eaeac1-5ffa-184a-bdb6-96356857d252}
     });
 
     describe('When Plan B (Chrome)', () => {
+      const audioRegex = `m=audio \\d+ UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidthKbps}`;
+      const videoRegex = `m=video \\d+ UDP/TLS/RTP/SAVPF 100 101 107 116 117 96 97 99 98\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidthKbps}\r\nb=TIAS:${testBandwidthBps}`;
+
       describe('When single stream', () => {
         it('should add b=as:XX to m=video', () => {
-          const testSdp = sdpUtil.addVideoBandwidth(chromeSdpSingleStream, testBandwidth);
-          assert(new RegExp(`m=video \\d+ UDP/TLS/RTP/SAVPF 100 101 107 116 117 96 97 99 98\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidth}`).test(testSdp));
+          const testSdp = sdpUtil.addVideoBandwidth(chromeSdpSingleStream, testBandwidthKbps);
+          assert(new RegExp(videoRegex).test(testSdp));
         });
         it('should not add b=as:XX to m=audio', () => {
-          const testSdp = sdpUtil.addVideoBandwidth(chromeSdpSingleStream, testBandwidth);
-          assert.equal(new RegExp(`m=audio \\+d UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidth}`).test(testSdp), false);
+          const testSdp = sdpUtil.addVideoBandwidth(chromeSdpSingleStream, testBandwidthKbps);
+          assert.equal(new RegExp(audioRegex).test(testSdp), false);
         });
       });
 
       describe('When multi stream', () => {
         it('should add b=as:XX to m=video', () => {
-          const testSdp = sdpUtil.addVideoBandwidth(chromeSdpMultiStream, testBandwidth);
-          assert(new RegExp(`m=video \\d+ UDP/TLS/RTP/SAVPF 100 101 107 116 117 96 97 99 98\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidth}`).test(testSdp));
+          const testSdp = sdpUtil.addVideoBandwidth(chromeSdpMultiStream, testBandwidthKbps);
+          assert(new RegExp(videoRegex).test(testSdp));
         });
         it('should not add b=as:XX to m=audio', () => {
-          const testSdp = sdpUtil.addVideoBandwidth(chromeSdpMultiStream, testBandwidth);
-          assert.equal(new RegExp(`m=audio \\d+ UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidth}`).test(testSdp), false);
+          const testSdp = sdpUtil.addVideoBandwidth(chromeSdpMultiStream, testBandwidthKbps);
+          assert.equal(new RegExp(audioRegex).test(testSdp), false);
         });
       });
     });
 
     describe('When Unified Plan (Firefox)', () => {
+      const audioRegex = `m=audio \\d+ UDP/TLS/RTP/SAVPF 109 9 0 8\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidthKbps}`;
+      const videoRegex = `m=video \\d+ UDP/TLS/RTP/SAVPF 120 126 97\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidthKbps}\r\nb=TIAS:${testBandwidthBps}`;
+
       describe('When single stream', () => {
         it('should add b=as:XX to m=video', () => {
-          const testSdp = sdpUtil.addVideoBandwidth(firefoxSdpSingleStream, testBandwidth);
-          assert(new RegExp(`m=video \\d+ UDP/TLS/RTP/SAVPF 120 126 97\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidth}`).test(testSdp));
+          const testSdp = sdpUtil.addVideoBandwidth(firefoxSdpSingleStream, testBandwidthKbps);
+          assert(new RegExp(videoRegex).test(testSdp));
         });
         it('should not add b=as:XX to m=audio', () => {
-          const testSdp = sdpUtil.addVideoBandwidth(firefoxSdpSingleStream, testBandwidth);
-          assert.equal(new RegExp(`m=audio \\d+ UDP/TLS/RTP/SAVPF 109 9 0 8\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidth}`).test(testSdp), false);
+          const testSdp = sdpUtil.addVideoBandwidth(firefoxSdpSingleStream, testBandwidthKbps);
+          assert.equal(new RegExp(audioRegex).test(testSdp), false);
         });
       });
 
       describe('When multi stream', () => {
         it('should add b=as:XX to m=video', () => {
-          const testSdp = sdpUtil.addVideoBandwidth(firefoxSdpMultiStream, testBandwidth);
-          const regex = new RegExp(`m=video \\d+ UDP/TLS/RTP/SAVPF 120 126 97\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidth}`, 'g');
+          const testSdp = sdpUtil.addVideoBandwidth(firefoxSdpMultiStream, testBandwidthKbps);
+          const regex = new RegExp(videoRegex, 'g');
 
           // "2" means 2 m=video sections with b=AS
           assert.equal(testSdp.match(regex).length, 2);
         });
         it('should not add b=as:XX to m=audio', () => {
-          const testSdp = sdpUtil.addVideoBandwidth(firefoxSdpMultiStream, testBandwidth);
-          assert.equal(new RegExp(`m=audio \\d+ UDP/TLS/RTP/SAVPF 109 9 0 8\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidth}`).test(testSdp), false);
+          const testSdp = sdpUtil.addVideoBandwidth(firefoxSdpMultiStream, testBandwidthKbps);
+          assert.equal(new RegExp(audioRegex).test(testSdp), false);
         });
       });
     });
@@ -491,51 +498,57 @@ a=ssrc:3344931084 cname:{71eaeac1-5ffa-184a-bdb6-96356857d252}
     const testBandwiidth = 200;
 
     describe('When Plan B (Chrome)', () => {
+      const audioRegex = `m=audio \\d+ UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidthKbps}\r\nb=TIAS:${testBandwidthBps}`;
+      const videoRegex = `m=video \\d+ UDP/TLS/RTP/SAVPF 100 101 107 116 117 96 97 99 98\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidthKbps}`;
+
       describe('When single stream', () => {
         it('should add b=as:XX to m=audio', () => {
-          const testSdp = sdpUtil.addAudioBandwidth(chromeSdpSingleStream, testBandwidth);
-          assert(new RegExp(`m=audio \\d+ UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidth}`).test(testSdp));
+          const testSdp = sdpUtil.addAudioBandwidth(chromeSdpSingleStream, testBandwidthKbps);
+          assert(new RegExp(audioRegex).test(testSdp));
         });
         it('should not add b=as:XX to m=video', () => {
-          const testSdp = sdpUtil.addAudioBandwidth(chromeSdpSingleStream, testBandwidth);
-          assert.equal(new RegExp(`m=video \\d+ UDP/TLS/RTP/SAVPF 100 101 107 116 117 96 97 99 98\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidth}`).test(testSdp), false);
+          const testSdp = sdpUtil.addAudioBandwidth(chromeSdpSingleStream, testBandwidthKbps);
+          assert.equal(new RegExp(videoRegex).test(testSdp), false);
         });
       });
 
       describe('When multi stream', () => {
         it('should add b=as:XX to m=video', () => {
-          const testSdp = sdpUtil.addAudioBandwidth(chromeSdpMultiStream, testBandwidth);
-          assert(new RegExp(`m=audio \\d+ UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidth}`).test(testSdp));
+          const testSdp = sdpUtil.addAudioBandwidth(chromeSdpMultiStream, testBandwidthKbps);
+          assert(new RegExp(audioRegex).test(testSdp));
         });
         it('should not add b=as:XX to m=audio', () => {
-          const testSdp = sdpUtil.addAudioBandwidth(chromeSdpMultiStream, testBandwidth);
-          assert.equal(new RegExp(`m=video \\d+ UDP/TLS/RTP/SAVPF 100 101 107 116 117 96 97 99 98\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidth}`).test(testSdp), false);
+          const testSdp = sdpUtil.addAudioBandwidth(chromeSdpMultiStream, testBandwidthKbps);
+          assert.equal(new RegExp(videoRegex).test(testSdp), false);
         });
       });
     });
 
     describe('When Unified Plan (Firefox)', () => {
+      const audioRegex = `m=audio \\d+ UDP/TLS/RTP/SAVPF 109 9 0 8\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidthKbps}\r\nb=TIAS:${testBandwidthBps}`;
+      const videoRegex = `m=video \\d+ UDP/TLS/RTP/SAVPF 120 126 97\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidthKbps}`;
+
       describe('When single stream', () => {
         it('should add b=as:XX to m=audio', () => {
           const testSdp = sdpUtil.addAudioBandwidth(firefoxSdpSingleStream, testBandwiidth);
-          assert(new RegExp(`m=audio \\d+ UDP/TLS/RTP/SAVPF 109 9 0 8\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwiidth}`).test(testSdp));
+          assert(new RegExp(audioRegex).test(testSdp));
         });
         it('should not add b=as:XX to m=video', () => {
           const testSdp = sdpUtil.addAudioBandwidth(firefoxSdpSingleStream, testBandwiidth);
-          assert.equal(new RegExp(`m=video \\d+ UDP/TLS/RTP/SAVPF 120 126 97\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwiidth}`).test(testSdp), false);
+          assert.equal(new RegExp(videoRegex).test(testSdp), false);
         });
       });
       describe('When multi stream', () => {
         it('should add b=as:XX to m=video', () => {
-          const testSdp = sdpUtil.addAudioBandwidth(firefoxSdpMultiStream, testBandwidth);
-          const regex = new RegExp(`m=audio \\d+ UDP/TLS/RTP/SAVPF 109 9 0 8\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidth}`, 'g');
+          const testSdp = sdpUtil.addAudioBandwidth(firefoxSdpMultiStream, testBandwidthKbps);
+          const regex = new RegExp(audioRegex, 'g');
 
           // "2" means 2 m=video sections with b=AS
           assert.equal(testSdp.match(regex).length, 2);
         });
         it('should not add b=as:XX to m=video', () => {
-          const testSdp = sdpUtil.addAudioBandwidth(firefoxSdpMultiStream, testBandwidth);
-          assert.equal(new RegExp(`m=video \\d+ UDP/TLS/RTP/SAVPF 120 126 97\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidth}`).test(testSdp), false);
+          const testSdp = sdpUtil.addAudioBandwidth(firefoxSdpMultiStream, testBandwidthKbps);
+          assert.equal(new RegExp(videoRegex).test(testSdp), false);
         });
       });
     });

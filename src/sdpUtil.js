@@ -8,7 +8,7 @@ const sdpTransform = require('sdp-transform');
 class SdpUtil {
 
   /**
-   * Add b=AS to m=video section and return the SDP
+   * Add b=AS to m=video section and return the SDP.
    * @param {string} sdp - A SDP.
    * @param {number} bandwidth - video Bandwidth (kbps)
    * @return {string} A SDP which include b=AS in m=video section
@@ -42,8 +42,13 @@ class SdpUtil {
     sdpObject.media = sdpObject.media.map(media => {
       if (media.type === mediaType) {
         media.bandwidth = [{
+          // Chrome supports only 'AS'
           type:  'AS',
           limit: bandwidth.toString()
+        }, {
+          // Firefox Supports only 'TIAS' from M49
+          type:  'TIAS',
+          limit: (bandwidth * 1000).toString()
         }];
       }
       return media;
