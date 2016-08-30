@@ -110,9 +110,10 @@ class SdpUtil {
 
   /**
    * Add b=AS to 'm=audio' or 'm=video' section and return the SDP
+   *
    * @param {string} sdp - A SDP.
    * @param {number} bandwidth - bandidth of 'audio' or 'video'
-   * @param {string }mediaType - 'audio' or 'video'
+   * @param {string} mediaType - 'audio' or 'video'
    * @return {string} A SDP which include b=AS in m=audio or m=video section
    * @private
    */
@@ -137,7 +138,7 @@ class SdpUtil {
 
   /**
    * Check bandwidth is valid or not. If invalid, throw Error
-   * @param {number} bandwidth - bandidth of 'audio' or 'video'
+   * @param {number} bandwidth - bandwidth of 'audio' or 'video'
    * @private
    */
   _validateBandwidth(bandwidth) {
