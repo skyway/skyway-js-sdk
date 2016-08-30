@@ -66,35 +66,43 @@ class Peer extends EventEmitter {
 
     const defaultOptions = {
       debug:  util.LOG_LEVELS.NONE,
-      host:   util.CLOUD_HOST,
-      port:   util.CLOUD_PORT,
       token:  util.randomToken(),
       config: util.defaultConfig,
       turn:   true
     };
-    this.options = Object.assign({}, defaultOptions, options);
-
-    if (this.options.host === '/') {
-      this.options.host = window.location.hostname;
-    }
-
-    if (this.options.host === util.CLOUD_HOST) {
-      this.options.secure = true;
-    }
-
-    util.setLogLevel(this.options.debug);
 
     if (!util.validateId(id)) {
       this._abort('invalid-id', `ID "${id}" is invalid`);
       return;
     }
 
-    if (!util.validateKey(this.options.key)) {
+    if (!util.validateKey(options.key)) {
       this._abort('invalid-key', `API KEY "${this.options.key}" is invalid`);
       return;
     }
 
-    this._initializeServerConnection(id);
+    if (!options.host || !options.port) {
+      util.getSignalingServer(res => {
+        if (res) {
+          defaultOptions.host = res.host;
+          defaultOptions.port = res.port;
+          defaultOptions.secure = res.secure;
+        } else {
+          util.log('server-error', 'Could not get server domain from the dispatcher.');
+          defaultOptions.host = util.CLOUD_HOST;
+          defaultOptions.port = util.CLOUD_PORT;
+          defaultOptions.secure = true;
+        }
+        this.options = Object.assign({}, defaultOptions, options);
+        this._initializeServerConnection(id);
+      });
+    } else {
+      if (options.host === '/') {
+        options.host = window.location.hostname;
+      }
+      this.options = Object.assign({}, defaultOptions, options);
+      this._initializeServerConnection(id);
+    }
   }
 
   /**
