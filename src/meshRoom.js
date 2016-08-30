@@ -170,7 +170,12 @@ class MeshRoom extends Room {
       this._addConnection(offerMessage.src, connection);
       this._setupMessageHandlers(connection);
 
-      connection.answer(this._localStream);
+      connection.answer(this._localStream, {
+        videoBandwidth: this._options.videoBandwidth,
+        audioBandwidth: this._options.audioBandwidth,
+        videoCodec:     this._options.videoCodec,
+        audioCodec:     this._options.audioCodec
+      });
     } else {
       util.warn(`Received malformed connection type: ${offerMessage.connectionType}`);
     }
