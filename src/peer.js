@@ -110,6 +110,8 @@ class Peer extends EventEmitter {
    * @param {string} [options.payload] - An offer message that triggered creating this object.
    * @param {number} [options.videoBandwidth] - A max video bandwidth(kbps)
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
+   * @param {string} [options.videoCodec] - A video codec like 'H264'
+   * @param {string} [options.audioCodec] - A video codec like 'PCMU'
    * @return {MediaConnection} An instance of MediaConnection.
    */
   call(peerId, stream, options = {}) {
