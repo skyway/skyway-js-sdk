@@ -164,11 +164,17 @@ class Negotiator extends EventEmitter {
    * @param {object} candidate - An object containing Candidate SDP.
    */
   handleCandidate(candidate) {
-    this._pc.addIceCandidate(new RTCIceCandidate(candidate)).then(() => {
+    try {
+      this._pc.addIceCandidate(new RTCIceCandidate(candidate)).then(() => {
+        util.log('Added ICE candidate');
+      }).catch(e => {
+        util.error('Failed to add ICE candidate', e);
+      });
+    } catch (err) {
+      // In react-native implementation, promise does not support for addIceCandidate
+      this._pc.addIceCandidate(new RTCIceCandidate(candidate));
       util.log('Added ICE candidate');
-    }).catch(e => {
-      util.error('Failed to add ICE candidate', e);
-    });
+    }
   }
 
   /**
@@ -277,7 +283,7 @@ class Negotiator extends EventEmitter {
    */
   _makeOfferSdp() {
     let options;
-    if (this._pc.getLocalStreams().length === 0) {
+    if (this._pc.getLocalStreams && this._pc.getLocalStreams().length === 0) {
       options = {
         offerToReceiveAudio: true,
         offerToReceiveVideo: true

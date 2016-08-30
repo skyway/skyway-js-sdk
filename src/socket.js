@@ -1,8 +1,10 @@
 'use strict';
 
-const io           = require('socket.io-client');
-const util         = require('./util');
+// depends on platform, you have to change the setting of object 'io'.
+const io           = require('socket.io-client');  // for generic browser
+// const io           = require('socket.io-client/socket.io');  // for react-native
 
+const util         = require('./util');
 const EventEmitter = require('events');
 
 /**
@@ -57,7 +59,8 @@ class Socket extends EventEmitter {
     this._io = io(this._httpUrl, {
       'force new connection': true,
       'query':                query,
-      'reconnectionAttempts': util.reconnectionAttempts
+      'reconnectionAttempts': util.reconnectionAttempts,
+      'transports':           ['xhr-polling', 'websocket']
     });
 
     this._io.on('reconnect_failed', () => {
