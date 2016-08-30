@@ -538,6 +538,7 @@ a=ssrc:3344931084 cname:{71eaeac1-5ffa-184a-bdb6-96356857d252}
           assert.equal(new RegExp(videoRegex).test(testSdp), false);
         });
       });
+
       describe('When multi stream', () => {
         it('should add b=as:XX to m=video', () => {
           const testSdp = sdpUtil.addAudioBandwidth(firefoxSdpMultiStream, testBandwidthKbps);
@@ -549,6 +550,128 @@ a=ssrc:3344931084 cname:{71eaeac1-5ffa-184a-bdb6-96356857d252}
         it('should not add b=as:XX to m=video', () => {
           const testSdp = sdpUtil.addAudioBandwidth(firefoxSdpMultiStream, testBandwidthKbps);
           assert.equal(new RegExp(videoRegex).test(testSdp), false);
+        });
+      });
+    });
+  });
+
+  describe('filterAudioCodec', () => {
+    const testAudioCodec = 'PCMU';
+
+    it('should throw error when codec does not exist', () => {
+      try {
+        sdpUtil.filterAudioCodec(chromeSdpMultiStream, 'NonExistCodec');
+      } catch (e) {
+        assert(e instanceof Error);
+        assert.equal(e.message, 'NonExistCodec does not exist');
+      }
+    });
+
+    it('should throw error when codec is not passed', () => {
+      try {
+        sdpUtil.filterAudioCodec(chromeSdpSingleStream);
+      } catch (e) {
+        assert(e instanceof Error);
+        assert.equal(e.message, 'codec is not passed');
+      }
+    });
+
+    describe('When Plan B (Chrome)', () => {
+      const pcmuRegex = 'a=rtpmap:0 PCMU/8000';
+      const opusRegex = 'a=rtpmap:111 opus/48000/2';
+
+      describe('When single stream', () => {
+        it('should remove audio codecs except PCMU', () => {
+          const testSdp = sdpUtil.filterAudioCodec(chromeSdpSingleStream, testAudioCodec);
+
+          assert(new RegExp(pcmuRegex).test(testSdp));
+          assert.equal(new RegExp(opusRegex).test(testSdp), false);
+        });
+      });
+
+      describe('When multi stream', () => {
+        it('should remove audio codecs except PCMU', () => {
+          const testSdp = sdpUtil.filterAudioCodec(chromeSdpMultiStream, testAudioCodec);
+
+          assert(new RegExp(pcmuRegex).test(testSdp));
+          assert.equal(new RegExp(opusRegex).test(testSdp), false);
+        });
+      });
+    });
+
+    describe('When Unified Plan (Firefox)', () => {
+      const pcmuRegex = 'a=rtpmap:0 PCMU/8000';
+      const opusRegex = 'a=rtpmap:109 opus/48000/2';
+
+      describe('When single stream', () => {
+        it('should remove audio codecs except PCMU', () => {
+          const testSdp = sdpUtil.filterAudioCodec(firefoxSdpSingleStream, testAudioCodec);
+
+          assert(new RegExp(pcmuRegex).test(testSdp));
+          assert.equal(new RegExp(opusRegex).test(testSdp), false);
+        });
+      });
+
+      describe('When multi stream', () => {
+        it('should remove audio codecs except PCMU', () => {
+          const testSdp = sdpUtil.filterAudioCodec(firefoxSdpMultiStream, testAudioCodec);
+
+          assert(new RegExp(pcmuRegex).test(testSdp));
+          assert.equal(new RegExp(opusRegex).test(testSdp), false);
+        });
+      });
+    });
+  });
+
+  describe('filterVideoCodec', () => {
+    const testVideoCodec = 'H264';
+
+    describe('When Plan B (Chrome)', () => {
+      const h264Regex = 'a=rtpmap:107 H264/90000';
+      const vp8Regex = 'a=rtpmap:100 VP8/90000';
+
+      describe('When single stream', () => {
+        it('should remove video codecs except H264', () => {
+          const testSdp = sdpUtil.filterVideoCodec(chromeSdpSingleStream, testVideoCodec);
+
+          assert(new RegExp(h264Regex).test(testSdp));
+          assert.equal(new RegExp(vp8Regex).test(testSdp), false);
+        });
+      });
+
+      describe('When multi stream', () => {
+        it('should remove video codecs except H264', () => {
+          const testSdp = sdpUtil.filterVideoCodec(chromeSdpMultiStream, testVideoCodec);
+
+          assert(new RegExp(h264Regex).test(testSdp));
+          assert.equal(new RegExp(vp8Regex).test(testSdp), false);
+        });
+      });
+    });
+
+    describe('When Unified Plan (Firefox)', () => {
+      const h264Regex = 'a=rtpmap:126 H264/90000';
+      const vp8Regex = 'a=rtpmap:120 VP8/90000';
+
+      describe('When single stream', () => {
+        it('should remove video codecs except H264', () => {
+          const testSdp = sdpUtil.filterVideoCodec(firefoxSdpSingleStream, testVideoCodec);
+
+          assert(new RegExp(h264Regex).test(testSdp));
+          assert.equal(new RegExp(vp8Regex).test(testSdp), false);
+
+          // Firefox should generate two H264 codecs
+          const regex = new RegExp('a=rtpmap:\\d+ H264', 'g');
+          assert.equal(testSdp.match(regex).length, 2);
+        });
+      });
+
+      describe('When multi stream', () => {
+        it('should remove video codecs except H264', () => {
+          const testSdp = sdpUtil.filterVideoCodec(firefoxSdpMultiStream, testVideoCodec);
+
+          assert(new RegExp(h264Regex).test(testSdp));
+          assert.equal(new RegExp(vp8Regex).test(testSdp), false);
         });
       });
     });
