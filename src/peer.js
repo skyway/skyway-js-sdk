@@ -176,6 +176,10 @@ class Peer extends EventEmitter {
    * @param {object} [roomOptions]- Optional arguments for the RTCPeerConnection.
    * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
    * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
+   * @param {number} [roomOptions.videoBandwidth] - A max video bandwidth(kbps)
+   * @param {number} [roomOptions.audioBandwidth] - A max audio bandwidth(kbps)
+   * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'
+   * @param {string} [roomOptions.audioCodec] - A video codec like 'PCMU'
    * @return {SFURoom|MeshRoom} - An instance of SFURoom or MeshRoom.
    */
   joinRoom(roomName, roomOptions = {}) {
@@ -335,6 +339,10 @@ class Peer extends EventEmitter {
    * @param {string} [roomOptions.peerId] - User's peerId.
    * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
    * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
+   * @param {number} [roomOptions.videoBandwidth] - A max video bandwidth(kbps)
+   * @param {number} [roomOptions.audioBandwidth] - A max audio bandwidth(kbps)
+   * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'
+   * @param {string} [roomOptions.audioCodec] - A video codec like 'PCMU'
    * @return {SFURoom} - An instance of SFURoom.
    */
   _initializeSfuRoom(roomName, roomOptions = {}) {
@@ -363,6 +371,10 @@ class Peer extends EventEmitter {
    * @param {string} roomOptions.peerId - User's peerId.
    * @param {string} [roomOptions.mode='mesh'] - One of 'sfu' or 'mesh'.
    * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
+   * @param {number} [roomOptions.videoBandwidth] - A max video bandwidth(kbps)
+   * @param {number} [roomOptions.audioBandwidth] - A max audio bandwidth(kbps)
+   * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'
+   * @param {string} [roomOptions.audioCodec] - A video codec like 'PCMU'
    * @return {SFURoom} - An instance of MeshRoom.
    */
   _initializeFullMeshRoom(roomName, roomOptions = {}) {
