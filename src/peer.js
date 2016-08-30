@@ -108,6 +108,8 @@ class Peer extends EventEmitter {
    * @param {string} [options.queuedMessages] - An array of messages that were already
    *                  received before the connection was created.
    * @param {string} [options.payload] - An offer message that triggered creating this object.
+   * @param {number} [options.videoBandwidth] - A max video bandwidth(kbps)
+   * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @return {MediaConnection} An instance of MediaConnection.
    */
   call(peerId, stream, options = {}) {

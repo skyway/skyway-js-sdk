@@ -4,6 +4,7 @@ const EventEmitter = require('events');
 const Enum         = require('enum');
 
 const shim         = require('../src/webrtcShim');
+const sdpUtil      = require('../src/sdpUtil');
 
 const RTCPeerConnection     = shim.RTCPeerConnection;
 const RTCIceCandidate       = shim.RTCIceCandidate;
@@ -47,11 +48,15 @@ class Negotiator extends EventEmitter {
    * @param {RTCSessionDescription} [options.offer]
    *        - The local description. If the peer is originator, handleOffer is called with it.
    * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @param {number} [options.videoBandwidth] - A max video bandwidth(kbps)
+   * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    */
   startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
     this._setupPCListeners();
     this._originator = options.originator;
+    this._audioBandwidth = options.audioBandwidth;
+    this._videoBandwidth = options.videoBandwidth;
 
     if (options.type === 'media' && options.stream) {
       // `addStream` will trigger onnegotiationneeded event.
@@ -280,6 +285,14 @@ class Negotiator extends EventEmitter {
     return new Promise(resolve => {
       this._pc.createOffer(offer => {
         util.log('Created offer.');
+
+        if (this._audioBandwidth) {
+          offer.sdp = sdpUtil.addAudioBandwidth(offer.sdp, this._audioBandwidth);
+        }
+        if (this._videoBandwidth) {
+          offer.sdp = sdpUtil.addVideoBandwidth(offer.sdp, this._videoBandwidth);
+        }
+
         resolve(offer);
       }, error => {
         util.emitError.call(this, 'webrtc', error);
@@ -297,6 +310,13 @@ class Negotiator extends EventEmitter {
     return new Promise(resolve => {
       this._pc.createAnswer(answer => {
         util.log('Created answer.');
+
+        if (this._audioBandwidth) {
+          answer.sdp = sdpUtil.addAudioBandwidth(answer.sdp, this._audioBandwidth);
+        }
+        if (this._videoBandwidth) {
+          answer.sdp = sdpUtil.addVideoBandwidth(answer.sdp, this._videoBandwidth);
+        }
 
         this._pc.setLocalDescription(answer, () => {
           util.log('Set localDescription: answer');
