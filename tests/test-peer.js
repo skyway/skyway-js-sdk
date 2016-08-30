@@ -30,6 +30,11 @@ describe('Peer', () => {
   let Peer;
   let initializeServerConnectionSpy;
 
+  const getSignalingServer = util.getSignalingServer;
+  util.getSignalingServer = cb => {
+    cb();
+  };
+
   beforeEach(() => {
     // new Socket should return a stubbed socket object
     SocketConstructorStub = sinon.stub(Socket, 'constructor');
@@ -78,6 +83,11 @@ describe('Peer', () => {
     initializeServerConnectionSpy.restore();
   });
 
+  after(() => {
+    // for tests after this file
+    util.getSignalingServer = getSignalingServer;
+  });
+
   describe('Constructor', () => {
     it('should create a Peer object', () => {
       const peer = new Peer({
@@ -93,8 +103,6 @@ describe('Peer', () => {
       });
 
       assert.equal(peer.options.debug.value, util.LOG_LEVELS.NONE.value);
-      assert.equal(peer.options.host, util.CLOUD_HOST);
-      assert.equal(peer.options.port, util.CLOUD_PORT);
       assert(peer.options.token);
       assert.equal(typeof peer.options.token, 'string');
       assert.deepEqual(peer.options.config, util.defaultConfig);
@@ -114,10 +122,60 @@ describe('Peer', () => {
       assert.equal(peer.options.config, config);
 
       // Default unchanged
-      assert.equal(peer.options.host, util.CLOUD_HOST);
-      assert.equal(peer.options.port, util.CLOUD_PORT);
       assert.equal(typeof peer.options.token, 'string');
       assert.equal(peer.options.turn, true);
+    });
+
+    describe('Signaling server options', () => {
+      describe('when host option is provided', () => {
+        it('should create Peer object with provided host', () => {
+          const mySignalingServer = {host: 'my.domain', port: 80, secure: false};
+          const peer = new Peer({
+            key:    apiKey,
+            host:   mySignalingServer.host,
+            port:   mySignalingServer.port,
+            secure: mySignalingServer.secure
+          });
+
+          assert.equal(peer.options.host, mySignalingServer.host);
+          assert.equal(peer.options.port, mySignalingServer.port);
+          assert.equal(peer.options.secure, mySignalingServer.secure);
+        });
+      });
+
+      describe('when host is not provided', () => {
+        describe('when the result of getSignalingServer is including signaling info', () => {
+          it('should create Peer object with despatcher result', () => {
+            const fakeSignalingHost = 'fake.domain';
+            util.getSignalingServer = function(cb) {
+              cb({host: fakeSignalingHost, port: 443, secure: true});
+            };
+
+            const peer = new Peer({
+              key: apiKey
+            });
+
+            assert.equal(peer.options.host, fakeSignalingHost);
+            assert.equal(peer.options.port, 443);
+            assert.equal(peer.options.secure, true);
+          });
+        });
+        describe('when the result of getSignalingServer is empty', () => {
+          it('should create Peer object with default options', () => {
+            util.getSignalingServer = function(cb) {
+              cb();
+            };
+
+            const peer = new Peer({
+              key: apiKey
+            });
+
+            assert.equal(peer.options.host, util.CLOUD_HOST);
+            assert.equal(peer.options.port, util.CLOUD_PORT);
+            assert.equal(peer.options.secure, true);
+          });
+        });
+      });
     });
 
     it('should not create a Peer object with invalid ID', done => {
