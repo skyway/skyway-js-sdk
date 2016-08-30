@@ -30,10 +30,90 @@ class SdpUtil {
   }
 
   /**
+   * Remove video codecs in SDP except argument's codec.
+   * If the codec doesn't exist, throw error.
+   * @param {string} sdp - A SDP.
+   * @param {string} codec - Video codec name (e.g. H264)
+   * @return {string} A SDP which contains the codecs except argument's codec
+   */
+  filterVideoCodec(sdp, codec) {
+    return this._filterCodec(sdp, codec, 'video');
+  }
+
+  /**
+   * Remove audio codecs in SDP except argument's codec.
+   * If the codec doesn't exist, throw error.
+   * @param {string} sdp - A SDP.
+   * @param {string} codec - Audio codec name (e.g. PCMU)
+   * @return {string} A SDP which contains the codecs except argument's codec
+   */
+  filterAudioCodec(sdp, codec) {
+    return this._filterCodec(sdp, codec, 'audio');
+  }
+
+  /**
+   * Remove codecs except the codec passed as argument and return the SDP
+   *
+   * @param {string} sdp - A SDP.
+   * @param {string} codec - The codec name, case sensitive.
+   * @param {string} mediaType - 'audio' or 'video'
+   * @return {string} A SDP which contains the codecs except argument's codec
+   * @private
+   */
+  _filterCodec(sdp, codec, mediaType) {
+    if (codec === undefined) {
+      throw new Error('codec is not passed');
+    }
+
+    const sdpObject = sdpTransform.parse(sdp);
+
+    sdpObject.media = sdpObject.media.map(media => {
+      if (media.type === mediaType) {
+        media.rtp = media.rtp.filter(rtp => {
+          return rtp.codec === codec;
+        });
+
+        // Extract the payload number into Array, like [126, 97];
+        // Note, there are cases the length of Array is more than 2.
+        //   e.g. Firefox generates two 'H264' video codecs: 126, 97;
+        //   e.g. Chrome generates three 'CN' audio codecs:  106, 105, 13;
+        const payloadNumbers = media.rtp.reduce((prev, curr) => {
+          return [...prev, curr.payload];
+        }, []);
+
+        // At this point, 0 means there's no codec, so let's throw Error.
+        if (media.rtp.length === 0) {
+          throw new Error(`${codec} does not exist`);
+        }
+
+        // fmtp is optional though most codecs have this parameter.
+        if (media.fmtp) {
+          media.fmtp = media.fmtp.filter(fmtp => {
+            return payloadNumbers.includes(fmtp.payload);
+          });
+        }
+
+        // rtcpFb is optional. Especially, m=audio doesn't have rtcpFb.
+        if (media.rtcpFb) {
+          media.rtcpFb = media.rtcpFb.filter(rtcpFb => {
+            return payloadNumbers.includes(rtcpFb.payload);
+          });
+        }
+
+        media.payloads = payloadNumbers.join(' ');
+      }
+      return media;
+    });
+
+    return sdpTransform.write(sdpObject);
+  }
+
+  /**
    * Add b=AS to 'm=audio' or 'm=video' section and return the SDP
+   *
    * @param {string} sdp - A SDP.
    * @param {number} bandwidth - bandidth of 'audio' or 'video'
-   * @param {string }mediaType - 'audio' or 'video'
+   * @param {string} mediaType - 'audio' or 'video'
    * @return {string} A SDP which include b=AS in m=audio or m=video section
    * @private
    */
@@ -58,7 +138,7 @@ class SdpUtil {
 
   /**
    * Check bandwidth is valid or not. If invalid, throw Error
-   * @param {number} bandwidth - bandidth of 'audio' or 'video'
+   * @param {number} bandwidth - bandwidth of 'audio' or 'video'
    * @private
    */
   _validateBandwidth(bandwidth) {

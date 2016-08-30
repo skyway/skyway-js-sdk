@@ -31,6 +31,8 @@ class MediaConnection extends Connection {
    * @param {string} [options.payload] - An offer message that triggered creating this object.
    * @param {number} [options.videoBandwidth] - A max video bandwidth(kbps)
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
+   * @param {string} [options.videoCodec] - A video codec like 'H264'
+   * @param {string} [options.audioCodec] - A video codec like 'PCMU'
    */
   constructor(remoteId, options) {
     super(remoteId, options);
@@ -56,7 +58,9 @@ class MediaConnection extends Connection {
           originator:     this._options.originator,
           pcConfig:       this._options.pcConfig,
           videoBandwidth: this._options.videoBandwidth,
-          audioBandwidth: this._options.audioBandwidth
+          audioBandwidth: this._options.audioBandwidth,
+          videoCodec:     this._options.videoCodec,
+          audioCodec:     this._options.audioCodec
         }
       );
       this._pcAvailable = true;
@@ -70,6 +74,8 @@ class MediaConnection extends Connection {
    * @param {object} [options] - Optional arguments for the connection.
    * @param {number} [options.videoBandwidth] - A max video bandwidth(kbps)
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
+   * @param {string} [options.videoCodec] - A video codec like 'H264'
+   * @param {string} [options.audioCodec] - A video codec like 'PCMU'
    */
   answer(stream, options = {}) {
     if (this.localStream) {
@@ -88,7 +94,9 @@ class MediaConnection extends Connection {
         offer:          this._options.payload.offer,
         pcConfig:       this._options.pcConfig,
         audioBandwidth: options.audioBandwidth,
-        videoBandwidth: options.videoBandwidth
+        videoBandwidth: options.videoBandwidth,
+        videoCodec:     options.videoCodec,
+        audioCodec:     options.audioCodec
       }
     );
     this._pcAvailable = true;

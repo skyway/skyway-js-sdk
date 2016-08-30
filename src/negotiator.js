@@ -50,6 +50,8 @@ class Negotiator extends EventEmitter {
    * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    * @param {number} [options.videoBandwidth] - A max video bandwidth(kbps)
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
+   * @param {string} [options.videoCodec] - A video codec like 'H264'
+   * @param {string} [options.audioCodec] - A video codec like 'PCMU'
    */
   startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
@@ -57,6 +59,8 @@ class Negotiator extends EventEmitter {
     this._originator = options.originator;
     this._audioBandwidth = options.audioBandwidth;
     this._videoBandwidth = options.videoBandwidth;
+    this._audioCodec = options.audioCodec;
+    this._videoCodec = options.videoCodec;
 
     if (options.type === 'media' && options.stream) {
       // `addStream` will trigger onnegotiationneeded event.
@@ -292,6 +296,12 @@ class Negotiator extends EventEmitter {
         if (this._videoBandwidth) {
           offer.sdp = sdpUtil.addVideoBandwidth(offer.sdp, this._videoBandwidth);
         }
+        if (this._audioCodec) {
+          offer.sdp = sdpUtil.filterAudioCodec(offer.sdp, this._audioCodec);
+        }
+        if (this._videoCodec) {
+          offer.sdp = sdpUtil.filterVideoCodec(offer.sdp, this._videoCodec);
+        }
 
         resolve(offer);
       }, error => {
@@ -316,6 +326,12 @@ class Negotiator extends EventEmitter {
         }
         if (this._videoBandwidth) {
           answer.sdp = sdpUtil.addVideoBandwidth(answer.sdp, this._videoBandwidth);
+        }
+        if (this._audioCodec) {
+          answer.sdp = sdpUtil.filterAudioCodec(answer.sdp, this._audioCodec);
+        }
+        if (this._videoCodec) {
+          answer.sdp = sdpUtil.filterVideoCodec(answer.sdp, this._videoCodec);
         }
 
         this._pc.setLocalDescription(answer, () => {
