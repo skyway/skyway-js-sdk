@@ -54,6 +54,8 @@ class Util {
    * Create a Util instance.
    */
   constructor() {
+    this.DISPATCHER_HOST = 'dispatcher.skyway.io';
+    this.DISPATCHER_PORT = 443;
     this.CLOUD_HOST = 'skyway.io';
     this.CLOUD_PORT = 443;
     this.TURN_HOST = 'turn.skyway.io';
@@ -329,6 +331,35 @@ class Util {
    */
   isSecure() {
     return location.protocol === 'https:';
+  }
+
+  getSignalingServer(cb) {
+    const http = new XMLHttpRequest();
+    const url = `https://${this.DISPATCHER_HOST}:${this.DISPATCHER_PORT}/signaling`;
+
+    // If there's no ID we need to wait for one before trying to init socket.
+    http.open('get', url, true);
+
+    /* istanbul ignore next */
+    http.onerror = function() {
+      cb();
+    };
+    http.onreadystatechange = function() {
+      if (http.readyState !== 4) {
+        return;
+      }
+      if (http.status === 200) {
+        const res = JSON.parse(http.responseText);
+        if (res && res.domain) {
+          cb({host: res.domain, port: 443, secure: true});
+        } else {
+          cb();
+        }
+      } else {
+        cb();
+      }
+    };
+    http.send(null);
   }
 
   /**
