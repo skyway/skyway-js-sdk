@@ -1,6 +1,6 @@
 'use strict';
 
-const util = require('../src/util');
+const util         = require('../src/util');
 
 const assert       = require('power-assert');
 const sinon        = require('sinon');
@@ -209,6 +209,69 @@ describe('Util', () => {
     // Test only 'HTTP' becauuse Karma only runs on 'HTTP'
     it('should return false if HTTP', () => {
       assert(util.isSecure(location.protocol) === false);
+    });
+  });
+
+  describe('getSignalingServer', () => {
+    let requests = [];
+    let xhr;
+    let spy;
+    beforeEach(() => {
+      xhr = sinon.useFakeXMLHttpRequest();
+      xhr.onCreate = function(request) {
+        requests.push(request);
+      };
+      spy = sinon.spy();
+    });
+
+    afterEach(() => {
+      xhr.restore();
+      requests = [];
+      spy.reset();
+    });
+
+    it('should send a "GET" request to the dispatcher URL', () => {
+      util.getSignalingServer();
+
+      assert.equal(requests.length, 1);
+      const url = `https://${util.DISPATCHER_HOST}:` +
+        `${util.DISPATCHER_PORT}/signaling`;
+      assert(requests[0].url === url);
+      assert(requests[0].method === 'get');
+    });
+
+    describe('should call callback with object including host', () => {
+      it('when response from dispatcher is including server domain', () => {
+        util.getSignalingServer(spy);
+
+        const result = {domain: 'hoge'};
+        requests[0].respond(200, {}, JSON.stringify(result));
+
+        assert.equal(spy.callCount, 1);
+        assert.deepEqual(spy.args[0][0], {host: "hoge", port: 443, secure: true});
+      });
+    });
+
+    describe('should call callback with nothing', () => {
+      it('when response from dispatcher is empty', () => {
+        util.getSignalingServer(spy);
+        const result = {};
+        requests[0].respond(200, {}, JSON.stringify(result));
+
+        assert.equal(spy.callCount, 1);
+        assert.equal(spy.args[0].length, 0);
+      });
+    });
+
+    describe('should call callback with nothing', () => {
+      it('when status code from dispatcher is not 200', () => {
+        util.getSignalingServer(spy);
+        const result = {};
+        requests[0].respond(400, {}, JSON.stringify(result));
+
+        assert.equal(spy.callCount, 1);
+        assert.equal(spy.args[0].length, 0);
+      });
     });
   });
 
