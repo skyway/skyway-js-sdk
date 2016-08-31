@@ -215,62 +215,120 @@ describe('Util', () => {
   describe('getSignalingServer', () => {
     let requests = [];
     let xhr;
-    let spy;
+    const fakeDomain = 'fake.domain';
     beforeEach(() => {
       xhr = sinon.useFakeXMLHttpRequest();
-      xhr.onCreate = function(request) {
+      xhr.onCreate = request => {
         requests.push(request);
       };
-      spy = sinon.spy();
     });
 
     afterEach(() => {
       xhr.restore();
       requests = [];
-      spy.reset();
     });
 
-    it('should send a "GET" request to the dispatcher URL', () => {
-      util.getSignalingServer();
+    it('should send a "GET" request to the dispatcher URL', done => {
+      const result = {domain: fakeDomain};
 
-      assert.equal(requests.length, 1);
-      const url = `https://${util.DISPATCHER_HOST}:` +
-        `${util.DISPATCHER_PORT}/signaling`;
-      assert(requests[0].url === url);
-      assert(requests[0].method === 'get');
+      util.getSignalingServer().then(res => {
+        assert.equal(requests.length, 1);
+        const url = `https://${util.DISPATCHER_HOST}:` +
+          `${util.DISPATCHER_PORT}/signaling`;
+        assert(requests[0].url === url);
+        assert(requests[0].method === 'GET');
+        done();
+      }).catch(err => {
+        assert.fail('Failed to get signaling server options from dispatcher.', err);
+        done();
+      });
+
+      requests[0].respond(200, {}, JSON.stringify(result));
     });
 
-    describe('should call callback with object including host', () => {
-      it('when response from dispatcher is including server domain', () => {
-        util.getSignalingServer(spy);
+    describe('when response from dispatcher is including server domain', () => {
+      it('should call callback with object including host', done => {
+        const result = {domain: fakeDomain};
 
-        const result = {domain: 'hoge'};
+        util.getSignalingServer().then(res => {
+          assert.deepEqual(res, {host: fakeDomain, port: 443, secure: true});
+          done();
+        }).catch(err => {
+          assert(err);
+          done();
+        });
+
         requests[0].respond(200, {}, JSON.stringify(result));
-
-        assert.equal(spy.callCount, 1);
-        assert.deepEqual(spy.args[0][0], {host: "hoge", port: 443, secure: true});
       });
     });
 
-    describe('should call callback with nothing', () => {
-      it('when response from dispatcher is empty', () => {
-        util.getSignalingServer(spy);
+    describe('when response from dispatcher is empty', () => {
+      it('should reject', done => {
         const result = {};
-        requests[0].respond(200, {}, JSON.stringify(result));
 
-        assert.equal(spy.callCount, 1);
-        assert.equal(spy.args[0].length, 0);
+        util.getSignalingServer().then(() => {
+          assert.fail('This should be rejected.');
+          done();
+        }).catch(err => {
+          assert(err);
+          done();
+        });
+
+        requests[0].respond(200, {}, JSON.stringify(result));
       });
     });
 
-    describe('should call callback with nothing', () => {
-      it('when status code from dispatcher is not 200', () => {
-        util.getSignalingServer(spy);
-        const result = {};
-        requests[0].respond(400, {}, JSON.stringify(result));
+    describe('when status code from dispatcher is 500', () => {
+      it('should reject', done => {
+        const result = {error: {
+          code:    500,
+          message: 'There was a problem with the server. Please wait a while and try again.'
+        }};
 
-        assert.equal(spy.callCount, 1);
-        assert.equal(spy.args[0].length, 0);
+        util.getSignalingServer().then(res => {
+          assert.fail('This should be rejected.');
+          done();
+        }).catch(err => {
+          assert(err);
+          assert.equal(err.message, 'There was a problem with the server. Please wait a while and try again.');
+          done();
+        });
+
+        requests[0].respond(500, {}, JSON.stringify(result));
+      });
+    });
+
+    describe('when status code from dispatcher is 404', () => {
+      it('should reject', done => {
+        const result = {error: {code: 404, message: 'Not Found.'}};
+
+        util.getSignalingServer().then(res => {
+          assert.fail('This should be rejected.');
+          done();
+        }).catch(err => {
+          assert(err);
+          assert.equal(err.message, 'Not Found.');
+          done();
+        });
+
+        requests[0].respond(404, {}, JSON.stringify(result));
+      });
+    });
+
+    describe('when status code from dispatcher is 405', () => {
+      it('should reject', done => {
+        const result = {error: {code: 405, message: 'Method Not Allowed.'}};
+
+        util.getSignalingServer().then(res => {
+          assert.fail('This should be rejected.');
+          done();
+        }).catch(err => {
+          assert(err);
+          assert.equal(err.message, 'Method Not Allowed.');
+          done();
+        });
+
+        requests[0].respond(405, {}, JSON.stringify(result));
       });
     });
   });

@@ -18,6 +18,8 @@ const MediaStream = window.MediaStream || window.webkitMediaStream;
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
   const peerId = 'testPeerId';
+  const signalingHost = 'fake.domain';
+  const signalingPort = 443;
   const timeForAsync = 10;
   let SocketConstructorStub;
   let SFURoomConstructorStub;
@@ -31,8 +33,8 @@ describe('Peer', () => {
   let initializeServerConnectionSpy;
 
   const getSignalingServer = util.getSignalingServer;
-  util.getSignalingServer = cb => {
-    cb();
+  util.getSignalingServer = () => {
+    return Promise.reject();
   };
 
   beforeEach(() => {
@@ -93,6 +95,7 @@ describe('Peer', () => {
       const peer = new Peer({
         key: apiKey
       });
+
       assert(peer);
       assert(peer instanceof Peer);
     });
@@ -143,36 +146,42 @@ describe('Peer', () => {
         });
       });
 
-      describe('when host is not provided', () => {
-        describe('when the result of getSignalingServer is including signaling info', () => {
-          it('should create Peer object with despatcher result', () => {
+      describe('when host option is not provided', () => {
+        const timeout = 100;
+        describe('when the getSignalingServer is resolved with including signaling info', () => {
+          it('should create Peer object with despatcher result', done => {
             const fakeSignalingHost = 'fake.domain';
-            util.getSignalingServer = function(cb) {
-              cb({host: fakeSignalingHost, port: 443, secure: true});
+            util.getSignalingServer = () => {
+              return Promise.resolve({host: fakeSignalingHost, port: 443, secure: true});
             };
 
             const peer = new Peer({
               key: apiKey
             });
 
-            assert.equal(peer.options.host, fakeSignalingHost);
-            assert.equal(peer.options.port, 443);
-            assert.equal(peer.options.secure, true);
+            setTimeout(() => {
+              assert.equal(peer.options.host, fakeSignalingHost);
+              assert.equal(peer.options.port, 443);
+              assert.equal(peer.options.secure, true);
+              done();
+            }, timeout);
           });
         });
-        describe('when the result of getSignalingServer is empty', () => {
-          it('should create Peer object with default options', () => {
-            util.getSignalingServer = function(cb) {
-              cb();
+        describe('when the getSignalingServer is rejected', () => {
+          it('should create Peer object with default options', done => {
+            util.getSignalingServer = () => {
+              return Promise.reject();
             };
 
             const peer = new Peer({
               key: apiKey
             });
 
-            assert.equal(peer.options.host, util.CLOUD_HOST);
-            assert.equal(peer.options.port, util.CLOUD_PORT);
-            assert.equal(peer.options.secure, true);
+            setTimeout(() => {
+              assert.equal(peer.options.host, util.CLOUD_HOST);
+              assert.equal(peer.options.port, util.CLOUD_PORT);
+              done();
+            }, timeout);
           });
         });
       });
@@ -205,7 +214,9 @@ describe('Peer', () => {
     it('should call _initializeServerConnection with passed id', () => {
       // eslint-disable-next-line no-new
       new Peer(peerId, {
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
 
       assert.equal(initializeServerConnectionSpy.callCount, 1);
@@ -215,7 +226,9 @@ describe('Peer', () => {
     it('should call _initializeServerConnection with undefined if id is not specified', () => {
       // eslint-disable-next-line no-new
       new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
 
       assert.equal(initializeServerConnectionSpy.callCount, 1);
@@ -230,7 +243,9 @@ describe('Peer', () => {
         socketInstanceStub.emit.restore();
 
         peer = new Peer(peerId, {
-          key: apiKey
+          key:  apiKey,
+          host: signalingHost,
+          port: signalingPort
         });
       });
 
@@ -586,7 +601,9 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
     });
 
@@ -725,7 +742,9 @@ describe('Peer', () => {
 
     beforeEach(() => {
       peer = new Peer(peerId, {
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
       peer.id = peerId;
     });
@@ -777,7 +796,9 @@ describe('Peer', () => {
 
     beforeEach(() => {
       peer = new Peer(peerId, {
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
       peer.id = peerId;
     });
@@ -825,7 +846,9 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
     });
 
@@ -1357,7 +1380,9 @@ describe('Peer', () => {
       sinon.spy(connectionStub, 'emit');
 
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
 
       peer._setupConnectionMessageHandlers(connectionStub);
@@ -1398,7 +1423,9 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
       sfuRoomInstanceStub.name = roomName;
 
@@ -1451,7 +1478,9 @@ describe('Peer', () => {
     let roomMessageHandlerStub;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
       sfuRoomInstanceStub.name = roomName;
 
@@ -1501,7 +1530,9 @@ describe('Peer', () => {
     let roomMessageHandlerStub;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
       meshRoomInstanceStub.name = roomName;
 
