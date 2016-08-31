@@ -64,12 +64,20 @@ class Peer extends EventEmitter {
       id = id.toString();
     }
 
+    // TODO: util.CLOUD_HOST/PORT will be removed after Dispatcher is stable
     const defaultOptions = {
       debug:  util.LOG_LEVELS.NONE,
+      host:   util.CLOUD_HOST,
+      port:   util.CLOUD_PORT,
+      secure: true,
       token:  util.randomToken(),
       config: util.defaultConfig,
       turn:   true
     };
+
+    this.options = Object.assign({}, defaultOptions, options);
+
+    util.setLogLevel(this.options.debug);
 
     if (!util.validateId(id)) {
       this._abort('invalid-id', `ID "${id}" is invalid`);
@@ -81,26 +89,22 @@ class Peer extends EventEmitter {
       return;
     }
 
+    // if signaling server option is not provided, get from dispatcher
     if (!options.host || !options.port) {
-      util.getSignalingServer(res => {
-        if (res) {
-          defaultOptions.host = res.host;
-          defaultOptions.port = res.port;
-          defaultOptions.secure = res.secure;
-        } else {
-          util.log('server-error', 'Could not get server domain from the dispatcher.');
-          defaultOptions.host = util.CLOUD_HOST;
-          defaultOptions.port = util.CLOUD_PORT;
-          defaultOptions.secure = true;
-        }
-        this.options = Object.assign({}, defaultOptions, options);
+      util.getSignalingServer().then(res => {
+        Object.assign(this.options, res);
+        this._initializeServerConnection(id);
+      }).catch(err => {
+        util.log(err);
         this._initializeServerConnection(id);
       });
     } else {
-      if (options.host === '/') {
-        options.host = window.location.hostname;
+      if (this.options.host === '/') {
+        this.options.host = window.location.hostname;
       }
-      this.options = Object.assign({}, defaultOptions, options);
+      if (options.secure === undefined && this.options.port !== 443) {
+        this.options.secure = undefined;
+      }
       this._initializeServerConnection(id);
     }
   }
