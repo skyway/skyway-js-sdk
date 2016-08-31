@@ -80,7 +80,6 @@ gulp.task('build', () => {
 
   return browserify('./src/peer.js', {standalone: 'Peer'})
     .transform(babelify, {presets: ['es2015']})
-    .require('react-native-webrtc')
     .bundle()
     .pipe(source('skyway.js'))
     .pipe(buffer())
