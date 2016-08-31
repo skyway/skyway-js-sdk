@@ -1,8 +1,13 @@
 'use strict';
 
-const io           = require('socket.io-client/socket.io');
-const util         = require('./util');
+let io;
+if(window.userAgent && window.userAgent === 'react-native') {
+  io = require('socket.io-client/socket.io')
+} else {
+  io = require('socket.io-client')
+}
 
+const util         = require('./util');
 const EventEmitter = require('events');
 
 /**
