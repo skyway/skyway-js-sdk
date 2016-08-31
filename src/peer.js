@@ -64,23 +64,18 @@ class Peer extends EventEmitter {
       id = id.toString();
     }
 
+    // TODO: util.CLOUD_HOST/PORT will be removed after Dispatcher is stable
     const defaultOptions = {
       debug:  util.LOG_LEVELS.NONE,
       host:   util.CLOUD_HOST,
       port:   util.CLOUD_PORT,
+      secure: true,
       token:  util.randomToken(),
       config: util.defaultConfig,
       turn:   true
     };
+
     this.options = Object.assign({}, defaultOptions, options);
-
-    if (this.options.host === '/') {
-      this.options.host = window.location.hostname;
-    }
-
-    if (this.options.host === util.CLOUD_HOST) {
-      this.options.secure = true;
-    }
 
     util.setLogLevel(this.options.debug);
 
@@ -89,12 +84,29 @@ class Peer extends EventEmitter {
       return;
     }
 
-    if (!util.validateKey(this.options.key)) {
+    if (!util.validateKey(options.key)) {
       this._abort('invalid-key', `API KEY "${this.options.key}" is invalid`);
       return;
     }
 
-    this._initializeServerConnection(id);
+    // if signaling server option is not provided, get from dispatcher
+    if (!options.host || !options.port) {
+      util.getSignalingServer().then(res => {
+        Object.assign(this.options, res);
+        this._initializeServerConnection(id);
+      }).catch(err => {
+        util.log(err);
+        this._initializeServerConnection(id);
+      });
+    } else {
+      if (this.options.host === '/') {
+        this.options.host = window.location.hostname;
+      }
+      if (options.secure === undefined && this.options.port !== 443) {
+        this.options.secure = undefined;
+      }
+      this._initializeServerConnection(id);
+    }
   }
 
   /**
