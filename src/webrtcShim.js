@@ -1,13 +1,14 @@
-const RNWebRTC = require('react-native-webrtc');
+// depends on platform, you have to change the setting of object 'RNWebRTC'.
 
-module.exports.RTCSessionDescription = RNWebRTC.RTCSessionDescription;
-module.exports.RTCPeerConnection     = RNWebRTC.RTCPeerConnection;
-module.exports.RTCIceCandidate       = RNWebRTC.RTCIceCandidate;
+//  const RNWebRTC = require('react-native-webrtc');   // for react-native
+const RNWebRTC = {};  // for generic browser
 
-//fixme: error happens while test.
-// module.exports.RTCSessionDescription = window.RTCSessionDescription ||
-//   window.mozRTCSessionDescription;
-// module.exports.RTCPeerConnection = window.RTCPeerConnection ||
-//   window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-// module.exports.RTCIceCandidate = window.RTCIceCandidate ||
-//   window.mozRTCIceCandidate;
+module.exports.RTCSessionDescription = window.RTCSessionDescription ||
+  window.mozRTCSessionDescription || RNWebRTC.RTCSessionDescription;
+
+module.exports.RTCPeerConnection = window.RTCPeerConnection ||
+  window.mozRTCPeerConnection || window.webkitRTCPeerConnection ||
+  RNWebRTC.RTCPeerConnection;
+
+module.exports.RTCIceCandidate = window.RTCIceCandidate ||
+  window.mozRTCIceCandidate || RNWebRTC.RTCIceCandidate;

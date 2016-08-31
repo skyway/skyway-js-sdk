@@ -170,7 +170,7 @@ class Negotiator extends EventEmitter {
       }).catch(e => {
         util.error('Failed to add ICE candidate', e);
       });
-    } catch(err) {
+    } catch (err) {
       // In react-native implementation, promise does not support for addIceCandidate
       this._pc.addIceCandidate(new RTCIceCandidate(candidate));
       util.log('Added ICE candidate');

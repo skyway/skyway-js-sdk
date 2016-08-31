@@ -1,8 +1,9 @@
 'use strict';
 
-// fixme: error happens while test
-// const io           = require('socket.io-client')
-const io           = require('socket.io-client/socket.io')
+// depends on platform, you have to change the setting of object 'io'.
+const io           = require('socket.io-client');  // for generic browser
+// const io           = require('socket.io-client/socket.io');  // for react-native
+
 const util         = require('./util');
 const EventEmitter = require('events');
 
