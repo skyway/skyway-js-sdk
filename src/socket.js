@@ -1,7 +1,7 @@
 'use strict';
 
 let io;
-if(window.userAgent && window.userAgent === 'react-native') {
+if(window.navigator.userAgent && window.navigator.userAgent === 'react-native') {
   io = require('socket.io-client/socket.io')
 } else {
   io = require('socket.io-client')
