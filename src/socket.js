@@ -1,12 +1,8 @@
 'use strict';
 
-let io;
-if(window.navigator.userAgent && window.navigator.userAgent === 'react-native') {
-  io = require('socket.io-client/socket.io')
-} else {
-  io = require('socket.io-client')
-}
-
+// fixme: error happens while test
+// const io           = require('socket.io-client')
+const io           = require('socket.io-client/socket.io')
 const util         = require('./util');
 const EventEmitter = require('events');
 
