@@ -54,6 +54,9 @@ class Util {
    * Create a Util instance.
    */
   constructor() {
+    this.DISPATCHER_HOST = 'dispatcher.skyway.io';
+    this.DISPATCHER_PORT = 443;
+    this.DISPATCHER_TIMEOUT = 3000;
     this.CLOUD_HOST = 'skyway.io';
     this.CLOUD_PORT = 443;
     this.TURN_HOST = 'turn.skyway.io';
@@ -329,6 +332,53 @@ class Util {
    */
   isSecure() {
     return location.protocol === 'https:';
+  }
+
+  /**
+   * Return object including signaling server info.
+   * @return {Promise} A promise that resolves with signaling server info
+                       and rejects if there's no response or status code isn't 200.
+   */
+  getSignalingServer() {
+    return new Promise((resolve, reject) => {
+      const http = new XMLHttpRequest();
+      const url = `https://${this.DISPATCHER_HOST}:${this.DISPATCHER_PORT}/signaling`;
+
+      http.timeout = this.DISPATCHER_TIMEOUT;
+      http.open('GET', url, true);
+
+      /* istanbul ignore next */
+      http.onerror = function() {
+        reject(new Error('There was a problem with the dispatcher.'));
+      };
+
+      http.ontimeout = () => {
+        reject(new Error('The request for the dispather timed out.'));
+      };
+
+      http.onreadystatechange = () => {
+        if (http.readyState !== 4) {
+          return;
+        }
+
+        const res = JSON.parse(http.responseText);
+        if (http.status === 200) {
+          if (res && res.domain) {
+            resolve({host: res.domain, port: 443, secure: true});
+            return;
+          }
+        }
+
+        if (res.error && res.error.message) {
+          const message = res.error.message;
+          reject(new Error(message));
+        } else {
+          reject(new Error('There was a problem with the dispatcher.'));
+        }
+      };
+
+      http.send(null);
+    });
   }
 
   /**

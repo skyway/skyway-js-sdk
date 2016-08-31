@@ -30,6 +30,10 @@ class MeshRoom extends Room {
    * @param {object} [options] - Optional arguments for the connection.
    * @param {MediaStream} [options.stream] - The MediaStream to send to the remote peer.
    * @param {object} [options.pcConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @param {number} [options.videoBandwidth] - A max video bandwidth(kbps)
+   * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
+   * @param {string} [options.videoCodec] - A video codec like 'H264'
+   * @param {string} [options.audioCodec] - A video codec like 'PCMU'
    */
   constructor(name, peerId, options) {
     super(name, peerId, options);
@@ -76,9 +80,13 @@ class MeshRoom extends Room {
    */
   makeMediaConnections(peerIds) {
     const options = {
-      stream:     this._localStream,
-      pcConfig:   this._pcConfig,
-      originator: true
+      stream:         this._localStream,
+      pcConfig:       this._pcConfig,
+      originator:     true,
+      videoBandwidth: this._options.videoBandwidth,
+      audioBandwidth: this._options.audioBandwidth,
+      videoCodec:     this._options.videoCodec,
+      audioCodec:     this._options.audioCodec
     };
 
     this._makeConnections(peerIds, 'media', options);
@@ -162,7 +170,12 @@ class MeshRoom extends Room {
       this._addConnection(offerMessage.src, connection);
       this._setupMessageHandlers(connection);
 
-      connection.answer(this._localStream);
+      connection.answer(this._localStream, {
+        videoBandwidth: this._options.videoBandwidth,
+        audioBandwidth: this._options.audioBandwidth,
+        videoCodec:     this._options.videoCodec,
+        audioCodec:     this._options.audioCodec
+      });
     } else {
       util.warn(`Received malformed connection type: ${offerMessage.connectionType}`);
     }

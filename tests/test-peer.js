@@ -18,6 +18,8 @@ const MediaStream = window.MediaStream || window.webkitMediaStream;
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
   const peerId = 'testPeerId';
+  const signalingHost = 'fake.domain';
+  const signalingPort = 443;
   const timeForAsync = 10;
   let SocketConstructorStub;
   let SFURoomConstructorStub;
@@ -29,6 +31,11 @@ describe('Peer', () => {
 
   let Peer;
   let initializeServerConnectionSpy;
+
+  const getSignalingServer = util.getSignalingServer;
+  util.getSignalingServer = () => {
+    return Promise.reject();
+  };
 
   beforeEach(() => {
     // new Socket should return a stubbed socket object
@@ -78,11 +85,17 @@ describe('Peer', () => {
     initializeServerConnectionSpy.restore();
   });
 
+  after(() => {
+    // for tests after this file
+    util.getSignalingServer = getSignalingServer;
+  });
+
   describe('Constructor', () => {
     it('should create a Peer object', () => {
       const peer = new Peer({
         key: apiKey
       });
+
       assert(peer);
       assert(peer instanceof Peer);
     });
@@ -93,8 +106,6 @@ describe('Peer', () => {
       });
 
       assert.equal(peer.options.debug.value, util.LOG_LEVELS.NONE.value);
-      assert.equal(peer.options.host, util.CLOUD_HOST);
-      assert.equal(peer.options.port, util.CLOUD_PORT);
       assert(peer.options.token);
       assert.equal(typeof peer.options.token, 'string');
       assert.deepEqual(peer.options.config, util.defaultConfig);
@@ -114,10 +125,66 @@ describe('Peer', () => {
       assert.equal(peer.options.config, config);
 
       // Default unchanged
-      assert.equal(peer.options.host, util.CLOUD_HOST);
-      assert.equal(peer.options.port, util.CLOUD_PORT);
       assert.equal(typeof peer.options.token, 'string');
       assert.equal(peer.options.turn, true);
+    });
+
+    describe('Signaling server options', () => {
+      describe('when host option is provided', () => {
+        it('should create Peer object with provided host', () => {
+          const mySignalingServer = {host: 'my.domain', port: 80, secure: false};
+          const peer = new Peer({
+            key:    apiKey,
+            host:   mySignalingServer.host,
+            port:   mySignalingServer.port,
+            secure: mySignalingServer.secure
+          });
+
+          assert.equal(peer.options.host, mySignalingServer.host);
+          assert.equal(peer.options.port, mySignalingServer.port);
+          assert.equal(peer.options.secure, mySignalingServer.secure);
+        });
+      });
+
+      describe('when host option is not provided', () => {
+        const timeout = 100;
+        describe('when the getSignalingServer is resolved with including signaling info', () => {
+          it('should create Peer object with despatcher result', done => {
+            const fakeSignalingHost = 'fake.domain';
+            util.getSignalingServer = () => {
+              return Promise.resolve({host: fakeSignalingHost, port: 443, secure: true});
+            };
+
+            const peer = new Peer({
+              key: apiKey
+            });
+
+            setTimeout(() => {
+              assert.equal(peer.options.host, fakeSignalingHost);
+              assert.equal(peer.options.port, 443);
+              assert.equal(peer.options.secure, true);
+              done();
+            }, timeout);
+          });
+        });
+        describe('when the getSignalingServer is rejected', () => {
+          it('should create Peer object with default options', done => {
+            util.getSignalingServer = () => {
+              return Promise.reject();
+            };
+
+            const peer = new Peer({
+              key: apiKey
+            });
+
+            setTimeout(() => {
+              assert.equal(peer.options.host, util.CLOUD_HOST);
+              assert.equal(peer.options.port, util.CLOUD_PORT);
+              done();
+            }, timeout);
+          });
+        });
+      });
     });
 
     it('should not create a Peer object with invalid ID', done => {
@@ -147,7 +214,9 @@ describe('Peer', () => {
     it('should call _initializeServerConnection with passed id', () => {
       // eslint-disable-next-line no-new
       new Peer(peerId, {
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
 
       assert.equal(initializeServerConnectionSpy.callCount, 1);
@@ -157,7 +226,9 @@ describe('Peer', () => {
     it('should call _initializeServerConnection with undefined if id is not specified', () => {
       // eslint-disable-next-line no-new
       new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
 
       assert.equal(initializeServerConnectionSpy.callCount, 1);
@@ -172,7 +243,9 @@ describe('Peer', () => {
         socketInstanceStub.emit.restore();
 
         peer = new Peer(peerId, {
-          key: apiKey
+          key:  apiKey,
+          host: signalingHost,
+          port: signalingPort
         });
       });
 
@@ -528,7 +601,9 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
     });
 
@@ -667,7 +742,9 @@ describe('Peer', () => {
 
     beforeEach(() => {
       peer = new Peer(peerId, {
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
       peer.id = peerId;
     });
@@ -719,7 +796,9 @@ describe('Peer', () => {
 
     beforeEach(() => {
       peer = new Peer(peerId, {
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
       peer.id = peerId;
     });
@@ -767,7 +846,9 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
     });
 
@@ -1299,7 +1380,9 @@ describe('Peer', () => {
       sinon.spy(connectionStub, 'emit');
 
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
 
       peer._setupConnectionMessageHandlers(connectionStub);
@@ -1340,7 +1423,9 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
       sfuRoomInstanceStub.name = roomName;
 
@@ -1393,7 +1478,9 @@ describe('Peer', () => {
     let roomMessageHandlerStub;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
       sfuRoomInstanceStub.name = roomName;
 
@@ -1443,7 +1530,9 @@ describe('Peer', () => {
     let roomMessageHandlerStub;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
       meshRoomInstanceStub.name = roomName;
 
