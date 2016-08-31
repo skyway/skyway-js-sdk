@@ -247,14 +247,14 @@ describe('Util', () => {
     });
 
     describe('when response from dispatcher is including server domain', () => {
-      it('should call callback with object including host', done => {
+      it('it should resolve with object including host', done => {
         const result = {domain: fakeDomain};
 
         util.getSignalingServer().then(res => {
           assert.deepEqual(res, {host: fakeDomain, port: 443, secure: true});
           done();
         }).catch(err => {
-          assert(err);
+          assert.fail(err);
           done();
         });
 
