@@ -33,9 +33,11 @@ describe('Peer', () => {
   let initializeServerConnectionSpy;
 
   const getSignalingServer = util.getSignalingServer;
+  const log = util.log;
   util.getSignalingServer = () => {
     return Promise.reject();
   };
+  util.log = () => {};
 
   beforeEach(() => {
     // new Socket should return a stubbed socket object
@@ -88,6 +90,7 @@ describe('Peer', () => {
   after(() => {
     // for tests after this file
     util.getSignalingServer = getSignalingServer;
+    util.log = log;
   });
 
   describe('Constructor', () => {
@@ -116,12 +119,12 @@ describe('Peer', () => {
       const config = {iceServers: []};
       const peer = new Peer({
         key:    apiKey,
-        debug:  util.LOG_LEVELS.FULL,
+        debug:  util.LOG_LEVELS.WARN,
         config: config
       });
       // Overwritten
       assert.equal(peer.options.key, apiKey);
-      assert.equal(peer.options.debug, util.LOG_LEVELS.FULL);
+      assert.equal(peer.options.debug, util.LOG_LEVELS.WARN);
       assert.equal(peer.options.config, config);
 
       // Default unchanged
