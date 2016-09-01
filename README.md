@@ -32,8 +32,9 @@ Additionally, since this library uses [oney/react-native-webrtc](https://github.
 
 ### API Key settings
 
-You need to set domain name **skyway.io** in your [SkyeWay API Key Settings](https://skyway.io/ds/).
+You need to set domain name **signaling-bcb14672.skyway.io** in your [SkyWay API Key Settings](https://skyway.io/ds/).
 
+note (Sept 1st, 2016) : Above setting will not work after a while. Because we need to set all signaling servers in dispatcher group.
 
 ## Contributing
 

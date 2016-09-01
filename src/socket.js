@@ -60,7 +60,7 @@ class Socket extends EventEmitter {
       'force new connection': true,
       'query':                query,
       'reconnectionAttempts': util.reconnectionAttempts,
-      'transports':           ['xhr-polling', 'websocket']
+      'jsonp':                false
     });
 
     this._io.on('reconnect_failed', () => {
