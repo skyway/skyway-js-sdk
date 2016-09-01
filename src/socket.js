@@ -56,11 +56,22 @@ class Socket extends EventEmitter {
       query = `apiKey=${this._key}&token=${token}`;
     }
 
+    // depends on runtime platform, transports has to be changed.
+    // case react-native, only websocket can be used.
+    let transports;
+    if (window.navigator.userAgent === 'react-native') {
+      // case react-native, restricted to websocket transport only
+      transports = ['websocket'];
+    } else {
+      // In most cases, keep it as default ( default is ['polling', 'websocket'] )
+      transports = undefined;
+    }
+
     this._io = io(this._httpUrl, {
       'force new connection': true,
       'query':                query,
       'reconnectionAttempts': util.reconnectionAttempts,
-      'jsonp':                false
+      'transports':           transports
     });
 
     this._io.on('reconnect_failed', () => {
