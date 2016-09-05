@@ -38,4 +38,4 @@ note (Sept 1st, 2016) : Above setting will not work after a while. Because we ne
 
 ## Contributing
 
-Make sure you have nodejs installed. Run `npm install` to get started. After making changes in `src/`, you run `gulp test` to run tests and then the `gulp` command to validate and build peer.js!
+Make sure you have nodejs installed. Run `npm install` to get started. After making changes in `src/`, you run `gulp test` to run tests and then the `gulp` command to validate(gulp lint) and build skyway.js which is stored in `dist` directory!
