@@ -320,19 +320,6 @@ describe('MeshRoom', () => {
     });
   });
 
-  describe('sendByDC', () => {
-    it('should emit a broadcastByDC event', done => {
-      const data = 'foobar';
-
-      meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcastByDC.key, dataMessage => {
-        assert.deepEqual(dataMessage, {roomName: meshRoomName, data: data});
-        done();
-      });
-
-      meshRoom.sendByDC(data);
-    });
-  });
-
   describe('close', () => {
     it('should close all connections within the room and emit close and leave events', done => {
       meshRoom.makeMediaConnections(['peerId1', 'peerId2']);

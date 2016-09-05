@@ -237,19 +237,6 @@ class MeshRoom extends Room {
   }
 
   /**
-   * Send data to all participants in the room with DataChannel.
-   * It emits broadcastByDC event.
-   * @param {*} data - The data to send.
-   */
-  sendByDC(data) {
-    const message = {
-      roomName: this.name,
-      data:     data
-    };
-    this.emit(MeshRoom.MESSAGE_EVENTS.broadcastByDC.key, message);
-  }
-
-  /**
    * Close all connections in the room.
    */
   close() {
