@@ -260,8 +260,6 @@ class Negotiator extends EventEmitter {
             .then(offer => {
               this._setLocalDescription(offer);
             });
-        } else {
-          this.handleOffer(this._pc.remoteDescription);
         }
       }
     };

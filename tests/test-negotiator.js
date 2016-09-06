@@ -778,20 +778,6 @@ describe('Negotiator', () => {
             pc.onnegotiationneeded();
           });
         });
-
-        describe('if not originator', () => {
-          beforeEach(() => {
-            negotiator._originator = false;
-          });
-
-          it('should call handleOffer', () => {
-            const handleOfferStub = sinon.stub(negotiator, 'handleOffer');
-            assert.equal(handleOfferStub.callCount, 0);
-            pc.onnegotiationneeded();
-            assert.equal(handleOfferStub.callCount, 1);
-            assert(handleOfferStub.calledWith(negotiator._pc.remoteDescription));
-          });
-        });
       });
 
       describe('onremovestream', () => {
