@@ -62,14 +62,15 @@ class Negotiator extends EventEmitter {
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
 
-    if (options.type === 'media' && options.stream) {
-      // `addStream` will trigger onnegotiationneeded event.
-      this._pc.addStream(options.stream);
-    } else if (options.type === 'media') {
-      // This means the peer wants to create offer SDP with `recvonly`
-      this._makeOfferSdp().then(offer => {
-        this._setLocalDescription(offer);
-      });
+    if (options.type === 'media') {
+      if (options.stream) {
+        this._pc.addStream(options.stream);
+      } else if (this._originator) {
+        // This means the peer wants to create offer SDP with `recvonly`
+        this._makeOfferSdp().then(offer => {
+          this._setLocalDescription(offer);
+        });
+      }
     }
 
     if (this._originator) {
