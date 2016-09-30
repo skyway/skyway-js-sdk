@@ -19,8 +19,8 @@ const NegotiatorEvents = new Enum([
   'offerCreated',
   'answerCreated',
   'iceCandidate',
-  'iceCandidatesComplete',
   'iceConnectionDisconnected',
+  'sendAnswer',
   'error'
 ]);
 
@@ -61,6 +61,7 @@ class Negotiator extends EventEmitter {
     this._videoBandwidth = options.videoBandwidth;
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
+    this._sfu = options.sfu;
 
     if (options.type === 'media') {
       if (options.stream) {
@@ -89,6 +90,10 @@ class Negotiator extends EventEmitter {
    * @param {MediaStream} newStream - The stream to replace the old stream with.
    */
   replaceStream(newStream) {
+    if (!this._pc) {
+      return;
+    }
+
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
     if (this._pc.getSenders) {
@@ -110,6 +115,9 @@ class Negotiator extends EventEmitter {
       // We don't actually need to do renegotiation but force it in order to prevent
       // problems with the stream.id being mismatched when renegotiation happens anyways
       this._pc.onnegotiationneeded();
+      if (this._sfu) {
+        this.emit(Negotiator.EVENTS.sendAnswer.key, this._pc.localDescription);
+      }
       return;
     }
 
@@ -130,6 +138,10 @@ class Negotiator extends EventEmitter {
     setTimeout(() => {
       this._pc.onnegotiationneeded = negotiationNeededHandler;
       this._pc.addStream(newStream);
+
+      if (this._sfu) {
+        this.emit(Negotiator.EVENTS.sendAnswer.key, this._pc.localDescription);
+      }
     });
   }
 
@@ -229,7 +241,7 @@ class Negotiator extends EventEmitter {
         this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
       } else {
         util.log('ICE candidates gathering complete');
-        this.emit(Negotiator.EVENTS.iceCandidatesComplete.key, pc.localDescription);
+        this.emit(Negotiator.EVENTS.sendAnswer.key, pc.localDescription);
       }
     };
 
@@ -439,7 +451,7 @@ class Negotiator extends EventEmitter {
   /**
    * Ice Candidate collection finished. Emits localDescription.
    *
-   * @event Negotiator#iceCandidate
+   * @event Negotiator#sendAnswer
    * @type {RTCSessionDescription}
    */
 

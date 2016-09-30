@@ -108,7 +108,7 @@ describe('SFURoom', () => {
 
       assert(onSpy.calledWith(Negotiator.EVENTS.addStream.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.removeStream.key));
-      assert(onSpy.calledWith(Negotiator.EVENTS.iceCandidatesComplete.key));
+      assert(onSpy.calledWith(Negotiator.EVENTS.sendAnswer.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.iceConnectionDisconnected.key));
     });
 
@@ -216,7 +216,7 @@ describe('SFURoom', () => {
         });
       });
 
-      describe('iceCandidatesComplete', () => {
+      describe('sendAnswer', () => {
         it('should emit an answer message event', done => {
           const answer = {};
           sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
@@ -225,7 +225,7 @@ describe('SFURoom', () => {
             done();
           });
 
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.iceCandidatesComplete.key, answer);
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.sendAnswer.key, answer);
         });
       });
 
@@ -438,6 +438,27 @@ describe('SFURoom', () => {
       assert.equal(emitSpy.callCount, 2);
       assert(emitSpy.calledWith(SFURoom.MESSAGE_EVENTS.leave.key, message));
       assert(emitSpy.calledWith(SFURoom.EVENTS.close.key));
+    });
+  });
+
+  describe('replaceStream', () => {
+    const newStream = {};
+
+    it('should change _localStream property with newStream', () => {
+      assert.notEqual(sfuRoom._localStream, newStream);
+
+      sfuRoom.replaceStream(newStream);
+
+      assert.equal(sfuRoom._localStream, newStream);
+    });
+
+    it('should call replaceStream on room._negotiator', () => {
+      const negotiatorReplaceStreamStub = sinon.stub(sfuRoom._negotiator, 'replaceStream');
+
+      sfuRoom.replaceStream(newStream);
+
+      assert.equal(negotiatorReplaceStreamStub.callCount, 1);
+      assert(negotiatorReplaceStreamStub.calledWith(newStream));
     });
   });
 

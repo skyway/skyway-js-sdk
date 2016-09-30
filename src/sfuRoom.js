@@ -75,7 +75,8 @@ class SFURoom extends Room {
         type:     'media',
         stream:   this._localStream,
         pcConfig: this._options.pcConfig,
-        offer:    offer
+        offer:    offer,
+        sfu:      true
       });
       this._setupNegotiatorMessageHandlers();
       this._connectionStarted = true;
@@ -113,7 +114,7 @@ class SFURoom extends Room {
       this.emit(SFURoom.EVENTS.removeStream.key, stream);
     });
 
-    this._negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, answer => {
+    this._negotiator.on(Negotiator.EVENTS.sendAnswer.key, answer => {
       const answerMessage = {
         roomName: this.name,
         answer:   answer
@@ -206,6 +207,21 @@ class SFURoom extends Room {
     };
     this.emit(SFURoom.MESSAGE_EVENTS.leave.key, message);
     this.emit(SFURoom.EVENTS.close.key);
+  }
+
+  /**
+   * Replace the stream being sent with a new one.
+   * @param {MediaStream} newStream - The stream to replace the old stream with.
+   */
+  replaceStream(newStream) {
+    this._localStream = newStream;
+    this._negotiator.replaceStream(newStream);
+
+    const data = {
+      roomName: this.name
+    };
+
+    this.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, data);
   }
 
   /**
