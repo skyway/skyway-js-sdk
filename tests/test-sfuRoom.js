@@ -108,8 +108,9 @@ describe('SFURoom', () => {
 
       assert(onSpy.calledWith(Negotiator.EVENTS.addStream.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.removeStream.key));
-      assert(onSpy.calledWith(Negotiator.EVENTS.sendAnswer.key));
+      assert(onSpy.calledWith(Negotiator.EVENTS.iceCandidatesComplete.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.iceConnectionDisconnected.key));
+      assert(onSpy.calledWith(Negotiator.EVENTS.negotiationNeeded.key));
     });
 
     describe('Event handlers', () => {
@@ -216,7 +217,7 @@ describe('SFURoom', () => {
         });
       });
 
-      describe('sendAnswer', () => {
+      describe('iceCandidatesComplete', () => {
         it('should emit an answer message event', done => {
           const answer = {};
           sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
@@ -225,7 +226,7 @@ describe('SFURoom', () => {
             done();
           });
 
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.sendAnswer.key, answer);
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.iceCandidatesComplete.key, answer);
         });
       });
 

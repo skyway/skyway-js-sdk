@@ -19,8 +19,9 @@ const NegotiatorEvents = new Enum([
   'offerCreated',
   'answerCreated',
   'iceCandidate',
+  'iceCandidatesComplete',
   'iceConnectionDisconnected',
-  'sendAnswer',
+  'negotiationNeeded',
   'error'
 ]);
 
@@ -61,7 +62,6 @@ class Negotiator extends EventEmitter {
     this._videoBandwidth = options.videoBandwidth;
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
-    this._sfu = options.sfu;
 
     if (options.type === 'media') {
       if (options.stream) {
@@ -115,9 +115,6 @@ class Negotiator extends EventEmitter {
       // We don't actually need to do renegotiation but force it in order to prevent
       // problems with the stream.id being mismatched when renegotiation happens anyways
       this._pc.onnegotiationneeded();
-      if (this._sfu) {
-        this.emit(Negotiator.EVENTS.sendAnswer.key, this._pc.localDescription);
-      }
       return;
     }
 
@@ -138,10 +135,6 @@ class Negotiator extends EventEmitter {
     setTimeout(() => {
       this._pc.onnegotiationneeded = negotiationNeededHandler;
       this._pc.addStream(newStream);
-
-      if (this._sfu) {
-        this.emit(Negotiator.EVENTS.sendAnswer.key, this._pc.localDescription);
-      }
     });
   }
 
@@ -241,7 +234,7 @@ class Negotiator extends EventEmitter {
         this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
       } else {
         util.log('ICE candidates gathering complete');
-        this.emit(Negotiator.EVENTS.sendAnswer.key, pc.localDescription);
+        this.emit(Negotiator.EVENTS.iceCandidatesComplete.key, pc.localDescription);
       }
     };
 
@@ -266,13 +259,17 @@ class Negotiator extends EventEmitter {
     pc.onnegotiationneeded = () => {
       util.log('`negotiationneeded` triggered');
 
-      // don't make a new offer if it's not stable
+      // Don't make a new offer if it's not stable.
       if (pc.signalingState === 'stable') {
+        // Emit negotiationNeeded event in case additional handling is needed.
         if (this._originator) {
           this._makeOfferSdp()
             .then(offer => {
               this._setLocalDescription(offer);
+              this.emit(Negotiator.EVENTS.negotiationNeeded.key);
             });
+        } else {
+          this.emit(Negotiator.EVENTS.negotiationNeeded.key);
         }
       }
     };
@@ -451,7 +448,7 @@ class Negotiator extends EventEmitter {
   /**
    * Ice Candidate collection finished. Emits localDescription.
    *
-   * @event Negotiator#sendAnswer
+   * @event Negotiator#iceCandidatesComplete
    * @type {RTCSessionDescription}
    */
 
@@ -459,6 +456,12 @@ class Negotiator extends EventEmitter {
    * Ice connection disconnected.
    *
    * @event Negotiator#iceConnectionDisconnected
+   */
+
+  /**
+   * Session needs negotiation.
+   *
+   * @event Negotiator#negotiationNeeded
    */
 
   /**

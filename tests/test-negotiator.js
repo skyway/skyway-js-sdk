@@ -679,9 +679,9 @@ describe('Negotiator', () => {
           pc.onicecandidate(ev);
         });
 
-        it('should emit \'sendAnswer\' when out of candidates', done => {
+        it('should emit \'iceCandidatesComplete\' when out of candidates', done => {
           let ev = {};
-          negotiator.on(Negotiator.EVENTS.sendAnswer.key, description => {
+          negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, description => {
             assert(description instanceof RTCSessionDescription);
             done();
           });
