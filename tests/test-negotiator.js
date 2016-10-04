@@ -777,6 +777,24 @@ describe('Negotiator', () => {
             });
             pc.onnegotiationneeded();
           });
+          it('should emit \'negotiationNeeded\'', done => {
+            const offer = 'offer';
+            const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
+            cbStub.callsArgWith(1, offer);
+            negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
+              done();
+            });
+            pc.onnegotiationneeded();
+          });
+        });
+
+        describe('if not originator', () => {
+          it('should emit \'negotiationNeeded\'', done => {
+            negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
+              done();
+            });
+            pc.onnegotiationneeded();
+          });
         });
       });
 

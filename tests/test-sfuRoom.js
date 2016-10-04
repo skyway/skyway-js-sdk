@@ -110,6 +110,7 @@ describe('SFURoom', () => {
       assert(onSpy.calledWith(Negotiator.EVENTS.removeStream.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.iceCandidatesComplete.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.iceConnectionDisconnected.key));
+      assert(onSpy.calledWith(Negotiator.EVENTS.negotiationNeeded.key));
     });
 
     describe('Event handlers', () => {
@@ -213,6 +214,34 @@ describe('SFURoom', () => {
           });
 
           sfuRoom._negotiator.emit(Negotiator.EVENTS.removeStream.key, stream);
+        });
+      });
+
+      describe('negotiationNeeded', () => {
+        it('should emit an offerRequest message event', done => {
+          sfuRoom.on(SFURoom.MESSAGE_EVENTS.offerRequest.key, offerRequestMessage => {
+            assert.equal(offerRequestMessage.roomName, sfuRoomName);
+            done();
+          });
+
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.negotiationNeeded.key);
+        });
+
+        it('should set up an answerCreated event handler which emits an answer event once', done => {
+          const answer = {};
+
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.negotiationNeeded.key);
+
+          // will fail if done() is called twice.
+          sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
+            assert.equal(answerMessage.roomName, sfuRoomName);
+            assert.equal(answerMessage.answer, answer);
+            done();
+          });
+
+          // call twice to make sure answerMessage is only emitted once.
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
         });
       });
 
@@ -438,6 +467,27 @@ describe('SFURoom', () => {
       assert.equal(emitSpy.callCount, 2);
       assert(emitSpy.calledWith(SFURoom.MESSAGE_EVENTS.leave.key, message));
       assert(emitSpy.calledWith(SFURoom.EVENTS.close.key));
+    });
+  });
+
+  describe('replaceStream', () => {
+    const newStream = {};
+
+    it('should change _localStream property with newStream', () => {
+      assert.notEqual(sfuRoom._localStream, newStream);
+
+      sfuRoom.replaceStream(newStream);
+
+      assert.equal(sfuRoom._localStream, newStream);
+    });
+
+    it('should call replaceStream on room._negotiator', () => {
+      const negotiatorReplaceStreamStub = sinon.stub(sfuRoom._negotiator, 'replaceStream');
+
+      sfuRoom.replaceStream(newStream);
+
+      assert.equal(negotiatorReplaceStreamStub.callCount, 1);
+      assert(negotiatorReplaceStreamStub.calledWith(newStream));
     });
   });
 

@@ -113,6 +113,25 @@ class SFURoom extends Room {
       this.emit(SFURoom.EVENTS.removeStream.key, stream);
     });
 
+    this._negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
+      // Renegotiate by requesting an offer then sending an answer when one is created.
+      const offerRequestMessage = {
+        roomName: this.name
+      };
+      this.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, offerRequestMessage);
+
+      // This triggers when the remoteDescription is set and localDescription is created.
+      // Trigger only once per negotiationneeded to prevent infinite offer/answer loops.
+      this._negotiator.once(Negotiator.EVENTS.answerCreated.key, answer => {
+        const answerMessage = {
+          roomName: this.name,
+          answer:   answer
+        };
+
+        this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
+      });
+    });
+
     this._negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, answer => {
       const answerMessage = {
         roomName: this.name,
@@ -209,6 +228,15 @@ class SFURoom extends Room {
   }
 
   /**
+   * Replace the stream being sent with a new one.
+   * @param {MediaStream} newStream - The stream to replace the old stream with.
+   */
+  replaceStream(newStream) {
+    this._localStream = newStream;
+    this._negotiator.replaceStream(newStream);
+  }
+
+  /**
    * Update the entries in the msid to peerId map.
    * @param {Object} msids - Object with msids as the key and peerIds as the values.
    */
@@ -251,7 +279,7 @@ class SFURoom extends Room {
   /**
    * Send offer request to SkyWay server.
    *
-   * @event MeshRoom#offerRequest
+   * @event SFURoom#offerRequest
    * @type {object}
    * @property {string} roomName - The Room name.
 
@@ -260,7 +288,7 @@ class SFURoom extends Room {
   /**
    * Send data to all peers in the room by WebSocket.
    *
-   * @event MeshRoom#broadcast
+   * @event SFURoom#broadcast
    * @type {object}
    * @property {string} roomName - The Room name.
    * @property {*} data - The data to send.

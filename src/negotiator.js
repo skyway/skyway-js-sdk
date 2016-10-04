@@ -21,6 +21,7 @@ const NegotiatorEvents = new Enum([
   'iceCandidate',
   'iceCandidatesComplete',
   'iceConnectionDisconnected',
+  'negotiationNeeded',
   'error'
 ]);
 
@@ -89,6 +90,10 @@ class Negotiator extends EventEmitter {
    * @param {MediaStream} newStream - The stream to replace the old stream with.
    */
   replaceStream(newStream) {
+    if (!this._pc) {
+      return;
+    }
+
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
     if (this._pc.getSenders) {
@@ -254,13 +259,17 @@ class Negotiator extends EventEmitter {
     pc.onnegotiationneeded = () => {
       util.log('`negotiationneeded` triggered');
 
-      // don't make a new offer if it's not stable
+      // Don't make a new offer if it's not stable.
       if (pc.signalingState === 'stable') {
+        // Emit negotiationNeeded event in case additional handling is needed.
         if (this._originator) {
           this._makeOfferSdp()
             .then(offer => {
               this._setLocalDescription(offer);
+              this.emit(Negotiator.EVENTS.negotiationNeeded.key);
             });
+        } else {
+          this.emit(Negotiator.EVENTS.negotiationNeeded.key);
         }
       }
     };
@@ -439,7 +448,7 @@ class Negotiator extends EventEmitter {
   /**
    * Ice Candidate collection finished. Emits localDescription.
    *
-   * @event Negotiator#iceCandidate
+   * @event Negotiator#iceCandidatesComplete
    * @type {RTCSessionDescription}
    */
 
@@ -447,6 +456,12 @@ class Negotiator extends EventEmitter {
    * Ice connection disconnected.
    *
    * @event Negotiator#iceConnectionDisconnected
+   */
+
+  /**
+   * Session needs negotiation.
+   *
+   * @event Negotiator#negotiationNeeded
    */
 
   /**
