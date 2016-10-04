@@ -2,6 +2,7 @@
 
 const EventEmitter = require('events');
 const Enum         = require('enum');
+const Interop      = require('sdp-interop').Interop;
 
 const shim         = require('../src/webrtcShim');
 const sdpUtil      = require('../src/sdpUtil');
@@ -11,6 +12,8 @@ const RTCIceCandidate       = shim.RTCIceCandidate;
 const RTCSessionDescription = shim.RTCSessionDescription;
 
 const util = require('./util');
+
+const interop = new Interop();
 
 const NegotiatorEvents = new Enum([
   'addStream',
@@ -62,6 +65,8 @@ class Negotiator extends EventEmitter {
     this._videoBandwidth = options.videoBandwidth;
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
+
+    this.lastOffer = "";
 
     if (options.type === 'media') {
       if (options.stream) {
@@ -143,6 +148,19 @@ class Negotiator extends EventEmitter {
    * @param {object} offerSdp - An object containing Offer SDP.
    */
   handleOffer(offerSdp) {
+    if (this.lastOffer.sdp === offerSdp.sdp) {
+      return;
+    }
+
+    this.lastOffer = offerSdp;
+
+    // TODO: only do this for sfuRoom
+    // Chrome can't handle unified plan messages so convert it to Plan B
+    // We don't need to convert the answer back to Unified Plan because the server can handle Plan B
+    if (navigator.webkitGetUserMedia) {
+      offerSdp = interop.toPlanB(offerSdp);
+    }
+
     this._setRemoteDescription(offerSdp)
       .then(() => {
         return this._makeAnswerSdp();
@@ -209,6 +227,10 @@ class Negotiator extends EventEmitter {
     return new RTCPeerConnection(pcConfig);
   }
 
+  getLocalSdp() {
+    return this._pc.localDescription;
+  }
+
   /**
    * Set up event handlers of RTCPeerConnection events.
    * @private
@@ -234,6 +256,7 @@ class Negotiator extends EventEmitter {
         this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
       } else {
         util.log('ICE candidates gathering complete');
+
         this.emit(Negotiator.EVENTS.iceCandidatesComplete.key, pc.localDescription);
       }
     };
