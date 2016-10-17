@@ -271,7 +271,7 @@ class Negotiator extends EventEmitter {
               this._setLocalDescription(offer);
               this.emit(Negotiator.EVENTS.negotiationNeeded.key);
             });
-        } else if(this._replaceStreamCalled)  {
+        } else if (this._replaceStreamCalled)  {
           this.emit(Negotiator.EVENTS.negotiationNeeded.key);
           this._replaceStreamCalled = false;
         }

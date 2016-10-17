@@ -789,11 +789,29 @@ describe('Negotiator', () => {
         });
 
         describe('if not originator', () => {
-          it('should emit \'negotiationNeeded\'', done => {
-            negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
-              done();
+          describe('if replaceStream has been called', () => {
+            beforeEach(() => {
+              negotiator._replaceStreamCalled = true;
             });
-            pc.onnegotiationneeded();
+            it('should emit \'negotiationNeeded\'', done => {
+              negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
+                done();
+              });
+              pc.onnegotiationneeded();
+            });
+          });
+          describe('if replaceStream hasn\'t been called', () => {
+            beforeEach(() => {
+              negotiator._replaceStreamCalled = false;
+            });
+            it('should not emit \'negotiationNeeded\'', done => {
+              negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
+                assert.fail('Should not emit negotiationNeeded event');
+              });
+              pc.onnegotiationneeded();
+
+              setTimeout(done);
+            });
           });
         });
       });
