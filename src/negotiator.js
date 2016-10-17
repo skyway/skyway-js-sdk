@@ -37,6 +37,7 @@ class Negotiator extends EventEmitter {
   constructor() {
     super();
     this._isExpectingAnswer = false;
+    this._replaceStreamCalled = false;
   }
 
   /**
@@ -129,6 +130,8 @@ class Negotiator extends EventEmitter {
     if (localStreams && localStreams[0]) {
       this._pc.removeStream(localStreams[0]);
     }
+
+    this._replaceStreamCalled = true;
 
     // Restore onnegotiationneeded and addStream asynchronously to give onnegotiationneeded
     // a chance to trigger (and do nothing) on removeStream.
@@ -268,8 +271,9 @@ class Negotiator extends EventEmitter {
               this._setLocalDescription(offer);
               this.emit(Negotiator.EVENTS.negotiationNeeded.key);
             });
-        } else {
+        } else if(this._replaceStreamCalled)  {
           this.emit(Negotiator.EVENTS.negotiationNeeded.key);
+          this._replaceStreamCalled = false;
         }
       }
     };
