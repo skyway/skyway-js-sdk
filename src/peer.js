@@ -616,7 +616,7 @@ class Peer extends EventEmitter {
       const room = this.rooms[offerMessage.roomName];
       if (room) {
         room.updateMsidMap(offerMessage.msids);
-        room.handleOffer(offerMessage.offer);
+        room.handleOffer(offerMessage);
       }
     });
   }

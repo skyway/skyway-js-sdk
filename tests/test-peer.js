@@ -1355,7 +1355,7 @@ describe('Peer', () => {
           peer.socket.emit(util.MESSAGE_TYPES.SERVER.SFU_OFFER.key, offerMessage);
 
           assert.equal(sfuRoomInstanceStub.handleOffer.callCount, 1);
-          assert(sfuRoomInstanceStub.handleOffer.calledWith(offerMessage.offer));
+          assert(sfuRoomInstanceStub.handleOffer.calledWith(offerMessage));
 
           assert.equal(sfuRoomInstanceStub.updateMsidMap.callCount, 1);
           assert(sfuRoomInstanceStub.updateMsidMap.calledWith(offerMessage.msids));

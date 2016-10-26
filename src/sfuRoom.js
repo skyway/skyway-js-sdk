@@ -64,9 +64,11 @@ class SFURoom extends Room {
   /**
    * Handles Offer message from SFU server.
    * It create new RTCPeerConnection object.
-   * @param {Object} offer - Offer SDP from SFU server.
+   * @param {object} offerMessage - Message object containing Offer SDP.
+   * @param {object} offerMessage.offer - Object containing Offer SDP text.
    */
-  handleOffer(offer) {
+  handleOffer(offerMessage) {
+    const offer = offerMessage.offer;
     // Handle SFU Offer and send Answer to Server
     if (this._connectionStarted) {
       this._negotiator.handleOffer(offer);

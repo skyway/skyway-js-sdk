@@ -53,7 +53,7 @@ describe('SFURoom', () => {
   });
 
   describe('handleOffer', () => {
-    const dummyOffer = 'offer';
+    const dummyOfferMessage = {offer: 'offer'};
     let startConnectionStub;
     let setupNegotiatorSpy;
 
@@ -63,7 +63,7 @@ describe('SFURoom', () => {
     });
 
     it('should call negotiator.startConnection', () => {
-      sfuRoom.handleOffer(dummyOffer);
+      sfuRoom.handleOffer(dummyOfferMessage);
 
       assert.equal(startConnectionStub.callCount, 1);
 
@@ -71,17 +71,17 @@ describe('SFURoom', () => {
       assert.equal(startConnectionArgs.type, 'media');
       assert.equal(startConnectionArgs.stream, origStream);
       assert.equal(startConnectionArgs.pcConfig, pcConfig);
-      assert.equal(startConnectionArgs.offer, dummyOffer);
+      assert.equal(startConnectionArgs.offer, dummyOfferMessage.offer);
     });
 
     it('should call _setupNegotiatorMessageHandlers', () => {
-      sfuRoom.handleOffer(dummyOffer);
+      sfuRoom.handleOffer(dummyOfferMessage);
 
       assert.equal(setupNegotiatorSpy.callCount, 1);
     });
 
     it('should set _connectionStarted to true', () => {
-      sfuRoom.handleOffer(dummyOffer);
+      sfuRoom.handleOffer(dummyOfferMessage);
 
       assert.equal(sfuRoom._connectionStarted, true);
     });
@@ -90,10 +90,10 @@ describe('SFURoom', () => {
       const handleOfferStub = sinon.stub(sfuRoom._negotiator, 'handleOffer');
       sfuRoom._connectionStarted = true;
 
-      sfuRoom.handleOffer(dummyOffer);
+      sfuRoom.handleOffer(dummyOfferMessage);
 
       assert.equal(handleOfferStub.callCount, 1);
-      assert(handleOfferStub.calledWith(dummyOffer));
+      assert(handleOfferStub.calledWith(dummyOfferMessage.offer));
 
       assert.equal(setupNegotiatorSpy.called, false);
       assert.equal(startConnectionStub.called, false);
