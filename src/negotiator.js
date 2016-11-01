@@ -65,8 +65,7 @@ class Negotiator extends EventEmitter {
     this._videoBandwidth = options.videoBandwidth;
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
-
-    this.lastOffer = "";
+    this._lastOfferSdp = '';
 
     if (options.type === 'media') {
       if (options.stream) {
@@ -148,11 +147,11 @@ class Negotiator extends EventEmitter {
    * @param {object} offerSdp - An object containing Offer SDP.
    */
   handleOffer(offerSdp) {
-    if (this.lastOffer.sdp === offerSdp.sdp) {
+    if (this._lastOfferSdp === offerSdp.sdp) {
       return;
     }
 
-    this.lastOffer = offerSdp;
+    this._lastOfferSdp = offerSdp.sdp;
 
     // TODO: only do this for sfuRoom
     // Chrome can't handle unified plan messages so convert it to Plan B
