@@ -147,6 +147,7 @@ class Negotiator extends EventEmitter {
    * @param {object} offerSdp - An object containing Offer SDP.
    */
   handleOffer(offerSdp) {
+    // Avoid unnecessary processing by short circuiting the code if nothing has changed in the sdp.
     if (this._lastOfferSdp === offerSdp.sdp) {
       return;
     }
@@ -224,10 +225,6 @@ class Negotiator extends EventEmitter {
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
     return new RTCPeerConnection(pcConfig);
-  }
-
-  getLocalSdp() {
-    return this._pc.localDescription;
   }
 
   /**
