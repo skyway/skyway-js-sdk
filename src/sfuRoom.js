@@ -121,17 +121,10 @@ class SFURoom extends Room {
         roomName: this.name
       };
       this.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, offerRequestMessage);
+    });
 
-      // This triggers when the remoteDescription is set and localDescription is created.
-      // Trigger only once per negotiationneeded to prevent infinite offer/answer loops.
-      this._negotiator.once(Negotiator.EVENTS.answerCreated.key, answer => {
-        const answerMessage = {
-          roomName: this.name,
-          answer:   answer
-        };
-
-        this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
-      });
+    this._negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key, () => {
+      this.close();
     });
 
     this._negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, answer => {
@@ -140,10 +133,6 @@ class SFURoom extends Room {
         answer:   answer
       };
       this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
-    });
-
-    this._negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key, () => {
-      this.close();
     });
   }
 

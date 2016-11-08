@@ -995,7 +995,8 @@ describe('Peer', () => {
               connectionType: 'media',
               connectionId:   connectionId,
               src:            peerId,
-              metadata:       {}
+              metadata:       {},
+              offer:          {}
             };
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
           });
@@ -1016,7 +1017,8 @@ describe('Peer', () => {
               connectionType: 'data',
               connectionId:   connectionId,
               src:            peerId,
-              metadata:       {}
+              metadata:       {},
+              offer:          {}
             };
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
           });
@@ -1028,7 +1030,8 @@ describe('Peer', () => {
               connectionType: undefined,
               connectionId:   connectionId,
               src:            peerId,
-              metadata:       {}
+              metadata:       {},
+              offer:          {}
             };
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
 
@@ -1042,7 +1045,8 @@ describe('Peer', () => {
               connectionType: 'media',
               connectionId:   connectionId,
               src:            peerId,
-              metadata:       {}
+              metadata:       {},
+              offer:          {}
             };
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);

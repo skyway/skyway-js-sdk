@@ -238,7 +238,8 @@ describe('Negotiator', () => {
           const options = {
             type:       'data',
             originator: false,
-            pcConfig:   {}
+            pcConfig:   {},
+            offer:      {}
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -255,7 +256,8 @@ describe('Negotiator', () => {
         it('should call handleOffer', () => {
           const options = {
             type:     'data',
-            pcConfig: {}
+            pcConfig: {},
+            offer:    {}
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -556,7 +558,8 @@ describe('Negotiator', () => {
       negotiator = new Negotiator();
       const options = {
         type:       'data',
-        originator: false
+        originator: false,
+        offer:      {}
       };
       negotiator.startConnection(options);
     });

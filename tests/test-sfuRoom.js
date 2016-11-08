@@ -226,23 +226,6 @@ describe('SFURoom', () => {
 
           sfuRoom._negotiator.emit(Negotiator.EVENTS.negotiationNeeded.key);
         });
-
-        it('should set up an answerCreated event handler which emits an answer event once', done => {
-          const answer = {};
-
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.negotiationNeeded.key);
-
-          // will fail if done() is called twice.
-          sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
-            assert.equal(answerMessage.roomName, sfuRoomName);
-            assert.equal(answerMessage.answer, answer);
-            done();
-          });
-
-          // call twice to make sure answerMessage is only emitted once.
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
-        });
       });
 
       describe('iceCandidatesComplete', () => {
