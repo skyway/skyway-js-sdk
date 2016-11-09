@@ -4,7 +4,10 @@ const Room       = require('./room');
 const Negotiator = require('./negotiator');
 const util       = require('./util');
 
-const Enum = require('enum');
+const Enum    = require('enum');
+const Interop = require('sdp-interop').Interop;
+
+const interop = new Interop();
 
 const MessageEvents = [
   'offerRequest'
@@ -68,7 +71,14 @@ class SFURoom extends Room {
    * @param {object} offerMessage.offer - Object containing Offer SDP text.
    */
   handleOffer(offerMessage) {
-    const offer = offerMessage.offer;
+    let offer = offerMessage.offer;
+
+    // Chrome can't handle unified plan messages so convert it to Plan B
+    // We don't need to convert the answer back to Unified Plan because the server can handle Plan B
+    if (navigator.webkitGetUserMedia) {
+      offer = interop.toPlanB(offer);
+    }
+
     // Handle SFU Offer and send Answer to Server
     if (this._connectionStarted) {
       this._negotiator.handleOffer(offer);
