@@ -914,16 +914,22 @@ describe('Peer', () => {
       });
 
       describe('ERROR', () => {
-        it('should call abort with server-error', () => {
-          const abortStub = sinon.stub(peer, '_abort');
+        let emitErrorStub;
+        beforeEach(() => {
+          emitErrorStub = sinon.stub(util, 'emitError');
+        });
+        afterEach(() => {
+          emitErrorStub.restore();
+        });
 
+        it('should call emitError with error type', () => {
           const error = {
             type:    'error-type',
             message: 'error message'
           };
           peer.socket.emit(util.MESSAGE_TYPES.SERVER.ERROR.key, error);
 
-          assert(abortStub.calledWith(error.type, error.message));
+          assert(emitErrorStub.calledWith(error.type, error.message));
         });
       });
     });
