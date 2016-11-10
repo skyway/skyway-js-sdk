@@ -432,25 +432,52 @@ describe('Negotiator', () => {
       negotiator._pc = negotiator._createPeerConnection();
     });
 
-    it('should setRemoteDescription', done => {
-      const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+    describe('when offerSdp is empty', done => {
+      it('should setRemoteDescription with lastOffer', done => {
+        const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
 
-      negotiator._pc.createOffer(offer => {
-        const offerObject = {
-          sdp:  offer.sdp,
-          type: offer.type
-        };
+        negotiator._pc.createOffer(offer => {
+          const offerObject = {
+            sdp:  offer.sdp,
+            type: offer.type
+          };
 
-        negotiator.handleOffer(offerObject);
+          negotiator._lastOffer = offerObject;
 
-        // let other async events run
-        setTimeout(() => {
-          assert.equal(setRemoteSpy.callCount, 1);
-          assert(setRemoteSpy.calledWith(offer));
-          done();
+          negotiator.handleOffer();
+
+          // let other async events run
+          setTimeout(() => {
+            assert.equal(setRemoteSpy.callCount, 1);
+            assert(setRemoteSpy.calledWith(offer));
+            done();
+          });
+        }, err => {
+          assert.fail(err);
         });
-      }, err => {
-        assert.fail(err);
+      });
+    });
+
+    describe('when offerSdp is not empty', done => {
+      it('should setRemoteDescription', done => {
+        const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+        negotiator._pc.createOffer(offer => {
+          const offerObject = {
+            sdp:  offer.sdp,
+            type: offer.type
+          };
+
+          negotiator.handleOffer(offerObject);
+
+          // let other async events run
+          setTimeout(() => {
+            assert.equal(setRemoteSpy.callCount, 1);
+            assert(setRemoteSpy.calledWith(offer));
+            done();
+          });
+        }, err => {
+          assert.fail(err);
+        });
       });
     });
 
@@ -796,11 +823,11 @@ describe('Negotiator', () => {
             beforeEach(() => {
               negotiator._replaceStreamCalled = true;
             });
-            it('should emit \'negotiationNeeded\'', done => {
-              negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
-                done();
-              });
+            it('should call handleOffer', () => {
+              const handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
+              assert.equal(handleOfferSpy.callCount, 0);
               pc.onnegotiationneeded();
+              assert.equal(handleOfferSpy.callCount, 1);
             });
           });
           describe('if replaceStream hasn\'t been called', () => {
