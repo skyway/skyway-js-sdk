@@ -77,6 +77,24 @@ class SFURoom extends Room {
     // We don't need to convert the answer back to Unified Plan because the server can handle Plan B
     if (navigator.webkitGetUserMedia) {
       offer = interop.toPlanB(offer);
+
+      // extract msids from the offer sdp
+      const msidRegexp = /a=ssrc:\d+ msid:(\w+)/g;
+      // use a set to avoid duplicates
+      const msids = new Set();
+
+      let matches;
+      // loop while matches is truthy
+      // double parentheses for explicit conditional assignment (lint)
+      while ((matches = msidRegexp.exec(offer.sdp))) {
+        msids.add(matches[1]);
+      }
+
+      // replace msid-semantic line with planB version
+      offer.sdp = offer.sdp.replace(
+        'a=msid-semantic:WMS *',
+        `a=msid-semantic:WMS ${Array.from(msids).join(' ')}`
+      );
     }
 
     // Handle SFU Offer and send Answer to Server
