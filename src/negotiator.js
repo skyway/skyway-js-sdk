@@ -92,7 +92,7 @@ class Negotiator extends EventEmitter {
    * @param {MediaStream} newStream - The stream to replace the old stream with.
    */
   replaceStream(newStream) {
-    if (!this._pc) {
+    if (!this._pc || this._replaceStreamCalled) {
       return;
     }
 
@@ -144,15 +144,19 @@ class Negotiator extends EventEmitter {
 
   /**
    * Set remote description with remote Offer SDP, then create Answer SDP and emit it.
-   * @param {object} offerSdp - An object containing Offer SDP.
+   * @param {object} [offerSdp] - An object containing Offer SDP.
    */
   handleOffer(offerSdp) {
     // Avoid unnecessary processing by short circuiting the code if nothing has changed in the sdp.
-    if (this._lastOfferSdp === offerSdp.sdp) {
+    if (this._lastOffer && offerSdp && this._lastOffer.sdp === offerSdp.sdp) {
       return;
     }
 
-    this._lastOfferSdp = offerSdp.sdp;
+    if (!offerSdp) {
+      offerSdp = this._lastOffer;
+    }
+
+    this._lastOffer = offerSdp;
 
     this._setRemoteDescription(offerSdp)
       .then(() => {
@@ -280,10 +284,11 @@ class Negotiator extends EventEmitter {
               this._setLocalDescription(offer);
               this.emit(Negotiator.EVENTS.negotiationNeeded.key);
             });
-        } else if (this._replaceStreamCalled)  {
-          this.emit(Negotiator.EVENTS.negotiationNeeded.key);
-          this._replaceStreamCalled = false;
+        } else if (this._replaceStreamCalled) {
+          this.handleOffer();
         }
+
+        this._replaceStreamCalled = false;
       }
     };
 

@@ -228,6 +228,19 @@ describe('SFURoom', () => {
         });
       });
 
+      describe('answerCreated', () => {
+        it('should emit an answer message event', done => {
+          const answer = {};
+          sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
+            assert.equal(answerMessage.roomName, sfuRoomName);
+            assert.equal(answerMessage.answer, answer);
+            done();
+          });
+
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
+        });
+      });
+
       describe('iceCandidatesComplete', () => {
         it('should emit an answer message event', done => {
           const answer = {};

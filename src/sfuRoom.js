@@ -133,6 +133,14 @@ class SFURoom extends Room {
       this.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, offerRequestMessage);
     });
 
+    this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
+      const answerMessage = {
+        roomName: this.name,
+        answer:   answer
+      };
+      this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
+    });
+
     this._negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key, () => {
       this.close();
     });
