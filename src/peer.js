@@ -42,20 +42,11 @@ class Peer extends EventEmitter {
   constructor(id, options) {
     super();
 
-    // true when connected to SkyWay server
-    this.open = false;
     this.connections = {};
     this.rooms = {};
 
-    // to prevent duplicate calls to destroy/disconnect
-    this._disconnectCalled = false;
-    this._destroyCalled = false;
-
     // messages received before connection is ready
     this._queuedMessages = {};
-
-    // store peerId after disconnect to use when reconnecting
-    this._lastPeerId = null;
 
     if (id && id.constructor === Object) {
       options = id;
@@ -127,16 +118,8 @@ class Peer extends EventEmitter {
    * @return {MediaConnection} An instance of MediaConnection.
    */
   call(peerId, stream, options = {}) {
-    if (this._disconnectCalled) {
-      util.warn('You cannot connect to a new Peer because you called ' +
-        '.disconnect() on this Peer and ended your connection with the ' +
-        'server. You can create a new Peer to reconnect, or call reconnect ' +
-        'on this peer if you believe its ID to still be available.');
-      util.emitError.call(
-        this,
-        'disconnected',
-        'Cannot connect to new Peer after disconnecting from server.');
-      return null;
+    if (!this._checkOpenStatus()) {
+      return;
     }
 
     options.originator = true;
@@ -162,17 +145,8 @@ class Peer extends EventEmitter {
    * @return {DataConnection} An instance of DataConnection.
    */
   connect(peerId, options = {}) {
-    if (this._disconnectCalled) {
-      util.warn('You cannot connect to a new Peer because you called ' +
-        '.disconnect() on this Peer and ended your connection with the ' +
-        'server. You can create a new Peer to reconnect, or call reconnect ' +
-        'on this peer if you believe its ID to still be available.');
-      util.emitError.call(
-        this,
-        'disconnected',
-        'Cannot connect to new Peer after disconnecting from server.'
-      );
-      return null;
+    if (!this._checkOpenStatus()) {
+      return;
     }
 
     options.pcConfig = this._pcConfig;
@@ -195,6 +169,10 @@ class Peer extends EventEmitter {
    * @return {SFURoom|MeshRoom} - An instance of SFURoom or MeshRoom.
    */
   joinRoom(roomName, roomOptions = {}) {
+    if (!this._checkOpenStatus()) {
+      return;
+    }
+
     if (!roomName) {
       util.emitError.call(this, 'room-error', 'Room name must be defined.');
       return null;
@@ -218,6 +196,10 @@ class Peer extends EventEmitter {
    * @return {MediaConnection|DataConnection} Search result.
    */
   getConnection(peerId, connectionId) {
+    if (!this._checkOpenStatus()) {
+      return;
+    }
+
     if (this.connections[peerId]) {
       for (let connection of this.connections[peerId]) {
         if (connection.id === connectionId) {
@@ -229,42 +211,36 @@ class Peer extends EventEmitter {
   }
 
   /**
+   * Whether the socket is connecting to the signalling server or not.
+   * @type {boolean} The open status.
+   */
+  get open() {
+    return this.socket.isOpen;
+  }
+
+  /**
    * Close all connections and disconnect socket.
    */
   destroy() {
-    if (!this._destroyCalled) {
-      this._destroyCalled = true;
-      this._cleanup();
-      this.disconnect();
-    }
+    this._cleanup();
+    this.disconnect();
   }
 
   /**
    * Close socket and clean up some properties, then emit disconnect event.
    */
   disconnect() {
-    setTimeout(() => {
-      if (!this._disconnectCalled) {
-        this._disconnectCalled = true;
-        this.open = false;
-
-        if (this.socket) {
-          this.socket.close();
-        }
-
-        this.emit(Peer.EVENTS.disconnected.key, this.id);
-        this._lastPeerId = this.id;
-        this.id = null;
-      }
-    }, 0);
+    if (this.open) {
+      this.socket.close();
+      this.emit(Peer.EVENTS.disconnected.key, this.id);
+    }
   }
 
   /**
    * Reconnect to SkyWay server. Does not work after a peer.destroy().
    */
   reconnect() {
-    if (this._disconnectCalled && !this._destroyCalled) {
-      this._disconnectCalled = false;
+    if (!this.open) {
       this.socket.reconnect();
     }
   }
@@ -274,6 +250,10 @@ class Peer extends EventEmitter {
    * @param {function} cb - The callback function that is called after XHR.
    */
   listAllPeers(cb) {
+    if (!this._checkOpenStatus()) {
+      return;
+    }
+
     cb = cb || function() {};
     const self = this;
     const http = new XMLHttpRequest();
@@ -310,6 +290,30 @@ class Peer extends EventEmitter {
   }
 
   /**
+   * Return socket open status and emit error when it's not open.
+   * @return {boolean} - The socket status.
+   */
+  _checkOpenStatus() {
+    if (!this.open) {
+      this._emitNotConnectedError();
+    }
+    return this.open;
+  }
+
+  /**
+   * Emit not connected error.
+   */
+  _emitNotConnectedError() {
+    util.warn('You cannot connect to a new Peer because you are not connecting to SkyWay server now.' +
+      'You can create a new Peer to reconnect, or call reconnect() ' +
+      'on this peer if you believe its ID to still be available.');
+    util.emitError.call(
+      this,
+      'disconnected',
+      'Cannot connect to new Peer before connecting to SkyWay server or after disconnecting from the server.');
+  }
+
+  /**
    * Creates new Socket and initalize its message handlers.
    * @param {string} id - User's peerId.
    * @private
@@ -330,10 +334,8 @@ class Peer extends EventEmitter {
 
     this.socket.on('disconnect', () => {
       // If we haven't explicitly disconnected, emit error and disconnect.
-      if (!this._disconnectCalled) {
-        this.disconnect();
-        util.emitError.call(this, 'socket-error', 'Lost connection to server.');
-      }
+      this.disconnect();
+      util.emitError.call(this, 'socket-error', 'Lost connection to server.');
     });
 
     this.socket.start(id, this.options.token);
@@ -414,7 +416,6 @@ class Peer extends EventEmitter {
   _setupMessageHandlers() {
     this.socket.on(util.MESSAGE_TYPES.SERVER.OPEN.key, openMessage => {
       this.id = openMessage.peerId;
-      this.open = true;
       this._pcConfig = Object.assign({}, this.options.config);
 
       // make a copy of iceServers as Object.assign still retains the reference
