@@ -10,7 +10,8 @@ const Interop = require('sdp-interop').Interop;
 const interop = new Interop();
 
 const MessageEvents = [
-  'offerRequest'
+  'offerRequest',
+  'candidate'
 ];
 
 const SFUEvents = new Enum([]);
@@ -163,12 +164,20 @@ class SFURoom extends Room {
       this.close();
     });
 
-    this._negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, answer => {
+    this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
       const answerMessage = {
         roomName: this.name,
         answer:   answer
       };
       this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
+    });
+
+    this._negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
+      const candidateMessage = {
+        roomName:  this.name,
+        candidate: candidate
+      };
+      this.emit(SFURoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
     });
   }
 

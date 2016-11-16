@@ -670,6 +670,9 @@ class Peer extends EventEmitter {
     room.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
       this.socket.send(util.MESSAGE_TYPES.CLIENT.SFU_ANSWER.key, answerMessage);
     });
+    room.on(SFURoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
+      this.socket.send(util.MESSAGE_TYPES.CLIENT.SFU_CANDIDATE.key, candidateMessage);
+    });
   }
 
   /**
