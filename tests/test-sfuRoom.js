@@ -53,7 +53,7 @@ describe('SFURoom', () => {
   });
 
   describe('handleOffer', () => {
-    const dummyOfferMessage = {offer: 'offer'};
+    const dummyOfferMessage = {offer: {sdp: '', type: 'offer'}};
     let startConnectionStub;
     let setupNegotiatorSpy;
 
