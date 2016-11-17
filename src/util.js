@@ -26,7 +26,8 @@ const clientMessages = new Enum([
   'ROOM_GET_USERS',
   'ROOM_SEND_DATA',
   'SFU_GET_OFFER',
-  'SFU_ANSWER'
+  'SFU_ANSWER',
+  'SFU_CANDIDATE'
 ]);
 
 const serverMessages = new Enum([
