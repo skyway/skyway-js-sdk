@@ -53,7 +53,7 @@ describe('SFURoom', () => {
   });
 
   describe('handleOffer', () => {
-    const dummyOfferMessage = {offer: 'offer'};
+    const dummyOfferMessage = {offer: {sdp: '', type: 'offer'}};
     let startConnectionStub;
     let setupNegotiatorSpy;
 
@@ -108,7 +108,8 @@ describe('SFURoom', () => {
 
       assert(onSpy.calledWith(Negotiator.EVENTS.addStream.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.removeStream.key));
-      assert(onSpy.calledWith(Negotiator.EVENTS.iceCandidatesComplete.key));
+      assert(onSpy.calledWith(Negotiator.EVENTS.iceCandidate.key));
+      assert(onSpy.calledWith(Negotiator.EVENTS.answerCreated.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.iceConnectionDisconnected.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.negotiationNeeded.key));
     });
@@ -228,7 +229,7 @@ describe('SFURoom', () => {
         });
       });
 
-      describe('iceCandidatesComplete', () => {
+      describe('answerCreated', () => {
         it('should emit an answer message event', done => {
           const answer = {};
           sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
@@ -237,7 +238,20 @@ describe('SFURoom', () => {
             done();
           });
 
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.iceCandidatesComplete.key, answer);
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
+        });
+      });
+
+      describe('iceCandidate', () => {
+        it('should emit a candidate message event', done => {
+          const candidate = {};
+          sfuRoom.on(SFURoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
+            assert.equal(candidateMessage.roomName, sfuRoomName);
+            assert.equal(candidateMessage.candidate, candidate);
+            done();
+          });
+
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
         });
       });
 

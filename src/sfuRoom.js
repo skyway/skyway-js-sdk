@@ -10,7 +10,8 @@ const Interop = require('sdp-interop').Interop;
 const interop = new Interop();
 
 const MessageEvents = [
-  'offerRequest'
+  'offerRequest',
+  'candidate'
 ];
 
 const SFUEvents = new Enum([]);
@@ -77,6 +78,24 @@ class SFURoom extends Room {
     // We don't need to convert the answer back to Unified Plan because the server can handle Plan B
     if (navigator.webkitGetUserMedia) {
       offer = interop.toPlanB(offer);
+
+      // extract msids from the offer sdp
+      const msidRegexp = /a=ssrc:\d+ msid:(\w+)/g;
+      // use a set to avoid duplicates
+      const msids = new Set();
+
+      let matches;
+      // loop while matches is truthy
+      // double parentheses for explicit conditional assignment (lint)
+      while ((matches = msidRegexp.exec(offer.sdp))) {
+        msids.add(matches[1]);
+      }
+
+      // replace msid-semantic line with planB version
+      offer.sdp = offer.sdp.replace(
+        'a=msid-semantic:WMS *',
+        `a=msid-semantic:WMS ${Array.from(msids).join(' ')}`
+      );
     }
 
     // Handle SFU Offer and send Answer to Server
@@ -133,16 +152,32 @@ class SFURoom extends Room {
       this.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, offerRequestMessage);
     });
 
-    this._negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key, () => {
-      this.close();
-    });
-
-    this._negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, answer => {
+    this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
       const answerMessage = {
         roomName: this.name,
         answer:   answer
       };
       this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
+    });
+
+    this._negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key, () => {
+      this.close();
+    });
+
+    this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
+      const answerMessage = {
+        roomName: this.name,
+        answer:   answer
+      };
+      this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
+    });
+
+    this._negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
+      const candidateMessage = {
+        roomName:  this.name,
+        candidate: candidate
+      };
+      this.emit(SFURoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
     });
   }
 
