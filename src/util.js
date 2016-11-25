@@ -55,8 +55,9 @@ class Util {
    * Create a Util instance.
    */
   constructor() {
-    this.DISPATCHER_HOST = 'dispatcher.skyway.io';
-    this.DISPATCHER_PORT = 443;
+    this.DISPATCHER_HOST = 'local.skyway.io';
+    this.DISPATCHER_PORT = 4443;
+    this.DISPATCHER_SECURE = true;
     this.DISPATCHER_TIMEOUT = 3000;
     this.CLOUD_HOST = 'skyway.io';
     this.CLOUD_PORT = 443;
@@ -343,7 +344,7 @@ class Util {
   getSignalingServer() {
     return new Promise((resolve, reject) => {
       const http = new XMLHttpRequest();
-      const url = `https://${this.DISPATCHER_HOST}:${this.DISPATCHER_PORT}/signaling`;
+      const url = `http${this.DISPATCHER_SECURE ? 's' : ''}://${this.DISPATCHER_HOST}:${this.DISPATCHER_PORT}/signaling`;
 
       http.timeout = this.DISPATCHER_TIMEOUT;
       http.open('GET', url, true);

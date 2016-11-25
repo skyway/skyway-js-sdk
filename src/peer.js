@@ -325,7 +325,19 @@ class Peer extends EventEmitter {
     this._setupMessageHandlers();
 
     this.socket.on('error', error => {
-      this._abort('socket-error', error);
+      if (error === 'Could not connect to server.') {
+        console.log('failed to reconnect');
+        util.getSignalingServer().then(res => {
+          console.log(`trying ${JSON.stringify(res)}`);
+          Object.assign(this.options, res);
+          this._initializeServerConnection(id);
+        }).catch(err => {
+          util.log(err);
+          this._initializeServerConnection(id);
+        });
+      } else {
+        this._abort('socket-error', error);
+      }
     });
 
     this.socket.on('disconnect', () => {

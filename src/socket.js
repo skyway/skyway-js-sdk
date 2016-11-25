@@ -75,10 +75,39 @@ class Socket extends EventEmitter {
     });
 
     this._io.on('reconnect_failed', () => {
-      this.emit('error', 'Could not connect to server.');
+      this._stopPings();
+
+      this._connectToNewServer();
+    });
+
+    this._io.on('error', e => {
+      console.error(e);
     });
 
     this._setupMessageHandlers();
+  }
+
+  _connectToNewServer(numAttempts = 0) {
+    const maxNumberOfAttempts = 10;
+    if (numAttempts >= maxNumberOfAttempts) {
+      this.emit('error', 'Could not connect to server.');
+      return;
+    }
+
+    // try for a different server
+    // TODO: do this in a smarter way using timeouts to wait a little bit,
+    //       waiting until we successfully connect instead of just attempting to connect to a different server.
+    //       Throw error after X connection attempts fail
+    util.getSignalingServer().then(res => {
+      if (this._httpUrl.indexOf(res.host) === -1) {
+        let httpProtocol = res.secure ? 'https://' : 'http://';
+        this._httpUrl = `${httpProtocol}${res.host}:${res.port}`;
+        this._io.io.uri = this._httpUrl;
+        this._io.connect();
+      } else {
+        this._connectToNewServer(++numAttempts);
+      }
+    });
   }
 
   /**
@@ -137,8 +166,6 @@ class Socket extends EventEmitter {
           if (!openMessage || !openMessage.peerId) {
             return;
           }
-
-          this._isOpen = true;
           if (!this._isPeerIdSet) {
             // set peerId for when reconnecting to the server
             this._io.io.opts.query += `&peerId=${openMessage.peerId}`;
@@ -147,8 +174,12 @@ class Socket extends EventEmitter {
 
           this._sendQueuedMessages();
 
-          // To inform the peer that the socket successfully connected
-          this.emit(type.key, openMessage);
+          if (!this._isOpen) {
+            this._isOpen = true;
+
+            // To inform the peer that the socket successfully connected
+            this.emit(type.key, openMessage);
+          }
         });
       } else {
         this._io.on(type.key, message => {
