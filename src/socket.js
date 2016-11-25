@@ -34,11 +34,11 @@ class Socket extends EventEmitter {
   }
 
   /**
-   * Whether the client is disconnected from the signalling server or not.
+   * Whether the socket is connecting to the signalling server or not.
    * @type {boolean}
    */
-  get disconnected() {
-    return !((this._io && this._io.connected) && this._isOpen);
+  get isOpen() {
+    return Boolean((this._io && this._io.connected) && this._isOpen);
   }
 
   /**
@@ -93,7 +93,7 @@ class Socket extends EventEmitter {
     }
 
     // If we are not connected yet, queue the message
-    if (this.disconnected) {
+    if (!this.isOpen) {
       this._queue.push({type: type, message: message});
       return;
     }
@@ -107,7 +107,7 @@ class Socket extends EventEmitter {
    * Disconnect from the signalling server.
    */
   close() {
-    if (!this.disconnected) {
+    if (this.isOpen) {
       this._io.disconnect();
       this._isOpen = false;
     }

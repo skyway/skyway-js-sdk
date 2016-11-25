@@ -20,7 +20,6 @@ describe('Peer', () => {
   const peerId = 'testPeerId';
   const signalingHost = 'fake.domain';
   const signalingPort = 443;
-  const timeForAsync = 10;
   let SocketConstructorStub;
   let SFURoomConstructorStub;
   let MeshRoomConstructorStub;
@@ -250,6 +249,10 @@ describe('Peer', () => {
           host: signalingHost,
           port: signalingPort
         });
+
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => true
+        });
       });
 
       it('should create a new Socket and set it to peer.socket', () => {
@@ -290,8 +293,9 @@ describe('Peer', () => {
       });
 
       it('should call destroy onbeforeunload', () => {
+        const destroySpy = sinon.spy(peer, 'destroy');
         window.onbeforeunload();
-        assert.equal(peer._destroyCalled, true);
+        assert.equal(destroySpy.callCount, 1);
       });
 
       it('should call socket.start', () => {
@@ -304,8 +308,10 @@ describe('Peer', () => {
   describe('call', () => {
     let peer;
     beforeEach(() => {
-      peer = new Peer({
-        key: apiKey
+      peer = new Peer(peerId, {
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
     });
 
@@ -313,28 +319,40 @@ describe('Peer', () => {
       peer.destroy();
     });
 
-    it('should create a new MediaConnection, add it, and return it', () => {
-      const _addConnectionSpy = sinon.spy(peer, '_addConnection');
-
-      const conn = peer.call(peerId, new MediaStream());
-
-      assert.equal(conn.constructor.name, 'MediaConnection');
-      assert.equal(_addConnectionSpy.callCount, 1);
-      assert(_addConnectionSpy.calledWith(peerId, conn));
-
-      _addConnectionSpy.restore();
-    });
-
-    it('should emit an error if disconnected', done => {
-      peer.on('error', e => {
-        assert.equal(e.type, 'disconnected');
-        done();
+    describe('when its socket is open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => true
+        });
       });
 
-      peer.disconnect();
+      it('should create a new MediaConnection, add it, and return it', () => {
+        const _addConnectionSpy = sinon.spy(peer, '_addConnection');
 
-      setTimeout(() => {
-        peer.call(peerId, {});
+        const conn = peer.call(peerId, new MediaStream());
+
+        assert.equal(conn.constructor.name, 'MediaConnection');
+        assert.equal(_addConnectionSpy.callCount, 1);
+        assert(_addConnectionSpy.calledWith(peerId, conn));
+
+        _addConnectionSpy.restore();
+      });
+    });
+
+    describe('when its socket is not open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => false
+        });
+      });
+
+      it('should emit error and return', done => {
+        peer.on('error', err => {
+          assert.equal(err.type, 'disconnected');
+          done();
+        });
+
+        peer.call(peerId, new MediaStream());
       });
     });
   });
@@ -343,7 +361,9 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
     });
 
@@ -351,27 +371,39 @@ describe('Peer', () => {
       peer.destroy();
     });
 
-    it('should create a new DataConnection, add it, and return it', () => {
-      const addConnectionSpy = sinon.spy(peer, '_addConnection');
-
-      const conn = peer.connect(peerId, {});
-
-      assert.equal(conn.constructor.name, 'DataConnection');
-      assert.equal(addConnectionSpy.callCount, 1);
-      assert(addConnectionSpy.calledWith(peerId, conn));
-
-      addConnectionSpy.restore();
-    });
-
-    it('should emit an error if disconnected', done => {
-      peer.on('error', e => {
-        assert.equal(e.type, 'disconnected');
-        done();
+    describe('when its socket is open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => true
+        });
       });
 
-      peer.disconnect();
+      it('should create a new DataConnection, add it, and return it', () => {
+        const addConnectionSpy = sinon.spy(peer, '_addConnection');
 
-      setTimeout(() => {
+        const conn = peer.connect(peerId, {});
+
+        assert.equal(conn.constructor.name, 'DataConnection');
+        assert.equal(addConnectionSpy.callCount, 1);
+        assert(addConnectionSpy.calledWith(peerId, conn));
+
+        addConnectionSpy.restore();
+      });
+    });
+
+    describe('when its socket is not open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => false
+        });
+      });
+
+      it('should emit error and return', done => {
+        peer.on('error', err => {
+          assert.equal(err.type, 'disconnected');
+          done();
+        });
+
         peer.connect(peerId);
       });
     });
@@ -379,64 +411,92 @@ describe('Peer', () => {
 
   describe('joinRoom', () => {
     const roomName = 'testRoomName';
-
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
     });
 
-    it('should call _initializeSfuRoom if mode is \'sfu\'', () => {
-      const initSfuRoomStub = sinon.stub(peer, '_initializeSfuRoom');
-      const options = {mode: 'sfu'};
-
-      peer.joinRoom(roomName, options);
-
-      assert.equal(initSfuRoomStub.callCount, 1);
-      assert(initSfuRoomStub.calledWith(roomName, options));
-    });
-
-    it('should call _initializeFullMeshRoom if mode is \'mesh\'', () => {
-      const initMeshRoomStub = sinon.stub(peer, '_initializeFullMeshRoom');
-      const options = {mode: 'mesh'};
-
-      peer.joinRoom(roomName, options);
-
-      assert.equal(initMeshRoomStub.callCount, 1);
-      assert(initMeshRoomStub.calledWith(roomName, options));
-    });
-
-    it('should call _initializeFullMeshRoom if mode is not set', () => {
-      const initMeshRoomStub = sinon.stub(peer, '_initializeFullMeshRoom');
-      const options = {};
-
-      peer.joinRoom(roomName, options);
-
-      assert.equal(initMeshRoomStub.callCount, 1);
-      assert(initMeshRoomStub.calledWith(roomName, options));
-    });
-
-    it('should emit an error if roomName isn\'t defined', done => {
-      const options = {};
-
-      peer.on('error', err => {
-        assert.equal(err.type, 'room-error');
-        done();
+    describe('when its socket is open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => true
+        });
       });
 
-      peer.joinRoom(undefined, options);
+      it('should call _initializeSfuRoom if mode is \'sfu\'', () => {
+        const initSfuRoomStub = sinon.stub(peer, '_initializeSfuRoom');
+        const options = {mode: 'sfu'};
+
+        peer.joinRoom(roomName, options);
+
+        assert.equal(initSfuRoomStub.callCount, 1);
+        assert(initSfuRoomStub.calledWith(roomName, options));
+      });
+
+      it('should call _initializeFullMeshRoom if mode is \'mesh\'', () => {
+        const initMeshRoomStub = sinon.stub(peer, '_initializeFullMeshRoom');
+        const options = {mode: 'mesh'};
+
+        peer.joinRoom(roomName, options);
+
+        assert.equal(initMeshRoomStub.callCount, 1);
+        assert(initMeshRoomStub.calledWith(roomName, options));
+      });
+
+      it('should call _initializeFullMeshRoom if mode is not set', () => {
+        const initMeshRoomStub = sinon.stub(peer, '_initializeFullMeshRoom');
+        const options = {};
+
+        peer.joinRoom(roomName, options);
+
+        assert.equal(initMeshRoomStub.callCount, 1);
+        assert(initMeshRoomStub.calledWith(roomName, options));
+      });
+
+      it('should emit an error if roomName isn\'t defined', done => {
+        const options = {};
+
+        peer.on('error', err => {
+          assert.equal(err.type, 'room-error');
+          done();
+        });
+
+        peer.joinRoom(undefined, options);
+      });
+
+      it('should set roomOptions pcConfig and peerId', () => {
+        const initMeshRoomStub = sinon.stub(peer, '_initializeFullMeshRoom');
+        const options = {};
+
+        peer.joinRoom(roomName, options);
+
+        const roomOptions = initMeshRoomStub.args[0][1];
+        assert.equal(roomOptions.pcConfig, peer._pcConfig);
+        assert.equal(roomOptions.peerId, peer.id);
+      });
     });
 
-    it('should set roomOptions pcConfig and peerId', () => {
-      const initMeshRoomStub = sinon.stub(peer, '_initializeFullMeshRoom');
-      const options = {};
+    describe('when its socket is not open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => false
+        });
+      });
 
-      peer.joinRoom(roomName, options);
+      it('should emit error and return', done => {
+        const options = {};
 
-      const roomOptions = initMeshRoomStub.args[0][1];
-      assert.equal(roomOptions.pcConfig, peer._pcConfig);
-      assert.equal(roomOptions.peerId, peer.id);
+        peer.on('error', err => {
+          assert.equal(err.type, 'disconnected');
+          done();
+        });
+
+        peer.joinRoom(roomName, options);
+      });
     });
   });
 
@@ -444,7 +504,9 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
     });
 
@@ -452,20 +514,45 @@ describe('Peer', () => {
       peer.disconnect();
     });
 
-    it('should get a connection if peerId and connId match', () => {
-      const peerId = 'testId';
-      const connection = new DataConnection(peerId, {});
+    describe('when its socket is open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => true
+        });
+      });
 
-      peer._addConnection(peerId, connection);
+      it('should get a connection if peerId and connId match', () => {
+        const peerId = 'testId';
+        const connection = new DataConnection(peerId, {});
 
-      assert.equal(peer.getConnection(peerId, connection.id), connection);
+        peer._addConnection(peerId, connection);
+
+        assert.equal(peer.getConnection(peerId, connection.id), connection);
+      });
+
+      it('should return null if connection doesn\'t exist', () => {
+        const peerId = 'testId';
+        const connection = new DataConnection(peerId, {});
+
+        assert.equal(peer.getConnection(peerId, connection.id), null);
+      });
     });
 
-    it('should return null if connection doesn\'t exist', () => {
-      const peerId = 'testId';
-      const connection = new DataConnection(peerId, {});
+    describe('when its socket is not open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => false
+        });
+      });
 
-      assert.equal(peer.getConnection(peerId, connection.id), null);
+      it('should emit error and return', done => {
+        peer.on('error', err => {
+          assert.equal(err.type, 'disconnected');
+          done();
+        });
+
+        peer.getConnection();
+      });
     });
   });
 
@@ -473,7 +560,13 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
+      });
+
+      sinon.stub(peer.socket, 'isOpen', {
+        get: () => true
       });
     });
 
@@ -491,19 +584,9 @@ describe('Peer', () => {
       spy.restore();
     });
 
-    it('should set _destroyCalled to true', done => {
-      peer.destroy();
-
-      peer.on('disconnected', () => {
-        assert.equal(peer._destroyCalled, true);
-        done();
-      });
-    });
-
     it('should not call disconnect() the second time you call it', () => {
       const spy = sinon.spy(peer, 'disconnect');
 
-      peer.destroy();
       peer.destroy();
 
       assert.equal(spy.callCount, 1);
@@ -534,9 +617,21 @@ describe('Peer', () => {
 
   describe('disconnect', () => {
     let peer;
+    let fakeIsOpen;
     beforeEach(() => {
+      fakeIsOpen = true;
+      socketInstanceStub.close = () => {
+        fakeIsOpen = false;
+      };
+
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
+      });
+
+      sinon.stub(peer.socket, 'isOpen', {
+        get: () => fakeIsOpen
       });
     });
 
@@ -545,58 +640,37 @@ describe('Peer', () => {
     });
 
     it('should emit "disconnected" event on peer', done => {
-      peer.disconnect();
       peer.on('disconnected', id => {
         assert.equal(peer.id, id);
         done();
       });
-    });
-
-    it('should set _disconnectCalled to true and open to false', done => {
       peer.disconnect();
-      peer.on('disconnected', () => {
-        assert.equal(peer._disconnectCalled, true);
-        assert.equal(peer.open, false);
-        done();
-      });
     });
 
     it('should call socket.close', done => {
-      peer.disconnect();
-
+      let disconnectEventCount = 0;
       peer.on('disconnected', () => {
-        assert.equal(peer.socket.close.callCount, 1);
+        assert.equal(++disconnectEventCount, 1);
         done();
       });
+      peer.disconnect();
     });
 
     it('should not do anything the second time you call it', function(done) {
-      peer.disconnect();
-
       let disconnectEventCount = 0;
       let beforeTestTimeout = this.timeout - 100;
+
+      peer.on('disconnected', () => {
+        assert.equal(++disconnectEventCount, 1);
+        peer.disconnect();
+      });
 
       setTimeout(() => {
         assert.equal(disconnectEventCount, 1);
         done();
       }, beforeTestTimeout);
 
-      peer.on('disconnected', () => {
-        assert.equal(++disconnectEventCount, 1);
-        peer.disconnect();
-      });
-    });
-
-    it('should set _lastPeerId to current id and id to null', done => {
       peer.disconnect();
-
-      peer.on('disconnected', id => {
-        setTimeout(() => {
-          assert.equal(peer._lastPeerId, id);
-          assert.equal(peer.id, null);
-          done();
-        }, timeForAsync);
-      });
     });
   });
 
@@ -610,37 +684,28 @@ describe('Peer', () => {
       });
     });
 
-    describe('disconnect was called but destroy wasn\'t', () => {
+    describe('when its socket is open', () => {
       beforeEach(() => {
-        peer._disconnectCalled = true;
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => true
+        });
       });
 
+      it('should do nothing', () => {
+        peer.reconnect();
+        assert.equal(peer.socket.reconnect.callCount, 0);
+      });
+    });
+
+    describe('when its socket is not open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => false
+        });
+      });
       it('should call socket.reconnect', () => {
         peer.reconnect();
-
         assert.equal(peer.socket.reconnect.callCount, 1);
-      });
-
-      it('should set _disconnectCalled to false', () => {
-        peer.reconnect();
-
-        assert.equal(peer._disconnectCalled, false);
-      });
-    });
-
-    describe('disconnect was not called', () => {
-      it('should do nothing', () => {
-        assert.equal(peer.socket.reconnect.callCount, 0);
-      });
-    });
-
-    describe('destroy was called', () => {
-      beforeEach(() => {
-        peer._destroyCalled = true;
-      });
-
-      it('should do nothing', () => {
-        assert.equal(peer.socket.reconnect.callCount, 0);
       });
     });
   });
@@ -651,7 +716,9 @@ describe('Peer', () => {
     let xhr;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
 
       xhr = sinon.useFakeXMLHttpRequest();
@@ -667,73 +734,158 @@ describe('Peer', () => {
       peer.destroy();
     });
 
-    it('should send a "GET" request to the right URL', () => {
-      peer.listAllPeers();
-      assert.equal(requests.length, 1);
+    describe('when its socket is open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => true
+        });
+      });
 
-      const protocol = peer.options.secure ? 'https://' : 'http://';
-      const url = `${protocol}${peer.options.host}:` +
-        `${peer.options.port}/api/apikeys/${apiKey}/clients/`;
-      assert(requests[0].url === url);
-      assert(requests[0].method === 'get');
-    });
-
-    it('should call the callback with the response as the argument', () => {
-      const spy = sinon.spy();
-      peer.listAllPeers(spy);
-      assert.equal(requests.length, 1);
-
-      const peerList = ['peerId1', 'peerId2', 'peerId3'];
-      requests[0].respond(200, {}, JSON.stringify(peerList));
-
-      assert.equal(spy.callCount, 1);
-      assert(spy.calledWith(peerList));
-    });
-
-    it('should throw an error when the status is 401', () => {
-      try {
+      it('should send a "GET" request to the right URL', () => {
         peer.listAllPeers();
-        requests.respond(401);
+        assert.equal(requests.length, 1);
+
+        const protocol = peer.options.secure ? 'https://' : 'http://';
+        const url = `${protocol}${peer.options.host}:` +
+          `${peer.options.port}/api/apikeys/${apiKey}/clients/`;
+        assert(requests[0].url === url);
+        assert(requests[0].method === 'get');
+      });
+
+      it('should call the callback with the response as the argument', () => {
+        const spy = sinon.spy();
+        peer.listAllPeers(spy);
+        assert.equal(requests.length, 1);
+
+        const peerList = ['peerId1', 'peerId2', 'peerId3'];
+        requests[0].respond(200, {}, JSON.stringify(peerList));
+
+        assert.equal(spy.callCount, 1);
+        assert(spy.calledWith(peerList));
+      });
+
+      it('should throw an error when the status is 401', () => {
+        try {
+          peer.listAllPeers();
+          requests.respond(401);
+        } catch (e) {
+          assert(e instanceof Error);
+          return;
+        }
+
+        assert.fail('Didn\'t throw an error');
+      });
+
+      it('should call the callback with an empty array any other status', () => {
+        const spy = sinon.spy();
+        const peerList = JSON.stringify(['peerId1', 'peerId2', 'peerId3']);
+        const responseCodes = [202, 400, 403, 404, 408, 500, 503];
+
+        for (let codeIndex = 0; codeIndex <= responseCodes.length; codeIndex++) {
+          peer.listAllPeers(spy);
+          requests[codeIndex].respond(responseCodes[codeIndex], {}, peerList);
+        }
+
+        assert.equal(spy.withArgs([]).callCount, responseCodes.length);
+      });
+
+      it('should not throw an error if cb isn\'t provided', () => {
+        try {
+          peer.listAllPeers();
+          requests[0].respond(200, {}, JSON.stringify([]));
+        } catch (e) {
+          assert.fail('Should not have thrown an error');
+        }
+      });
+
+      // onerror testing is unstable. Wait for sinonjs2 to be released
+      it.skip('should throw an error on peer if http request fails', done => {
+        peer.on('error', err => {
+          assert(err instanceof Error);
+          assert.equal(err.type, 'server-error');
+          done();
+        });
+
+        peer.listAllPeers();
+        requests[0].abort();
+      });
+    });
+
+    describe('when its socket is not open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => false
+        });
+      });
+
+      it('should emit error and return', done => {
+        peer.on('error', err => {
+          assert.equal(err.type, 'disconnected');
+          done();
+        });
+
+        peer.listAllPeers();
+      });
+    });
+  });
+
+  describe('_checkOpenStatus', () => {
+    const peerId = 'testPeerId';
+    let peer;
+
+    beforeEach(() => {
+      peer = new Peer(peerId, {
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
+      });
+    });
+
+    describe('when socket is open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => true
+        });
+      });
+      it('should return open status', () => {
+        assert.equal(peer._checkOpenStatus(), true);
+      });
+    });
+
+    describe('when socket is not open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => false
+        });
+      });
+      it('should emit error', () => {
+        try {
+          peer._checkOpenStatus();
+        } catch (e) {
+          assert(e instanceof Error);
+          return;
+        }
+      });
+    });
+  });
+
+  describe('_emitNotConnectedError', () => {
+    const peerId = 'testPeerId';
+    let peer;
+
+    beforeEach(() => {
+      peer = new Peer(peerId, {
+        key: apiKey
+      });
+    });
+
+    it('should emit error', () => {
+      try {
+        peer._emitNotConnectedError();
       } catch (e) {
         assert(e instanceof Error);
         return;
       }
-
-      assert.fail('Didn\'t throw an error');
-    });
-
-    it('should call the callback with an empty array any other status', () => {
-      const spy = sinon.spy();
-      const peerList = JSON.stringify(['peerId1', 'peerId2', 'peerId3']);
-      const responseCodes = [202, 400, 403, 404, 408, 500, 503];
-
-      for (let codeIndex = 0; codeIndex <= responseCodes.length; codeIndex++) {
-        peer.listAllPeers(spy);
-        requests[codeIndex].respond(responseCodes[codeIndex], {}, peerList);
-      }
-
-      assert.equal(spy.withArgs([]).callCount, responseCodes.length);
-    });
-
-    it('should not throw an error if cb isn\'t provided', () => {
-      try {
-        peer.listAllPeers();
-        requests[0].respond(200, {}, JSON.stringify([]));
-      } catch (e) {
-        assert.fail('Should not have thrown an error');
-      }
-    });
-
-    // onerror testing is unstable. Wait for sinonjs2 to be released
-    it.skip('should throw an error on peer if http request fails', done => {
-      peer.on('error', err => {
-        assert(err instanceof Error);
-        assert.equal(err.type, 'server-error');
-        done();
-      });
-
-      peer.listAllPeers();
-      requests[0].abort();
     });
   });
 
@@ -869,7 +1021,6 @@ describe('Peer', () => {
           peer.socket.emit(util.MESSAGE_TYPES.SERVER.OPEN.key, openMessage);
 
           assert.equal(peer.id, peerId);
-          assert.equal(peer.open, true);
         });
 
         it('should add turn servers if credentials are defined', () => {
@@ -935,6 +1086,11 @@ describe('Peer', () => {
     });
 
     describe('signaling messages', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen', {
+          get: () => true
+        });
+      });
       describe('LEAVE', () => {
         let logSpy;
 
@@ -1608,7 +1764,9 @@ describe('Peer', () => {
     let errorSpy;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
 
       // prevent error from breaking tests
@@ -1759,7 +1917,9 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
       });
     });
 
