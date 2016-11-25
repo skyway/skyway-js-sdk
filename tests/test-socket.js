@@ -10,8 +10,13 @@ const util = require('../src/util');
 describe('Socket', () => {
   const serverPort = 5080;
   let Socket;
+  let socket;
   let stub;
   let spy;
+
+  const apiKey = 'apiKey';
+  const token = 'token';
+  const peerId = 'peerId';
 
   beforeEach(() => {
     stub = sinon.stub(SocketIO, 'Socket');
@@ -33,7 +38,13 @@ describe('Socket', () => {
         io:         {opts: {query: ''}}
       }
     );
-    Socket = proxyquire('../src/socket', {'socket.io-client': stub});
+
+    Socket = proxyquire('../src/socket', {
+      'socket.io-client': stub,
+      './util':           util
+    });
+
+    socket = new Socket(false, 'localhost', serverPort, apiKey);
   });
 
   afterEach(() => {
@@ -43,67 +54,65 @@ describe('Socket', () => {
 
   describe('Connecting to the server', () => {
     it('should be able to connect to a server', done => {
-      let apiKey = 'apiKey';
-      let token = 'token';
-      let peerId = 'peerId';
       const openMessage = {peerId: peerId};
-
-      const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(undefined, token);
 
       assert(stub.called);
       socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
 
-      assert.equal(socket.disconnected, false);
+      assert.equal(socket.isOpen, true);
 
       done();
     });
 
     it('should be able to connect to a server with a PeerID', () => {
-      let apiKey = 'apiKey';
-      let peerId = 'peerId';
-      let token = 'token';
       const openMessage = {peerId: peerId};
-
-      const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
 
       assert(stub.called);
       socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
 
-      assert.equal(socket.disconnected, false);
+      assert.equal(socket.isOpen, true);
     });
 
     it('should close socket and have disconnect status set', () => {
+      const openMessage = {peerId: peerId};
+
+      socket.start(peerId, token);
+      assert.equal(socket.isOpen, false);
+
+      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+      assert.equal(socket.isOpen, true);
+
+      socket.close();
+      assert.equal(socket.isOpen, false);
+    });
+
+    it('should close socket and stop pings', () => {
       let apiKey = 'apiKey';
       let peerId = 'peerId';
       let token = 'token';
       const openMessage = {peerId: peerId};
 
       const socket = new Socket(false, 'localhost', serverPort, apiKey);
+      const stopPingsSpy = sinon.spy(socket, '_stopPings');
 
       socket.start(peerId, token);
-      assert.equal(socket.disconnected, true);
 
       socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
-      assert.equal(socket.disconnected, false);
+      assert.equal(stopPingsSpy.callCount, 0);
 
       socket.close();
-      assert.equal(socket.disconnected, true);
+      assert.equal(stopPingsSpy.callCount, 1);
     });
   });
 
   describe('Sending data', () => {
     it('should be able to send some data', () => {
-      let apiKey = 'apiKey';
-      let peerId = 'peerId';
-      let token = 'token';
       const openMessage = {peerId: peerId};
       let data = {type: 'MSG', message: 'hello world'};
-
-      const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
       socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
@@ -113,13 +122,8 @@ describe('Socket', () => {
     });
 
     it('should not send data without a type set', () => {
-      let apiKey = 'apiKey';
-      let peerId = 'peerId';
-      let token = 'token';
       const openMessage = {peerId: peerId};
       let data = {message: 'hello world'};
-
-      const socket = new Socket(false, 'localhost', serverPort, apiKey);
 
       socket.start(peerId, token);
       socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
@@ -130,18 +134,13 @@ describe('Socket', () => {
     });
 
     it('should send queued messages upon connecting', () => {
-      let apiKey = 'apiKey';
-      let peerId = 'peerId';
-      let token = 'token';
       const openMessage = {peerId: peerId};
       let data1 = {type: 'MSG', message: 'hello world'};
       let data2 = {type: 'MSG', message: 'goodbye world'};
       let receivedData;
 
-      const socket = new Socket(false, 'localhost', serverPort, apiKey);
-
       socket.start(undefined, token);
-      assert.equal(socket.disconnected, true);
+      assert.equal(socket.isOpen, false);
 
       // First pass - No peerID
       socket.send(data1.type, data1.message);
@@ -163,15 +162,10 @@ describe('Socket', () => {
   });
 
   describe('_setupMessageHandlers', () => {
-    let socket;
     let emitSpy;
-    let peerId = 'peerId';
-    let token = 'token';
     const openMessage = {peerId: peerId};
 
     beforeEach(() => {
-      let apiKey = 'apiKey';
-      socket = new Socket(false, 'localhost', serverPort, apiKey);
       emitSpy = sinon.spy(socket, 'emit');
     });
 
@@ -192,7 +186,6 @@ describe('Socket', () => {
     });
 
     it('should update the _io query on \'OPEN\' messages', () => {
-      let peerId = 'peerId';
       const openMessage = {peerId: peerId};
 
       socket.start(undefined, token);
@@ -208,6 +201,20 @@ describe('Socket', () => {
       query = socket._io.io.opts.query;
       assert(socket._isPeerIdSet);
       assert(peerIdRegex.test(query));
+    });
+
+    it('should start sending pings on \'OPEN\' messages', () => {
+      let peerId = 'peerId';
+      const openMessage = {peerId: peerId};
+      const startPingsStub = sinon.stub(socket, '_startPings');
+
+      socket.start(undefined, token);
+
+      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+
+      assert.equal(startPingsStub.callCount, 1);
+
+      startPingsStub.restore();
     });
 
     it('should emit all non-OPEN message types on socket', () => {
@@ -227,6 +234,57 @@ describe('Socket', () => {
       });
 
       assert.equal(emitSpy.callCount, util.MESSAGE_TYPES.SERVER.enums.length - 1);
+    });
+  });
+
+  describe('pings', () => {
+    let socket;
+    let peerId = 'peerId';
+    let token = 'token';
+    let clock;
+    const openMessage = {peerId: peerId};
+
+    beforeEach(() => {
+      clock = sinon.useFakeTimers();
+      let apiKey = 'apiKey';
+      socket = new Socket(false, 'localhost', serverPort, apiKey);
+
+      socket.start(peerId, token);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+    });
+
+    afterEach(() => {
+      clock.restore();
+      clearInterval(socket._pingIntervalId);
+    });
+
+    describe('_startPings', () => {
+      it('should send a ping message every ping interval', () => {
+        const numberOfChecks = 5;
+
+        socket._startPings();
+
+        assert.equal(spy.callCount, 0);
+        for (let i = 0; i < numberOfChecks; i++) {
+          clock.tick(util.pingInterval);
+
+          assert(spy.getCall(i).calledWith(util.MESSAGE_TYPES.CLIENT.PING.key));
+          assert.equal(spy.callCount, i + 1);
+        }
+      });
+    });
+
+    describe('_stopPings', () => {
+      it('should clear the interval and set it to undefined', function() {
+        socket._startPings();
+        socket._stopPings();
+
+        assert.equal(socket._pingIntervalId, undefined);
+
+        clock.tick(util.pingInterval * 10);
+
+        assert.equal(spy.callCount, 0);
+      });
     });
   });
 });
