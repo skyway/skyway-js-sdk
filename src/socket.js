@@ -75,6 +75,7 @@ class Socket extends EventEmitter {
     });
 
     this._io.on('reconnect_failed', () => {
+      this._stopPings();
       this.emit('error', 'Could not connect to server.');
     });
 
@@ -108,6 +109,7 @@ class Socket extends EventEmitter {
    */
   close() {
     if (this.isOpen) {
+      this._stopPings();
       this._io.disconnect();
       this._isOpen = false;
     }
@@ -145,6 +147,8 @@ class Socket extends EventEmitter {
             this._isPeerIdSet = true;
           }
 
+          this._startPings();
+
           this._sendQueuedMessages();
 
           // To inform the peer that the socket successfully connected
@@ -167,6 +171,27 @@ class Socket extends EventEmitter {
       this.send(data.type, data.message);
     }
     this._queue = [];
+  }
+
+  /**
+   * Start sending ping messages if they aren't already
+   * @private
+   */
+  _startPings() {
+    if (!this._pingIntervalId) {
+      this._pingIntervalId = setInterval(() => {
+        this.send(util.MESSAGE_TYPES.CLIENT.PING.key);
+      }, util.pingInterval);
+    }
+  }
+
+  /**
+   * Stop sending ping messages
+   * @private
+   */
+  _stopPings() {
+    clearInterval(this._pingIntervalId);
+    this._pingIntervalId = undefined;
   }
 
   /**

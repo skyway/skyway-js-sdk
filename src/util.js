@@ -27,7 +27,8 @@ const clientMessages = new Enum([
   'ROOM_SEND_DATA',
   'SFU_GET_OFFER',
   'SFU_ANSWER',
-  'SFU_CANDIDATE'
+  'SFU_CANDIDATE',
+  'PING'
 ]);
 
 const serverMessages = new Enum([
@@ -83,6 +84,9 @@ class Util {
 
     // Send loop interval in milliseconds
     this.sendInterval = 1;
+
+    // Ping interval in milliseconds
+    this.pingInterval = 25000;
 
     this.defaultConfig = {
       iceServers: [{

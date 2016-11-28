@@ -38,7 +38,11 @@ describe('Socket', () => {
         io:         {opts: {query: ''}}
       }
     );
-    Socket = proxyquire('../src/socket', {'socket.io-client': stub});
+
+    Socket = proxyquire('../src/socket', {
+      'socket.io-client': stub,
+      './util':           util
+    });
 
     socket = new Socket(false, 'localhost', serverPort, apiKey);
   });
@@ -84,6 +88,24 @@ describe('Socket', () => {
 
       socket.close();
       assert.equal(socket.isOpen, false);
+    });
+
+    it('should close socket and stop pings', () => {
+      let apiKey = 'apiKey';
+      let peerId = 'peerId';
+      let token = 'token';
+      const openMessage = {peerId: peerId};
+
+      const socket = new Socket(false, 'localhost', serverPort, apiKey);
+      const stopPingsSpy = sinon.spy(socket, '_stopPings');
+
+      socket.start(peerId, token);
+
+      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+      assert.equal(stopPingsSpy.callCount, 0);
+
+      socket.close();
+      assert.equal(stopPingsSpy.callCount, 1);
     });
   });
 
@@ -181,6 +203,20 @@ describe('Socket', () => {
       assert(peerIdRegex.test(query));
     });
 
+    it('should start sending pings on \'OPEN\' messages', () => {
+      let peerId = 'peerId';
+      const openMessage = {peerId: peerId};
+      const startPingsStub = sinon.stub(socket, '_startPings');
+
+      socket.start(undefined, token);
+
+      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+
+      assert.equal(startPingsStub.callCount, 1);
+
+      startPingsStub.restore();
+    });
+
     it('should emit all non-OPEN message types on socket', () => {
       socket.start(peerId, token);
 
@@ -198,6 +234,57 @@ describe('Socket', () => {
       });
 
       assert.equal(emitSpy.callCount, util.MESSAGE_TYPES.SERVER.enums.length - 1);
+    });
+  });
+
+  describe('pings', () => {
+    let socket;
+    let peerId = 'peerId';
+    let token = 'token';
+    let clock;
+    const openMessage = {peerId: peerId};
+
+    beforeEach(() => {
+      clock = sinon.useFakeTimers();
+      let apiKey = 'apiKey';
+      socket = new Socket(false, 'localhost', serverPort, apiKey);
+
+      socket.start(peerId, token);
+      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+    });
+
+    afterEach(() => {
+      clock.restore();
+      clearInterval(socket._pingIntervalId);
+    });
+
+    describe('_startPings', () => {
+      it('should send a ping message every ping interval', () => {
+        const numberOfChecks = 5;
+
+        socket._startPings();
+
+        assert.equal(spy.callCount, 0);
+        for (let i = 0; i < numberOfChecks; i++) {
+          clock.tick(util.pingInterval);
+
+          assert(spy.getCall(i).calledWith(util.MESSAGE_TYPES.CLIENT.PING.key));
+          assert.equal(spy.callCount, i + 1);
+        }
+      });
+    });
+
+    describe('_stopPings', () => {
+      it('should clear the interval and set it to undefined', function() {
+        socket._startPings();
+        socket._stopPings();
+
+        assert.equal(socket._pingIntervalId, undefined);
+
+        clock.tick(util.pingInterval * 10);
+
+        assert.equal(spy.callCount, 0);
+      });
     });
   });
 });
