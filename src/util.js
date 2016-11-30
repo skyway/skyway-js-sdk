@@ -56,8 +56,8 @@ class Util {
    * Create a Util instance.
    */
   constructor() {
-    this.DISPATCHER_HOST = 'local.skyway.io';
-    this.DISPATCHER_PORT = 4443;
+    this.DISPATCHER_HOST = 'dispatcher.skyway.io';
+    this.DISPATCHER_PORT = 443;
     this.DISPATCHER_SECURE = true;
     this.DISPATCHER_TIMEOUT = 3000;
     this.TURN_HOST = 'turn.skyway.io';

@@ -244,7 +244,6 @@ class Socket extends EventEmitter {
           this._reconnectAttempts = 0;
 
           this._startPings();
-
           this._sendQueuedMessages();
 
           if (!this._isOpen) {
