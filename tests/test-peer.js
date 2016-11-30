@@ -147,46 +147,6 @@ describe('Peer', () => {
           assert.equal(peer.options.secure, mySignalingServer.secure);
         });
       });
-
-      describe('when host option is not provided', () => {
-        const timeout = 100;
-        describe('when the getSignalingServer is resolved with including signaling info', () => {
-          it('should create Peer object with despatcher result', done => {
-            const fakeSignalingHost = 'fake.domain';
-            util.getSignalingServer = () => {
-              return Promise.resolve({host: fakeSignalingHost, port: 443, secure: true});
-            };
-
-            const peer = new Peer({
-              key: apiKey
-            });
-
-            setTimeout(() => {
-              assert.equal(peer.options.host, fakeSignalingHost);
-              assert.equal(peer.options.port, 443);
-              assert.equal(peer.options.secure, true);
-              done();
-            }, timeout);
-          });
-        });
-        describe('when the getSignalingServer is rejected', () => {
-          it('should create Peer object with default options', done => {
-            util.getSignalingServer = () => {
-              return Promise.reject();
-            };
-
-            const peer = new Peer({
-              key: apiKey
-            });
-
-            setTimeout(() => {
-              assert.equal(peer.options.host, util.CLOUD_HOST);
-              assert.equal(peer.options.port, util.CLOUD_PORT);
-              done();
-            }, timeout);
-          });
-        });
-      });
     });
 
     it('should not create a Peer object with invalid ID', done => {
@@ -257,11 +217,13 @@ describe('Peer', () => {
 
       it('should create a new Socket and set it to peer.socket', () => {
         assert.equal(SocketConstructorStub.callCount, 1);
-        assert(SocketConstructorStub.calledWith(
-          peer.options.secure,
-          peer.options.host,
-          peer.options.port,
-          peer.options.key));
+        assert(SocketConstructorStub.calledWithMatch(
+          peer.options.key,
+          {
+            secure: peer.options.secure,
+            host:   peer.options.host,
+            port:   peer.options.port
+          }));
         assert.equal(peer.socket.constructor.name, 'Socket');
       });
 
@@ -720,6 +682,9 @@ describe('Peer', () => {
         host: signalingHost,
         port: signalingPort
       });
+
+      const protocol = peer.options.secure ? 'https://' : 'http://';
+      peer.socket.signalingServerUrl = `${protocol}${signalingHost}:${signalingPort}`;
 
       xhr = sinon.useFakeXMLHttpRequest();
       xhr.onCreate = function(request) {
