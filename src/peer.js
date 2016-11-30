@@ -55,15 +55,16 @@ class Peer extends EventEmitter {
       id = id.toString();
     }
 
-    // TODO: util.CLOUD_HOST/PORT will be removed after Dispatcher is stable
     const defaultOptions = {
       debug:  util.LOG_LEVELS.NONE,
-      host:   util.CLOUD_HOST,
-      port:   util.CLOUD_PORT,
       secure: true,
       token:  util.randomToken(),
       config: util.defaultConfig,
-      turn:   true
+      turn:   true,
+
+      dispatcherSecure: util.DISPATCHER_SECURE,
+      dispatcherHost:   util.DISPATCHER_HOST,
+      dispatcherPort:   util.DISPATCHER_PORT
     };
 
     this.options = Object.assign({}, defaultOptions, options);
@@ -80,24 +81,13 @@ class Peer extends EventEmitter {
       return;
     }
 
-    // if signaling server option is not provided, get from dispatcher
-    if (!options.host || !options.port) {
-      util.getSignalingServer().then(res => {
-        Object.assign(this.options, res);
-        this._initializeServerConnection(id);
-      }).catch(err => {
-        util.log(err);
-        this._initializeServerConnection(id);
-      });
-    } else {
-      if (this.options.host === '/') {
-        this.options.host = window.location.hostname;
-      }
-      if (options.secure === undefined && this.options.port !== 443) {
-        this.options.secure = undefined;
-      }
-      this._initializeServerConnection(id);
+    if (this.options.host === '/') {
+      this.options.host = window.location.hostname;
     }
+    if (options.secure === undefined && this.options.port !== 443) {
+      this.options.secure = undefined;
+    }
+    this._initializeServerConnection(id);
   }
 
   /**
@@ -257,10 +247,8 @@ class Peer extends EventEmitter {
     cb = cb || function() {};
     const self = this;
     const http = new XMLHttpRequest();
-    const protocol = this.options.secure ? 'https://' : 'http://';
 
-    const url = `${protocol}${this.options.host}:` +
-              `${this.options.port}/api/apikeys/${this.options.key}/clients/`;
+    const url = `${this.socket.signalingServerUrl}/api/apikeys/${this.options.key}/clients/`;
 
     // If there's no ID we need to wait for one before trying to init socket.
     http.open('get', url, true);
@@ -320,28 +308,22 @@ class Peer extends EventEmitter {
    */
   _initializeServerConnection(id) {
     this.socket = new Socket(
-      this.options.secure,
-      this.options.host,
-      this.options.port,
-      this.options.key
+      this.options.key,
+      {
+        secure: this.options.secure,
+        host:   this.options.host,
+        port:   this.options.port,
+
+        dispatcherSecure: this.options.dispatcherSecure,
+        dispatcherHost:   this.options.dispatcherHost,
+        dispatcherPort:   this.options.dispatcherPort
+      }
     );
 
     this._setupMessageHandlers();
 
     this.socket.on('error', error => {
-      if (error === 'Could not connect to server.') {
-        console.log('failed to reconnect');
-        util.getSignalingServer().then(res => {
-          console.log(`trying ${JSON.stringify(res)}`);
-          Object.assign(this.options, res);
-          this._initializeServerConnection(id);
-        }).catch(err => {
-          util.log(err);
-          this._initializeServerConnection(id);
-        });
-      } else {
-        this._abort('socket-error', error);
-      }
+      this._abort('socket-error', error);
     });
 
     this.socket.on('disconnect', () => {
