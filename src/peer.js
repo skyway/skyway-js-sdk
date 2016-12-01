@@ -33,8 +33,11 @@ class Peer extends EventEmitter {
    * @param {Object} options - Optional arguments for the connection.
    * @param {string} options.key - SkyWay API key.
    * @param {number} [options.debug=0] - Log level. NONE:0, ERROR:1, WARN:2, FULL:3.
-   * @param {string} [options.host='skyway.io'] - The host name of signaling server.
-   * @param {number} [options.port=443] - The port number of signaling server.
+   * @param {string} [options.host] - The host name of signaling server.
+   * @param {number} [options.port] - The port number of signaling server.
+   * @param {string} [options.dispatcherPort=dispatcher.skyway.io] - The host name of the dispatcher server.
+   * @param {number} [options.dispatcherPort=443] - The port number of dispatcher server.
+   * @param {boolean} [options.dispatcherSecure=true] - True if the dispatcher server supports https.
    * @param {string} [options.token=util.randomToken()] - The token used to authorize Peer.
    * @param {object} [options.config=util.defaultConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    * @param {boolean} [options.turn=true] - Whether using TURN or not.
