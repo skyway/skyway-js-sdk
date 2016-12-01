@@ -14,12 +14,16 @@ const EventEmitter = require('events');
 class Socket extends EventEmitter {
   /**
    * Creates an instance of Socket.
-   * @param {boolean} secure - True if signalling server supports HTTPS/WSS.
-   * @param {string} host - The signalling server host.
-   * @param {number | string} port - The port the signalling server is listening to.
    * @param {string} key - The apiKey to connect using.
+   * @param {Object} options - Socket connection options.
+   * @param {boolean} options.secure - True if signalling server supports HTTPS/WSS.
+   * @param {string} options.host - The signalling server host.
+   * @param {number | string} options.port - The port the signalling server is listening to.
+   * @param {boolean} options.dispatcherSecure - True if dispatcher server supports HTTPS/WSS.
+   * @param {string} options.dispatcherHost - The signalling server host.
+   * @param {number | string} options.dispatcherPort - The port the signalling server is listening to.
    */
-  constructor(secure, host, port, key) {
+  constructor(key, options) {
     super();
 
     this._isOpen = false;
@@ -28,9 +32,19 @@ class Socket extends EventEmitter {
 
     this._io  = null;
     this._key = key;
+    this._reconnectAttempts = 0;
 
-    let httpProtocol = secure ? 'https://' : 'http://';
-    this._httpUrl = `${httpProtocol}${host}:${port}`;
+    if (options.host && options.port) {
+      let httpProtocol = options.secure ? 'https://' : 'http://';
+      this.signalingServerUrl = `${httpProtocol}${options.host}:${options.port}`;
+    } else {
+      const dispatcherHost = options.dispatcherHost || util.DISPATCHER_HOST;
+      const dispatcherPort = options.dispatcherPort || util.DISPATCHER_PORT;
+      const dispatcherSecure = options.dispatcherSecure || util.DISPATCHER_SECURE;
+
+      let httpProtocol = dispatcherSecure ? 'https://' : 'http://';
+      this._dispatcherUrl = `${httpProtocol}${dispatcherHost}:${dispatcherPort}/signaling`;
+    }
   }
 
   /**
@@ -45,15 +59,14 @@ class Socket extends EventEmitter {
    * Connect to the signalling server.
    * @param {string} id - Unique peerId to identify the client.
    * @param {string} token - Token to identify the session.
+   * @return {Promise} Promise that resolves when starting is done.
    * @fires Socket#error
    */
   start(id, token) {
-    let query;
+    let query = `apiKey=${this._key}&token=${token}`;
     if (id) {
-      query = `apiKey=${this._key}&token=${token}&peerId=${id}`;
+      query += `&peerId=${id}`;
       this._isPeerIdSet = true;
-    } else {
-      query = `apiKey=${this._key}&token=${token}`;
     }
 
     // depends on runtime platform, transports has to be changed.
@@ -67,19 +80,103 @@ class Socket extends EventEmitter {
       transports = undefined;
     }
 
-    this._io = io(this._httpUrl, {
-      'force new connection': true,
-      'query':                query,
-      'reconnectionAttempts': util.reconnectionAttempts,
-      'transports':           transports
-    });
+    return new Promise(resolve => {
+      if (this._dispatcherUrl) {
+        this._getSignalingServer().then(serverInfo => {
+          let httpProtocol = serverInfo.secure ? 'https://' : 'http://';
+          this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${serverInfo.port}`;
+          resolve();
+        });
+      } else {
+        resolve();
+      }
+    }).then(() => {
+      this._io = io(this.signalingServerUrl, {
+        'force new connection': true,
+        'query':                query,
+        'reconnectionAttempts': util.reconnectionAttempts,
+        'transports':           transports
+      });
 
-    this._io.on('reconnect_failed', () => {
-      this._stopPings();
+      this._io.on('reconnect_failed', () => {
+        this._stopPings();
+        this._connectToNewServer();
+      });
+
+      this._io.on('error', e => {
+        util.error(e);
+      });
+
+      this._setupMessageHandlers();
+    });
+  }
+
+  _connectToNewServer(numAttempts = 0) {
+    // max number of attempts to get a new server from the dispatcher.
+    const maxNumberOfAttempts = 10;
+    if (numAttempts >= maxNumberOfAttempts || this._reconnectAttempts >= util.numberServersToTry) {
       this.emit('error', 'Could not connect to server.');
-    });
+      return;
+    }
 
-    this._setupMessageHandlers();
+    // Keep trying until we connect to a new server because consul can take some time to remove from the active list.
+    this._getSignalingServer().then(serverInfo => {
+      if (this.signalingServerUrl.indexOf(serverInfo.host) === -1) {
+        let httpProtocol = serverInfo.secure ? 'https://' : 'http://';
+        this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${serverInfo.port}`;
+        this._io.io.uri = this.signalingServerUrl;
+        this._io.connect();
+        this._reconnectAttempts++;
+      } else {
+        this._connectToNewServer(++numAttempts);
+      }
+    });
+  }
+
+  /**
+   * Return object including signaling server info.
+   * @return {Promise} A promise that resolves with signaling server info
+   and rejects if there's no response or status code isn't 200.
+   */
+  _getSignalingServer() {
+    return new Promise((resolve, reject) => {
+      const http = new XMLHttpRequest();
+
+      http.timeout = util.DISPATCHER_TIMEOUT;
+      http.open('GET', this._dispatcherUrl, true);
+
+      /* istanbul ignore next */
+      http.onerror = function() {
+        reject(new Error('There was a problem with the dispatcher.'));
+      };
+
+      http.ontimeout = () => {
+        reject(new Error('The request for the dispather timed out.'));
+      };
+
+      http.onreadystatechange = () => {
+        if (http.readyState !== 4) {
+          return;
+        }
+
+        const res = JSON.parse(http.responseText);
+        if (http.status === 200) {
+          if (res && res.domain) {
+            resolve({host: res.domain, port: 443, secure: true});
+            return;
+          }
+        }
+
+        if (res.error && res.error.message) {
+          const message = res.error.message;
+          reject(new Error(message));
+        } else {
+          reject(new Error('There was a problem with the dispatcher.'));
+        }
+      };
+
+      http.send(null);
+    });
   }
 
   /**
@@ -139,20 +236,22 @@ class Socket extends EventEmitter {
           if (!openMessage || !openMessage.peerId) {
             return;
           }
-
-          this._isOpen = true;
           if (!this._isPeerIdSet) {
             // set peerId for when reconnecting to the server
             this._io.io.opts.query += `&peerId=${openMessage.peerId}`;
             this._isPeerIdSet = true;
           }
+          this._reconnectAttempts = 0;
 
           this._startPings();
-
           this._sendQueuedMessages();
 
-          // To inform the peer that the socket successfully connected
-          this.emit(type.key, openMessage);
+          if (!this._isOpen) {
+            this._isOpen = true;
+
+            // To inform the peer that the socket successfully connected
+            this.emit(type.key, openMessage);
+          }
         });
       } else {
         this._io.on(type.key, message => {
