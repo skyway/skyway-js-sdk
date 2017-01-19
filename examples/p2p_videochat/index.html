@@ -109,7 +109,7 @@
       };
       navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
           // Set your video displays
-          $('#my-video').prop('src', URL.createObjectURL(stream));
+          $('#my-video').get(0).srcObject = stream;
           window.localStream = stream;
 
           if (window.existingCall) {
@@ -135,7 +135,7 @@
       }
       // Wait for stream on the call, then set peer video display
       call.on('stream', function(stream){
-        $('#their-video').prop('src', URL.createObjectURL(stream));
+        $('#their-video').get(0).srcObject = stream;
       });
       // UI stuff
       window.existingCall = call;
