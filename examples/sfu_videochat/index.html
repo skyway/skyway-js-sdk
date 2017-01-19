@@ -129,20 +129,19 @@
     function step3 (room) {
       // Wait for stream on the call, then set peer video display
       room.on('stream', function(stream){
-        //const streamURL = URL.createObjectURL(stream);
         const peerId = stream.peerId;
 
         $('#their-videos').append($(
-          '<div class="video_' + peerId +'" id="video_' + peerId + '_' + stream.id.replace('{', '').replace('}') + '">' +
+          '<div class="video_' + peerId +'" id="video_' + peerId + '_' + stream.id.replace('{', '').replace('}', '') + '">' +
             '<label>' + stream.peerId + ':' + stream.id + '</label>' +
             '<video autoplay class="remoteVideos">' +
           '</div>'));
-        $('#video_' + peerId + '_' + stream.id.replace('{', '').replace('}')).find("video").get(0).srcObject = stream;
+        $('#video_' + peerId + '_' + stream.id.replace('{', '').replace('}', '')).find("video").get(0).srcObject = stream;
       });
 
       room.on('removeStream', function(stream) {
         const peerId = stream.peerId;
-        $('#video_' + peerId + '_' + stream.id.replace('{', '').replace('}')).remove();
+        $('#video_' + peerId + '_' + stream.id.replace('{', '').replace('}', '')).remove();
       });
 
       // UI stuff
