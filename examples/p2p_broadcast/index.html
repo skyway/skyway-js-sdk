@@ -34,7 +34,7 @@
         e.preventDefault();
         navigator.getUserMedia({audio: true, video: true}, function(stream){
           // Set your video displays
-          $('#video').prop('src', URL.createObjectURL(stream)).prop('muted', true);
+          $('#video').get(0).srcObject = stream;
           window.localStream = stream;
         }, function(){ $('#step1-error').show(); });
       });
@@ -50,7 +50,7 @@
     function showBroadcast (call) {
       // Wait for stream on the call, then set peer video display
       call.on('stream', function(stream){
-        $('#video').prop('src', URL.createObjectURL(stream));
+        $('#video').get(0).srcObject = stream;
       });
       call.on('close', function() {
         console.log('connection closed');
