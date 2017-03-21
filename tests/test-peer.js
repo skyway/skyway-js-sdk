@@ -24,6 +24,8 @@ describe('Peer', () => {
   let SFURoomConstructorStub;
   let MeshRoomConstructorStub;
 
+  let DataConnectionConstructorSpy;
+
   let socketInstanceStub;
   let sfuRoomInstanceStub;
   let meshRoomInstanceStub;
@@ -54,6 +56,17 @@ describe('Peer', () => {
     meshRoomInstanceStub = sinon.createStubInstance(MeshRoom);
     MeshRoomConstructorStub.returns(meshRoomInstanceStub);
 
+    // We have to add the spy like this in order to get the
+    // DataConnection object using DataConnectionConstructorSpy.thisValues
+    DataConnectionConstructorSpy = sinon.spy();
+    class DCSpier extends DataConnection {
+      constructor(...args) {
+        super(...args);
+        this.spy = DataConnectionConstructorSpy;
+        this.spy(...args);
+      }
+    }
+
     // EventEmitter functions should be spies not stubs so we can test them properly
     socketInstanceStub.on.restore();
     socketInstanceStub.emit.restore();
@@ -71,10 +84,11 @@ describe('Peer', () => {
     sinon.spy(meshRoomInstanceStub, 'emit');
 
     Peer = proxyquire('../src/peer', {
-      './socket':   SocketConstructorStub,
-      './sfuRoom':  SFURoomConstructorStub,
-      './meshRoom': MeshRoomConstructorStub,
-      './util':     util});
+      './socket':         SocketConstructorStub,
+      './sfuRoom':        SFURoomConstructorStub,
+      './meshRoom':       MeshRoomConstructorStub,
+      './dataConnection': DCSpier,
+      './util':           util});
     initializeServerConnectionSpy = sinon.spy(Peer.prototype, '_initializeServerConnection');
   });
 
@@ -345,7 +359,7 @@ describe('Peer', () => {
 
         const conn = peer.connect(peerId, {});
 
-        assert.equal(conn.constructor.name, 'DataConnection');
+        assert(conn instanceof DataConnection);
         assert.equal(addConnectionSpy.callCount, 1);
         assert(addConnectionSpy.calledWith(peerId, conn));
 
@@ -1130,9 +1144,10 @@ describe('Peer', () => {
 
           it('should create DataConnection on data OFFER events', done => {
             const connectionId = util.randomToken();
+
             peer.on(Peer.EVENTS.connection.key, connection => {
               assert(connection);
-              assert.equal(connection.constructor.name, 'DataConnection');
+              assert(connection instanceof DataConnection);
               assert.equal(connection._options.connectionId, connectionId);
               assert.equal(Object.keys(peer.connections[peerId]).length, 1);
               assert.equal(peer.getConnection(peerId, connection.id), connection);
@@ -1148,6 +1163,13 @@ describe('Peer', () => {
               offer:          {}
             };
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
+
+            setTimeout(() => {
+              assert.equal(DataConnectionConstructorSpy.callCount, 1);
+
+              const connection = DataConnectionConstructorSpy.thisValues[0];
+              connection.emit(DataConnection.EVENTS.open.key);
+            });
           });
 
           it('should not create a connection if connectType is invalid', () => {
