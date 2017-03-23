@@ -512,8 +512,10 @@ class Peer extends EventEmitter {
         );
 
         util.log('DataConnection created in OFFER');
-        this._addConnection(offerMessage.src, connection);
-        this.emit(Peer.EVENTS.connection.key, connection);
+        connection.on(DataConnection.EVENTS.open.key, () => {
+          this._addConnection(offerMessage.src, connection);
+          this.emit(Peer.EVENTS.connection.key, connection);
+        });
       } else {
         util.warn('Received malformed connection type: ', offerMessage.connectionType);
       }
