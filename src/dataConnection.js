@@ -78,6 +78,11 @@ class DataConnection extends Connection {
       this._setupMessageHandlers();
     });
 
+    // If this is not the originator, we need to set the pcConfig
+    if (this._options.payload) {
+      this._options.payload.pcConfig = this._options.pcConfig;
+    }
+
     this._negotiator.startConnection(
       this._options.payload || {
         originator: true,

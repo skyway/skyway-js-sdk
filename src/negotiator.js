@@ -63,9 +63,9 @@ class Negotiator extends EventEmitter {
     this._videoBandwidth = options.videoBandwidth;
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
-    this._lastOfferSdp = '';
+    this._type = options.type;
 
-    if (options.type === 'media') {
+    if (this._type === 'media') {
       if (options.stream) {
         this._pc.addStream(options.stream);
       } else if (this._originator) {
@@ -77,7 +77,7 @@ class Negotiator extends EventEmitter {
     }
 
     if (this._originator) {
-      if (options.type === 'data') {
+      if (this._type === 'data') {
         const label = options.label || '';
         const dc = this._pc.createDataChannel(label);
         this.emit(Negotiator.EVENTS.dcCreated.key, dc);
@@ -309,13 +309,11 @@ class Negotiator extends EventEmitter {
    */
   _makeOfferSdp() {
     let options;
-    if (this._pc.getLocalStreams && this._pc.getLocalStreams().length === 0) {
+    if (this._type === 'media' && this._pc.getLocalStreams && this._pc.getLocalStreams().length === 0) {
       options = {
         offerToReceiveAudio: true,
         offerToReceiveVideo: true
       };
-    } else {
-      options = undefined;
     }
 
     return new Promise(resolve => {

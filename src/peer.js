@@ -512,8 +512,10 @@ class Peer extends EventEmitter {
         );
 
         util.log('DataConnection created in OFFER');
+
+        // _addConnection() needs to be outside of the open event or else open won't fire.
+        this._addConnection(offerMessage.src, connection);
         connection.on(DataConnection.EVENTS.open.key, () => {
-          this._addConnection(offerMessage.src, connection);
           this.emit(Peer.EVENTS.connection.key, connection);
         });
       } else {
