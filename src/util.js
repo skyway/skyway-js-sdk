@@ -38,6 +38,7 @@ const serverMessages = new Enum([
   'ANSWER',
   'CANDIDATE',
   'LEAVE',
+  'EXPIRES_IN',
   'ROOM_LOGS',
   'ROOM_USERS',
   'ROOM_DATA',

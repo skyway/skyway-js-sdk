@@ -1043,6 +1043,28 @@ describe('Peer', () => {
         });
       });
 
+      describe('EXPIRES_IN', () => {
+        let logSpy;
+
+        beforeEach(() => {
+          logSpy = sinon.spy(util, 'log');
+        });
+        afterEach(() => {
+          logSpy.restore();
+        });
+
+        it('should emit expires_in', done => {
+          const remainingSec = 100;
+          peer.on(Peer.EVENTS.expiresin.key, sec => {
+            assert.equal(logSpy.callCount, 1);
+            assert.equal(sec, remainingSec);
+            assert(logSpy.calledWith(`Credential expires in ${remainingSec}`));
+            done();
+          });
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.EXPIRES_IN.key, remainingSec);
+        });
+      });
+
       describe('ERROR', () => {
         let emitErrorStub;
         beforeEach(() => {

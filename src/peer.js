@@ -16,6 +16,7 @@ const PeerEvents = new Enum([
   'error',
   'call',
   'connection',
+  'expiresin',
   'close',
   'disconnected'
 ]);
@@ -458,6 +459,11 @@ class Peer extends EventEmitter {
     this.socket.on(util.MESSAGE_TYPES.SERVER.LEAVE.key, peerId => {
       util.log(`Received leave message from ${peerId}`);
       this._cleanupPeer(peerId);
+    });
+
+    this.socket.on(util.MESSAGE_TYPES.SERVER.EXPIRES_IN.key, remainingSec => {
+      util.log(`Credential expires in ${remainingSec}`);
+      this.emit(Peer.EVENTS.expiresin.key, remainingSec);
     });
 
     this.socket.on(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMessage => {
