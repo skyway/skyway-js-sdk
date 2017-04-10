@@ -42,6 +42,10 @@ class Peer extends EventEmitter {
    * @param {string} [options.token=util.randomToken()] - The token used to authorize Peer.
    * @param {object} [options.config=util.defaultConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    * @param {boolean} [options.turn=true] - Whether using TURN or not.
+   * @param {object} [options.credential] - The credential used to authenticate peer.
+   + @param {number} [options.credential.timestamp] - Current UNIX timestamp.
+   + @param {number} [options.credential.ttl] - Time to live; The credential expires at timestamp + ttl.
+   + @param {string} [options.credential.authToken] - Credential token calculated with HMAC.
    */
   constructor(id, options) {
     super();
@@ -336,7 +340,7 @@ class Peer extends EventEmitter {
       util.emitError.call(this, 'socket-error', 'Lost connection to server.');
     });
 
-    this.socket.start(id, this.options.token);
+    this.socket.start(id, this.options.token, this.options.credential);
 
     window.onbeforeunload = () => {
       this.destroy();

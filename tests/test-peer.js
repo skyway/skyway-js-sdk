@@ -214,69 +214,88 @@ describe('Peer', () => {
     // This can't be separated out because it is called in the constructor
     describe('_initializeServerConnection', () => {
       let peer;
-      beforeEach(() => {
-        socketInstanceStub.on.restore();
-        socketInstanceStub.emit.restore();
 
-        peer = new Peer(peerId, {
-          key:  apiKey,
-          host: signalingHost,
-          port: signalingPort
+      describe('without credential', () => {
+        beforeEach(() => {
+          socketInstanceStub.on.restore();
+          socketInstanceStub.emit.restore();
+
+          peer = new Peer(peerId, {
+            key:  apiKey,
+            host: signalingHost,
+            port: signalingPort
+          });
+
+          sinon.stub(peer.socket, 'isOpen', {
+            get: () => true
+          });
         });
 
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => true
+        it('should create a new Socket and set it to peer.socket', () => {
+          assert.equal(SocketConstructorStub.callCount, 1);
+          assert(SocketConstructorStub.calledWithMatch(
+            peer.options.key,
+            {
+              secure: peer.options.secure,
+              host:   peer.options.host,
+              port:   peer.options.port
+            }));
+          assert.equal(peer.socket.constructor.name, 'Socket');
+        });
+
+        it('should abort on a socket \'error\'', done => {
+          const errMsg = 'test error';
+
+          peer.on('error', err => {
+            assert.equal(err.type, 'socket-error');
+            assert.equal(err.message, errMsg);
+            done();
+          });
+
+          peer.socket.emit('error', errMsg);
+        });
+
+        it('should abort and disconnect on a socket \'disconnect\' event', done => {
+          const disconnectSpy = sinon.spy(peer, 'disconnect');
+
+          peer.on('error', err => {
+            assert.equal(err.type, 'socket-error');
+            assert.equal(err.message, 'Lost connection to server.');
+
+            assert.equal(disconnectSpy.callCount, 1);
+            disconnectSpy.restore();
+            done();
+          });
+
+          peer.socket.emit('disconnect');
+        });
+
+        it('should call destroy onbeforeunload', () => {
+          const destroySpy = sinon.spy(peer, 'destroy');
+          window.onbeforeunload();
+          assert.equal(destroySpy.callCount, 1);
+        });
+
+        it('should call socket.start', () => {
+          assert.equal(peer.socket.start.callCount, 1);
+          assert(peer.socket.start.calledWith(peerId, peer.options.token));
         });
       });
 
-      it('should create a new Socket and set it to peer.socket', () => {
-        assert.equal(SocketConstructorStub.callCount, 1);
-        assert(SocketConstructorStub.calledWithMatch(
-          peer.options.key,
-          {
-            secure: peer.options.secure,
-            host:   peer.options.host,
-            port:   peer.options.port
-          }));
-        assert.equal(peer.socket.constructor.name, 'Socket');
-      });
-
-      it('should abort on a socket \'error\'', done => {
-        const errMsg = 'test error';
-
-        peer.on('error', err => {
-          assert.equal(err.type, 'socket-error');
-          assert.equal(err.message, errMsg);
-          done();
+      describe('with credential', () => {
+        it('should call socket.start w/ credential', () => {
+          peer = new Peer(peerId, {
+            key:        apiKey,
+            host:       signalingHost,
+            port:       signalingPort,
+            credential: {
+              timestamp: 100,
+              ttl:       1000,
+              authToken: "hogehoge"
+            }
+          });
+          assert(peer.socket.start.calledWith(peerId, peer.options.token, peer.options.credential));
         });
-
-        peer.socket.emit('error', errMsg);
-      });
-
-      it('should abort and disconnect on a socket \'disconnect\' event', done => {
-        const disconnectSpy = sinon.spy(peer, 'disconnect');
-
-        peer.on('error', err => {
-          assert.equal(err.type, 'socket-error');
-          assert.equal(err.message, 'Lost connection to server.');
-
-          assert.equal(disconnectSpy.callCount, 1);
-          disconnectSpy.restore();
-          done();
-        });
-
-        peer.socket.emit('disconnect');
-      });
-
-      it('should call destroy onbeforeunload', () => {
-        const destroySpy = sinon.spy(peer, 'destroy');
-        window.onbeforeunload();
-        assert.equal(destroySpy.callCount, 1);
-      });
-
-      it('should call socket.start', () => {
-        assert.equal(peer.socket.start.callCount, 1);
-        assert(peer.socket.start.calledWith(peerId, peer.options.token));
       });
     });
   });

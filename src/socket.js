@@ -59,14 +59,19 @@ class Socket extends EventEmitter {
    * Connect to the signalling server.
    * @param {string} id - Unique peerId to identify the client.
    * @param {string} token - Token to identify the session.
+   * @param {object} credential - TBD
    * @return {Promise} Promise that resolves when starting is done.
    * @fires Socket#error
    */
-  start(id, token) {
+  start(id, token, credential) {
     let query = `apiKey=${this._key}&token=${token}`;
     if (id) {
       query += `&peerId=${id}`;
       this._isPeerIdSet = true;
+    }
+
+    if (credential) {
+      // querystring manipulation later
     }
 
     // depends on runtime platform, transports has to be changed.
