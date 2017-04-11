@@ -473,7 +473,7 @@ class Peer extends EventEmitter {
       this._cleanupPeer(peerId);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.EXPIRES_IN.key, remainingSec => {
+    this.socket.on(util.MESSAGE_TYPES.SERVER.AUTH_EXPIRES_IN.key, remainingSec => {
       util.log(`Credential expires in ${remainingSec}`);
       this.emit(Peer.EVENTS.expiresin.key, remainingSec);
     });

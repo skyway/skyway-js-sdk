@@ -1075,7 +1075,7 @@ describe('Peer', () => {
         });
       });
 
-      describe('EXPIRES_IN', () => {
+      describe('AUTH_EXPIRES_IN', () => {
         let logSpy;
 
         beforeEach(() => {
@@ -1093,7 +1093,7 @@ describe('Peer', () => {
             assert(logSpy.calledWith(`Credential expires in ${remainingSec}`));
             done();
           });
-          peer.socket.emit(util.MESSAGE_TYPES.SERVER.EXPIRES_IN.key, remainingSec);
+          peer.socket.emit(util.MESSAGE_TYPES.SERVER.AUTH_EXPIRES_IN.key, remainingSec);
         });
       });
 

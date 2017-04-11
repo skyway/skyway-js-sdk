@@ -256,7 +256,7 @@ class Socket extends EventEmitter {
    * @fires Socket#ANSWER
    * @fires Socket#CANDIDATE
    * @fires Socket#LEAVE
-   * @fires Socket#EXPIRES_IN
+   * @fires Socket#AUTH_EXPIRES_IN
    * @fires Socket#ROOM_OFFER
    * @fires Socket#ROOM_USER_JOIN
    * @fires Socket#ROOM_USER_LEAVE
