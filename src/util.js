@@ -28,7 +28,8 @@ const clientMessages = new Enum([
   'SFU_GET_OFFER',
   'SFU_ANSWER',
   'SFU_CANDIDATE',
-  'PING'
+  'PING',
+  'UPDATE_CREDENTIAL'
 ]);
 
 const serverMessages = new Enum([

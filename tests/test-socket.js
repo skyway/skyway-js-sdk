@@ -56,20 +56,32 @@ describe('Socket', () => {
   });
 
   describe('Connecting to the server', () => {
-    describe('when host and port are specified', () => {
-      it('should be able to connect to a server', done => {
-        const openMessage = {peerId: peerId};
-        socket.start(undefined, token).then(() => {
-          assert(socketIoClientStub.called);
-          socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
-          assert.equal(socket.isOpen, true);
-          done();
+    const openMessage = {peerId: peerId};
+    describe('when credential isn\'t given', () => {
+      describe('when host and port are specified', () => {
+        it('should be able to connect to a server', done => {
+          socket.start(undefined, token).then(() => {
+            assert(socketIoClientStub.called);
+            socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+            assert.equal(socket.isOpen, true);
+            done();
+          });
+        });
+
+        it('should be able to connect to a server with a PeerID', done => {
+          socket.start(peerId, token).then(() => {
+            assert(socketIoClientStub.called);
+            socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+            assert.equal(socket.isOpen, true);
+            done();
+          });
         });
       });
+    });
 
-      it('should be able to connect to a server with a PeerID', done => {
-        const openMessage = {peerId: peerId};
-        socket.start(peerId, token).then(() => {
+    describe('when credential is given', () => {
+      it('should be able to connect to a server with credential', done => {
+        socket.start(undefined, token, {timestamp: 1491285508, ttl: 1000, credential: 'Credential'}).then(() => {
           assert(socketIoClientStub.called);
           socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
           assert.equal(socket.isOpen, true);
@@ -120,6 +132,24 @@ describe('Socket', () => {
           done();
         });
       });
+    });
+  });
+
+  describe('updateCredential', () => {
+    beforeEach(done => {
+      socket.start(undefined, token).then(() => done());
+    });
+    it('should update queryString in this._io and send message to the server', () => {
+      const openMessage = {peerId: peerId};
+      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+
+      const newCredential = 'newCredential';
+      // set current queryString manually
+      socket._io.io.opts.query = `apiKey=${apiKey}&peerId=${peerId}&credential=hogehoge`;
+      socket.updateCredential(newCredential);
+      assert(eventSpy.called);
+      // Make sure the queryString contains new credential.
+      assert(socket._io.io.opts.query.indexOf(newCredential) !== 1);
     });
   });
 

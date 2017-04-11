@@ -705,6 +705,19 @@ describe('Peer', () => {
     });
   });
 
+  describe('updateCredential', () => {
+    it('should send UPDATE_CREDENTIAL message', () => {
+      const credential = 'newCredential';
+      const peer = new Peer({
+        key:  apiKey,
+        host: signalingHost,
+        port: signalingPort
+      });
+      peer.updateCredential(credential);
+      assert(peer.socket.updateCredential.calledWith(credential));
+    });
+  });
+
   describe('listAllPeers', () => {
     let peer;
     let requests = [];
