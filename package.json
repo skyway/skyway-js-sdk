@@ -57,6 +57,7 @@
     "events": "^1.1.0",
     "js-binarypack": "0.0.9",
     "object-sizeof": "^1.0.10",
+    "query-string": "^4.3.2",
     "react-native": "^0.35.0",
     "react-native-webrtc": "0.8.0",
     "sdp-interop": "^0.1.11",
