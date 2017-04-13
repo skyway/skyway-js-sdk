@@ -81,7 +81,7 @@ describe('Socket', () => {
 
     describe('when credential is given', () => {
       it('should be able to connect to a server with credential', done => {
-        socket.start(undefined, token, {timestamp: 1491285508, ttl: 1000, credential: 'Credential'}).then(() => {
+        socket.start(peerId, token, {timestamp: 1491285508, ttl: 1000, credential: 'Credential'}).then(() => {
           assert(socketIoClientStub.called);
           socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
           assert.equal(socket.isOpen, true);
@@ -135,21 +135,25 @@ describe('Socket', () => {
     });
   });
 
-  describe('updateCredential', () => {
+  describe.only('updateCredential', () => {
     beforeEach(done => {
-      socket.start(undefined, token).then(() => done());
+      socket.start(peerId, token).then(() => done());
     });
     it('should update queryString in this._io and send message to the server', () => {
       const openMessage = {peerId: peerId};
       socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
-
-      const newCredential = 'newCredential';
+      const newCredential = {
+        timestamp: 100,
+        ttl:       1000,
+        authToken: 'newCredential'
+      };
       // set current queryString manually
       socket._io.io.opts.query = `apiKey=${apiKey}&peerId=${peerId}&credential=hogehoge`;
       socket.updateCredential(newCredential);
-      assert(eventSpy.called);
       // Make sure the queryString contains new credential.
-      assert(socket._io.io.opts.query.indexOf(newCredential) !== 1);
+      assert(socket._io.io.opts.query.indexOf(encodeURIComponent(newCredential.authToken)) !== -1);
+      // Also sure the socket.send() is called
+      assert(eventSpy.calledWith(util.MESSAGE_TYPES.CLIENT.UPDATE_CREDENTIAL.key, newCredential));
     });
   });
 

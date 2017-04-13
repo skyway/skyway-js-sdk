@@ -706,8 +706,12 @@ describe('Peer', () => {
   });
 
   describe('updateCredential', () => {
-    it('should send UPDATE_CREDENTIAL message', () => {
-      const credential = 'newCredential';
+    it('should call socket.updateCredential()', () => {
+      const credential = {
+        timestamp: 100,
+        ttl:       1000,
+        authToken: "hogehoge"
+      };
       const peer = new Peer({
         key:  apiKey,
         host: signalingHost,
