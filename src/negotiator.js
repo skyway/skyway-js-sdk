@@ -98,8 +98,30 @@ class Negotiator extends EventEmitter {
 
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
+    // Firefox 53 has both getSenders and getLocalStreams,
+    // but Google Chrome 59 has only getLocalStreams.
     if (this._pc.getSenders) {
       this._pc.getSenders().forEach(sender => {
+        let tracks;
+        if (sender.track.kind === 'audio') {
+          tracks = newStream.getAudioTracks();
+        } else if (sender.track.kind === 'video') {
+          tracks = newStream.getVideoTracks();
+        }
+
+        if (tracks && tracks[0]) {
+          sender.replaceTrack(tracks[0]);
+        } else {
+          this._pc.removeTrack(sender);
+        }
+      });
+
+      // We don't actually need to do renegotiation but force it in order to prevent
+      // problems with the stream.id being mismatched when renegotiation happens anyways
+      this._pc.onnegotiationneeded();
+      return;
+    } else if (this._pc.getLocalStreams) {
+      this._pc.getLocalStreams().forEach(sender => {
         let tracks;
         if (sender.track.kind === 'audio') {
           tracks = newStream.getAudioTracks();
@@ -127,7 +149,7 @@ class Negotiator extends EventEmitter {
     // Unset onnegotiationneeded so that it doesn't trigger on removeStream
     this._pc.onnegotiationneeded = () => {};
 
-    const localStreams = this._pc.getLocalStreams();
+    const localStreams = this._pc.getSenders() || this._pc.getLocalStreams();
     if (localStreams && localStreams[0]) {
       this._pc.removeStream(localStreams[0]);
     }
@@ -309,7 +331,7 @@ class Negotiator extends EventEmitter {
    */
   _makeOfferSdp() {
     let options;
-    if (this._type === 'media' && this._pc.getLocalStreams && this._pc.getLocalStreams().length === 0) {
+    if (this._type === 'media' && ((this._pc.getSenders && this._pc.getSenders().length === 0) || (this._pc.getLocalStreams && this._pc.getLocalStreams().length === 0))) {
       options = {
         offerToReceiveAudio: true,
         offerToReceiveVideo: true,
