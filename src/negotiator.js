@@ -252,11 +252,19 @@ class Negotiator extends EventEmitter {
    */
   _setupPCListeners() {
     const pc = this._pc;
-    pc.onaddstream = evt => {
-      util.log('Received remote media stream');
-      const stream = evt.stream;
-      this.emit(Negotiator.EVENTS.addStream.key, stream);
-    };
+    if (pc.ontrack) {
+      pc.ontrack = evt => {
+        util.log('Received remote media stream');
+        const stream = evt.stream;
+        this.emit(Negotiator.EVENTS.addStream.key, stream);
+      };
+    } else {
+      pc.onaddstream = evt => {
+        util.log('Received remote media stream');
+        const stream = evt.stream;
+        this.emit(Negotiator.EVENTS.addStream.key, stream);
+      };
+    }
 
     pc.ondatachannel = evt => {
       util.log('Received data channel');
