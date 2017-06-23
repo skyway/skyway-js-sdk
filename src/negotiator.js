@@ -129,7 +129,7 @@ class Negotiator extends EventEmitter {
     // Unset onnegotiationneeded so that it doesn't trigger on removeStream
     this._pc.onnegotiationneeded = () => {};
 
-    const localStreams = this._pc.getSenders !== undefined ? this._pc.getSenders() : this._pc.getLocalStreams();
+    const localStreams = this._pc.getSenders === undefined ? this._pc.getLocalStreams() : this._pc.getSenders();
     if (localStreams && localStreams[0]) {
       this._pc.removeStream(localStreams[0]);
     }
@@ -232,19 +232,19 @@ class Negotiator extends EventEmitter {
    */
   _setupPCListeners() {
     const pc = this._pc;
-    if (pc.ontrack !== undefined) {
-      pc.ontrack = evt => {
-        if (evt.track.kind == 'video') {
-          util.log('Received remote media stream');
-          const stream = evt.streams[0];
-          this.emit(Negotiator.EVENTS.addStream.key, stream);
-        }
-      };
-    } else {
+    if (pc.ontrack === undefined) {
       pc.onaddstream = evt => {
         util.log('Received remote media stream');
         const stream = evt.stream;
         this.emit(Negotiator.EVENTS.addStream.key, stream);
+      };
+    } else {
+      pc.ontrack = evt => {
+        if (evt.track.kind === 'video') {
+          util.log('Received remote media stream');
+          const stream = evt.streams[0];
+          this.emit(Negotiator.EVENTS.addStream.key, stream);
+        }
       };
     }
 
@@ -321,7 +321,9 @@ class Negotiator extends EventEmitter {
    */
   _makeOfferSdp() {
     let options;
-    if (this._type === 'media' && ((this._pc.getSenders !== undefined && this._pc.getSenders().length === 0) || (this._pc.getLocalStreams !== undefined && this._pc.getLocalStreams().length === 0))) {
+    if (this._type === 'media' &&
+      ((this._pc.getSenders !== undefined && this._pc.getSenders().length === 0) ||
+      (this._pc.getLocalStreams !== undefined && this._pc.getLocalStreams().length === 0))) {
       options = {
         offerToReceiveAudio: true,
         offerToReceiveVideo: true,
