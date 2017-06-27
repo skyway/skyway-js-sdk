@@ -1,7 +1,7 @@
 {
-  "name": "skywayjs",
+  "name": "eclwebrtc",
   "version": "1.0.0",
-  "description": "The client library for skyway",
+  "description": "The JS client library for ECL WebRTC",
   "main": "src/peer.js",
   "directories": {
     "test": "test"
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://ghe.nttcloud.net/SkyWay/SkyWay-Client.git"
+    "url": "https://ghe.nttcloud.net/SkyWay/ECLRTC-JS-SDK.git"
   },
   "author": "NTT Communications Corp.",
   "license": "MIT",
