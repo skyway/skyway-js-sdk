@@ -436,8 +436,18 @@ class Peer extends EventEmitter {
       this._pcConfig.iceServers = iceServers ? iceServers.slice() : [];
 
       // Set up turn credentials
-      const credential = openMessage.turnCredential;
-      if (this.options.turn === true && credential) {
+      const turnCredential = openMessage.turnCredential;
+      let turnUserName;
+      let turnPassword;
+      if (typeof turnCredential === 'object') {
+        turnUserName = turnCredential.username;
+        turnPassword = turnCredential.credential;
+      } else if (typeof turnCredential === 'string') {
+        // Handle older server versions that don't send the username
+        turnUserName = `${this.options.key}$${this.id}`;
+        turnPassword = turnCredential;
+      }
+      if (this.options.turn === true && turnUserName && turnPassword) {
         // possible turn types are turn-tcp, turns-tcp, turn-udp
         const turnCombinations = [
           {protocol: 'turn', transport: 'tcp'},
@@ -452,8 +462,8 @@ class Peer extends EventEmitter {
             urls: `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
             url:  `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
 
-            username:   `${this.options.key}$${this.id}`,
-            credential: credential
+            username:   turnUserName,
+            credential: turnPassword
           };
 
           this._pcConfig.iceServers.push(iceServer);

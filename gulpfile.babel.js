@@ -81,7 +81,7 @@ gulp.task('build', () => {
   return browserify('./src/peer.js', {standalone: 'Peer'})
     .transform(babelify, {presets: ['es2015']})
     .bundle()
-    .pipe(source('skyway.js'))
+    .pipe(source('eclwebrtc.js'))
     .pipe(buffer())
     .pipe(header(copyright))
     .pipe(gulp.dest('dist'))

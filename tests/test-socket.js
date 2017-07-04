@@ -135,7 +135,7 @@ describe('Socket', () => {
     });
   });
 
-  describe.only('updateCredential', () => {
+  describe('updateCredential', () => {
     beforeEach(done => {
       socket.start(peerId, token).then(() => done());
     });
