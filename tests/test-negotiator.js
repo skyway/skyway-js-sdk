@@ -2,13 +2,10 @@
 
 const assert           = require('power-assert');
 const sinon            = require('sinon');
-const sinonStubPromise = require('sinon-stub-promise');
 const proxyquire       = require('proxyquireify')(require);
 
 const Negotiator       = require('../src/negotiator');
 const util             = require('../src/util');
-
-sinonStubPromise(sinon);
 
 describe('Negotiator', () => {
   describe('Constructor', () => {
