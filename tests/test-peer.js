@@ -655,6 +655,7 @@ describe('Peer', () => {
 
     it('should not do anything the second time you call it', function(done) {
       let disconnectEventCount = 0;
+      // eslint-disable-next-line no-invalid-this
       let beforeTestTimeout = this.timeout - 100;
 
       peer.on('disconnected', () => {
