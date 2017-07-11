@@ -30,7 +30,7 @@ module.exports =  {
     'coverage',
   ],
 
-  browsers: ['Chrome'],
+  browsers: ['ChromeHeadless'],
 
   coverageReporter: {
     reporters: [
