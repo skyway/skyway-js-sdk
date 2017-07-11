@@ -10,7 +10,7 @@ const sizeof     = require('object-sizeof');
 const DCEvents = new Enum([
   'open',
   'data',
-  'error'
+  'error',
 ]);
 
 DCEvents.extend(Connection.EVENTS.enums);
@@ -19,7 +19,7 @@ const DCSerializations = new Enum([
   'binary',
   'binary-utf8',
   'json',
-  'none'
+  'none',
 ]);
 
 /**
@@ -88,7 +88,7 @@ class DataConnection extends Connection {
         originator: true,
         type:       'data',
         label:      this.label,
-        pcConfig:   this._options.pcConfig
+        pcConfig:   this._options.pcConfig,
       }
     );
     this._pcAvailable = true;
@@ -151,7 +151,7 @@ class DataConnection extends Connection {
         mimeType:      dataMeta.mimeType,
         totalParts:    dataMeta.totalParts,
         parts:         new Array(dataMeta.totalParts),
-        receivedParts: 0
+        receivedParts: 0,
       };
     }
     currData.receivedParts++;
@@ -205,7 +205,7 @@ class DataConnection extends Connection {
       id:         util.randomId(),
       type:       type,
       size:       size,
-      totalParts: 0
+      totalParts: 0,
     };
 
     if (type === 'file') {

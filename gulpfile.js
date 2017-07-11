@@ -43,7 +43,7 @@ for (let filename of fileList) {
     pattern:  filename,
     watched:  false,
     served:   true,
-    included: true
+    included: true,
   });
 }
 
@@ -64,7 +64,7 @@ gulp.task('lint', () => {
       '!dist/**',
       '!coverage/**',
       '!docs/**',
-      '!examples/**'
+      '!examples/**',
     ])
     .pipe(eslint('.eslintrc'))
     .pipe(eslint.format())

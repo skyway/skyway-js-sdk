@@ -22,7 +22,7 @@ const NegotiatorEvents = new Enum([
   'iceCandidatesComplete',
   'iceConnectionDisconnected',
   'negotiationNeeded',
-  'error'
+  'error',
 ]);
 
 /**
@@ -312,7 +312,7 @@ class Negotiator extends EventEmitter {
     if (this._type === 'media' && this._pc.getLocalStreams && this._pc.getLocalStreams().length === 0) {
       options = {
         offerToReceiveAudio: true,
-        offerToReceiveVideo: true
+        offerToReceiveVideo: true,
       };
     }
 
@@ -486,7 +486,6 @@ class Negotiator extends EventEmitter {
    * @event Negotiator#error
    * @type {Error}
    */
-
 }
 
 module.exports = Negotiator;

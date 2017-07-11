@@ -12,7 +12,7 @@ const LogLevel = new Enum({
   NONE:  0,
   ERROR: 1,
   WARN:  2,
-  FULL:  3
+  FULL:  3,
 });
 
 const clientMessages = new Enum([
@@ -29,7 +29,7 @@ const clientMessages = new Enum([
   'SFU_ANSWER',
   'SFU_CANDIDATE',
   'PING',
-  'UPDATE_CREDENTIAL'
+  'UPDATE_CREDENTIAL',
 ]);
 
 const serverMessages = new Enum([
@@ -45,7 +45,7 @@ const serverMessages = new Enum([
   'ROOM_DATA',
   'ROOM_USER_JOIN',
   'ROOM_USER_LEAVE',
-  'SFU_OFFER'
+  'SFU_OFFER',
 ]);
 
 let utilInstance;
@@ -71,7 +71,7 @@ class Util {
     this.LOG_LEVELS = LogLevel;
     this.MESSAGE_TYPES = {
       CLIENT: clientMessages,
-      SERVER: serverMessages
+      SERVER: serverMessages,
     };
 
     this.chunkedBrowsers = {Chrome: 1};
@@ -95,9 +95,9 @@ class Util {
     this.defaultConfig = {
       iceServers: [{
         urls: 'stun:stun.skyway.io:3478',
-        url:  'stun:stun.skyway.io:3478'
+        url:  'stun:stun.skyway.io:3478',
       }],
-      iceTransportPolicy: 'all'
+      iceTransportPolicy: 'all',
     };
 
     // Returns the current browser.
@@ -153,7 +153,7 @@ class Util {
       }
 
       return {
-        binaryBlob: binaryBlob
+        binaryBlob: binaryBlob,
       };
     })();
 
@@ -198,7 +198,7 @@ class Util {
     if (this._logLevel >= LogLevel.WARN.value) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
-      console.warn.apply(console, copy);
+      console.warn(...copy);
     }
   }
 
@@ -209,7 +209,7 @@ class Util {
     if (this._logLevel >= LogLevel.ERROR.value) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
-      console.error.apply(console, copy);
+      console.error(...copy);
     }
   }
 
@@ -220,7 +220,7 @@ class Util {
     if (this._logLevel >= LogLevel.FULL.value) {
       let copy = Array.prototype.slice.call(arguments);
       copy.unshift(LOG_PREFIX);
-      console.log.apply(console, copy);
+      console.log(...copy);
     }
   }
 

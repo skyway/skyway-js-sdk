@@ -18,7 +18,7 @@ const PeerEvents = new Enum([
   'connection',
   'expiresin',
   'close',
-  'disconnected'
+  'disconnected',
 ]);
 
 /**
@@ -27,7 +27,6 @@ const PeerEvents = new Enum([
  * @extends EventEmitter
  */
 class Peer extends EventEmitter {
-
   /**
    * Create new Peer instance. This is called by user application.
    * @param {string} [id] - User's peerId.
@@ -72,7 +71,7 @@ class Peer extends EventEmitter {
 
       dispatcherSecure: util.DISPATCHER_SECURE,
       dispatcherHost:   util.DISPATCHER_HOST,
-      dispatcherPort:   util.DISPATCHER_PORT
+      dispatcherPort:   util.DISPATCHER_PORT,
     };
 
     this.options = Object.assign({}, defaultOptions, options);
@@ -335,7 +334,7 @@ class Peer extends EventEmitter {
 
         dispatcherSecure: this.options.dispatcherSecure,
         dispatcherHost:   this.options.dispatcherHost,
-        dispatcherPort:   this.options.dispatcherPort
+        dispatcherPort:   this.options.dispatcherPort,
       }
     );
 
@@ -382,7 +381,7 @@ class Peer extends EventEmitter {
 
     const data = {
       roomName: roomName,
-      roomType: 'sfu'
+      roomType: 'sfu',
     };
 
     this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key, data);
@@ -414,7 +413,7 @@ class Peer extends EventEmitter {
 
     const data = {
       roomName: roomName,
-      roomType: 'mesh'
+      roomType: 'mesh',
     };
 
     this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key, data);
@@ -452,7 +451,7 @@ class Peer extends EventEmitter {
         const turnCombinations = [
           {protocol: 'turn', transport: 'tcp'},
           {protocol: 'turns', transport: 'tcp'},
-          {protocol: 'turn', transport: 'udp'}
+          {protocol: 'turn', transport: 'udp'},
         ];
         for (let turnType of turnCombinations) {
           const protocol = turnType.protocol;
@@ -463,7 +462,7 @@ class Peer extends EventEmitter {
             url:  `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
 
             username:   turnUserName,
-            credential: turnPassword
+            credential: turnPassword,
           };
 
           this._pcConfig.iceServers.push(iceServer);
@@ -521,7 +520,7 @@ class Peer extends EventEmitter {
             metadata:       offerMessage.metadata,
             originator:     false,
             queuedMessages: this._queuedMessages[connectionId],
-            pcConfig:       this._pcConfig
+            pcConfig:       this._pcConfig,
           }
         );
 
@@ -538,7 +537,7 @@ class Peer extends EventEmitter {
             label:          offerMessage.label,
             serialization:  offerMessage.serialization,
             queuedMessages: this._queuedMessages[connectionId],
-            pcConfig:       this._pcConfig
+            pcConfig:       this._pcConfig,
           }
         );
 
@@ -845,7 +844,6 @@ class Peer extends EventEmitter {
    * @event Peer#disconnected
    * @type {string}
    */
-
 }
 
 module.exports = Peer;

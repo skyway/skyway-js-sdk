@@ -8,7 +8,7 @@ const Enum = require('enum');
 
 const MCEvents = new Enum([
   'stream',
-  'removeStream'
+  'removeStream',
 ]);
 
 MCEvents.extend(Connection.EVENTS.enums);
@@ -60,7 +60,7 @@ class MediaConnection extends Connection {
           videoBandwidth: this._options.videoBandwidth,
           audioBandwidth: this._options.audioBandwidth,
           videoCodec:     this._options.videoCodec,
-          audioCodec:     this._options.audioCodec
+          audioCodec:     this._options.audioCodec,
         }
       );
       this._pcAvailable = true;
@@ -96,7 +96,7 @@ class MediaConnection extends Connection {
         audioBandwidth: options.audioBandwidth,
         videoBandwidth: options.videoBandwidth,
         videoCodec:     options.videoCodec,
-        audioCodec:     options.audioCodec
+        audioCodec:     options.audioCodec,
       }
     );
     this._pcAvailable = true;
