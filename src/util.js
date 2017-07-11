@@ -193,28 +193,31 @@ class Util {
 
   /**
    * Output a warning message to the Web Console.
+   * @param {...*} args - arguments to warn.
    */
-  warn() {
+  warn(...args) {
     if (this._logLevel >= LogLevel.WARN.value) {
-      console.warn(LOG_PREFIX, ...copy);
+      console.warn(LOG_PREFIX, ...args);
     }
   }
 
   /**
    * Output an error message to the Web Console.
+   * @param {...*} args - arguments to error.
    */
-  error() {
+  error(...args) {
     if (this._logLevel >= LogLevel.ERROR.value) {
-      console.error(LOG_PREFIX, ...copy);
+      console.error(LOG_PREFIX, ...args);
     }
   }
 
   /**
    * Output a log message to the Web Console.
+   * @param {...*} args - arguments to log.
    */
-  log() {
+  log(...args) {
     if (this._logLevel >= LogLevel.FULL.value) {
-      console.log(LOG_PREFIX, ...copy);
+      console.log(LOG_PREFIX, ...args);
     }
   }
 
