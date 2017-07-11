@@ -115,6 +115,10 @@ class MediaConnection extends Connection {
     this.localStream = newStream;
   }
 
+  /**
+   * Set up negotiator message handlers.
+   * @private
+   */
   _setupNegotiatorMessageHandlers() {
     super._setupNegotiatorMessageHandlers();
 

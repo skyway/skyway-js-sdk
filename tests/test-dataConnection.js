@@ -35,7 +35,7 @@ describe('DataConnection', () => {
       startConnection: startSpy,
       cleanup:         cleanupSpy,
       handleAnswer:    answerSpy,
-      handleCandidate: candidateSpy
+      handleCandidate: candidateSpy,
     });
 
     Connection = proxyquire(
@@ -78,7 +78,7 @@ describe('DataConnection', () => {
         label:         label,
         serialization: serialization,
         metadata:      metadata,
-        payload:       {browser: peerBrowser}
+        payload:       {browser: peerBrowser},
       };
 
       const dc = new DataConnection(id, options);
@@ -278,7 +278,7 @@ describe('DataConnection', () => {
           index:      0,
           totalParts: 1,
           data:       util.pack(message),
-          type:       typeof message
+          type:       typeof message,
         };
 
         const dc = new DataConnection('remoteId');
@@ -301,7 +301,7 @@ describe('DataConnection', () => {
           index:      0,
           totalParts: 1,
           data:       util.pack(message),
-          type:       typeof message
+          type:       typeof message,
         };
 
         const dc = new DataConnection('remoteId');
@@ -327,7 +327,7 @@ describe('DataConnection', () => {
           index:      0,
           totalParts: 1,
           data:       packedJson,
-          type:       'json'
+          type:       'json',
         };
 
         const dc = new DataConnection('remoteId', {});
@@ -352,7 +352,7 @@ describe('DataConnection', () => {
           index:      0,
           totalParts: 1,
           data:       util.pack(abMessage),
-          type:       'arraybuffer'
+          type:       'arraybuffer',
         };
 
         const dc = new DataConnection('remoteId', {});
@@ -378,7 +378,7 @@ describe('DataConnection', () => {
           index:      0,
           totalParts: 1,
           data:       util.pack(blob),
-          type:       blob.type
+          type:       blob.type,
         };
 
         const dc = new DataConnection('remoteId', {});
@@ -410,14 +410,14 @@ describe('DataConnection', () => {
           index:      0,
           totalParts: 2,
           data:       slice1,
-          type:       typeof slice1
+          type:       typeof slice1,
         };
         const dataMeta2 = {
           id:         'test',
           index:      1,
           totalParts: 2,
           data:       slice2,
-          type:       typeof slice2
+          type:       typeof slice2,
         };
 
         const dc = new DataConnection('remoteId');
@@ -605,7 +605,7 @@ describe('DataConnection', () => {
       it('should correctly send a File', done => {
         const mimeType = 'text/plain;charset=utf-8;';
         const file = new File(['foobar'], 'testfile', {
-          type: mimeType
+          type: mimeType,
         });
 
         let sendSpy = sinon.spy();

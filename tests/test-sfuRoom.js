@@ -18,7 +18,7 @@ describe('SFURoom', () => {
     sfuRoom = new SFURoom(sfuRoomName, peerId,
       {
         pcConfig: pcConfig,
-        stream:   origStream
+        stream:   origStream,
       }
     );
   });
@@ -270,7 +270,7 @@ describe('SFURoom', () => {
   describe('handleJoin', () => {
     describe('when message src is your peerId', () => {
       const joinMessage = {
-        src: peerId
+        src: peerId,
       };
 
       it('should emit an open event', done => {
@@ -316,7 +316,7 @@ describe('SFURoom', () => {
 
     describe('when message src is not your peerId', () => {
       const joinMessage = {
-        src: remotePeerId
+        src: remotePeerId,
       };
 
       it('should add user to members', () => {
@@ -353,7 +353,7 @@ describe('SFURoom', () => {
       it('should remove the user from members', () => {
         const removePeerId = sfuRoom.members[1];
         const leaveMessage = {
-          src: removePeerId
+          src: removePeerId,
         };
 
         sfuRoom.handleLeave(leaveMessage);
@@ -364,7 +364,7 @@ describe('SFURoom', () => {
 
       it('should not change members if user isn\'t in it', () => {
         const leaveMessage = {
-          src: 'notAMember'
+          src: 'notAMember',
         };
 
         sfuRoom.handleLeave(leaveMessage);
@@ -374,7 +374,7 @@ describe('SFURoom', () => {
 
       it('should emit a peerLeave event', done => {
         const leaveMessage = {
-          src: sfuRoom.members[1]
+          src: sfuRoom.members[1],
         };
 
         sfuRoom.on(SFURoom.EVENTS.peerLeave.key, leaveId => {
@@ -391,7 +391,7 @@ describe('SFURoom', () => {
       it('should not remove from members', () => {
         const removePeerId = sfuRoom.members[1];
         const leaveMessage = {
-          src: removePeerId
+          src: removePeerId,
         };
 
         sfuRoom.handleLeave(leaveMessage);
@@ -403,7 +403,7 @@ describe('SFURoom', () => {
       it('should not emit a peerLeave event', done => {
         const removePeerId = sfuRoom.members[1];
         const leaveMessage = {
-          src: removePeerId
+          src: removePeerId,
         };
 
         sfuRoom.on(SFURoom.EVENTS.peerLeave.key, () => {
@@ -521,7 +521,7 @@ describe('SFURoom', () => {
     it('should emit a data event', done => {
       const message = {
         data: 'foobar',
-        src:  remotePeerId
+        src:  remotePeerId,
       };
 
       sfuRoom.on(SFURoom.EVENTS.data.key, receivedMessage => {

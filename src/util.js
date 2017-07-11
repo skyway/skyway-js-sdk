@@ -114,7 +114,7 @@ class Util {
       return 'Unsupported';
     })();
 
-    this.supports = (function() {
+    this.supports = (function(defaultConfig) {
       if (typeof RTCPeerConnection === 'undefined') {
         return {};
       }
@@ -125,7 +125,7 @@ class Util {
       let pc;
       let dc;
       try {
-        pc = new RTCPeerConnection(this.defaultConfig, {});
+        pc = new RTCPeerConnection(defaultConfig, {});
       } catch (e) {
         data = false;
       }
@@ -155,7 +155,7 @@ class Util {
       return {
         binaryBlob: binaryBlob,
       };
-    })();
+    })(this.defaultConfig);
 
     this._logLevel = LogLevel.NONE.value;
   }
@@ -196,9 +196,7 @@ class Util {
    */
   warn() {
     if (this._logLevel >= LogLevel.WARN.value) {
-      let copy = Array.prototype.slice.call(arguments);
-      copy.unshift(LOG_PREFIX);
-      console.warn(...copy);
+      console.warn(LOG_PREFIX, ...copy);
     }
   }
 
@@ -207,9 +205,7 @@ class Util {
    */
   error() {
     if (this._logLevel >= LogLevel.ERROR.value) {
-      let copy = Array.prototype.slice.call(arguments);
-      copy.unshift(LOG_PREFIX);
-      console.error(...copy);
+      console.error(LOG_PREFIX, ...copy);
     }
   }
 
@@ -218,9 +214,7 @@ class Util {
    */
   log() {
     if (this._logLevel >= LogLevel.FULL.value) {
-      let copy = Array.prototype.slice.call(arguments);
-      copy.unshift(LOG_PREFIX);
-      console.log(...copy);
+      console.log(LOG_PREFIX, ...copy);
     }
   }
 

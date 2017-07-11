@@ -16,7 +16,7 @@
     }],
     "max-nested-callbacks": [2,8],
     "no-var": 2,
-    "max-len": [1, 120],
+    "max-len": [1, 140],
     "no-useless-escape": [0],
     "arrow-parens": ["error", "as-needed"],
   },

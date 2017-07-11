@@ -35,14 +35,14 @@ describe('Negotiator', () => {
       createDCSpy = sinon.spy();
       pcStub = {
         addStream:         addStreamSpy,
-        createDataChannel: createDCSpy
+        createDataChannel: createDCSpy,
       };
 
       newPcStub.returns(pcStub);
       const Negotiator = proxyquire('../src/negotiator', {
         '../src/webrtcShim': {
-          RTCPeerConnection: newPcStub
-        }
+          RTCPeerConnection: newPcStub,
+        },
       });
 
       negotiator = new Negotiator();
@@ -61,7 +61,7 @@ describe('Negotiator', () => {
     it('should call _createPeerConnection pcConfig and set _pc to the result', () => {
       const options = {
         originator: true,
-        pcConfig:   {}
+        pcConfig:   {},
       };
 
       negotiator.startConnection(options);
@@ -78,7 +78,7 @@ describe('Negotiator', () => {
             type:       'media',
             stream:     {},
             originator: true,
-            pcConfig:   {}
+            pcConfig:   {},
           };
 
           assert.equal(addStreamSpy.callCount, 0);
@@ -97,7 +97,7 @@ describe('Negotiator', () => {
           const options = {
             type:       'media',
             originator: true,
-            pcConfig:   {}
+            pcConfig:   {},
           };
 
           negotiator.startConnection(options);
@@ -114,7 +114,7 @@ describe('Negotiator', () => {
             stream:     {},
             originator: false,
             pcConfig:   {},
-            offer:      {}
+            offer:      {},
           };
 
           assert.equal(addStreamSpy.callCount, 0);
@@ -134,7 +134,7 @@ describe('Negotiator', () => {
             type:     'media',
             stream:   {},
             pcConfig: {},
-            offer:    {}
+            offer:    {},
           };
 
           assert.equal(addStreamSpy.callCount, 0);
@@ -155,7 +155,7 @@ describe('Negotiator', () => {
           const options = {
             type:       'data',
             originator: true,
-            pcConfig:   {}
+            pcConfig:   {},
           };
 
           negotiator.on(Negotiator.EVENTS.dcCreated.key, () => {
@@ -178,7 +178,7 @@ describe('Negotiator', () => {
             type:       'data',
             originator: false,
             pcConfig:   {},
-            offer:      {}
+            offer:      {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -198,7 +198,7 @@ describe('Negotiator', () => {
             type:       'data',
             originator: false,
             pcConfig:   {},
-            offer:      {}
+            offer:      {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -218,7 +218,7 @@ describe('Negotiator', () => {
         it('shouldn\'t call createDataConnection or addStream', () => {
           const options = {
             originator: true,
-            pcConfig:   {}
+            pcConfig:   {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -239,7 +239,7 @@ describe('Negotiator', () => {
             type:       'data',
             originator: false,
             pcConfig:   {},
-            offer:      {}
+            offer:      {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -257,7 +257,7 @@ describe('Negotiator', () => {
           const options = {
             type:     'data',
             pcConfig: {},
-            offer:    {}
+            offer:    {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -304,15 +304,15 @@ describe('Negotiator', () => {
 
         audioSender = {
           track: {
-            kind: 'audio'
+            kind: 'audio',
           },
-          replaceTrack: sinon.stub()
+          replaceTrack: sinon.stub(),
         };
         videoSender = {
           track: {
-            kind: 'video'
+            kind: 'video',
           },
-          replaceTrack: sinon.stub()
+          replaceTrack: sinon.stub(),
         };
         getSendersStub.returns([audioSender, videoSender]);
 
@@ -321,7 +321,7 @@ describe('Negotiator', () => {
 
         newStream = {
           getVideoTracks: getVideoTracksStub,
-          getAudioTracks: getAudioTracksStub
+          getAudioTracks: getAudioTracksStub,
         };
       });
 
@@ -439,7 +439,7 @@ describe('Negotiator', () => {
         negotiator._pc.createOffer(offer => {
           const offerObject = {
             sdp:  offer.sdp,
-            type: offer.type
+            type: offer.type,
           };
 
           negotiator._lastOffer = offerObject;
@@ -464,7 +464,7 @@ describe('Negotiator', () => {
         negotiator._pc.createOffer(offer => {
           const offerObject = {
             sdp:  offer.sdp,
-            type: offer.type
+            type: offer.type,
           };
 
           negotiator.handleOffer(offerObject);
@@ -485,7 +485,7 @@ describe('Negotiator', () => {
       negotiator._pc.createOffer(offer => {
         const offerObject = {
           sdp:  offer.sdp,
-          type: offer.type
+          type: offer.type,
         };
 
         negotiator.handleOffer(offerObject);
@@ -519,7 +519,7 @@ describe('Negotiator', () => {
           // creating an answer is complicated so just use an offer
           const answerObject = {
             sdp:  offer.sdp,
-            type: 'answer'
+            type: 'answer',
           };
 
           assert.equal(setRemoteStub.callCount, 0);
@@ -546,7 +546,7 @@ describe('Negotiator', () => {
           // creating an answer is complicated so just use an offer
           const answerObject = {
             sdp:  offer.sdp,
-            type: 'answer'
+            type: 'answer',
           };
 
           negotiator.handleAnswer(answerObject);
@@ -576,7 +576,7 @@ describe('Negotiator', () => {
     const candidate = {
       candidate:     'candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0',
       sdpMLineIndex: 0,
-      sdpMid:        'data'
+      sdpMid:        'data',
     };
 
     let negotiator;
@@ -586,7 +586,7 @@ describe('Negotiator', () => {
       const options = {
         type:       'data',
         originator: false,
-        offer:      {}
+        offer:      {},
       };
       negotiator.startConnection(options);
     });
@@ -638,8 +638,8 @@ describe('Negotiator', () => {
       const pcStub = sinon.stub();
       const Negotiator = proxyquire('../src/negotiator', {
         '../src/webrtcShim': {
-          RTCPeerConnection: pcStub
-        }
+          RTCPeerConnection: pcStub,
+        },
       });
       const negotiator = new Negotiator();
       const pcConf = {};
@@ -740,12 +740,12 @@ describe('Negotiator', () => {
         beforeEach(() => {
           pcStub = sinon.stub();
           pcStub.returns({
-            iceConnectionState: 'disconnected'
+            iceConnectionState: 'disconnected',
           });
           const Negotiator = proxyquire('../src/negotiator', {
             '../src/webrtcShim': {
-              RTCPeerConnection: pcStub
-            }
+              RTCPeerConnection: pcStub,
+            },
           });
           negotiator = new Negotiator();
           pc = negotiator._pc = negotiator._createPeerConnection();
@@ -1071,7 +1071,7 @@ describe('Negotiator', () => {
 
     const sdp = {
       type: 'offer',
-      sdp:  'sdp'
+      sdp:  'sdp',
     };
 
     beforeEach(() => {

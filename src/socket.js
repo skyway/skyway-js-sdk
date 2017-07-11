@@ -121,6 +121,11 @@ class Socket extends EventEmitter {
     });
   }
 
+  /**
+   * Connect to "new" server.
+   * @param {number} numAttempts - Time to connect(default to 0).
+   * @private
+   */
   _connectToNewServer(numAttempts = 0) {
     // max number of attempts to get a new server from the dispatcher.
     const maxNumberOfAttempts = 10;

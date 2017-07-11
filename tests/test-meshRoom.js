@@ -36,12 +36,12 @@ describe('MeshRoom', () => {
       on:            onSpy,
       close:         closeSpy,
       answer:        answerSpy,
-      replaceStream: replaceStreamSpy
+      replaceStream: replaceStreamSpy,
     });
 
     dcStub.returns({
       type: 'data',
-      on:   onSpy
+      on:   onSpy,
     });
 
     MeshRoom = proxyquire('../src/meshRoom', {'./mediaConnection': mcStub, './dataConnection': dcStub});
@@ -130,7 +130,7 @@ describe('MeshRoom', () => {
   describe('handleJoin', () => {
     describe('when message src is your peerId', () => {
       const joinMessage = {
-        src: peerId
+        src: peerId,
       };
 
       it('should emit an open event', done => {
@@ -168,7 +168,7 @@ describe('MeshRoom', () => {
 
     describe('when message src is not your peerId', () => {
       const joinMessage = {
-        src: remotePeerId
+        src: remotePeerId,
       };
 
       it('should emit a peerJoin event', done => {
@@ -215,7 +215,7 @@ describe('MeshRoom', () => {
       const data = {
         connectionId:   connId1,
         connectionType: 'media',
-        src:            remotePeerId
+        src:            remotePeerId,
       };
 
       it('should create new MediaConnection and add it to connections', () => {
@@ -259,7 +259,7 @@ describe('MeshRoom', () => {
       const data = {
         connectionId:   connId1,
         connectionType: 'foobar',
-        src:            remotePeerId
+        src:            remotePeerId,
       };
 
       it('should not create a media or data connection', () => {
@@ -280,7 +280,7 @@ describe('MeshRoom', () => {
 
       const answerMessage = {
         connectionId: connId1,
-        src:          remotePeerId
+        src:          remotePeerId,
       };
       meshRoom.handleAnswer(answerMessage);
 
@@ -298,7 +298,7 @@ describe('MeshRoom', () => {
 
       const candidateMessage = {
         connectionId: connId1,
-        src:          remotePeerId
+        src:          remotePeerId,
       };
       meshRoom.handleCandidate(candidateMessage);
 
@@ -393,7 +393,7 @@ describe('MeshRoom', () => {
 
     describe('when type is data', () => {
       const options = {
-        pcConfig: pcConfig
+        pcConfig: pcConfig,
       };
 
       it('should create a DataConnection for each peerId', () => {
@@ -433,7 +433,7 @@ describe('MeshRoom', () => {
     describe('when type is media', () => {
       const options = {
         pcConfig: pcConfig,
-        stream:   origStream
+        stream:   origStream,
       };
 
       it('should create a MediaConnection for each peerId', () => {
@@ -539,7 +539,7 @@ describe('MeshRoom', () => {
         it('should emit offer message including room name', done => {
           const offer = {};
           const offerMessage = {
-            offer: offer
+            offer: offer,
           };
 
           meshRoom.on(MeshRoom.MESSAGE_EVENTS.offer.key, emittedOfferMessage => {
@@ -557,7 +557,7 @@ describe('MeshRoom', () => {
         it('should emit answer message including room name', done => {
           const answer = {};
           const answerMessage = {
-            answer: answer
+            answer: answer,
           };
 
           meshRoom.on(MeshRoom.MESSAGE_EVENTS.answer.key, emittedAnswerMessage => {
@@ -575,7 +575,7 @@ describe('MeshRoom', () => {
         it('should emit candidate message including room name', done => {
           const candidate = {};
           const candidateMessage = {
-            candidate: candidate
+            candidate: candidate,
           };
 
           meshRoom.on(MeshRoom.MESSAGE_EVENTS.candidate.key, emittedCandidateMessage => {
@@ -625,7 +625,7 @@ describe('MeshRoom', () => {
     it('should emit a data event', done => {
       const message = {
         data: 'foobar',
-        src:  remotePeerId
+        src:  remotePeerId,
       };
 
       meshRoom.on(MeshRoom.EVENTS.data.key, receivedMessage => {
