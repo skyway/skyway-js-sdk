@@ -122,8 +122,8 @@ class Socket extends EventEmitter {
   }
 
   /**
-   * Connect to "new" server.
-   * @param {number} numAttempts - Time to connect(default to 0).
+   * Connect to "new" signaling server. Attempts up to 10 times before giving up and emitting an error on the socket.
+   * @param {number} [numAttempts=0] - Current number of attempts.
    * @private
    */
   _connectToNewServer(numAttempts = 0) {
