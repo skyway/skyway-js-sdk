@@ -1,7 +1,7 @@
 'use strict';
 
-const Connection       = require('../src/connection');
-const MediaConnection  = require('../src/mediaConnection');
+const Connection       = require('../src/peer/connection');
+const MediaConnection  = require('../src/peer/mediaConnection');
 
 const assert      = require('power-assert');
 const sinon       = require('sinon');
@@ -44,7 +44,7 @@ describe('MeshRoom', () => {
       on:   onSpy,
     });
 
-    MeshRoom = proxyquire('../src/meshRoom', {'./mediaConnection': mcStub, './dataConnection': dcStub});
+    MeshRoom = proxyquire('../src/peer/meshRoom', {'./mediaConnection': mcStub, './dataConnection': dcStub});
     meshRoom = new MeshRoom(meshRoomName, peerId, {stream: origStream, pcConfig: pcConfig});
   });
 

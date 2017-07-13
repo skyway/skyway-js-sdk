@@ -1,11 +1,11 @@
 'use strict';
 
-const assert           = require('power-assert');
-const sinon            = require('sinon');
-const proxyquire       = require('proxyquireify')(require);
+const assert     = require('power-assert');
+const sinon      = require('sinon');
+const proxyquire = require('proxyquireify')(require);
 
-const Negotiator       = require('../src/negotiator');
-const util             = require('../src/util');
+const Negotiator = require('../src/peer/negotiator');
+const logger     = require('../src/shared/logger');
 
 describe('Negotiator', () => {
   describe('Constructor', () => {
@@ -36,7 +36,7 @@ describe('Negotiator', () => {
       };
 
       newPcStub.returns(pcStub);
-      const Negotiator = proxyquire('../src/negotiator', {
+      const Negotiator = proxyquire('../src/peer/negotiator', {
         '../src/webrtcShim': {
           RTCPeerConnection: newPcStub,
         },
@@ -605,8 +605,8 @@ describe('Negotiator', () => {
       assert.equal(candidate.sdpMid, addIceArg.sdpMid);
     });
 
-    it('should call util.error if addIceCandidate fails', () => {
-      const errorStub = sinon.stub(util, 'error');
+    it('should call logger.error if addIceCandidate fails', () => {
+      const errorStub = sinon.stub(logger, 'error');
       const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
       addIceStub.returns(Promise.reject());
 
@@ -633,7 +633,7 @@ describe('Negotiator', () => {
   describe('_createPeerConnection', () => {
     it('should call RTCPeerConnection with pcConfig', () => {
       const pcStub = sinon.stub();
-      const Negotiator = proxyquire('../src/negotiator', {
+      const Negotiator = proxyquire('../src/peer/negotiator', {
         '../src/webrtcShim': {
           RTCPeerConnection: pcStub,
         },
@@ -739,7 +739,7 @@ describe('Negotiator', () => {
           pcStub.returns({
             iceConnectionState: 'disconnected',
           });
-          const Negotiator = proxyquire('../src/negotiator', {
+          const Negotiator = proxyquire('../src/peer/negotiator', {
             '../src/webrtcShim': {
               RTCPeerConnection: pcStub,
             },
@@ -848,7 +848,7 @@ describe('Negotiator', () => {
         let logSpy;
 
         beforeEach(() => {
-          logSpy = sinon.spy(util, 'log');
+          logSpy = sinon.spy(logger, 'log');
         });
 
         afterEach(() => {

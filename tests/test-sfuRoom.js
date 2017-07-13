@@ -1,7 +1,7 @@
 'use strict';
 
-const SFURoom    = require('../src/sfuRoom');
-const Negotiator = require('../src/negotiator');
+const SFURoom    = require('../src/peer/sfuRoom');
+const Negotiator = require('../src/peer/negotiator');
 
 const assert = require('power-assert');
 const sinon  = require('sinon');

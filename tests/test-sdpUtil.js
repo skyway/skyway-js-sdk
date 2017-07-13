@@ -1,6 +1,6 @@
 'use strict';
 
-const sdpUtil = require('../src/sdpUtil');
+const sdpUtil = require('../src/shared/sdpUtil');
 
 const assert  = require('power-assert');
 
