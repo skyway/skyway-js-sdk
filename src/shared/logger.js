@@ -11,7 +11,7 @@ const LogLevel = new Enum({
 });
 
 /**
- * Class for logging util
+ * Class for logging
  * This class exports only one instance(a.k.a. Singleton)
  */
 class Logger {

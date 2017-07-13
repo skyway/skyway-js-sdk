@@ -1,17 +1,17 @@
 'use strict';
 
+const EventEmitter = require('events');
+const Enum         = require('enum');
+
 const Connection      = require('./connection');
 const DataConnection  = require('./dataConnection');
 const MediaConnection = require('./mediaConnection');
 const SFURoom         = require('./sfuRoom');
 const MeshRoom        = require('./meshRoom');
 const Socket          = require('./socket');
-const util            = require('./util');
-const logger          = require('./util/logger');
-const config          = require('./util/config');
-
-const EventEmitter = require('events');
-const Enum         = require('enum');
+const util            = require('./shared/util');
+const logger          = require('./shared/logger');
+const config          = require('./shared/config');
 
 const PeerEvents = new Enum([
   'open',

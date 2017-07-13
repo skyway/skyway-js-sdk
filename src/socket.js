@@ -1,11 +1,11 @@
 'use strict';
 
 const io = require('socket.io-client');
-
-const config       = require('./util/config');
-const logger       = require('./util/logger');
 const EventEmitter = require('events');
 const queryString  = require('query-string');
+
+const config = require('./shared/config');
+const logger = require('./shared/logger');
 
 /**
  * Class to handle WS/HTTP communication with the signalling server

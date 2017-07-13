@@ -1,11 +1,12 @@
 'use strict';
 
-const Room       = require('./room');
-const Negotiator = require('./negotiator');
-const logger     = require('./util/logger');
-
 const Enum    = require('enum');
 const Interop = require('sdp-interop').Interop;
+
+const Room       = require('./room');
+const Negotiator = require('./negotiator');
+const logger     = require('./shared/logger');
+
 
 const interop = new Interop();
 

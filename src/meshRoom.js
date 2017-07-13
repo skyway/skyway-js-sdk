@@ -1,11 +1,12 @@
 'use strict';
 
 const Enum            = require('enum');
-const logger          = require('./util/logger');
+
 const Room            = require('./room');
 const Connection      = require('./connection');
 const MediaConnection = require('./mediaConnection');
 const DataConnection = require('./dataConnection');
+const logger          = require('./shared/logger');
 
 const MessageEvents = [
   'broadcastByDC',

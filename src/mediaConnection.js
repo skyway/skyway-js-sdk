@@ -1,10 +1,10 @@
 'use strict';
 
+const Enum = require('enum');
+
 const Connection = require('./connection');
 const Negotiator = require('./negotiator');
-const logger     = require('./util/logger');
-
-const Enum = require('enum');
+const logger     = require('./shared/logger');
 
 const MCEvents = new Enum([
   'stream',

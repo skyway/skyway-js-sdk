@@ -1,12 +1,12 @@
 'use strict';
 
-const util       = require('./util');
-const logger     = require('./util/logger');
-const config     = require('./util/config');
-const Negotiator = require('./negotiator');
-
 const EventEmitter = require('events');
 const Enum         = require('enum');
+
+const util       = require('./shared/util');
+const logger     = require('./shared/logger');
+const config     = require('./shared/config');
+const Negotiator = require('./negotiator');
 
 const ConnectionEvents = new Enum([
   'candidate',
