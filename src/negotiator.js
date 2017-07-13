@@ -4,7 +4,6 @@ const EventEmitter = require('events');
 const Enum         = require('enum');
 
 const sdpUtil = require('./sdpUtil');
-const util    = require('./util');
 const logger  = require('./util/logger');
 
 const NegotiatorEvents = new Enum([
@@ -324,7 +323,10 @@ class Negotiator extends EventEmitter {
 
         resolve(offer);
       }, error => {
-        util.emitError.call(this, 'webrtc', error);
+        error.type = 'webrtc';
+        logger.error(error);
+        this.emit(Negotiator.EVENTS.error.key, error);
+
         logger.log('Failed to createOffer, ', error);
       }, options);
     });
@@ -356,13 +358,19 @@ class Negotiator extends EventEmitter {
         this._pc.setLocalDescription(answer, () => {
           logger.log('Set localDescription: answer');
           resolve(answer);
-        }, err => {
-          util.emitError.call(this, 'webrtc', err);
+        }, error => {
+          error.type = 'webrtc';
+          logger.error(error);
+          this.emit(Negotiator.EVENTS.error.key, error);
+
           logger.log('Failed to setLocalDescription, ', err);
         });
-      }, err => {
-        util.emitError.call(this, 'webrtc', err);
-        logger.log('Failed to createAnswer, ', err);
+      }, error => {
+        error.type = 'webrtc';
+        logger.error(error);
+        this.emit(Negotiator.EVENTS.error.key, error);
+
+        logger.log('Failed to createAnswer, ', error);
       });
     });
   }
@@ -381,7 +389,10 @@ class Negotiator extends EventEmitter {
         this.emit(Negotiator.EVENTS.offerCreated.key, offer);
         resolve(offer);
       }, error => {
-        util.emitError.call(this, 'webrtc', error);
+        error.type = 'webrtc';
+        logger.error(error);
+        this.emit(Negotiator.EVENTS.error.key, error);
+
         logger.log('Failed to setLocalDescription, ', error);
         reject(error);
       });
@@ -400,9 +411,12 @@ class Negotiator extends EventEmitter {
       this._pc.setRemoteDescription(new RTCSessionDescription(sdp), () => {
         logger.log('Set remoteDescription:', sdp.type);
         resolve();
-      }, err => {
-        util.emitError.call(this, 'webrtc', err);
-        logger.log('Failed to setRemoteDescription: ', err);
+      }, error => {
+        error.type = 'webrtc';
+        logger.error(error);
+        this.emit(Negotiator.EVENTS.error.key, error);
+
+        logger.log('Failed to setRemoteDescription: ', error);
       });
     });
   }

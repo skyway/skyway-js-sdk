@@ -172,7 +172,10 @@ class Peer extends EventEmitter {
     }
 
     if (!roomName) {
-      util.emitError.call(this, 'room-error', 'Room name must be defined.');
+      const err = new Error('Room name must be defined.');
+      err.type = 'room-error';
+      logger.error(err);
+      this.emit(Peer.EVENTS.error.key, err);
       return null;
     }
 
@@ -314,10 +317,11 @@ class Peer extends EventEmitter {
     logger.warn('You cannot connect to a new Peer because you are not connecting to SkyWay server now.' +
       'You can create a new Peer to reconnect, or call reconnect() ' +
       'on this peer if you believe its ID to still be available.');
-    util.emitError.call(
-      this,
-      'disconnected',
-      'Cannot connect to new Peer before connecting to SkyWay server or after disconnecting from the server.');
+
+    const err = new Error('Cannot connect to new Peer before connecting to SkyWay server or after disconnecting from the server.');
+    err.type = 'disconnected';
+    logger.error(err);
+    this.emit(Peer.EVENTS.error.key, err);
   }
 
   /**
@@ -348,7 +352,11 @@ class Peer extends EventEmitter {
     this.socket.on('disconnect', () => {
       // If we haven't explicitly disconnected, emit error and disconnect.
       this.disconnect();
-      util.emitError.call(this, 'socket-error', 'Lost connection to server.');
+
+      const err = new Error('Lost connection to server.');
+      err.type = 'socket-error';
+      logger.error(err);
+      this.emit(Peer.EVENTS.error.key, err);
     });
 
     this.socket.start(id, this.options.token, this.options.credential);
@@ -478,7 +486,10 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(util.MESSAGE_TYPES.SERVER.ERROR.key, error => {
-      util.emitError.call(this, error.type, error.message);
+      const err = new Error(error.message);
+      err.type = error.type;
+      logger.error(err);
+      this.emit(Peer.EVENTS.error.key, err);
     });
 
     this.socket.on(util.MESSAGE_TYPES.SERVER.LEAVE.key, peerId => {
@@ -739,7 +750,11 @@ class Peer extends EventEmitter {
   _abort(type, message) {
     logger.error('Aborting!');
     this.disconnect();
-    util.emitError.call(this, type, message);
+
+    const err = new Error(message);
+    err.type = type;
+    logger.error(err);
+    this.emit(Peer.EVENTS.error.key, err);
   }
 
   /**
