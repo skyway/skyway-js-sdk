@@ -6,7 +6,7 @@ const Room            = require('./room');
 const Connection      = require('./connection');
 const MediaConnection = require('./mediaConnection');
 const DataConnection = require('./dataConnection');
-const logger          = require('./shared/logger');
+const logger          = require('../shared/logger');
 
 const MessageEvents = [
   'broadcastByDC',

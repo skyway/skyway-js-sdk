@@ -3,10 +3,10 @@
 const EventEmitter = require('events');
 const Enum         = require('enum');
 
-const util       = require('./shared/util');
-const logger     = require('./shared/logger');
-const config     = require('./shared/config');
 const Negotiator = require('./negotiator');
+const util       = require('../shared/util');
+const logger     = require('../shared/logger');
+const config     = require('../shared/config');
 
 const ConnectionEvents = new Enum([
   'candidate',

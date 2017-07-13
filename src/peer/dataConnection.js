@@ -4,11 +4,11 @@ const BinaryPack = require('js-binarypack');
 const Enum       = require('enum');
 const sizeof     = require('object-sizeof');
 
-const Connection = require('./connection');
 const Negotiator = require('./negotiator');
-const util       = require('./shared/util');
-const logger     = require('./shared/logger');
-const config     = require('./shared/config');
+const Connection = require('./connection');
+const util       = require('../shared/util');
+const logger     = require('../shared/logger');
+const config     = require('../shared/config');
 
 const DCEvents = new Enum([
   'open',
