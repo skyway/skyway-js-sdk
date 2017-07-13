@@ -42,8 +42,8 @@ describe('Socket', () => {
 
     Socket = proxyquire('../src/peer/socket', {
       'socket.io-client': socketIoClientStub,
-      './shaerd/config':  config,
-      './shaerd/util':    util,
+      './shared/config':  config,
+      './shared/util':    util,
     });
 
     socket = new Socket(apiKey, {

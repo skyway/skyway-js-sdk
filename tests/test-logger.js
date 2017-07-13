@@ -1,6 +1,6 @@
 'use strict';
 
-const logger = require('../src/shaerd/logger');
+const logger = require('../src/shared/logger');
 
 const assert = require('power-assert');
 const sinon  = require('sinon');
