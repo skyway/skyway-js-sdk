@@ -21,6 +21,7 @@ class Logger {
    */
   constructor() {
     this._logLevel = LogLevel.NONE.value;
+    this.LOG_LEVELS = LogLevel;
   }
 
   /**
@@ -81,14 +82,6 @@ class Logger {
     if (this._logLevel >= LogLevel.FULL.value) {
       console.log(LOG_PREFIX, ...args);
     }
-  }
-
-  /**
-   * Log levels.
-   * @type {Enum}
-   */
-  static get LOG_LEVELS() {
-    return LogLevel;
   }
 }
 
