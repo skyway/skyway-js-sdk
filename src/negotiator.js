@@ -3,14 +3,8 @@
 const EventEmitter = require('events');
 const Enum         = require('enum');
 
-const shim         = require('../src/webrtcShim');
-const sdpUtil      = require('../src/sdpUtil');
-
-const RTCPeerConnection     = shim.RTCPeerConnection;
-const RTCIceCandidate       = shim.RTCIceCandidate;
-const RTCSessionDescription = shim.RTCSessionDescription;
-
-const util = require('./util');
+const sdpUtil = require('./sdpUtil');
+const util    = require('./util');
 
 const NegotiatorEvents = new Enum([
   'addStream',
