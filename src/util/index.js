@@ -51,16 +51,11 @@ class Util {
     this.TURN_HOST = 'turn.skyway.io';
     this.TURN_PORT = 443;
 
-    this.debug = false;
-
-    this.setZeroTimeout = undefined;
-
     this.MESSAGE_TYPES = {
       CLIENT: clientMessages,
       SERVER: serverMessages,
     };
 
-    this.chunkedBrowsers = {Chrome: 1};
     // Current recommended maximum chunksize is 16KB (DataChannel spec)
     // https://tools.ietf.org/html/draft-ietf-rtcweb-data-channel-13
     // The actual chunk size is adjusted in dataChannel to accomodate metaData
@@ -85,20 +80,6 @@ class Util {
       }],
       iceTransportPolicy: 'all',
     };
-
-    // Returns the current browser.
-    this.browser = (function() {
-      if (window.mozRTCPeerConnection) {
-        return 'Firefox';
-      }
-      if (window.webkitRTCPeerConnection) {
-        return 'Chrome';
-      }
-      if (window.RTCPeerConnection) {
-        return 'Supported';
-      }
-      return 'Unsupported';
-    })();
   }
 
   /**
