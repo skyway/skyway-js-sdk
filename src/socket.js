@@ -1,7 +1,7 @@
 'use strict';
 
 // depends on platform, you have to change the setting of object 'io'.
-const io           = require('socket.io-client');  // for generic browser
+const io           = require('socket.io-client'); // for generic browser
 // const io           = require('socket.io-client/socket.io');  // for react-native
 
 const util         = require('./util');
@@ -105,7 +105,7 @@ class Socket extends EventEmitter {
         'force new connection': true,
         'query':                query,
         'reconnectionAttempts': util.reconnectionAttempts,
-        'transports':           transports
+        'transports':           transports,
       });
 
       this._io.on('reconnect_failed', () => {
@@ -121,6 +121,11 @@ class Socket extends EventEmitter {
     });
   }
 
+  /**
+   * Connect to "new" signaling server. Attempts up to 10 times before giving up and emitting an error on the socket.
+   * @param {number} [numAttempts=0] - Current number of attempts.
+   * @private
+   */
   _connectToNewServer(numAttempts = 0) {
     // max number of attempts to get a new server from the dispatcher.
     const maxNumberOfAttempts = 10;

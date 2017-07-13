@@ -11,31 +11,31 @@ module.exports =  {
     transform: [
       ['browserify-istanbul', {
         instrumenter:       require('isparta'),
-        instrumenterConfig: {babel: {presets: ['es2015']}}
+        instrumenterConfig: {babel: {presets: ['es2015']}},
       }],
       ['babelify', {presets: ['es2015'],
-        plugins: ['babel-plugin-espower']}
-      ]
+        plugins: ['babel-plugin-espower']},
+      ],
     ],
-    plugin: ['proxyquireify/plugin']
+    plugin: ['proxyquireify/plugin'],
   },
 
   preprocessors: {
     'tests/**/test-*.js': 'browserify',
-    'src/**/*.js':        ['browserify']
+    'src/**/*.js':        ['browserify'],
   },
 
   reporters: [
     'mocha',
-    'coverage'
+    'coverage',
   ],
 
-  browsers: ['Chrome'],
+  browsers: ['ChromeHeadless'],
 
   coverageReporter: {
     reporters: [
       {type: 'html', dir: 'coverage/'},
-      {type: 'text'}
-    ]
-  }
+      {type: 'text'},
+    ],
+  },
 };

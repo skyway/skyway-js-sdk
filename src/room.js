@@ -12,7 +12,7 @@ const Events = [
   'peerLeave',
   'error',
   'data',
-  'log'
+  'log',
 ];
 
 const MessageEvents = [
@@ -22,7 +22,7 @@ const MessageEvents = [
   'leave',
   'close',
   'getLog',
-  'broadcast'
+  'broadcast',
 ];
 
 const RoomEvents = new Enum(Events);
@@ -33,7 +33,6 @@ const RoomMessageEvents = new Enum(MessageEvents);
  * @extends EventEmitter
  */
 class Room extends EventEmitter {
-
   /**
    * Creates a Room instance.
    * @param {string} name - Room name.
@@ -73,7 +72,7 @@ class Room extends EventEmitter {
   handleData(dataMessage) {
     const message = {
       data: dataMessage.data,
-      src:  dataMessage.src
+      src:  dataMessage.src,
     };
     this.emit(Room.EVENTS.data.key, message);
   }
@@ -92,7 +91,7 @@ class Room extends EventEmitter {
    */
   getLog() {
     const message = {
-      roomName: this.name
+      roomName: this.name,
     };
     this.emit(Room.MESSAGE_EVENTS.getLog.key, message);
   }

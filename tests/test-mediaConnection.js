@@ -37,7 +37,7 @@ describe('MediaConnection', () => {
       cleanup:         cleanupSpy,
       handleAnswer:    answerSpy,
       handleCandidate: candidateSpy,
-      replaceStream:   replaceSpy
+      replaceStream:   replaceSpy,
     });
 
     Connection = proxyquire(
@@ -84,7 +84,7 @@ describe('MediaConnection', () => {
       const stream = Symbol();
       const options = {
         stream:   stream,
-        metadata: metadata
+        metadata: metadata,
       };
 
       const mc = new MediaConnection(id, options);

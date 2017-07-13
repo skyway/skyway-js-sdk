@@ -18,7 +18,7 @@ describe('Util', () => {
         'ABCD 0123',
         'ABCD_0123',
         'ABCD-0123-abcd-7890',
-        'ABCD-0123------------abcd-7890'
+        'ABCD-0123------------abcd-7890',
       ];
       validIds.forEach(id => {
         assert(util.validateId(id));
@@ -30,7 +30,7 @@ describe('Util', () => {
         'あいうえお',
         '!@#$%^&&*()',
         'ABCD  0000 ',
-        '><script>alert(1);</script>'
+        '><script>alert(1);</script>',
       ];
       invalidIds.forEach(id => {
         assert(util.validateId(id) === null);
@@ -42,7 +42,7 @@ describe('Util', () => {
     it('should be valid when valid key is given', () => {
       const validKeys = [
         '00000000-0000-0000-0000-000000000000',
-        'abcdefgh-1234-5678-jklm-zxcvasdfqwrt'
+        'abcdefgh-1234-5678-jklm-zxcvasdfqwrt',
       ];
       validKeys.forEach(key => {
         assert(util.validateKey(key));
@@ -54,7 +54,7 @@ describe('Util', () => {
         '0-0-0-0',
         'あいうえお',
         '><script>alert(1);</script>',
-        '00000000-0000-0000-0000-0000000000001'
+        '00000000-0000-0000-0000-0000000000001',
       ];
       validKeys.forEach(key => {
         assert(util.validateKey(key) === null);
@@ -218,7 +218,9 @@ describe('Util', () => {
     let errorStub;
     let emitter;
 
+    // eslint-disable-next-line require-jsdoc
     class DummyEmitter extends EventEmitter {
+      // eslint-disable-next-line require-jsdoc
       static get EVENTS() {
         return new Enum(['error']);
       }

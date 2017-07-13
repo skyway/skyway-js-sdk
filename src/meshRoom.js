@@ -9,7 +9,7 @@ const DataConnection = require('./dataConnection');
 
 const MessageEvents = [
   'broadcastByDC',
-  'getPeers'
+  'getPeers',
 ];
 
 const MeshEvents = new Enum([]);
@@ -22,7 +22,6 @@ MeshMessageEvents.extend(Room.MESSAGE_EVENTS.enums);
  * @extends Room
  */
 class MeshRoom extends Room {
-
   /**
    * Create a fullmesh room.
    * @param {string} name - Room name.
@@ -54,7 +53,7 @@ class MeshRoom extends Room {
 
     const data = {
       roomName: this.name,
-      type:     'media'
+      type:     'media',
     };
 
     this.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, data);
@@ -68,7 +67,7 @@ class MeshRoom extends Room {
   connect() {
     const data = {
       roomName: this.name,
-      type:     'data'
+      type:     'data',
     };
 
     this.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, data);
@@ -86,7 +85,7 @@ class MeshRoom extends Room {
       videoBandwidth: this._options.videoBandwidth,
       audioBandwidth: this._options.audioBandwidth,
       videoCodec:     this._options.videoCodec,
-      audioCodec:     this._options.audioCodec
+      audioCodec:     this._options.audioCodec,
     };
 
     this._makeConnections(peerIds, 'media', options);
@@ -98,7 +97,7 @@ class MeshRoom extends Room {
    */
   makeDataConnections(peerIds) {
     const options = {
-      pcConfig: this._pcConfig
+      pcConfig: this._pcConfig,
     };
 
     this._makeConnections(peerIds, 'data', options);
@@ -163,7 +162,7 @@ class MeshRoom extends Room {
           connectionId: connectionId,
           payload:      offerMessage,
           metadata:     offerMessage.metadata,
-          pcConfig:     this._pcConfig
+          pcConfig:     this._pcConfig,
         }
       );
       util.log('MediaConnection created in OFFER');
@@ -174,7 +173,7 @@ class MeshRoom extends Room {
         videoBandwidth: this._options.videoBandwidth,
         audioBandwidth: this._options.audioBandwidth,
         videoCodec:     this._options.videoCodec,
-        audioCodec:     this._options.audioCodec
+        audioCodec:     this._options.audioCodec,
       });
     } else {
       util.warn(`Received malformed connection type: ${offerMessage.connectionType}`);
@@ -231,7 +230,7 @@ class MeshRoom extends Room {
   send(data) {
     const message = {
       roomName: this.name,
-      data:     data
+      data:     data,
     };
     this.emit(MeshRoom.MESSAGE_EVENTS.broadcast.key, message);
   }
@@ -248,7 +247,7 @@ class MeshRoom extends Room {
       }
     }
     const message = {
-      roomName: this.name
+      roomName: this.name,
     };
     this.emit(MeshRoom.MESSAGE_EVENTS.leave.key, message);
     this.emit(MeshRoom.EVENTS.close.key);

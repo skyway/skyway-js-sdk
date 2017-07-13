@@ -6,7 +6,6 @@ const sdpTransform = require('sdp-transform');
  * Class that contains utility functions for SDP munging.
  */
 class SdpUtil {
-
   /**
    * Add b=AS to m=video section and return the SDP.
    * @param {string} sdp - A SDP.
@@ -124,11 +123,11 @@ class SdpUtil {
         media.bandwidth = [{
           // Chrome supports only 'AS'
           type:  'AS',
-          limit: bandwidth.toString()
+          limit: bandwidth.toString(),
         }, {
           // Firefox Supports only 'TIAS' from M49
           type:  'TIAS',
-          limit: (bandwidth * 1000).toString()
+          limit: (bandwidth * 1000).toString(),
         }];
       }
       return media;

@@ -10,7 +10,7 @@ const ConnectionEvents = new Enum([
   'candidate',
   'offer',
   'answer',
-  'close'
+  'close',
 ]);
 
 /**
@@ -155,7 +155,7 @@ class Connection extends EventEmitter {
         answer:         answer,
         dst:            this.remoteId,
         connectionId:   this.id,
-        connectionType: this.type
+        connectionType: this.type,
       };
       this.emit(Connection.EVENTS.answer.key, connectionAnswer);
     });
@@ -166,7 +166,7 @@ class Connection extends EventEmitter {
         dst:            this.remoteId,
         connectionId:   this.id,
         connectionType: this.type,
-        metadata:       this.metadata
+        metadata:       this.metadata,
       };
       if (this.serialization) {
         connectionOffer.serialization = this.serialization;
@@ -182,7 +182,7 @@ class Connection extends EventEmitter {
         candidate:      candidate,
         dst:            this.remoteId,
         connectionId:   this.id,
-        connectionType: this.type
+        connectionType: this.type,
       };
       this.emit(Connection.EVENTS.candidate.key, connectionCandidate);
     });

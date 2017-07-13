@@ -11,7 +11,7 @@ const interop = new Interop();
 
 const MessageEvents = [
   'offerRequest',
-  'candidate'
+  'candidate',
 ];
 
 const SFUEvents = new Enum([]);
@@ -59,7 +59,7 @@ class SFURoom extends Room {
     }
 
     const data = {
-      roomName: this.name
+      roomName: this.name,
     };
 
     this.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, data);
@@ -106,7 +106,7 @@ class SFURoom extends Room {
         type:     'media',
         stream:   this._localStream,
         pcConfig: this._options.pcConfig,
-        offer:    offer
+        offer:    offer,
       });
       this._setupNegotiatorMessageHandlers();
       this._connectionStarted = true;
@@ -147,7 +147,7 @@ class SFURoom extends Room {
     this._negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
       // Renegotiate by requesting an offer then sending an answer when one is created.
       const offerRequestMessage = {
-        roomName: this.name
+        roomName: this.name,
       };
       this.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, offerRequestMessage);
     });
@@ -155,7 +155,7 @@ class SFURoom extends Room {
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
       const answerMessage = {
         roomName: this.name,
-        answer:   answer
+        answer:   answer,
       };
       this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
     });
@@ -167,7 +167,7 @@ class SFURoom extends Room {
     this._negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
       const candidateMessage = {
         roomName:  this.name,
-        candidate: candidate
+        candidate: candidate,
       };
       this.emit(SFURoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
     });
@@ -229,7 +229,7 @@ class SFURoom extends Room {
 
     const message = {
       roomName: this.name,
-      data:     data
+      data:     data,
     };
     this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
   }
@@ -249,7 +249,7 @@ class SFURoom extends Room {
     this._open = false;
 
     const message = {
-      roomName: this.name
+      roomName: this.name,
     };
     this.emit(SFURoom.MESSAGE_EVENTS.leave.key, message);
     this.emit(SFURoom.EVENTS.close.key);

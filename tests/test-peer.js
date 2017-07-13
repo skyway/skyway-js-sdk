@@ -59,7 +59,9 @@ describe('Peer', () => {
     // We have to add the spy like this in order to get the
     // DataConnection object using DataConnectionConstructorSpy.thisValues
     DataConnectionConstructorSpy = sinon.spy();
+    // eslint-disable-next-line require-jsdoc
     class DCSpier extends DataConnection {
+      // eslint-disable-next-line require-jsdoc
       constructor(...args) {
         super(...args);
         this.spy = DataConnectionConstructorSpy;
@@ -109,7 +111,7 @@ describe('Peer', () => {
   describe('Constructor', () => {
     it('should create a Peer object', () => {
       const peer = new Peer({
-        key: apiKey
+        key: apiKey,
       });
 
       assert(peer);
@@ -118,7 +120,7 @@ describe('Peer', () => {
 
     it('should create a Peer object with default options', () => {
       const peer = new Peer({
-        key: apiKey
+        key: apiKey,
       });
 
       assert.equal(peer.options.debug.value, util.LOG_LEVELS.NONE.value);
@@ -133,7 +135,7 @@ describe('Peer', () => {
       const peer = new Peer({
         key:    apiKey,
         debug:  util.LOG_LEVELS.WARN,
-        config: config
+        config: config,
       });
       // Overwritten
       assert.equal(peer.options.key, apiKey);
@@ -153,7 +155,7 @@ describe('Peer', () => {
             key:    apiKey,
             host:   mySignalingServer.host,
             port:   mySignalingServer.port,
-            secure: mySignalingServer.secure
+            secure: mySignalingServer.secure,
           });
 
           assert.equal(peer.options.host, mySignalingServer.host);
@@ -167,7 +169,7 @@ describe('Peer', () => {
       let peer;
       try {
         peer = new Peer('間違ったIDです', {
-          key: apiKey
+          key: apiKey,
         });
       } catch (e) {
         assert.equal(peer, undefined);
@@ -179,7 +181,7 @@ describe('Peer', () => {
       let peer;
       try {
         peer = new Peer({
-          key: 'wrong'
+          key: 'wrong',
         });
       } catch (e) {
         assert.equal(peer, undefined);
@@ -192,7 +194,7 @@ describe('Peer', () => {
       new Peer(peerId, {
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
 
       assert.equal(initializeServerConnectionSpy.callCount, 1);
@@ -204,7 +206,7 @@ describe('Peer', () => {
       new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
 
       assert.equal(initializeServerConnectionSpy.callCount, 1);
@@ -223,11 +225,11 @@ describe('Peer', () => {
           peer = new Peer(peerId, {
             key:  apiKey,
             host: signalingHost,
-            port: signalingPort
+            port: signalingPort,
           });
 
           sinon.stub(peer.socket, 'isOpen', {
-            get: () => true
+            get: () => true,
           });
         });
 
@@ -238,7 +240,7 @@ describe('Peer', () => {
             {
               secure: peer.options.secure,
               host:   peer.options.host,
-              port:   peer.options.port
+              port:   peer.options.port,
             }));
           assert.equal(peer.socket.constructor.name, 'Socket');
         });
@@ -291,8 +293,8 @@ describe('Peer', () => {
             credential: {
               timestamp: 100,
               ttl:       1000,
-              authToken: "hogehoge"
-            }
+              authToken: 'hogehoge',
+            },
           });
           assert(peer.socket.start.calledWith(peerId, peer.options.token, peer.options.credential));
         });
@@ -306,7 +308,7 @@ describe('Peer', () => {
       peer = new Peer(peerId, {
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
     });
 
@@ -317,7 +319,7 @@ describe('Peer', () => {
     describe('when its socket is open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => true
+          get: () => true,
         });
       });
 
@@ -337,7 +339,7 @@ describe('Peer', () => {
     describe('when its socket is not open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => false
+          get: () => false,
         });
       });
 
@@ -358,7 +360,7 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
     });
 
@@ -369,7 +371,7 @@ describe('Peer', () => {
     describe('when its socket is open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => true
+          get: () => true,
         });
       });
 
@@ -389,7 +391,7 @@ describe('Peer', () => {
     describe('when its socket is not open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => false
+          get: () => false,
         });
       });
 
@@ -411,14 +413,14 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
     });
 
     describe('when its socket is open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => true
+          get: () => true,
         });
       });
 
@@ -478,7 +480,7 @@ describe('Peer', () => {
     describe('when its socket is not open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => false
+          get: () => false,
         });
       });
 
@@ -501,7 +503,7 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
     });
 
@@ -512,7 +514,7 @@ describe('Peer', () => {
     describe('when its socket is open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => true
+          get: () => true,
         });
       });
 
@@ -536,7 +538,7 @@ describe('Peer', () => {
     describe('when its socket is not open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => false
+          get: () => false,
         });
       });
 
@@ -557,11 +559,11 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
 
       sinon.stub(peer.socket, 'isOpen', {
-        get: () => true
+        get: () => true,
       });
     });
 
@@ -622,11 +624,11 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
 
       sinon.stub(peer.socket, 'isOpen', {
-        get: () => fakeIsOpen
+        get: () => fakeIsOpen,
       });
     });
 
@@ -653,6 +655,7 @@ describe('Peer', () => {
 
     it('should not do anything the second time you call it', function(done) {
       let disconnectEventCount = 0;
+      // eslint-disable-next-line no-invalid-this
       let beforeTestTimeout = this.timeout - 100;
 
       peer.on('disconnected', () => {
@@ -675,14 +678,14 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
     });
 
     describe('when its socket is open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => true
+          get: () => true,
         });
       });
 
@@ -695,7 +698,7 @@ describe('Peer', () => {
     describe('when its socket is not open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => false
+          get: () => false,
         });
       });
       it('should call socket.reconnect', () => {
@@ -710,12 +713,12 @@ describe('Peer', () => {
       const credential = {
         timestamp: 100,
         ttl:       1000,
-        authToken: "hogehoge"
+        authToken: 'hogehoge',
       };
       const peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
       peer.updateCredential(credential);
       assert(peer.socket.updateCredential.calledWith(credential));
@@ -730,7 +733,7 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
 
       const protocol = peer.options.secure ? 'https://' : 'http://';
@@ -752,7 +755,7 @@ describe('Peer', () => {
     describe('when its socket is open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => true
+          get: () => true,
         });
       });
 
@@ -829,7 +832,7 @@ describe('Peer', () => {
     describe('when its socket is not open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => false
+          get: () => false,
         });
       });
 
@@ -852,14 +855,14 @@ describe('Peer', () => {
       peer = new Peer(peerId, {
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
     });
 
     describe('when socket is open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => true
+          get: () => true,
         });
       });
       it('should return open status', () => {
@@ -870,7 +873,7 @@ describe('Peer', () => {
     describe('when socket is not open', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => false
+          get: () => false,
         });
       });
       it('should emit error', () => {
@@ -890,7 +893,7 @@ describe('Peer', () => {
 
     beforeEach(() => {
       peer = new Peer(peerId, {
-        key: apiKey
+        key: apiKey,
       });
     });
 
@@ -914,7 +917,7 @@ describe('Peer', () => {
       peer = new Peer(peerId, {
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
       peer.id = peerId;
     });
@@ -968,7 +971,7 @@ describe('Peer', () => {
       peer = new Peer(peerId, {
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
       peer.id = peerId;
     });
@@ -1018,7 +1021,7 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
     });
 
@@ -1113,7 +1116,7 @@ describe('Peer', () => {
         it('should call emitError with error type', () => {
           const error = {
             type:    'error-type',
-            message: 'error message'
+            message: 'error message',
           };
           peer.socket.emit(util.MESSAGE_TYPES.SERVER.ERROR.key, error);
 
@@ -1125,7 +1128,7 @@ describe('Peer', () => {
     describe('signaling messages', () => {
       beforeEach(() => {
         sinon.stub(peer.socket, 'isOpen', {
-          get: () => true
+          get: () => true,
         });
       });
       describe('LEAVE', () => {
@@ -1158,7 +1161,7 @@ describe('Peer', () => {
       describe('OFFER', () => {
         const roomName = 'testRoomName';
         const offerMessage = {
-          roomName: roomName
+          roomName: roomName,
         };
 
         describe('MeshRoom', () => {
@@ -1195,7 +1198,7 @@ describe('Peer', () => {
               connectionId:   connectionId,
               src:            peerId,
               metadata:       {},
-              offer:          {}
+              offer:          {},
             };
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
           });
@@ -1218,7 +1221,7 @@ describe('Peer', () => {
               connectionId:   connectionId,
               src:            peerId,
               metadata:       {},
-              offer:          {}
+              offer:          {},
             };
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
 
@@ -1238,7 +1241,7 @@ describe('Peer', () => {
               connectionId:   connectionId,
               src:            peerId,
               metadata:       {},
-              offer:          {}
+              offer:          {},
             };
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
 
@@ -1253,7 +1256,7 @@ describe('Peer', () => {
               connectionId:   connectionId,
               src:            peerId,
               metadata:       {},
-              offer:          {}
+              offer:          {},
             };
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
@@ -1270,7 +1273,7 @@ describe('Peer', () => {
         describe('MeshRoom', () => {
           const roomName = 'testRoomName';
           const answerMessage = {
-            roomName: roomName
+            roomName: roomName,
           };
 
           it('should call handleAnswer if room exists', () => {
@@ -1299,7 +1302,7 @@ describe('Peer', () => {
               dst:            'remoteId',
               answer:         {},
               connectionId:   mediaConnection.id,
-              connectionType: 'media'
+              connectionType: 'media',
             };
 
             const stub = sinon.stub(mediaConnection, 'handleAnswer');
@@ -1319,14 +1322,14 @@ describe('Peer', () => {
               dst:            'id2',
               answer:         {},
               connectionId:   connId1,
-              connectionType: 'media'
+              connectionType: 'media',
             };
             const dataAnswerMessage = {
               src:            'id1',
               dst:            'id2',
               answer:         {},
               connectionId:   connId2,
-              connectionType: 'data'
+              connectionType: 'data',
             };
 
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.ANSWER.key, mediaAnswerMessage);
@@ -1349,7 +1352,7 @@ describe('Peer', () => {
         describe('MeshRoom', () => {
           const roomName = 'testRoomName';
           const candidateMessage = {
-            roomName: roomName
+            roomName: roomName,
           };
           it('should call handleCandidate if room exists', () => {
             peer.rooms[roomName] = meshRoomInstanceStub;
@@ -1377,7 +1380,7 @@ describe('Peer', () => {
               dst:            'remoteId',
               candidate:      {},
               connectionId:   dataConnection.id,
-              connectionType: 'data'
+              connectionType: 'data',
             };
 
             const stub = sinon.stub(dataConnection, 'handleCandidate');
@@ -1397,14 +1400,14 @@ describe('Peer', () => {
               dst:            'id2',
               candidate:      {},
               connectionId:   connId1,
-              connectionType: 'media'
+              connectionType: 'media',
             };
             const dataCandidateMessage = {
               src:            'id1',
               dst:            'id2',
               candidate:      {},
               connectionId:   connId2,
-              connectionType: 'data'
+              connectionType: 'data',
             };
 
             peer.socket.emit(util.MESSAGE_TYPES.SERVER.CANDIDATE.key, mediaCandidateMessage);
@@ -1429,7 +1432,7 @@ describe('Peer', () => {
 
       describe('ROOM_USER_JOIN', () => {
         const joinMessage = {
-          roomName: roomName
+          roomName: roomName,
         };
 
         it('should call handleJoin if room exists', () => {
@@ -1450,7 +1453,7 @@ describe('Peer', () => {
 
       describe('ROOM_USER_LEAVE', () => {
         const leaveMessage = {
-          roomName: roomName
+          roomName: roomName,
         };
         it('should call handleLeave if room exists', () => {
           peer.rooms[roomName] = sfuRoomInstanceStub;
@@ -1470,7 +1473,7 @@ describe('Peer', () => {
 
       describe('ROOM_DATA', () => {
         const dataMessage = {
-          roomName: roomName
+          roomName: roomName,
         };
         it('should call handleData if room exists', () => {
           peer.rooms[roomName] = sfuRoomInstanceStub;
@@ -1491,7 +1494,7 @@ describe('Peer', () => {
       describe('ROOM_LOGS', () => {
         const logMessage = {
           roomName: roomName,
-          log:      []
+          log:      [],
         };
         it('should call handleLog if room exists', () => {
           peer.rooms[roomName] = sfuRoomInstanceStub;
@@ -1514,12 +1517,12 @@ describe('Peer', () => {
         const mediaUsersMessage = {
           roomName: roomName,
           userList: userList,
-          type:     'media'
+          type:     'media',
         };
         const dataUsersMessage = {
           roomName: roomName,
           userList: userList,
-          type:     'data'
+          type:     'data',
         };
 
         it('should call makeMediaConnections if type is media', () => {
@@ -1557,7 +1560,7 @@ describe('Peer', () => {
         const offerMessage = {
           roomName: roomName,
           msids:    {},
-          offer:    {}
+          offer:    {},
         };
 
         it('should call handleOffer and updateMsidMap if room exists', () => {
@@ -1596,7 +1599,7 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
 
       peer._setupConnectionMessageHandlers(connectionStub);
@@ -1639,7 +1642,7 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
       sfuRoomInstanceStub.name = roomName;
 
@@ -1694,7 +1697,7 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
       sfuRoomInstanceStub.name = roomName;
 
@@ -1746,7 +1749,7 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
       meshRoomInstanceStub.name = roomName;
 
@@ -1811,7 +1814,7 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
 
       // prevent error from breaking tests
@@ -1857,7 +1860,7 @@ describe('Peer', () => {
       let setupConnectionMessageHandlerStub;
       beforeEach(() => {
         peer = new Peer({
-          key: apiKey
+          key: apiKey,
         });
 
         setupConnectionMessageHandlerStub = sinon.stub(peer, '_setupConnectionMessageHandlers');
@@ -1900,7 +1903,7 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key: apiKey,
       });
     });
 
@@ -1929,7 +1932,7 @@ describe('Peer', () => {
     let peer;
     beforeEach(() => {
       peer = new Peer({
-        key: apiKey
+        key: apiKey,
       });
     });
 
@@ -1964,7 +1967,7 @@ describe('Peer', () => {
       peer = new Peer({
         key:  apiKey,
         host: signalingHost,
-        port: signalingPort
+        port: signalingPort,
       });
     });
 

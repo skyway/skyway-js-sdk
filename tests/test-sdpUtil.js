@@ -437,7 +437,9 @@ a=ssrc:3344931084 cname:{71eaeac1-5ffa-184a-bdb6-96356857d252}
     });
 
     describe('When Plan B (Chrome)', () => {
+      // eslint-disable-next-line max-len
       const audioRegex = `m=audio \\d+ UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidthKbps}`;
+      // eslint-disable-next-line max-len
       const videoRegex = `m=video \\d+ UDP/TLS/RTP/SAVPF 100 101 107 116 117 96 97 99 98\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidthKbps}\r\nb=TIAS:${testBandwidthBps}`;
 
       describe('When single stream', () => {
@@ -464,7 +466,9 @@ a=ssrc:3344931084 cname:{71eaeac1-5ffa-184a-bdb6-96356857d252}
     });
 
     describe('When Unified Plan (Firefox)', () => {
+      // eslint-disable-next-line max-len
       const audioRegex = `m=audio \\d+ UDP/TLS/RTP/SAVPF 109 9 0 8\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidthKbps}`;
+      // eslint-disable-next-line max-len
       const videoRegex = `m=video \\d+ UDP/TLS/RTP/SAVPF 120 126 97\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidthKbps}\r\nb=TIAS:${testBandwidthBps}`;
 
       describe('When single stream', () => {
@@ -498,7 +502,9 @@ a=ssrc:3344931084 cname:{71eaeac1-5ffa-184a-bdb6-96356857d252}
     const testBandwiidth = 200;
 
     describe('When Plan B (Chrome)', () => {
+      // eslint-disable-next-line max-len
       const audioRegex = `m=audio \\d+ UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidthKbps}\r\nb=TIAS:${testBandwidthBps}`;
+      // eslint-disable-next-line max-len
       const videoRegex = `m=video \\d+ UDP/TLS/RTP/SAVPF 100 101 107 116 117 96 97 99 98\r\nc=IN IP4 0\.0\.0\.0\r\nb=AS:${testBandwidthKbps}`;
 
       describe('When single stream', () => {
@@ -525,7 +531,9 @@ a=ssrc:3344931084 cname:{71eaeac1-5ffa-184a-bdb6-96356857d252}
     });
 
     describe('When Unified Plan (Firefox)', () => {
+      // eslint-disable-next-line max-len
       const audioRegex = `m=audio \\d+ UDP/TLS/RTP/SAVPF 109 9 0 8\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidthKbps}\r\nb=TIAS:${testBandwidthBps}`;
+      // eslint-disable-next-line max-len
       const videoRegex = `m=video \\d+ UDP/TLS/RTP/SAVPF 120 126 97\r\nc=IN IP4 192\.168\.1\.3\r\nb=AS:${testBandwidthKbps}`;
 
       describe('When single stream', () => {

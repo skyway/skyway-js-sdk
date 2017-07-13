@@ -35,18 +35,18 @@ describe('Socket', () => {
         emit:       eventSpy,
         disconnect: eventSpy,
         connected:  true,
-        io:         {opts: {query: ''}}
+        io:         {opts: {query: ''}},
       }
     );
 
     Socket = proxyquire('../src/socket', {
       'socket.io-client': socketIoClientStub,
-      './util':           util
+      './util':           util,
     });
 
     socket = new Socket(apiKey, {
       host: 'localhost',
-      port: serverPort
+      port: serverPort,
     });
   });
 
@@ -104,14 +104,14 @@ describe('Socket', () => {
         socket = new Socket(apiKey, {
           dispatcherHost:   dispatcherHost,
           dispatcherPort:   dispatcherPort,
-          dispatcherSecure: dispatcherSecure
+          dispatcherSecure: dispatcherSecure,
         });
 
         getSignalingServerStub = sinon.stub(socket, '_getSignalingServer');
         getSignalingServerStub.returns(Promise.resolve({
           host:   signalingHost,
           port:   signalingPort,
-          secure: signalingSecure
+          secure: signalingSecure,
         }));
       });
 
@@ -145,7 +145,7 @@ describe('Socket', () => {
       const newCredential = {
         timestamp: 100,
         ttl:       1000,
-        authToken: 'newCredential'
+        authToken: 'newCredential',
       };
       // set current queryString manually
       socket._io.io.opts.query = `apiKey=${apiKey}&peerId=${peerId}&credential=hogehoge`;
@@ -182,7 +182,7 @@ describe('Socket', () => {
 
       const socket = new Socket(apiKey, {
         host: 'localhost',
-        port: serverPort
+        port: serverPort,
       });
       const stopPingsSpy = sinon.spy(socket, '_stopPings');
 
@@ -327,7 +327,7 @@ describe('Socket', () => {
       let apiKey = 'apiKey';
       socket = new Socket(apiKey, {
         host: 'localhost',
-        port: serverPort
+        port: serverPort,
       });
 
       socket.start(peerId, token).then(() => {
@@ -446,7 +446,7 @@ describe('Socket', () => {
       it('should reject', done => {
         const result = {error: {
           code:    500,
-          message: 'There was a problem with the server. Please wait a while and try again.'
+          message: 'There was a problem with the server. Please wait a while and try again.',
         }};
 
         socket._getSignalingServer().then(res => {

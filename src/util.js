@@ -12,7 +12,7 @@ const LogLevel = new Enum({
   NONE:  0,
   ERROR: 1,
   WARN:  2,
-  FULL:  3
+  FULL:  3,
 });
 
 const clientMessages = new Enum([
@@ -29,7 +29,7 @@ const clientMessages = new Enum([
   'SFU_ANSWER',
   'SFU_CANDIDATE',
   'PING',
-  'UPDATE_CREDENTIAL'
+  'UPDATE_CREDENTIAL',
 ]);
 
 const serverMessages = new Enum([
@@ -45,7 +45,7 @@ const serverMessages = new Enum([
   'ROOM_DATA',
   'ROOM_USER_JOIN',
   'ROOM_USER_LEAVE',
-  'SFU_OFFER'
+  'SFU_OFFER',
 ]);
 
 let utilInstance;
@@ -71,7 +71,7 @@ class Util {
     this.LOG_LEVELS = LogLevel;
     this.MESSAGE_TYPES = {
       CLIENT: clientMessages,
-      SERVER: serverMessages
+      SERVER: serverMessages,
     };
 
     this.chunkedBrowsers = {Chrome: 1};
@@ -95,9 +95,9 @@ class Util {
     this.defaultConfig = {
       iceServers: [{
         urls: 'stun:stun.skyway.io:3478',
-        url:  'stun:stun.skyway.io:3478'
+        url:  'stun:stun.skyway.io:3478',
       }],
-      iceTransportPolicy: 'all'
+      iceTransportPolicy: 'all',
     };
 
     // Returns the current browser.
@@ -114,7 +114,7 @@ class Util {
       return 'Unsupported';
     })();
 
-    this.supports = (function() {
+    this.supports = (function(defaultConfig) {
       if (typeof RTCPeerConnection === 'undefined') {
         return {};
       }
@@ -125,7 +125,7 @@ class Util {
       let pc;
       let dc;
       try {
-        pc = new RTCPeerConnection(this.defaultConfig, {});
+        pc = new RTCPeerConnection(defaultConfig, {});
       } catch (e) {
         data = false;
       }
@@ -153,9 +153,9 @@ class Util {
       }
 
       return {
-        binaryBlob: binaryBlob
+        binaryBlob: binaryBlob,
       };
-    })();
+    })(this.defaultConfig);
 
     this._logLevel = LogLevel.NONE.value;
   }
@@ -193,34 +193,31 @@ class Util {
 
   /**
    * Output a warning message to the Web Console.
+   * @param {...*} args - arguments to warn.
    */
-  warn() {
+  warn(...args) {
     if (this._logLevel >= LogLevel.WARN.value) {
-      let copy = Array.prototype.slice.call(arguments);
-      copy.unshift(LOG_PREFIX);
-      console.warn.apply(console, copy);
+      console.warn(LOG_PREFIX, ...args);
     }
   }
 
   /**
    * Output an error message to the Web Console.
+   * @param {...*} args - arguments to error.
    */
-  error() {
+  error(...args) {
     if (this._logLevel >= LogLevel.ERROR.value) {
-      let copy = Array.prototype.slice.call(arguments);
-      copy.unshift(LOG_PREFIX);
-      console.error.apply(console, copy);
+      console.error(LOG_PREFIX, ...args);
     }
   }
 
   /**
    * Output a log message to the Web Console.
+   * @param {...*} args - arguments to log.
    */
-  log() {
+  log(...args) {
     if (this._logLevel >= LogLevel.FULL.value) {
-      let copy = Array.prototype.slice.call(arguments);
-      copy.unshift(LOG_PREFIX);
-      console.log.apply(console, copy);
+      console.log(LOG_PREFIX, ...args);
     }
   }
 
