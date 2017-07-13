@@ -111,49 +111,6 @@ class Util {
       return 'Unsupported';
     })();
 
-    this.supports = (function(defaultConfig) {
-      if (typeof RTCPeerConnection === 'undefined') {
-        return {};
-      }
-
-      let data = true;
-      let binaryBlob = false;
-
-      let pc;
-      let dc;
-      try {
-        pc = new RTCPeerConnection(defaultConfig, {});
-      } catch (e) {
-        data = false;
-      }
-
-      if (data) {
-        try {
-          dc = pc.createDataChannel('_SKYWAYTEST');
-        } catch (e) {
-          data = false;
-        }
-      }
-
-      if (data) {
-        // Binary test
-        try {
-          dc.binaryType = 'blob';
-          binaryBlob = true;
-        } catch (e) {
-          // binaryBlob is already false
-        }
-      }
-
-      if (pc) {
-        pc.close();
-      }
-
-      return {
-        binaryBlob: binaryBlob,
-      };
-    })(this.defaultConfig);
-
     this._logLevel = LogLevel.NONE.value;
   }
 
