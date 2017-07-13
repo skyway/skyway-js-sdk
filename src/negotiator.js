@@ -322,7 +322,7 @@ class Negotiator extends EventEmitter {
   _makeOfferSdp() {
     let options;
     if (this._type === 'media' &&
-      ((typeof this._pc.getSenders == 'function' && this._pc.getSenders().length === 0) ||
+      ((typeof this._pc.getSenders === 'function' && this._pc.getSenders().length === 0) ||
       (this._pc.getLocalStreams !== undefined && this._pc.getLocalStreams().length === 0))) {
       options = {
         offerToReceiveAudio: true,
