@@ -100,7 +100,7 @@ class Negotiator extends EventEmitter {
     // This doesn't require renegotiation.
     // Firefox 53 has both getSenders and getLocalStreams,
     // but Google Chrome 59 has only getLocalStreams.
-    if (this._pc.getSenders) {
+    if (typeof this._pc.getSenders === 'function') {
       this._pc.getSenders().forEach(sender => {
         let tracks;
         if (sender.track.kind === 'audio') {
@@ -129,7 +129,7 @@ class Negotiator extends EventEmitter {
     // Unset onnegotiationneeded so that it doesn't trigger on removeStream
     this._pc.onnegotiationneeded = () => {};
 
-    const localStreams = this._pc.getSenders === undefined ? this._pc.getLocalStreams() : this._pc.getSenders();
+    const localStreams = typeof this._pc.getSenders === 'function' ? this._pc.getSenders() : this._pc.getLocalStreams();
     if (localStreams && localStreams[0]) {
       this._pc.removeStream(localStreams[0]);
     }
@@ -322,7 +322,7 @@ class Negotiator extends EventEmitter {
   _makeOfferSdp() {
     let options;
     if (this._type === 'media' &&
-      ((this._pc.getSenders !== undefined && this._pc.getSenders().length === 0) ||
+      ((typeof this._pc.getSenders == 'function' && this._pc.getSenders().length === 0) ||
       (this._pc.getLocalStreams !== undefined && this._pc.getLocalStreams().length === 0))) {
       options = {
         offerToReceiveAudio: true,
