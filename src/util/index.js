@@ -3,7 +3,7 @@
 const BinaryPack = require('js-binarypack');
 const Enum       = require('enum');
 
-const logger = require('./util/logger');
+const logger = require('./logger');
 
 const clientMessages = new Enum([
   'SEND_OFFER',
