@@ -5,6 +5,7 @@ const Negotiator = require('./negotiator');
 const util       = require('./util');
 const logger     = require('./util/logger');
 
+const BinaryPack = require('js-binarypack');
 const Enum       = require('enum');
 const sizeof     = require('object-sizeof');
 
@@ -139,7 +140,7 @@ class DataConnection extends Connection {
 
     // Everything below is for serialization binary or binary-utf8
 
-    const dataMeta = util.unpack(msg.data);
+    const dataMeta = BinaryPack.unpack(msg.data);
 
     // If we haven't started receiving pieces of data with a given id, this will be undefined
     // In that case, we need to initialise receivedData[id] to hold incoming file chunks
@@ -163,7 +164,7 @@ class DataConnection extends Connection {
 
       // recombine the sliced arraybuffers
       let ab = util.joinArrayBuffers(currData.parts);
-      let unpackedData = util.unpack(ab);
+      let unpackedData = BinaryPack.unpack(ab);
 
       this.emit(DataConnection.EVENTS.data.key, unpackedData);
     }
@@ -198,7 +199,7 @@ class DataConnection extends Connection {
 
     // Everything below is for serialization binary or binary-utf8
 
-    let packedData = util.pack(data);
+    let packedData = BinaryPack.pack(data);
     let size = packedData.size;
     let type = data.constructor.name;
 
@@ -229,7 +230,7 @@ class DataConnection extends Connection {
       dataMeta.data = slice;
 
       // Add all chunks to our buffer and start the send loop (if we haven't already)
-      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+      util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
         this._sendBuffer.push(ab);
         this._startSendLoop();
       });

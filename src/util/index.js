@@ -1,7 +1,6 @@
 'use strict';
 
-const BinaryPack = require('js-binarypack');
-const Enum       = require('enum');
+const Enum = require('enum');
 
 const clientMessages = new Enum([
   'SEND_OFFER',
@@ -54,11 +53,7 @@ class Util {
 
     this.debug = false;
 
-    this.pack = BinaryPack.pack;
-    this.unpack = BinaryPack.unpack;
-
     this.setZeroTimeout = undefined;
-
 
     this.MESSAGE_TYPES = {
       CLIENT: clientMessages,
