@@ -1,8 +1,6 @@
 'use strict';
 
-// depends on platform, you have to change the setting of object 'io'.
-const io           = require('socket.io-client'); // for generic browser
-// const io           = require('socket.io-client/socket.io');  // for react-native
+const io = require('socket.io-client');
 
 const util         = require('./util');
 const EventEmitter = require('events');
@@ -79,17 +77,6 @@ class Socket extends EventEmitter {
       query += `&credential=${encodedCredentialStr}`;
     }
 
-    // depends on runtime platform, transports has to be changed.
-    // case react-native, only websocket can be used.
-    let transports;
-    if (window.navigator.userAgent === 'react-native') {
-      // case react-native, restricted to websocket transport only
-      transports = ['websocket'];
-    } else {
-      // In most cases, keep it as default ( default is ['polling', 'websocket'] )
-      transports = undefined;
-    }
-
     return new Promise(resolve => {
       if (this._dispatcherUrl) {
         this._getSignalingServer().then(serverInfo => {
@@ -105,7 +92,6 @@ class Socket extends EventEmitter {
         'force new connection': true,
         'query':                query,
         'reconnectionAttempts': util.reconnectionAttempts,
-        'transports':           transports,
       });
 
       this._io.on('reconnect_failed', () => {
