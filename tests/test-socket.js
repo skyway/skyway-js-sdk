@@ -351,7 +351,7 @@ describe('Socket', () => {
 
         assert.equal(eventSpy.callCount, 0);
         for (let i = 0; i < numberOfChecks; i++) {
-          clock.tick(util.pingInterval);
+          clock.tick(config.pingInterval);
 
           assert(eventSpy.getCall(i).calledWith(config.MESSAGE_TYPES.CLIENT.PING.key));
           assert.equal(eventSpy.callCount, i + 1);
@@ -366,7 +366,7 @@ describe('Socket', () => {
 
         assert.equal(socket._pingIntervalId, undefined);
 
-        clock.tick(util.pingInterval * 10);
+        clock.tick(config.pingInterval * 10);
 
         assert.equal(eventSpy.callCount, 0);
       });
@@ -385,7 +385,7 @@ describe('Socket', () => {
 
       socket.start(undefined, apiKey).then(() => done());
 
-      socket._dispatcherUrl = `https://${util.DISPATCHER_HOST}:${util.DISPATCHER_PORT}`;
+      socket._dispatcherUrl = `https://${config.DISPATCHER_HOST}:${config.DISPATCHER_PORT}`;
     });
 
     afterEach(() => {
@@ -400,7 +400,7 @@ describe('Socket', () => {
         assert.equal(requests.length, 1);
 
         // TODO: Headache zone. Comparing vs the variable `url` causes a freeze.
-        // let url = `https://${util.DISPATCHER_HOST}:${util.DISPATCHER_PORT}/signaling`;
+        // let url = `https://${config.DISPATCHER_HOST}:${config.DISPATCHER_PORT}/signaling`;
         // assert.equal(requests[0].url, url);
         assert.equal(requests[0].method, 'GET');
         done();
