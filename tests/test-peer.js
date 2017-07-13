@@ -1095,15 +1095,18 @@ describe('Peer', () => {
       });
 
       describe('ERROR', () => {
-        // let emitErrorStub;
-        // beforeEach(() => {
-        //   emitErrorStub = sinon.stub(logger, 'error');
-        // });
-        // afterEach(() => {
-        //   emitErrorStub.restore();
-        // });
-        //
-        it('should call emitError with error type');
+        it('should call emitError with error type', done => {
+          const error = new Error('error message');
+          error.type = 'error-type';
+
+          peer.on(Peer.EVENTS.error.key, err => {
+            assert(err instanceof Error);
+            assert.equal(err.type, 'error-type');
+            assert.equal(err.message, 'error message');
+            done();
+          });
+          peer.socket.emit(config.MESSAGE_TYPES.SERVER.ERROR.key, error);
+        });
       });
     });
 
