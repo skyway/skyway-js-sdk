@@ -3,9 +3,6 @@ module.exports =  {
 
   frameworks: ['mocha', 'browserify'],
 
-  exclude: [
-  ],
-
   browserify: {
     debug:     true,
     transform: [
@@ -21,8 +18,8 @@ module.exports =  {
   },
 
   preprocessors: {
-    'tests/**/test-*.js': 'browserify',
-    'src/**/*.js':        ['browserify'],
+    'tests/**/*.js': 'browserify',
+    'src/**/*.js':   'browserify',
   },
 
   reporters: [

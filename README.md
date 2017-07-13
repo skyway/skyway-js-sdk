@@ -8,6 +8,8 @@ Use `gulp lint` to run eslint.
 
 Use `gulp test` to run unit tests.
 
+> You can specify files to test by `gulp test --tests=peer.js`, `gulp test --tests=shared/logger.js --tests=shared/util.js`.
+
 Use `gulp build` to build the library (babelify, browserify, uglify).
 
 ## Contributing
