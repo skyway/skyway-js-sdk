@@ -7,6 +7,7 @@ const SFURoom         = require('./sfuRoom');
 const MeshRoom        = require('./meshRoom');
 const Socket          = require('./socket');
 const util            = require('./util');
+const logger          = require('./util/logger');
 
 const EventEmitter = require('events');
 const Enum         = require('enum');
@@ -63,7 +64,7 @@ class Peer extends EventEmitter {
     }
 
     const defaultOptions = {
-      debug:  util.LOG_LEVELS.NONE,
+      debug:  logger.LOG_LEVELS.NONE,
       secure: true,
       token:  util.randomToken(),
       config: util.defaultConfig,
@@ -76,7 +77,7 @@ class Peer extends EventEmitter {
 
     this.options = Object.assign({}, defaultOptions, options);
 
-    util.setLogLevel(this.options.debug);
+    logger.setLogLevel(this.options.debug);
 
     if (!util.validateId(id)) {
       this._abort('invalid-id', `ID "${id}" is invalid`);
@@ -123,7 +124,7 @@ class Peer extends EventEmitter {
     options.stream = stream;
     options.pcConfig = this._pcConfig;
     const mc = new MediaConnection(peerId, options);
-    util.log('MediaConnection created in call method');
+    logger.log('MediaConnection created in call method');
     this._addConnection(peerId, mc);
     return mc;
   }
@@ -148,7 +149,7 @@ class Peer extends EventEmitter {
 
     options.pcConfig = this._pcConfig;
     const connection = new DataConnection(peerId, options);
-    util.log('DataConnection created in connect method');
+    logger.log('DataConnection created in connect method');
     this._addConnection(peerId, connection);
     return connection;
   }
@@ -310,7 +311,7 @@ class Peer extends EventEmitter {
    * Emit not connected error.
    */
   _emitNotConnectedError() {
-    util.warn('You cannot connect to a new Peer because you are not connecting to SkyWay server now.' +
+    logger.warn('You cannot connect to a new Peer because you are not connecting to SkyWay server now.' +
       'You can create a new Peer to reconnect, or call reconnect() ' +
       'on this peer if you believe its ID to still be available.');
     util.emitError.call(
@@ -468,9 +469,9 @@ class Peer extends EventEmitter {
           this._pcConfig.iceServers.push(iceServer);
         }
 
-        util.log('SkyWay TURN Server is available');
+        logger.log('SkyWay TURN Server is available');
       } else {
-        util.log('SkyWay TURN Server is unavailable');
+        logger.log('SkyWay TURN Server is unavailable');
       }
 
       this.emit(Peer.EVENTS.open.key, this.id);
@@ -481,12 +482,12 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(util.MESSAGE_TYPES.SERVER.LEAVE.key, peerId => {
-      util.log(`Received leave message from ${peerId}`);
+      logger.log(`Received leave message from ${peerId}`);
       this._cleanupPeer(peerId);
     });
 
     this.socket.on(util.MESSAGE_TYPES.SERVER.AUTH_EXPIRES_IN.key, remainingSec => {
-      util.log(`Credential expires in ${remainingSec}`);
+      logger.log(`Credential expires in ${remainingSec}`);
       this.emit(Peer.EVENTS.expiresin.key, remainingSec);
     });
 
@@ -524,7 +525,7 @@ class Peer extends EventEmitter {
           }
         );
 
-        util.log('MediaConnection created in OFFER');
+        logger.log('MediaConnection created in OFFER');
         this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.call.key, connection);
       } else if (offerMessage.connectionType === 'data') {
@@ -541,7 +542,7 @@ class Peer extends EventEmitter {
           }
         );
 
-        util.log('DataConnection created in OFFER');
+        logger.log('DataConnection created in OFFER');
 
         // _addConnection() needs to be outside of the open event or else open won't fire.
         this._addConnection(offerMessage.src, connection);
@@ -549,7 +550,7 @@ class Peer extends EventEmitter {
           this.emit(Peer.EVENTS.connection.key, connection);
         });
       } else {
-        util.warn('Received malformed connection type: ', offerMessage.connectionType);
+        logger.warn('Received malformed connection type: ', offerMessage.connectionType);
       }
 
       delete this._queuedMessages[connectionId];
@@ -736,7 +737,7 @@ class Peer extends EventEmitter {
    * @private
    */
   _abort(type, message) {
-    util.error('Aborting!');
+    logger.error('Aborting!');
     this.disconnect();
     util.emitError.call(this, type, message);
   }

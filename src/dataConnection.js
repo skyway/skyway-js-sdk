@@ -3,6 +3,7 @@
 const Connection = require('./connection');
 const Negotiator = require('./negotiator');
 const util       = require('./util');
+const logger     = require('./util/logger');
 
 const Enum       = require('enum');
 const sizeof     = require('object-sizeof');
@@ -102,7 +103,7 @@ class DataConnection extends Connection {
    */
   _setupMessageHandlers() {
     this._dc.onopen = () => {
-      util.log('Data channel connection success');
+      logger.log('Data channel connection success');
       this.open = true;
       this.emit(DataConnection.EVENTS.open.key);
     };
@@ -113,12 +114,12 @@ class DataConnection extends Connection {
     };
 
     this._dc.onclose = () => {
-      util.log('DataChannel closed for:', this.id);
+      logger.log('DataChannel closed for:', this.id);
       this.close();
     };
 
     this._dc.onerror = err => {
-      util.error(err);
+      logger.error(err);
     };
   }
 

@@ -3,6 +3,7 @@
 const io = require('socket.io-client');
 
 const util         = require('./util');
+const logger       = require('./util/logger');
 const EventEmitter = require('events');
 const queryString  = require('query-string');
 
@@ -100,7 +101,7 @@ class Socket extends EventEmitter {
       });
 
       this._io.on('error', e => {
-        util.error(e);
+        logger.error(e);
       });
 
       this._setupMessageHandlers();
@@ -236,7 +237,7 @@ class Socket extends EventEmitter {
     } else {
       // For future development; here we can tell the the developer
       // which connection(p2p/turn/sfu) should be authenticated.
-      util.warn('Adding a credential when one wasn\'t specified before.');
+      logger.warn('Adding a credential when one wasn\'t specified before.');
     }
     this._io.io.opts.query = queryString.stringify(parseQuery);
 

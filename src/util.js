@@ -3,14 +3,7 @@
 const BinaryPack = require('js-binarypack');
 const Enum       = require('enum');
 
-const LOG_PREFIX      = 'SkyWayJS: ';
-
-const LogLevel = new Enum({
-  NONE:  0,
-  ERROR: 1,
-  WARN:  2,
-  FULL:  3,
-});
+const logger = require('./util/logger');
 
 const clientMessages = new Enum([
   'SEND_OFFER',
@@ -45,8 +38,6 @@ const serverMessages = new Enum([
   'SFU_OFFER',
 ]);
 
-let utilInstance;
-
 /**
  * Class that contains utility functions.
  */
@@ -59,13 +50,18 @@ class Util {
     this.DISPATCHER_PORT = 443;
     this.DISPATCHER_SECURE = true;
     this.DISPATCHER_TIMEOUT = 3000;
+
     this.TURN_HOST = 'turn.skyway.io';
     this.TURN_PORT = 443;
+
     this.debug = false;
+
     this.pack = BinaryPack.pack;
     this.unpack = BinaryPack.unpack;
+
     this.setZeroTimeout = undefined;
-    this.LOG_LEVELS = LogLevel;
+
+
     this.MESSAGE_TYPES = {
       CLIENT: clientMessages,
       SERVER: serverMessages,
@@ -110,69 +106,6 @@ class Util {
       }
       return 'Unsupported';
     })();
-
-    this._logLevel = LogLevel.NONE.value;
-  }
-
-  /**
-   * Set the level of log.
-   * @param {Integer} [level=0] The log level. 0: NONE, 1: ERROR, 2: WARN, 3:FULL.
-   */
-  setLogLevel(level) {
-    if (level.value) {
-      level = level.value;
-    }
-
-    const decimalRadix = 10;
-    let debugLevel = parseInt(level, decimalRadix);
-
-    switch (debugLevel) {
-      case 0:
-        this._logLevel = LogLevel.NONE.value;
-        break;
-      case 1:
-        this._logLevel = LogLevel.ERROR.value;
-        break;
-      case 2:
-        this._logLevel = LogLevel.WARN.value;
-        break;
-      case 3:
-        this._logLevel = LogLevel.FULL.value;
-        break;
-      default:
-        this._logLevel = LogLevel.NONE.value;
-        break;
-    }
-  }
-
-  /**
-   * Output a warning message to the Web Console.
-   * @param {...*} args - arguments to warn.
-   */
-  warn(...args) {
-    if (this._logLevel >= LogLevel.WARN.value) {
-      console.warn(LOG_PREFIX, ...args);
-    }
-  }
-
-  /**
-   * Output an error message to the Web Console.
-   * @param {...*} args - arguments to error.
-   */
-  error(...args) {
-    if (this._logLevel >= LogLevel.ERROR.value) {
-      console.error(LOG_PREFIX, ...args);
-    }
-  }
-
-  /**
-   * Output a log message to the Web Console.
-   * @param {...*} args - arguments to log.
-   */
-  log(...args) {
-    if (this._logLevel >= LogLevel.FULL.value) {
-      console.log(LOG_PREFIX, ...args);
-    }
   }
 
   /**
@@ -307,7 +240,7 @@ class Util {
     }
     err.type = type;
 
-    utilInstance.error(err);
+    logger.error(err);
 
     if (this && this.emit &&
       this.constructor.EVENTS && this.constructor.EVENTS.error) {
@@ -316,5 +249,4 @@ class Util {
   }
 }
 
-utilInstance = new Util();
-module.exports = utilInstance;
+module.exports = new Util();

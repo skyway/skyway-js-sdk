@@ -1,6 +1,7 @@
 'use strict';
 
 const util       = require('./util');
+const logger     = require('./util/logger');
 const Negotiator = require('./negotiator');
 
 const EventEmitter = require('events');
@@ -85,7 +86,7 @@ class Connection extends EventEmitter {
       this._negotiator.handleAnswer(answerMessage.answer);
       this.open = true;
     } else {
-      util.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
+      logger.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
       this._queuedMessages.push({type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: answerMessage});
     }
   }
@@ -98,7 +99,7 @@ class Connection extends EventEmitter {
     if (this._pcAvailable) {
       this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
-      util.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
+      logger.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
       this._queuedMessages.push({type: util.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: candidateMessage});
     }
   }
@@ -125,7 +126,7 @@ class Connection extends EventEmitter {
           this.handleCandidate(message.payload);
           break;
         default:
-          util.warn('Unrecognized message type:', message.type, 'from peer:', this.remoteId);
+          logger.warn('Unrecognized message type:', message.type, 'from peer:', this.remoteId);
           break;
       }
     }
@@ -198,7 +199,7 @@ class Connection extends EventEmitter {
    * @deprecated Use remoteId instead.
    */
   get peer() {
-    util.warn(`${this.constructor.name}.peer is deprecated and may be removed from a future version.` +
+    logger.warn(`${this.constructor.name}.peer is deprecated and may be removed from a future version.` +
         ` Please use ${this.constructor.name}.remoteId instead.`);
     return this.remoteId;
   }

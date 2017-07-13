@@ -2,7 +2,7 @@
 
 const Room       = require('./room');
 const Negotiator = require('./negotiator');
-const util       = require('./util');
+const logger     = require('./util/logger');
 
 const Enum    = require('enum');
 const Interop = require('sdp-interop').Interop;
@@ -130,7 +130,7 @@ class SFURoom extends Room {
         this.remoteStreams[remoteStream.id] = remoteStream;
         this.emit(SFURoom.EVENTS.stream.key, remoteStream);
 
-        util.log(`Received remote media stream for ${remoteStream.peerId} in ${this.name}`);
+        logger.log(`Received remote media stream for ${remoteStream.peerId} in ${this.name}`);
       } else {
         this._unknownStreams[remoteStream.id] = remoteStream;
       }
