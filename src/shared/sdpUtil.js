@@ -151,5 +151,4 @@ class SdpUtil {
   }
 }
 
-const sdpUtilInstance = new SdpUtil();
-module.exports = sdpUtilInstance;
+module.exports = new SdpUtil();

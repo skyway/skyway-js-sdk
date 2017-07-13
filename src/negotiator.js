@@ -3,7 +3,7 @@
 const EventEmitter = require('events');
 const Enum         = require('enum');
 
-const sdpUtil = require('./sdpUtil');
+const sdpUtil = require('./shared/sdpUtil');
 const logger  = require('./shared/logger');
 
 const NegotiatorEvents = new Enum([
