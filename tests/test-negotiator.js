@@ -34,13 +34,7 @@ describe('Negotiator', () => {
         addStream:         addStreamSpy,
         createDataChannel: createDCSpy,
       };
-
       newPcStub.returns(pcStub);
-      const Negotiator = proxyquire('../src/peer/negotiator', {
-        '../src/webrtcShim': {
-          RTCPeerConnection: newPcStub,
-        },
-      });
 
       negotiator = new Negotiator();
       handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
@@ -632,17 +626,13 @@ describe('Negotiator', () => {
 
   describe('_createPeerConnection', () => {
     it('should call RTCPeerConnection with pcConfig', () => {
-      const pcStub = sinon.stub();
-      const Negotiator = proxyquire('../src/peer/negotiator', {
-        '../src/webrtcShim': {
-          RTCPeerConnection: pcStub,
-        },
-      });
+      const pcStub = sinon.stub(window, 'RTCPeerConnection');
       const negotiator = new Negotiator();
       const pcConf = {};
       negotiator._createPeerConnection(pcConf);
 
       assert(pcStub.calledWith(pcConf));
+      pcStub.restore();
     });
   });
 
@@ -651,7 +641,7 @@ describe('Negotiator', () => {
       const negotiator = new Negotiator();
       const pc = negotiator._pc = negotiator._createPeerConnection();
 
-      negotiator._setupPCListeners(pc);
+      negotiator._setupPCListeners();
       assert.equal(typeof pc.onaddstream, 'function');
       assert.equal(typeof pc.ondatachannel, 'function');
       assert.equal(typeof pc.onicecandidate, 'function');
@@ -668,7 +658,7 @@ describe('Negotiator', () => {
       beforeEach(() => {
         negotiator = new Negotiator();
         pc = negotiator._pc = negotiator._createPeerConnection();
-        negotiator._setupPCListeners(pc);
+        negotiator._setupPCListeners();
       });
 
       describe('onaddstream', () => {
@@ -735,18 +725,17 @@ describe('Negotiator', () => {
         let pc;
 
         beforeEach(() => {
-          pcStub = sinon.stub();
+          pcStub = sinon.stub(window, 'RTCPeerConnection');
           pcStub.returns({
             iceConnectionState: 'disconnected',
           });
-          const Negotiator = proxyquire('../src/peer/negotiator', {
-            '../src/webrtcShim': {
-              RTCPeerConnection: pcStub,
-            },
-          });
           negotiator = new Negotiator();
           pc = negotiator._pc = negotiator._createPeerConnection();
-          negotiator._setupPCListeners(pc);
+          negotiator._setupPCListeners();
+        });
+
+        afterEach(() => {
+          pcStub.restore();
         });
 
         describe('when pc.iceConnectionState is \'disconnected\'', () => {
@@ -880,7 +869,7 @@ describe('Negotiator', () => {
     beforeEach(() => {
       negotiator = new Negotiator();
       pc = negotiator._pc = negotiator._createPeerConnection();
-      negotiator._setupPCListeners(pc);
+      negotiator._setupPCListeners();
 
       createOfferStub = sinon.stub(pc, 'createOffer');
     });
@@ -906,13 +895,13 @@ describe('Negotiator', () => {
     });
 
     it('should emit Error when createOffer fails', done => {
-      const fakeError = 'fakeError';
+      const fakeError = new Error('fakeError');
       createOfferStub.callsArgWith(1, fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
         assert.equal(err.type, 'webrtc');
-        assert.equal(err.message, fakeError);
+        assert.equal(err.message, 'fakeError');
         done();
       });
 
@@ -932,7 +921,7 @@ describe('Negotiator', () => {
     beforeEach(() => {
       negotiator = new Negotiator();
       pc = negotiator._pc = negotiator._createPeerConnection();
-      negotiator._setupPCListeners(pc);
+      negotiator._setupPCListeners();
 
       createAnswerStub = sinon.stub(pc, 'createAnswer');
       setLocalDescriptionStub = sinon.stub(pc, 'setLocalDescription');
@@ -963,14 +952,14 @@ describe('Negotiator', () => {
 
       it('should emit Error when setLocalDescription fails', done => {
         const fakeAnswer = 'answer';
-        const fakeError = 'fakeError';
+        const fakeError = new Error('fakeError');
         createAnswerStub.callsArgWith(0, fakeAnswer);
         setLocalDescriptionStub.callsArgWith(2, fakeError);
 
         negotiator.on(Negotiator.EVENTS.error.key, err => {
           assert(err instanceof Error);
           assert.equal(err.type, 'webrtc');
-          assert.equal(err.message, fakeError);
+          assert.equal(err.message, 'fakeError');
           done();
         });
 
@@ -982,13 +971,13 @@ describe('Negotiator', () => {
     });
 
     it('should emit Error when createAnswer fails', done => {
-      const fakeError = 'fakeError';
+      const fakeError = new Error('fakeError');
       createAnswerStub.callsArgWith(1, fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
         assert.equal(err.type, 'webrtc');
-        assert.equal(err.message, fakeError);
+        assert.equal(err.message, 'fakeError');
         done();
       });
 
@@ -1048,12 +1037,13 @@ describe('Negotiator', () => {
 
     it('should emit Error if setLocalDescription fails', done => {
       const offer = 'offer';
-      const fakeError = 'fakeError';
+      const fakeError = new Error('fakeError');
       setLocalDescriptionStub.callsArgWith(2, fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
         assert.equal(err.type, 'webrtc');
+        assert.equal(err.message, 'fakeError');
         done();
       });
 
@@ -1098,12 +1088,13 @@ describe('Negotiator', () => {
     });
 
     it('should emit Error if setRemoteDescription fails', done => {
-      const fakeError = 'fakeError';
+      const fakeError = new Error('fakeError');
       setRemoteDescriptionStub.callsArgWith(2, fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
         assert.equal(err.type, 'webrtc');
+        assert.equal(err.message, 'fakeError');
         done();
       });
 
