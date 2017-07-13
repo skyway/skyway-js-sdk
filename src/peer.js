@@ -8,6 +8,7 @@ const MeshRoom        = require('./meshRoom');
 const Socket          = require('./socket');
 const util            = require('./util');
 const logger          = require('./util/logger');
+const config          = require('./util/config');
 
 const EventEmitter = require('events');
 const Enum         = require('enum');
@@ -40,7 +41,7 @@ class Peer extends EventEmitter {
    * @param {number} [options.dispatcherPort=443] - The port number of dispatcher server.
    * @param {boolean} [options.dispatcherSecure=true] - True if the dispatcher server supports https.
    * @param {string} [options.token=util.randomToken()] - The token used to authorize Peer.
-   * @param {object} [options.config=util.defaultConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @param {object} [options.config=config.defaultConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    * @param {boolean} [options.turn=true] - Whether using TURN or not.
    * @param {object} [options.credential] - The credential used to authenticate peer.
    + @param {number} [options.credential.timestamp] - Current UNIX timestamp.
@@ -67,12 +68,12 @@ class Peer extends EventEmitter {
       debug:  logger.LOG_LEVELS.NONE,
       secure: true,
       token:  util.randomToken(),
-      config: util.defaultConfig,
+      config: config.defaultConfig,
       turn:   true,
 
-      dispatcherSecure: util.DISPATCHER_SECURE,
-      dispatcherHost:   util.DISPATCHER_HOST,
-      dispatcherPort:   util.DISPATCHER_PORT,
+      dispatcherSecure: config.DISPATCHER_SECURE,
+      dispatcherHost:   config.DISPATCHER_HOST,
+      dispatcherPort:   config.DISPATCHER_PORT,
     };
 
     this.options = Object.assign({}, defaultOptions, options);
@@ -393,7 +394,7 @@ class Peer extends EventEmitter {
       roomType: 'sfu',
     };
 
-    this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key, data);
+    this.socket.send(config.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key, data);
 
     return sfuRoom;
   }
@@ -425,7 +426,7 @@ class Peer extends EventEmitter {
       roomType: 'mesh',
     };
 
-    this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key, data);
+    this.socket.send(config.MESSAGE_TYPES.CLIENT.ROOM_JOIN.key, data);
 
     return meshRoom;
   }
@@ -435,7 +436,7 @@ class Peer extends EventEmitter {
    * @private
    */
   _setupMessageHandlers() {
-    this.socket.on(util.MESSAGE_TYPES.SERVER.OPEN.key, openMessage => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.OPEN.key, openMessage => {
       this.id = openMessage.peerId;
       this._pcConfig = Object.assign({}, this.options.config);
 
@@ -467,8 +468,8 @@ class Peer extends EventEmitter {
           const transport = turnType.transport;
 
           const iceServer = {
-            urls: `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
-            url:  `${protocol}:${util.TURN_HOST}:${util.TURN_PORT}?transport=${transport}`,
+            urls: `${protocol}:${config.TURN_HOST}:${config.TURN_PORT}?transport=${transport}`,
+            url:  `${protocol}:${config.TURN_HOST}:${config.TURN_PORT}?transport=${transport}`,
 
             username:   turnUserName,
             credential: turnPassword,
@@ -485,24 +486,24 @@ class Peer extends EventEmitter {
       this.emit(Peer.EVENTS.open.key, this.id);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.ERROR.key, error => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.ERROR.key, error => {
       const err = new Error(error.message);
       err.type = error.type;
       logger.error(err);
       this.emit(Peer.EVENTS.error.key, err);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.LEAVE.key, peerId => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.LEAVE.key, peerId => {
       logger.log(`Received leave message from ${peerId}`);
       this._cleanupPeer(peerId);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.AUTH_EXPIRES_IN.key, remainingSec => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.AUTH_EXPIRES_IN.key, remainingSec => {
       logger.log(`Credential expires in ${remainingSec}`);
       this.emit(Peer.EVENTS.expiresin.key, remainingSec);
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.OFFER.key, offerMessage => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.OFFER.key, offerMessage => {
       // handle mesh room offers
       const roomName = offerMessage.roomName;
       if (roomName) {
@@ -567,7 +568,7 @@ class Peer extends EventEmitter {
       delete this._queuedMessages[connectionId];
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.ANSWER.key, answerMessage => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.ANSWER.key, answerMessage => {
       // handle mesh room answers
       const roomName = answerMessage.roomName;
       if (roomName) {
@@ -588,11 +589,11 @@ class Peer extends EventEmitter {
       if (connection) {
         connection.handleAnswer(answerMessage);
       } else {
-        this._storeMessage(util.MESSAGE_TYPES.SERVER.ANSWER.key, answerMessage);
+        this._storeMessage(config.MESSAGE_TYPES.SERVER.ANSWER.key, answerMessage);
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.CANDIDATE.key, candidateMessage => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.CANDIDATE.key, candidateMessage => {
       // handle mesh room candidates
       const roomName = candidateMessage.roomName;
       if (roomName) {
@@ -613,39 +614,39 @@ class Peer extends EventEmitter {
       if (connection) {
         connection.handleCandidate(candidateMessage);
       } else {
-        this._storeMessage(util.MESSAGE_TYPES.SERVER.CANDIDATE.key, candidateMessage);
+        this._storeMessage(config.MESSAGE_TYPES.SERVER.CANDIDATE.key, candidateMessage);
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.ROOM_USER_JOIN.key, roomUserJoinMessage => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.ROOM_USER_JOIN.key, roomUserJoinMessage => {
       const room = this.rooms[roomUserJoinMessage.roomName];
       if (room) {
         room.handleJoin(roomUserJoinMessage);
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.ROOM_USER_LEAVE.key, roomUserLeaveMessage => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.ROOM_USER_LEAVE.key, roomUserLeaveMessage => {
       const room = this.rooms[roomUserLeaveMessage.roomName];
       if (room) {
         room.handleLeave(roomUserLeaveMessage);
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.ROOM_DATA.key, roomDataMessage => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.ROOM_DATA.key, roomDataMessage => {
       const room = this.rooms[roomDataMessage.roomName];
       if (room) {
         room.handleData(roomDataMessage);
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.ROOM_LOGS.key, roomLogMessage => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.ROOM_LOGS.key, roomLogMessage => {
       const room = this.rooms[roomLogMessage.roomName];
       if (room) {
         room.handleLog(roomLogMessage.log);
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.ROOM_USERS.key, roomUserListMessage => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.ROOM_USERS.key, roomUserListMessage => {
       const room = this.rooms[roomUserListMessage.roomName];
       if (room) {
         if (roomUserListMessage.type === 'media') {
@@ -656,7 +657,7 @@ class Peer extends EventEmitter {
       }
     });
 
-    this.socket.on(util.MESSAGE_TYPES.SERVER.SFU_OFFER.key, offerMessage => {
+    this.socket.on(config.MESSAGE_TYPES.SERVER.SFU_OFFER.key, offerMessage => {
       const room = this.rooms[offerMessage.roomName];
       if (room) {
         room.updateMsidMap(offerMessage.msids);
@@ -672,13 +673,13 @@ class Peer extends EventEmitter {
    */
   _setupConnectionMessageHandlers(connection) {
     connection.on(Connection.EVENTS.candidate.key, candidateMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.SEND_CANDIDATE.key, candidateMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_CANDIDATE.key, candidateMessage);
     });
     connection.on(Connection.EVENTS.answer.key, answerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.SEND_ANSWER.key, answerMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_ANSWER.key, answerMessage);
     });
     connection.on(Connection.EVENTS.offer.key, offerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.SEND_OFFER.key, offerMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_OFFER.key, offerMessage);
     });
   }
 
@@ -689,14 +690,14 @@ class Peer extends EventEmitter {
    */
   _setupRoomMessageHandlers(room) {
     room.on(SFURoom.MESSAGE_EVENTS.broadcast.key, sendMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_SEND_DATA.key, sendMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.ROOM_SEND_DATA.key, sendMessage);
     });
     room.on(SFURoom.MESSAGE_EVENTS.getLog.key, getLogMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_GET_LOGS.key, getLogMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.ROOM_GET_LOGS.key, getLogMessage);
     });
     room.on(SFURoom.MESSAGE_EVENTS.leave.key, leaveMessage => {
       delete this.rooms[room.name];
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_LEAVE.key, leaveMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.ROOM_LEAVE.key, leaveMessage);
     });
   }
 
@@ -709,13 +710,13 @@ class Peer extends EventEmitter {
     this._setupRoomMessageHandlers(room);
 
     room.on(SFURoom.MESSAGE_EVENTS.offerRequest.key, sendMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.SFU_GET_OFFER.key, sendMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.SFU_GET_OFFER.key, sendMessage);
     });
     room.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.SFU_ANSWER.key, answerMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.SFU_ANSWER.key, answerMessage);
     });
     room.on(SFURoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.SFU_CANDIDATE.key, candidateMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.SFU_CANDIDATE.key, candidateMessage);
     });
   }
 
@@ -728,16 +729,16 @@ class Peer extends EventEmitter {
     this._setupRoomMessageHandlers(room);
 
     room.on(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.SEND_OFFER.key, offerMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_OFFER.key, offerMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.SEND_ANSWER.key, answerMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_ANSWER.key, answerMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.SEND_CANDIDATE.key, candidateMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_CANDIDATE.key, candidateMessage);
     });
     room.on(MeshRoom.MESSAGE_EVENTS.getPeers.key, requestMessage => {
-      this.socket.send(util.MESSAGE_TYPES.CLIENT.ROOM_GET_USERS.key, requestMessage);
+      this.socket.send(config.MESSAGE_TYPES.CLIENT.ROOM_GET_USERS.key, requestMessage);
     });
   }
 

@@ -363,7 +363,7 @@ class Negotiator extends EventEmitter {
           logger.error(error);
           this.emit(Negotiator.EVENTS.error.key, error);
 
-          logger.log('Failed to setLocalDescription, ', err);
+          logger.log('Failed to setLocalDescription, ', error);
         });
       }, error => {
         error.type = 'webrtc';

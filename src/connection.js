@@ -2,6 +2,7 @@
 
 const util       = require('./util');
 const logger     = require('./util/logger');
+const config     = require('./util/config');
 const Negotiator = require('./negotiator');
 
 const EventEmitter = require('events');
@@ -87,7 +88,7 @@ class Connection extends EventEmitter {
       this.open = true;
     } else {
       logger.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: answerMessage});
+      this._queuedMessages.push({type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: answerMessage});
     }
   }
 
@@ -100,7 +101,7 @@ class Connection extends EventEmitter {
       this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
       logger.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: candidateMessage});
+      this._queuedMessages.push({type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: candidateMessage});
     }
   }
 
@@ -119,10 +120,10 @@ class Connection extends EventEmitter {
   _handleQueuedMessages() {
     for (let message of this._queuedMessages) {
       switch (message.type) {
-        case util.MESSAGE_TYPES.SERVER.ANSWER.key:
+        case config.MESSAGE_TYPES.SERVER.ANSWER.key:
           this.handleAnswer(message.payload);
           break;
-        case util.MESSAGE_TYPES.SERVER.CANDIDATE.key:
+        case config.MESSAGE_TYPES.SERVER.CANDIDATE.key:
           this.handleCandidate(message.payload);
           break;
         default:

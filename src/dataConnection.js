@@ -4,6 +4,7 @@ const Connection = require('./connection');
 const Negotiator = require('./negotiator');
 const util       = require('./util');
 const logger     = require('./util/logger');
+const config     = require('./util/config');
 
 const BinaryPack = require('js-binarypack');
 const Enum       = require('enum');
@@ -219,7 +220,7 @@ class DataConnection extends Connection {
 
     // dataMeta contains all possible parameters by now.
     // Adjust the chunk size to avoid issues with sending
-    const chunkSize = util.maxChunkSize - sizeof(dataMeta);
+    const chunkSize = config.maxChunkSize - sizeof(dataMeta);
     const numSlices = Math.ceil(size / chunkSize);
     dataMeta.totalParts = numSlices;
 
@@ -258,7 +259,7 @@ class DataConnection extends Connection {
           clearInterval(this.sendInterval);
           this.sendInterval = undefined;
         }
-      }, util.sendInterval);
+      }, config.sendInterval);
     }
   }
 
