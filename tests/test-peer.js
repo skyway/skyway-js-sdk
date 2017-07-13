@@ -34,14 +34,6 @@ describe('Peer', () => {
   let Peer;
   let initializeServerConnectionSpy;
 
-  // TODO: what is this...?
-  const getSignalingServer = util.getSignalingServer;
-  const log = logger.log;
-  util.getSignalingServer = () => {
-    return Promise.reject();
-  };
-  logger.log = () => {};
-
   beforeEach(() => {
     // new Socket should return a stubbed socket object
     SocketConstructorStub = sinon.stub(Socket, 'constructor');
@@ -104,12 +96,6 @@ describe('Peer', () => {
     MeshRoomConstructorStub.restore();
 
     initializeServerConnectionSpy.restore();
-  });
-
-  after(() => {
-    // for tests after this file
-    util.getSignalingServer = getSignalingServer;
-    logger.log = log;
   });
 
   describe('Constructor', () => {
