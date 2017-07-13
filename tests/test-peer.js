@@ -15,7 +15,6 @@ const proxyquire   = require('proxyquireify')(require);
 const sinon        = require('sinon');
 const EventEmitter = require('events');
 
-const MediaStream = window.MediaStream || window.webkitMediaStream;
 
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
@@ -35,6 +34,7 @@ describe('Peer', () => {
   let Peer;
   let initializeServerConnectionSpy;
 
+  // TODO: what is this...?
   const getSignalingServer = util.getSignalingServer;
   const log = logger.log;
   util.getSignalingServer = () => {
@@ -93,6 +93,7 @@ describe('Peer', () => {
       './peer/meshRoom':       MeshRoomConstructorStub,
       './peer/dataConnection': DCSpier,
       './shared/config':       config,
+      './shared/logger':       logger,
       './shared/util':         util});
     initializeServerConnectionSpy = sinon.spy(Peer.prototype, '_initializeServerConnection');
   });
@@ -1130,7 +1131,7 @@ describe('Peer', () => {
         let logSpy;
 
         beforeEach(() => {
-          logSpy = sinon.spy(util, 'log');
+          logSpy = sinon.spy(logger, 'log');
         });
         afterEach(() => {
           logSpy.restore();
