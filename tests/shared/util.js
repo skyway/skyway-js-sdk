@@ -1,6 +1,6 @@
 'use strict';
 
-const util = require('../src/shared/util');
+const util = require('../../src/shared/util');
 
 const assert = require('power-assert');
 

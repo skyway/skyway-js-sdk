@@ -2,10 +2,9 @@
 
 const assert     = require('power-assert');
 const sinon      = require('sinon');
-const proxyquire = require('proxyquireify')(require);
 
-const Negotiator = require('../src/peer/negotiator');
-const logger     = require('../src/shared/logger');
+const Negotiator = require('../../src/peer/negotiator');
+const logger     = require('../../src/shared/logger');
 
 describe('Negotiator', () => {
   describe('Constructor', () => {

@@ -5,9 +5,9 @@ const proxyquire = require('proxyquireify')(require);
 const sinon      = require('sinon');
 const BinaryPack = require('js-binarypack');
 
-const util       = require('../src/shared/util');
-const config     = require('../src/shared/config');
-const Negotiator = require('../src/peer/negotiator');
+const util       = require('../../src/shared/util');
+const config     = require('../../src/shared/config');
+const Negotiator = require('../../src/peer/negotiator');
 
 let Connection;
 let DataConnection;
@@ -41,11 +41,11 @@ describe('DataConnection', () => {
     });
 
     Connection = proxyquire(
-      '../src/peer/connection',
+      '../../src/peer/connection',
       {'./negotiator': negotiatorStub}
     );
     DataConnection = proxyquire(
-      '../src/peer/dataConnection',
+      '../../src/peer/dataConnection',
       {'./connection': Connection}
     );
   });

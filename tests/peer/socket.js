@@ -5,8 +5,8 @@ const proxyquire  = require('proxyquireify')(require);
 const SocketIO    = require('socket.io-client');
 const sinon       = require('sinon');
 
-const util = require('../src/shared/util');
-const config = require('../src/shared/config');
+const util = require('../../src/shared/util');
+const config = require('../../src/shared/config');
 
 describe('Socket', () => {
   const serverPort = 5080;
@@ -40,7 +40,7 @@ describe('Socket', () => {
       }
     );
 
-    Socket = proxyquire('../src/peer/socket', {
+    Socket = proxyquire('../../src/peer/socket', {
       'socket.io-client': socketIoClientStub,
       './shared/config':  config,
       './shared/util':    util,

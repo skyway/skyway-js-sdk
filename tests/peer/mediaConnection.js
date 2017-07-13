@@ -4,8 +4,8 @@ const assert     = require('power-assert');
 const proxyquire = require('proxyquireify')(require);
 const sinon      = require('sinon');
 
-const config     = require('../src/shared/config');
-const Negotiator = require('../src/peer/negotiator');
+const config     = require('../../src/shared/config');
+const Negotiator = require('../../src/peer/negotiator');
 
 let Connection;
 let MediaConnection;
@@ -41,11 +41,11 @@ describe('MediaConnection', () => {
     });
 
     Connection = proxyquire(
-      '../src/peer/connection',
+      '../../src/peer/connection',
       {'./negotiator': stub}
     );
     MediaConnection = proxyquire(
-      '../src/peer/mediaConnection',
+      '../../src/peer/mediaConnection',
       {'./connection': Connection}
     );
   });
