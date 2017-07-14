@@ -1,7 +1,7 @@
 'use strict';
 
-const EventEmitter    = require('events');
-const Enum            = require('enum');
+const EventEmitter = require('events');
+const Enum         = require('enum');
 
 const Events = [
   'stream',

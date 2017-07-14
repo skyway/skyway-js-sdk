@@ -1,10 +1,12 @@
 'use strict';
 
-const util       = require('./util');
-const Negotiator = require('./negotiator');
-
 const EventEmitter = require('events');
 const Enum         = require('enum');
+
+const Negotiator = require('./negotiator');
+const util       = require('../shared/util');
+const logger     = require('../shared/logger');
+const config     = require('../shared/config');
 
 const ConnectionEvents = new Enum([
   'candidate',
@@ -85,8 +87,8 @@ class Connection extends EventEmitter {
       this._negotiator.handleAnswer(answerMessage.answer);
       this.open = true;
     } else {
-      util.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: answerMessage});
+      logger.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
+      this._queuedMessages.push({type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: answerMessage});
     }
   }
 
@@ -98,8 +100,8 @@ class Connection extends EventEmitter {
     if (this._pcAvailable) {
       this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
-      util.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
-      this._queuedMessages.push({type: util.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: candidateMessage});
+      logger.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
+      this._queuedMessages.push({type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: candidateMessage});
     }
   }
 
@@ -118,14 +120,14 @@ class Connection extends EventEmitter {
   _handleQueuedMessages() {
     for (let message of this._queuedMessages) {
       switch (message.type) {
-        case util.MESSAGE_TYPES.SERVER.ANSWER.key:
+        case config.MESSAGE_TYPES.SERVER.ANSWER.key:
           this.handleAnswer(message.payload);
           break;
-        case util.MESSAGE_TYPES.SERVER.CANDIDATE.key:
+        case config.MESSAGE_TYPES.SERVER.CANDIDATE.key:
           this.handleCandidate(message.payload);
           break;
         default:
-          util.warn('Unrecognized message type:', message.type, 'from peer:', this.remoteId);
+          logger.warn('Unrecognized message type:', message.type, 'from peer:', this.remoteId);
           break;
       }
     }
@@ -198,7 +200,7 @@ class Connection extends EventEmitter {
    * @deprecated Use remoteId instead.
    */
   get peer() {
-    util.warn(`${this.constructor.name}.peer is deprecated and may be removed from a future version.` +
+    logger.warn(`${this.constructor.name}.peer is deprecated and may be removed from a future version.` +
         ` Please use ${this.constructor.name}.remoteId instead.`);
     return this.remoteId;
   }

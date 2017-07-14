@@ -15,39 +15,44 @@ const jsdoc       = require('gulp-jsdoc3');
 
 const karmaConfig = require('./karma.conf.js');
 const KarmaServer = require('karma').Server;
-
-let tests = require('yargs').argv.test;
-const testDir = 'tests/';
-const srcDir  = 'src/';
-const fileList = [];
-const files = [];
-
-// If --test is all or not specified, run all tests
-if (!tests || tests === 'all') {
-  fileList.push(`${testDir}test-**.js`);
-  fileList.push(`${srcDir}**.js`);
-} else {
-  // Put it in an array if there's only one --test
-  if (typeof tests === 'string') {
-    tests = [tests];
-  }
-
-  for (let test of tests) {
-    fileList.push(`${srcDir}${test}.js`);
-    fileList.push(`${testDir}test-${test}.js`);
-  }
-}
-
-for (let filename of fileList) {
-  files.push({
-    pattern:  filename,
-    watched:  false,
-    served:   true,
-    included: true,
-  });
-}
+const argv = require('yargs').argv;
 
 gulp.task('test', done => {
+  const testDir = './tests';
+  const srcDir  = './src';
+
+  const files = [];
+  function getFileItem(path) {
+    return {
+      pattern:  path,
+      watched:  false,
+      served:   true,
+      included: true,
+    };
+  }
+
+  // If --tests is all or not specified, run all tests
+  if (!argv.tests || argv.tests === 'all') {
+    [
+      `${testDir}/**/*.js`,
+      `${srcDir}/**/*.js`,
+    ].forEach(p => files.push(getFileItem(p)));
+  }
+  // If test specified
+  else {
+    // Put it in an array if there's only one --tests
+    if (typeof argv.tests === 'string') {
+      files.push(getFileItem(`${testDir}/${argv.tests}`));
+      files.push(getFileItem(`${srcDir}/${argv.tests}`));
+    }
+    else {
+      argv.tests.forEach(p => {
+        files.push(getFileItem(`${testDir}/${p}`));
+        files.push(getFileItem(`${srcDir}/${p}`));
+      });
+    }
+  }
+
   karmaConfig.files = files;
   KarmaServer.start(karmaConfig, done);
 });

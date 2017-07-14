@@ -3,14 +3,8 @@
 const EventEmitter = require('events');
 const Enum         = require('enum');
 
-const shim         = require('../src/webrtcShim');
-const sdpUtil      = require('../src/sdpUtil');
-
-const RTCPeerConnection     = shim.RTCPeerConnection;
-const RTCIceCandidate       = shim.RTCIceCandidate;
-const RTCSessionDescription = shim.RTCSessionDescription;
-
-const util = require('./util');
+const sdpUtil = require('../shared/sdpUtil');
+const logger  = require('../shared/logger');
 
 const NegotiatorEvents = new Enum([
   'addStream',
@@ -186,9 +180,9 @@ class Negotiator extends EventEmitter {
    */
   handleCandidate(candidate) {
     this._pc.addIceCandidate(new RTCIceCandidate(candidate)).then(() => {
-      util.log('Added ICE candidate');
+      logger.log('Added ICE candidate');
     }).catch(e => {
-      util.error('Failed to add ICE candidate', e);
+      logger.error('Failed to add ICE candidate', e);
     });
   }
 
@@ -196,7 +190,7 @@ class Negotiator extends EventEmitter {
    * Close a PeerConnection.
    */
   cleanup() {
-    util.log('Cleaning up PeerConnection');
+    logger.log('Cleaning up PeerConnection');
 
     if (this._pc && (this._pc.readyState !== 'closed' || this._pc.signalingState !== 'closed')) {
       this._pc.close();
@@ -211,7 +205,7 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _createPeerConnection(pcConfig) {
-    util.log('Creating RTCPeerConnection');
+    logger.log('Creating RTCPeerConnection');
 
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
@@ -225,13 +219,13 @@ class Negotiator extends EventEmitter {
   _setupPCListeners() {
     const pc = this._pc;
     pc.onaddstream = evt => {
-      util.log('Received remote media stream');
+      logger.log('Received remote media stream');
       const stream = evt.stream;
       this.emit(Negotiator.EVENTS.addStream.key, stream);
     };
 
     pc.ondatachannel = evt => {
-      util.log('Received data channel');
+      logger.log('Received data channel');
       const dc = evt.channel;
       this.emit(Negotiator.EVENTS.dcCreated.key, dc);
     };
@@ -239,10 +233,10 @@ class Negotiator extends EventEmitter {
     pc.onicecandidate = evt => {
       const candidate = evt.candidate;
       if (candidate) {
-        util.log('Generated ICE candidate for:', candidate);
+        logger.log('Generated ICE candidate for:', candidate);
         this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
       } else {
-        util.log('ICE candidates gathering complete');
+        logger.log('ICE candidates gathering complete');
 
         this.emit(Negotiator.EVENTS.iceCandidatesComplete.key, pc.localDescription);
       }
@@ -251,23 +245,23 @@ class Negotiator extends EventEmitter {
     pc.oniceconnectionstatechange = () => {
       switch (pc.iceConnectionState) {
         case 'completed':
-          util.log('iceConnectionState is completed');
+          logger.log('iceConnectionState is completed');
           // istanbul ignore next
           pc.onicecandidate = () => {};
           break;
         case 'failed':
         case 'disconnected':
-          util.log(`iceConnectionState is ${pc.iceConnectionState}, closing connection`);
+          logger.log(`iceConnectionState is ${pc.iceConnectionState}, closing connection`);
           this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
           break;
         default:
-          util.log(`iceConnectionState is ${pc.iceConnectionState}`);
+          logger.log(`iceConnectionState is ${pc.iceConnectionState}`);
           break;
       }
     };
 
     pc.onnegotiationneeded = () => {
-      util.log('`negotiationneeded` triggered');
+      logger.log('`negotiationneeded` triggered');
 
       // Don't make a new offer if it's not stable.
       if (pc.signalingState === 'stable') {
@@ -287,12 +281,12 @@ class Negotiator extends EventEmitter {
     };
 
     pc.onremovestream = evt => {
-      util.log('`removestream` triggered');
+      logger.log('`removestream` triggered');
       this.emit(Negotiator.EVENTS.removeStream.key, evt.stream);
     };
 
     pc.onsignalingstatechange = () => {
-      util.log(`signalingState is ${pc.signalingState}`);
+      logger.log(`signalingState is ${pc.signalingState}`);
     };
   }
 
@@ -312,7 +306,7 @@ class Negotiator extends EventEmitter {
 
     return new Promise(resolve => {
       this._pc.createOffer(offer => {
-        util.log('Created offer.');
+        logger.log('Created offer.');
 
         if (this._audioBandwidth) {
           offer.sdp = sdpUtil.addAudioBandwidth(offer.sdp, this._audioBandwidth);
@@ -329,8 +323,11 @@ class Negotiator extends EventEmitter {
 
         resolve(offer);
       }, error => {
-        util.emitError.call(this, 'webrtc', error);
-        util.log('Failed to createOffer, ', error);
+        error.type = 'webrtc';
+        logger.error(error);
+        this.emit(Negotiator.EVENTS.error.key, error);
+
+        logger.log('Failed to createOffer, ', error);
       }, options);
     });
   }
@@ -343,7 +340,7 @@ class Negotiator extends EventEmitter {
   _makeAnswerSdp() {
     return new Promise(resolve => {
       this._pc.createAnswer(answer => {
-        util.log('Created answer.');
+        logger.log('Created answer.');
 
         if (this._audioBandwidth) {
           answer.sdp = sdpUtil.addAudioBandwidth(answer.sdp, this._audioBandwidth);
@@ -359,15 +356,21 @@ class Negotiator extends EventEmitter {
         }
 
         this._pc.setLocalDescription(answer, () => {
-          util.log('Set localDescription: answer');
+          logger.log('Set localDescription: answer');
           resolve(answer);
-        }, err => {
-          util.emitError.call(this, 'webrtc', err);
-          util.log('Failed to setLocalDescription, ', err);
+        }, error => {
+          error.type = 'webrtc';
+          logger.error(error);
+          this.emit(Negotiator.EVENTS.error.key, error);
+
+          logger.log('Failed to setLocalDescription, ', error);
         });
-      }, err => {
-        util.emitError.call(this, 'webrtc', err);
-        util.log('Failed to createAnswer, ', err);
+      }, error => {
+        error.type = 'webrtc';
+        logger.error(error);
+        this.emit(Negotiator.EVENTS.error.key, error);
+
+        logger.log('Failed to createAnswer, ', error);
       });
     });
   }
@@ -381,13 +384,16 @@ class Negotiator extends EventEmitter {
   _setLocalDescription(offer) {
     return new Promise((resolve, reject) => {
       this._pc.setLocalDescription(offer, () => {
-        util.log('Set localDescription: offer');
+        logger.log('Set localDescription: offer');
         this._isExpectingAnswer = true;
         this.emit(Negotiator.EVENTS.offerCreated.key, offer);
         resolve(offer);
       }, error => {
-        util.emitError.call(this, 'webrtc', error);
-        util.log('Failed to setLocalDescription, ', error);
+        error.type = 'webrtc';
+        logger.error(error);
+        this.emit(Negotiator.EVENTS.error.key, error);
+
+        logger.log('Failed to setLocalDescription, ', error);
         reject(error);
       });
     });
@@ -400,14 +406,17 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _setRemoteDescription(sdp) {
-    util.log(`Setting remote description ${JSON.stringify(sdp)}`);
+    logger.log(`Setting remote description ${JSON.stringify(sdp)}`);
     return new Promise(resolve => {
       this._pc.setRemoteDescription(new RTCSessionDescription(sdp), () => {
-        util.log('Set remoteDescription:', sdp.type);
+        logger.log('Set remoteDescription:', sdp.type);
         resolve();
-      }, err => {
-        util.emitError.call(this, 'webrtc', err);
-        util.log('Failed to setRemoteDescription: ', err);
+      }, error => {
+        error.type = 'webrtc';
+        logger.error(error);
+        this.emit(Negotiator.EVENTS.error.key, error);
+
+        logger.log('Failed to setRemoteDescription: ', error);
       });
     });
   }
