@@ -132,10 +132,10 @@ class DataConnection extends Connection {
    */
   _handleDataMessage(msg) {
     if (this.serialization === DataConnection.SERIALIZATIONS.none.key) {
-      this.emit(DataConnection.EVENTS.data, msg.data);
+      this.emit(DataConnection.EVENTS.data.key, msg.data);
       return;
     } else if (this.serialization === DataConnection.SERIALIZATIONS.json.key) {
-      this.emit(DataConnection.EVENTS.data, JSON.parse(msg.data));
+      this.emit(DataConnection.EVENTS.data.key, JSON.parse(msg.data));
       return;
     }
 
