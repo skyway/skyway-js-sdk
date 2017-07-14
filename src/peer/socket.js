@@ -1,11 +1,9 @@
-'use strict';
+import io from 'socket.io-client';
+import EventEmitter from 'events';
+import queryString  from 'query-string';
 
-const io = require('socket.io-client');
-const EventEmitter = require('events');
-const queryString  = require('query-string');
-
-const config = require('../shared/config');
-const logger = require('../shared/logger');
+import config from '../shared/config';
+import logger from '../shared/logger';
 
 /**
  * Class to handle WS/HTTP communication with the signalling server
@@ -434,4 +432,4 @@ class Socket extends EventEmitter {
    */
 }
 
-module.exports = Socket;
+export default Socket;

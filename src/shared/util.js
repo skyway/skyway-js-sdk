@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Validate the Peer ID format.
  * @param {string} [id] - A Peer ID.
@@ -119,7 +117,7 @@ function isSecure() {
   return location.protocol === 'https:';
 }
 
-module.exports = {
+export default {
   validateId,
   validateKey,
   randomId,

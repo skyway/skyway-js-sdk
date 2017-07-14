@@ -1,12 +1,10 @@
-'use strict';
+import Enum from 'enum';
 
-const Enum            = require('enum');
-
-const Room            = require('./room');
-const Connection      = require('./connection');
-const MediaConnection = require('./mediaConnection');
-const DataConnection = require('./dataConnection');
-const logger          = require('../shared/logger');
+import Room            from './room';
+import Connection      from './connection';
+import MediaConnection from './mediaConnection';
+import DataConnection  from './dataConnection';
+import logger          from '../shared/logger';
 
 const MessageEvents = [
   'broadcastByDC',
@@ -420,4 +418,4 @@ class MeshRoom extends Room {
    */
 }
 
-module.exports = MeshRoom;
+export default MeshRoom;
