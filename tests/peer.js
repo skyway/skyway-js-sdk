@@ -218,9 +218,7 @@ describe('Peer', () => {
             port: signalingPort,
           });
 
-          sinon.stub(peer.socket, 'isOpen', {
-            get: () => true,
-          });
+          sinon.stub(peer.socket, 'isOpen').get(() => true);
         });
 
         it('should create a new Socket and set it to peer.socket', () => {
@@ -308,9 +306,7 @@ describe('Peer', () => {
 
     describe('when its socket is open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => true,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => true);
       });
 
       it('should create a new MediaConnection, add it, and return it', () => {
@@ -328,9 +324,7 @@ describe('Peer', () => {
 
     describe('when its socket is not open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => false,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => false);
       });
 
       it('should emit error and return', done => {
@@ -360,9 +354,7 @@ describe('Peer', () => {
 
     describe('when its socket is open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => true,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => true);
       });
 
       it('should create a new DataConnection, add it, and return it', () => {
@@ -380,9 +372,7 @@ describe('Peer', () => {
 
     describe('when its socket is not open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => false,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => false);
       });
 
       it('should emit error and return', done => {
@@ -409,9 +399,7 @@ describe('Peer', () => {
 
     describe('when its socket is open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => true,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => true);
       });
 
       it('should call _initializeSfuRoom if mode is \'sfu\'', () => {
@@ -469,9 +457,7 @@ describe('Peer', () => {
 
     describe('when its socket is not open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => false,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => false);
       });
 
       it('should emit error and return', done => {
@@ -503,9 +489,7 @@ describe('Peer', () => {
 
     describe('when its socket is open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => true,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => true);
       });
 
       it('should get a connection if peerId and connId match', () => {
@@ -527,9 +511,7 @@ describe('Peer', () => {
 
     describe('when its socket is not open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => false,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => false);
       });
 
       it('should emit error and return', done => {
@@ -552,9 +534,7 @@ describe('Peer', () => {
         port: signalingPort,
       });
 
-      sinon.stub(peer.socket, 'isOpen', {
-        get: () => true,
-      });
+      sinon.stub(peer.socket, 'isOpen').get(() => true);
     });
 
     afterEach(() => {
@@ -617,9 +597,7 @@ describe('Peer', () => {
         port: signalingPort,
       });
 
-      sinon.stub(peer.socket, 'isOpen', {
-        get: () => fakeIsOpen,
-      });
+      sinon.stub(peer.socket, 'isOpen').get(() => fakeIsOpen);
     });
 
     afterEach(() => {
@@ -674,9 +652,7 @@ describe('Peer', () => {
 
     describe('when its socket is open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => true,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => true);
       });
 
       it('should do nothing', () => {
@@ -687,9 +663,7 @@ describe('Peer', () => {
 
     describe('when its socket is not open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => false,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => false);
       });
       it('should call socket.reconnect', () => {
         peer.reconnect();
@@ -744,9 +718,7 @@ describe('Peer', () => {
 
     describe('when its socket is open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => true,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => true);
       });
 
       it('should send a "GET" request to the right URL', () => {
@@ -821,9 +793,7 @@ describe('Peer', () => {
 
     describe('when its socket is not open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => false,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => false);
       });
 
       it('should emit error and return', done => {
@@ -851,9 +821,7 @@ describe('Peer', () => {
 
     describe('when socket is open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => true,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => true);
       });
       it('should return open status', () => {
         assert.equal(peer._checkOpenStatus(), true);
@@ -862,9 +830,7 @@ describe('Peer', () => {
 
     describe('when socket is not open', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => false,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => false);
       });
       it('should emit error', () => {
         try {
@@ -1112,9 +1078,7 @@ describe('Peer', () => {
 
     describe('signaling messages', () => {
       beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen', {
-          get: () => true,
-        });
+        sinon.stub(peer.socket, 'isOpen').get(() => true);
       });
       describe('LEAVE', () => {
         let logSpy;
