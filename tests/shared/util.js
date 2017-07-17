@@ -1,8 +1,5 @@
-'use strict';
-
-const util = require('../../src/shared/util');
-
-const assert = require('power-assert');
+import assert from 'power-assert';
+import util from '../../src/shared/util';
 
 describe('Util', () => {
   describe('validateId', () => {

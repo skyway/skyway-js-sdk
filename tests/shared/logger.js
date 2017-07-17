@@ -1,9 +1,7 @@
-'use strict';
+import logger from '../../src/shared/logger';
 
-const logger = require('../../src/shared/logger');
-
-const assert = require('power-assert');
-const sinon  = require('sinon');
+import assert from 'power-assert';
+import sinon  from 'sinon';
 
 describe('Logger', () => {
   describe('Log Related methods', () => {
