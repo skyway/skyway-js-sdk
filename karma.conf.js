@@ -1,25 +1,26 @@
+const webpackConfig = require('./webpack.config.js');
+
 module.exports =  {
   singleRun: true,
 
-  frameworks: ['mocha', 'browserify'],
+  frameworks: ['mocha'],
 
-  browserify: {
-    debug:     true,
-    transform: [
-      ['browserify-istanbul', {
-        instrumenter:       require('isparta'),
-        instrumenterConfig: {babel: {presets: ['es2015']}},
-      }],
-      ['babelify', {presets: ['es2015'],
-        plugins: ['babel-plugin-espower']},
-      ],
-    ],
-    plugin: ['proxyquireify/plugin'],
-  },
+  // browserify: {
+  //   debug:     true,
+  //   transform: [
+  //     ['browserify-istanbul', {
+  //       instrumenter: require('isparta'),
+  //     }],
+  //     ['babelify'],
+  //   ],
+  //   plugin: ['proxyquireify/plugin'],
+  // },
+
+  webpack: webpackConfig,
 
   preprocessors: {
-    'tests/**/*.js': 'browserify',
-    'src/**/*.js':   'browserify',
+    'tests/**/*.js': 'webpack',
+    'src/**/*.js':   'webpack',
   },
 
   reporters: [
