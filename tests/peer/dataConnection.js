@@ -128,7 +128,7 @@ describe('DataConnection', () => {
       const messages = [{type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message'}];
 
       let spy = sinon.spy();
-      sinon.stub(DataConnection.prototype, 'handleAnswer', spy);
+      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy);
       const dc = new DataConnection('remoteId', {queuedMessages: messages});
 
       assert.deepEqual(dc._queuedMessages, []);
@@ -143,8 +143,8 @@ describe('DataConnection', () => {
 
       let spy1 = sinon.spy();
       let spy2 = sinon.spy();
-      sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
-      sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
+      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
+      sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
 
       const dc = new DataConnection('remoteId', {queuedMessages: messages});
 
@@ -158,8 +158,8 @@ describe('DataConnection', () => {
 
       let spy1 = sinon.spy();
       let spy2 = sinon.spy();
-      sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
-      sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
+      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
+      sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
 
       const dc = new DataConnection('remoteId', {queuedMessages: messages});
 
