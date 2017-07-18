@@ -1,12 +1,9 @@
-'use strict';
+import assert   from 'power-assert';
+import SocketIO from 'socket.io-client';
+import sinon    from 'sinon';
 
-const assert      = require('power-assert');
-const proxyquire  = require('proxyquireify')(require);
-const SocketIO    = require('socket.io-client');
-const sinon       = require('sinon');
-
-const util = require('../../src/shared/util');
-const config = require('../../src/shared/config');
+import SocketInjector from 'inject-loader!../../src/peer/socket';
+import config from '../../src/shared/config';
 
 describe('Socket', () => {
   const serverPort = 5080;
@@ -40,11 +37,9 @@ describe('Socket', () => {
       }
     );
 
-    Socket = proxyquire('../../src/peer/socket', {
+    Socket = SocketInjector({
       'socket.io-client': socketIoClientStub,
-      './shared/config':  config,
-      './shared/util':    util,
-    });
+    }).default;
 
     socket = new Socket(apiKey, {
       host: 'localhost',

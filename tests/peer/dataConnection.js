@@ -1,13 +1,13 @@
-'use strict';
+import assert     from 'power-assert';
+import sinon      from 'sinon';
+import BinaryPack from 'js-binarypack';
 
-const assert     = require('power-assert');
-const proxyquire = require('proxyquireify')(require);
-const sinon      = require('sinon');
-const BinaryPack = require('js-binarypack');
+import util       from '../../src/shared/util';
+import config     from '../../src/shared/config';
+import Negotiator from '../../src/peer/negotiator';
 
-const util       = require('../../src/shared/util');
-const config     = require('../../src/shared/config');
-const Negotiator = require('../../src/peer/negotiator');
+import ConnectionInjector from 'inject-loader!../../src/peer/connection';
+import DataConnectionInjector from 'inject-loader!../../src/peer/dataConnection';
 
 let Connection;
 let DataConnection;
@@ -39,15 +39,11 @@ describe('DataConnection', () => {
       handleAnswer:    answerSpy,
       handleCandidate: candidateSpy,
     });
+    // hoist statics
+    negotiatorStub.EVENTS = Negotiator.EVENTS;
 
-    Connection = proxyquire(
-      '../../src/peer/connection',
-      {'./negotiator': negotiatorStub}
-    );
-    DataConnection = proxyquire(
-      '../../src/peer/dataConnection',
-      {'./connection': Connection}
-    );
+    Connection = ConnectionInjector({ './negotiator': negotiatorStub }).default;
+    DataConnection = DataConnectionInjector({ './connection': Connection }).default;
   });
 
   afterEach(() => {

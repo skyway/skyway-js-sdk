@@ -1,20 +1,18 @@
-'use strict';
+import assert       from 'power-assert';
+import sinon        from 'sinon';
+import EventEmitter from 'events';
 
-const MediaConnection = require('../src/peer/mediaConnection');
-const DataConnection  = require('../src/peer/dataConnection');
-const SFURoom         = require('../src/peer/sfuRoom');
-const MeshRoom        = require('../src/peer/meshRoom');
-const Room            = require('../src/peer/room');
-const Socket          = require('../src/peer/socket');
-const util            = require('../src/shared/util');
-const config          = require('../src/shared/config');
-const logger          = require('../src/shared/logger');
+import MediaConnection from '../src/peer/mediaConnection';
+import DataConnection  from '../src/peer/dataConnection';
+import SFURoom         from '../src/peer/sfuRoom';
+import MeshRoom        from '../src/peer/meshRoom';
+import Room            from '../src/peer/room';
+import Socket          from '../src/peer/socket';
+import util            from '../src/shared/util';
+import config          from '../src/shared/config';
+import logger          from '../src/shared/logger';
 
-const assert       = require('power-assert');
-const proxyquire   = require('proxyquireify')(require);
-const sinon        = require('sinon');
-const EventEmitter = require('events');
-
+import PeerInjector from 'inject-loader!../src/peer';
 
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
@@ -44,11 +42,15 @@ describe('Peer', () => {
     SFURoomConstructorStub = sinon.stub(SFURoom, 'constructor');
     sfuRoomInstanceStub = sinon.createStubInstance(SFURoom);
     SFURoomConstructorStub.returns(sfuRoomInstanceStub);
+    // hoist statics
+    SFURoomConstructorStub.MESSAGE_EVENTS = SFURoom.MESSAGE_EVENTS;
 
     // new MeshRoom should return a stubbed meshRoom object
     MeshRoomConstructorStub = sinon.stub(MeshRoom, 'constructor');
     meshRoomInstanceStub = sinon.createStubInstance(MeshRoom);
     MeshRoomConstructorStub.returns(meshRoomInstanceStub);
+    // hoist statics
+    MeshRoomConstructorStub.MESSAGE_EVENTS = MeshRoom.MESSAGE_EVENTS;
 
     // We have to add the spy like this in order to get the
     // DataConnection object using DataConnectionConstructorSpy.thisValues
@@ -79,7 +81,8 @@ describe('Peer', () => {
     sinon.spy(meshRoomInstanceStub, 'on');
     sinon.spy(meshRoomInstanceStub, 'emit');
 
-    Peer = proxyquire('../src/peer', {
+
+    Peer = PeerInjector({
       './peer/socket':         SocketConstructorStub,
       './peer/sfuRoom':        SFURoomConstructorStub,
       './peer/meshRoom':       MeshRoomConstructorStub,

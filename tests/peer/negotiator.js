@@ -1,10 +1,8 @@
-'use strict';
+import assert from 'power-assert';
+import sinon  from 'sinon';
 
-const assert     = require('power-assert');
-const sinon      = require('sinon');
-
-const Negotiator = require('../../src/peer/negotiator');
-const logger     = require('../../src/shared/logger');
+import Negotiator from '../../src/peer/negotiator';
+import logger     from '../../src/shared/logger';
 
 describe('Negotiator', () => {
   describe('Constructor', () => {
