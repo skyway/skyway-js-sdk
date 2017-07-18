@@ -1,20 +1,21 @@
 const webpackConfig = require('./webpack.config.js');
 
+webpackConfig.module.rules.push({
+  test:    /\.js$/,
+  exclude: /node_modules/,
+  use:     {
+    loader:  'istanbul-instrumenter-loader',
+    options: {
+      debug:     true,
+      esModules: true,
+    },
+  },
+});
+
 module.exports =  {
   singleRun: true,
 
   frameworks: ['mocha'],
-
-  // browserify: {
-  //   debug:     true,
-  //   transform: [
-  //     ['browserify-istanbul', {
-  //       instrumenter: require('isparta'),
-  //     }],
-  //     ['babelify'],
-  //   ],
-  //   plugin: ['proxyquireify/plugin'],
-  // },
 
   webpack: webpackConfig,
 
