@@ -1,12 +1,15 @@
 const webpack = require('webpack');
 
+// base
 const config = {
-  entry:  './src/peer.js',
+  entry: {
+    'eclwebrtc': './src/peer.js',
+  },
   output: {
     libraryTarget: 'umd',
     library:       'Peer',
     path:          `${__dirname}/dist`,
-    filename:      'eclwebrtc.js',
+    filename:      '[name].js',
   },
   module: {
     rules: [
@@ -19,11 +22,31 @@ const config = {
       },
     ],
   },
-  plugins: [],
+  plugins: [
+    new webpack.optimize.ModuleConcatenationPlugin(),
+    new webpack.BannerPlugin(_getCopyRight()),
+  ],
 };
 
+// from `npm run build, exports both `.js`, `.min.js`
 if (process.env.NODE_ENV === 'production') {
-  config.plugins.push(new webpack.optimize.ModuleConcatenationPlugin());
+  const minConf = Object.assign({}, config, {
+    entry:   { 'eclwebrtc.min': './src/peer.js', },
+    plugins: [
+      ...config.plugins.slice(),
+      new webpack.optimize.UglifyJsPlugin()
+    ],
+  });
+
+  module.exports = [config, minConf];
+}
+// from karma, exports only not minified
+else {
+  module.exports = config;
 }
 
-module.exports = config;
+
+function _getCopyRight() {
+  const currentYear = new Date().getFullYear();
+  return `skywayjs Copyright(c) ${currentYear} NTT Communications Corporation`;
+}
