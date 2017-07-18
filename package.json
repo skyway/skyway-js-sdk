@@ -8,9 +8,11 @@
     "test": "test"
   },
   "scripts": {
-    "gulp": "gulp",
+    "test": "karma start ./karma.conf.js",
+    "clean": "del ./dist",
+    "lint": "eslint ./src ./tests",
     "build": "webpack",
-    "test": "gulp test"
+    "doc": "jsdoc -c ./jsdoc.config.js"
   },
   "repository": {
     "type": "git",
@@ -22,19 +24,13 @@
     "babel-loader": "^7.1.1",
     "babel-plugin-espower": "^2.1.1",
     "babel-preset-es2015": "^6.3.13",
-    "del": "^3.0.0",
+    "del-cli": "^1.1.0",
     "eslint": "^4.2.0",
     "eslint-config-google": "^0.9.1",
-    "gulp": "^3.9.0",
-    "gulp-eslint": "^4.0.0",
-    "gulp-header": "^1.7.1",
-    "gulp-insert": "^0.5.0",
-    "gulp-jsdoc3": "^1.0.1",
-    "gulp-rename": "^1.2.2",
-    "gulp-uglify": "^3.0.0",
     "inject-loader": "^3.0.0",
     "istanbul": "^0.4.2",
     "istanbul-instrumenter-loader": "^2.0.0",
+    "jsdoc": "^3.5.3",
     "karma": "^1.7.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.1",
@@ -45,11 +41,8 @@
     "mock-socket": "^6.1.0",
     "power-assert": "^1.2.0",
     "rootpath": "^0.1.2",
-    "run-sequence": "^2.0.0",
     "sinon": "^2.3.7",
     "socket.io": "^2.0.3",
-    "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0",
     "webpack": "^3.3.0",
     "yargs": "^8.0.2"
   },

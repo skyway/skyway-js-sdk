@@ -4,14 +4,28 @@
 
 Use `npm install` to set up dependencies.
 
-Use `gulp lint` to run eslint.
+```sh
+# run eslint
+npm run lint
 
-Use `gulp test` to run unit tests.
+# run all unit tests
+npm run test # OR npm test OR npm t
 
-> You can specify files to test by `gulp test --tests=peer.js`, `gulp test --tests=shared/logger.js --tests=shared/util.js`.
+# run specified unit test
+npm run test -- --tests=shared/logger.js
+npm run test -- --tests=shared/logger.js --tests=peer.js
 
-Use `gulp build` to build the library (babelify, browserify, uglify).
+# build the library
+npm run build
+```
 
 ## Contributing
 
-Make sure you have nodejs installed. Run `npm install` to get started. After making changes in `src/`, you run `gulp test` to run tests and then the `gulp` command to validate(gulp lint) and build skyway.js which is stored in `dist` directory!
+Make sure you have nodejs installed. Run `npm install` to get started.
+
+After making changes in `src/`, you run
+
+- `npm run lint` to validate
+- `npm test` to run tests
+
+then the `npm run build` and build `eclwebrtc(.min).js` which is stored in `dist` directory!
