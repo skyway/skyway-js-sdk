@@ -44,6 +44,8 @@ module.exports = config => {
   });
 };
 
+// Currently, we are sacrificing test running performance for this functionality.
+// See https://github.com/webpack-contrib/karma-webpack#alternative-usage
 function _setTestFiles(argv) {
   const testDir = './tests';
   const srcDir  = './src';
