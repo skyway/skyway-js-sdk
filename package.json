@@ -37,13 +37,9 @@
     "karma-mocha-reporter": "^2.2.3",
     "karma-webpack": "^2.0.4",
     "mocha": "^3.4.2",
-    "mock-socket": "^6.1.0",
     "power-assert": "^1.2.0",
-    "rootpath": "^0.1.2",
     "sinon": "^2.3.7",
-    "socket.io": "^2.0.3",
-    "webpack": "^3.3.0",
-    "yargs": "^8.0.2"
+    "webpack": "^3.3.0"
   },
   "dependencies": {
     "enum": "git+https://github.com/eastandwest/enum.git#react-native",
