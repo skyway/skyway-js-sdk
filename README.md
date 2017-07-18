@@ -11,10 +11,6 @@ npm run lint
 # run all unit tests
 npm run test # OR npm test OR npm t
 
-# run specified unit test
-npm run test -- --tests=shared/logger.js
-npm run test -- --tests=shared/logger.js --tests=peer.js
-
 # build the library
 npm run build
 ```
