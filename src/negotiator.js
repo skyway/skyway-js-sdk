@@ -95,12 +95,15 @@ class Negotiator extends EventEmitter {
     if (!this._pc || this._replaceStreamCalled) {
       return;
     }
+    this._isOnTrackAvailable = typeof RTCPeerConnection.ontrack !== 'undefined';
+    this._isRtpSenderAvailable = typeof RTCPeerConnection.prototype.getSenders === 'function';
+    this._isRtpLocalStreamsAvailable = typeof RTCPeerConnection.prototype.getLocalStreams !== 'undefined';
 
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
     // Firefox 53 has both getSenders and getLocalStreams,
     // but Google Chrome 59 has only getLocalStreams.
-    if (typeof this._pc.getSenders === 'function') {
+    if (this._isRtpSenderAvailable) {
       this._pc.getSenders().forEach(sender => {
         let tracks;
         if (sender.track.kind === 'audio') {
@@ -129,7 +132,7 @@ class Negotiator extends EventEmitter {
     // Unset onnegotiationneeded so that it doesn't trigger on removeStream
     this._pc.onnegotiationneeded = () => {};
 
-    const localStreams = typeof this._pc.getSenders === 'function' ? this._pc.getSenders() : this._pc.getLocalStreams();
+    const localStreams = this._pc.getLocalStreams();
     if (localStreams && localStreams[0]) {
       this._pc.removeStream(localStreams[0]);
     }
@@ -232,19 +235,19 @@ class Negotiator extends EventEmitter {
    */
   _setupPCListeners() {
     const pc = this._pc;
-    if (pc.ontrack === undefined) {
-      pc.onaddstream = evt => {
-        util.log('Received remote media stream');
-        const stream = evt.stream;
-        this.emit(Negotiator.EVENTS.addStream.key, stream);
-      };
-    } else {
+    if (this._isOnTrackAvailable) {
       pc.ontrack = evt => {
         if (evt.track.kind === 'video') {
           util.log('Received remote media stream');
           const stream = evt.streams[0];
           this.emit(Negotiator.EVENTS.addStream.key, stream);
         }
+      };
+    } else {
+      pc.onaddstream = evt => {
+        util.log('Received remote media stream');
+        const stream = evt.stream;
+        this.emit(Negotiator.EVENTS.addStream.key, stream);
       };
     }
 
@@ -322,8 +325,8 @@ class Negotiator extends EventEmitter {
   _makeOfferSdp() {
     let options;
     if (this._type === 'media' &&
-      ((typeof this._pc.getSenders === 'function' && this._pc.getSenders().length === 0) ||
-      (this._pc.getLocalStreams !== undefined && this._pc.getLocalStreams().length === 0))) {
+      ((this._isRtpSenderAvailable && this._pc.getSenders().length === 0) ||
+      (this._isRtpLocalStreamsAvailable && this._pc.getLocalStreams().length === 0))) {
       options = {
         offerToReceiveAudio: true,
         offerToReceiveVideo: true,
