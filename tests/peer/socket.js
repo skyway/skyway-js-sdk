@@ -2,7 +2,7 @@ import assert   from 'power-assert';
 import SocketIO from 'socket.io-client';
 import sinon    from 'sinon';
 
-import SocketInjector from 'inject-loader!../../src/peer/socket';
+import socketInjector from 'inject-loader!../../src/peer/socket';
 import config from '../../src/shared/config';
 
 describe('Socket', () => {
@@ -37,7 +37,7 @@ describe('Socket', () => {
       }
     );
 
-    Socket = SocketInjector({
+    Socket = socketInjector({
       'socket.io-client': socketIoClientStub,
     }).default;
 

@@ -4,8 +4,8 @@ import sinon  from 'sinon';
 import config     from '../../src/shared/config';
 import Negotiator from '../../src/peer/negotiator';
 
-import ConnectionInjector from 'inject-loader!../../src/peer/connection';
-import MediaConnectionInjector from 'inject-loader!../../src/peer/mediaConnection';
+import connectionInjector from 'inject-loader!../../src/peer/connection';
+import mediaConnectionInjector from 'inject-loader!../../src/peer/mediaConnection';
 
 let Connection;
 let MediaConnection;
@@ -42,8 +42,8 @@ describe('MediaConnection', () => {
     // hoist statics
     stub.EVENTS = Negotiator.EVENTS;
 
-    Connection = ConnectionInjector({ './negotiator': stub }).default;
-    MediaConnection = MediaConnectionInjector({ './connection': Connection }).default;
+    Connection = connectionInjector({'./negotiator': stub}).default;
+    MediaConnection = mediaConnectionInjector({'./connection': Connection}).default;
   });
 
   afterEach(() => {

@@ -6,8 +6,8 @@ import util       from '../../src/shared/util';
 import config     from '../../src/shared/config';
 import Negotiator from '../../src/peer/negotiator';
 
-import ConnectionInjector from 'inject-loader!../../src/peer/connection';
-import DataConnectionInjector from 'inject-loader!../../src/peer/dataConnection';
+import connectionInjector from 'inject-loader!../../src/peer/connection';
+import dataConnectionInjector from 'inject-loader!../../src/peer/dataConnection';
 
 let Connection;
 let DataConnection;
@@ -42,8 +42,8 @@ describe('DataConnection', () => {
     // hoist statics
     negotiatorStub.EVENTS = Negotiator.EVENTS;
 
-    Connection = ConnectionInjector({ './negotiator': negotiatorStub }).default;
-    DataConnection = DataConnectionInjector({ './connection': Connection }).default;
+    Connection = connectionInjector({'./negotiator': negotiatorStub}).default;
+    DataConnection = dataConnectionInjector({'./connection': Connection}).default;
   });
 
   afterEach(() => {

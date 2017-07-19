@@ -1,5 +1,5 @@
 import Enum from 'enum';
-import { Interop } from 'sdp-interop';
+import {Interop} from 'sdp-interop';
 
 import Room       from './room';
 import Negotiator from './negotiator';

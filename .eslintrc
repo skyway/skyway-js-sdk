@@ -4,8 +4,7 @@
     "sourceType": "module"
   },
   "extends": [
-    "google",
-    "eslint:recommended"
+    "google"
   ],
   "rules": {
     "no-multi-spaces": [1, {

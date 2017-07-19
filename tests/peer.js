@@ -12,7 +12,7 @@ import util            from '../src/shared/util';
 import config          from '../src/shared/config';
 import logger          from '../src/shared/logger';
 
-import PeerInjector from 'inject-loader!../src/peer';
+import peerInjector from 'inject-loader!../src/peer';
 
 describe('Peer', () => {
   const apiKey = 'abcdefgh-1234-5678-jklm-zxcvasdfqwrt';
@@ -82,7 +82,7 @@ describe('Peer', () => {
     sinon.spy(meshRoomInstanceStub, 'emit');
 
 
-    Peer = PeerInjector({
+    Peer = peerInjector({
       './peer/socket':         SocketConstructorStub,
       './peer/sfuRoom':        SFURoomConstructorStub,
       './peer/meshRoom':       MeshRoomConstructorStub,

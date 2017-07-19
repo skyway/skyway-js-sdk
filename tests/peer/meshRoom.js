@@ -4,7 +4,7 @@ import sinon  from 'sinon';
 import Connection      from '../../src/peer/connection';
 import MediaConnection from '../../src/peer/mediaConnection';
 
-import MeshRoomInjector from 'inject-loader!../../src/peer/meshRoom';
+import meshRoomInjector from 'inject-loader!../../src/peer/meshRoom';
 
 describe('MeshRoom', () => {
   const meshRoomName = 'testMeshRoom';
@@ -45,7 +45,7 @@ describe('MeshRoom', () => {
       on:   onSpy,
     });
 
-    MeshRoom = MeshRoomInjector({
+    MeshRoom = meshRoomInjector({
       './mediaConnection': mcStub,
       './dataConnection':  dcStub,
     }).default;
