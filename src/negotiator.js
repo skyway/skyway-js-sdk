@@ -95,9 +95,9 @@ class Negotiator extends EventEmitter {
     if (!this._pc || this._replaceStreamCalled) {
       return;
     }
-    this._isOnTrackAvailable = typeof RTCPeerConnection.ontrack !== 'undefined';
-    this._isRtpSenderAvailable = typeof RTCPeerConnection.prototype.getSenders === 'function';
-    this._isRtpLocalStreamsAvailable = typeof RTCPeerConnection.prototype.getLocalStreams !== 'undefined';
+    this._isOnTrackAvailable = typeof this._pc.ontrack !== 'undefined';
+    this._isRtpSenderAvailable = typeof this._pc.getSenders === 'function';
+    this._isRtpLocalStreamsAvailable = typeof this._pc.getLocalStreams !== 'undefined';
 
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
