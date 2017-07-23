@@ -31,22 +31,24 @@ const config = {
 // from `npm run build, exports both `.js`, `.min.js`
 if (process.env.NODE_ENV === 'production') {
   const minConf = Object.assign({}, config, {
-    entry:   { 'eclwebrtc.min': './src/peer.js', },
+    entry:   {'eclwebrtc.min': './src/peer.js'},
     plugins: [
       ...config.plugins.slice(),
-      new webpack.optimize.UglifyJsPlugin()
+      new webpack.optimize.UglifyJsPlugin(),
     ],
   });
 
   module.exports = [config, minConf];
-}
 // from karma, exports only not minified
-else {
+} else {
   module.exports = config;
 }
 
-
+// eslint-disable-next-line
 function _getCopyRight() {
   const currentYear = new Date().getFullYear();
-  return `skywayjs Copyright(c) ${currentYear} NTT Communications Corporation`;
+  return `
+skywayjs Copyright(c) ${currentYear} NTT Communications Corporation
+peerjs Copyright(c) 2013 Michelle Bu <michelle@michellebu.com>
+  `.trim();
 }
