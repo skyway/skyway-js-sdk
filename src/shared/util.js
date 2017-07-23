@@ -71,45 +71,6 @@ function blobToArrayBuffer(blob, cb) {
 }
 
 /**
- * Convert Blob to BinaryString.
- * @param {Blob} blob - The Blob to be read as BinaryString.
- * @param {Function} cb - Callback function that called after load event fired.
- */
-function blobToBinaryString(blob, cb) {
-  let fr = new FileReader();
-  fr.onload = event => {
-    cb(event.target.result);
-  };
-  fr.readAsBinaryString(blob);
-}
-
-/**
- * Convert Blob to text.
- * @param {Blob} blob - The Blob to be read as text.
- * @param {Function} cb - Callback function that called after load event fired.
- */
-function blobToString(blob, cb) {
-  let fr = new FileReader();
-  fr.onload = event => {
-    cb(event.target.result);
-  };
-  fr.readAsText(blob);
-}
-
-/**
- * Convert BinaryString to ArrayBuffer.
- * @param {BinaryString} binary - The BinaryString that is converted to ArrayBuffer.
- * @return {string} An ArrayBuffer.
- */
-function binaryStringToArrayBuffer(binary) {
-  let byteArray = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    byteArray[i] = binary.charCodeAt(i) & 0xff;
-  }
-  return byteArray.buffer;
-}
-
-/**
  * Whether the protocol is https or not.
  * @return {boolean} Whether the protocol is https or not.
  */
@@ -123,9 +84,6 @@ export default {
   randomId,
   randomToken,
   joinArrayBuffers,
-  blobToBinaryString,
-  blobToString,
   blobToArrayBuffer,
-  binaryStringToArrayBuffer,
   isSecure,
 };

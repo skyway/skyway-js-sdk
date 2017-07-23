@@ -341,32 +341,6 @@ describe('DataConnection', () => {
         });
       });
 
-      it('should correctly handle ArrayBuffer messages', done => {
-        const message = 'foobar';
-        const abMessage = util.binaryStringToArrayBuffer(message);
-
-        const dataMeta = {
-          id:         'test',
-          index:      0,
-          totalParts: 1,
-          data:       BinaryPack.pack(abMessage),
-          type:       'arraybuffer',
-        };
-
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
-
-        dc.on(DataConnection.EVENTS.data.key, data => {
-          // We want to check that the received data is an ArrayBuffer
-          assert.deepEqual(data, abMessage);
-          done();
-        });
-
-        util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
-          dc._handleDataMessage({data: ab});
-        });
-      });
-
       it('should correctly handle Blob messages', done => {
         const message = 'foobar';
         const blob = new Blob([message], {type: 'text/plain'});
@@ -558,26 +532,6 @@ describe('DataConnection', () => {
         }, 100);
 
         dc.send(jsonObj);
-      });
-
-      it('should correctly send ArrayBuffer data', done => {
-        const message = 'foobar';
-        const abMessage = util.binaryStringToArrayBuffer(message);
-        let sendSpy = sinon.spy();
-
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
-        dc._dc.onopen();
-
-        setTimeout(() => {
-          assert(sendSpy.calledOnce);
-
-          const unpacked = BinaryPack.unpack(sendSpy.args[0][0]);
-          assert.deepEqual(unpacked.data, abMessage);
-          done();
-        }, 100);
-
-        dc.send(abMessage);
       });
 
       it('should correctly send Blob data', done => {
