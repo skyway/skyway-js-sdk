@@ -1084,16 +1084,19 @@ describe('Negotiator', () => {
     });
 
     it('should call pc.setRemoteDescription', () => {
+      setRemoteDescriptionStub = setRemoteDescriptionStub.resolves();
+
       assert.equal(setRemoteDescriptionStub.callCount, 0);
-      negotiator._setRemoteDescription(sdp);
-      assert.equal(setRemoteDescriptionStub.callCount, 1);
-      assert.equal(setRemoteDescriptionStub.args[0][0].type, sdp.type);
-      assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
-      assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
+      negotiator._setRemoteDescription(sdp)
+        .then(() => {
+          assert.equal(setRemoteDescriptionStub.callCount, 1);
+          assert.equal(setRemoteDescriptionStub.args[0][0].type, sdp.type);
+          assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
+        });
     });
 
     it('should resolve if setRemoteDescription succeeds', done => {
-      setRemoteDescriptionStub.callsArg(1);
+      setRemoteDescriptionStub = setRemoteDescriptionStub.resolves();
 
       negotiator._setRemoteDescription(sdp)
         .then(() => {
@@ -1103,7 +1106,7 @@ describe('Negotiator', () => {
 
     it('should emit Error if setRemoteDescription fails', done => {
       const fakeError = new Error('fakeError');
-      setRemoteDescriptionStub.callsArgWith(2, fakeError);
+      setRemoteDescriptionStub = setRemoteDescriptionStub.rejects(fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);

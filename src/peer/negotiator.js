@@ -412,18 +412,19 @@ class Negotiator extends EventEmitter {
    */
   _setRemoteDescription(sdp) {
     logger.log(`Setting remote description ${JSON.stringify(sdp)}`);
-    return new Promise(resolve => {
-      this._pc.setRemoteDescription(new RTCSessionDescription(sdp), () => {
+    return this._pc.setRemoteDescription(new RTCSessionDescription(sdp))
+      .then(() => {
         logger.log('Set remoteDescription:', sdp.type);
-        resolve();
-      }, error => {
+        return Promise.resolve();
+      })
+      .catch(error => {
         error.type = 'webrtc';
         logger.error(error);
         this.emit(Negotiator.EVENTS.error.key, error);
 
         logger.log('Failed to setRemoteDescription: ', error);
+        return Promise.reject(error);
       });
-    });
   }
 
   /**
