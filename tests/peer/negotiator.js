@@ -937,17 +937,19 @@ describe('Negotiator', () => {
     });
 
     it('should call pc.createAnswer', () => {
+      createAnswerStub = createAnswerStub.resolves();
+
       assert.equal(createAnswerStub.callCount, 0);
-      negotiator._makeAnswerSdp();
-      assert.equal(createAnswerStub.callCount, 1);
-      assert.equal(typeof createAnswerStub.args[0][0], 'function');
-      assert.equal(typeof createAnswerStub.args[0][1], 'function');
+      negotiator._makeAnswerSdp()
+        .then(() => {
+          assert.equal(createAnswerStub.callCount, 1);
+        });
     });
 
     describe('when createAnswer succeeds', () => {
       it('should return answer when setLocalDescription succeeds', done => {
         const fakeAnswer = 'answer';
-        createAnswerStub.callsArgWith(0, fakeAnswer);
+        createAnswerStub = createAnswerStub.resolves(fakeAnswer);
         setLocalDescriptionStub.callsArg(1);
 
         negotiator._makeAnswerSdp()
@@ -962,7 +964,7 @@ describe('Negotiator', () => {
       it('should emit Error when setLocalDescription fails', done => {
         const fakeAnswer = 'answer';
         const fakeError = new Error('fakeError');
-        createAnswerStub.callsArgWith(0, fakeAnswer);
+        createAnswerStub = createAnswerStub.resolves(fakeAnswer);
         setLocalDescriptionStub.callsArgWith(2, fakeError);
 
         negotiator.on(Negotiator.EVENTS.error.key, err => {
@@ -981,7 +983,7 @@ describe('Negotiator', () => {
 
     it('should emit Error when createAnswer fails', done => {
       const fakeError = new Error('fakeError');
-      createAnswerStub.callsArgWith(1, fakeError);
+      createAnswerStub = createAnswerStub.rejects(fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
