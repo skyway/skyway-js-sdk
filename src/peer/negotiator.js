@@ -302,31 +302,33 @@ class Negotiator extends EventEmitter {
       };
     }
 
-    return new Promise(resolve => {
-      this._pc.createOffer(offer => {
-        logger.log('Created offer.');
+    return this._pc.createOffer(options)
+      .then(offer => {
+      logger.log('Created offer.');
 
-        if (this._audioBandwidth) {
-          offer.sdp = sdpUtil.addAudioBandwidth(offer.sdp, this._audioBandwidth);
-        }
-        if (this._videoBandwidth) {
-          offer.sdp = sdpUtil.addVideoBandwidth(offer.sdp, this._videoBandwidth);
-        }
-        if (this._audioCodec) {
-          offer.sdp = sdpUtil.filterAudioCodec(offer.sdp, this._audioCodec);
-        }
-        if (this._videoCodec) {
-          offer.sdp = sdpUtil.filterVideoCodec(offer.sdp, this._videoCodec);
-        }
+      if (this._audioBandwidth) {
+        offer.sdp = sdpUtil.addAudioBandwidth(offer.sdp, this._audioBandwidth);
+      }
+      if (this._videoBandwidth) {
+        offer.sdp = sdpUtil.addVideoBandwidth(offer.sdp, this._videoBandwidth);
+      }
+      if (this._audioCodec) {
+        offer.sdp = sdpUtil.filterAudioCodec(offer.sdp, this._audioCodec);
+      }
+      if (this._videoCodec) {
+        offer.sdp = sdpUtil.filterVideoCodec(offer.sdp, this._videoCodec);
+      }
 
-        resolve(offer);
-      }, error => {
-        error.type = 'webrtc';
-        logger.error(error);
-        this.emit(Negotiator.EVENTS.error.key, error);
+      return Promise.resolve(offer);
+    })
+    .catch(error => {
+      error.type = 'webrtc';
+      logger.error(error);
+      this.emit(Negotiator.EVENTS.error.key, error);
 
-        logger.log('Failed to createOffer, ', error);
-      }, options);
+      logger.log('Failed to createOffer, ', error);
+
+      return Promise.reject(error);
     });
   }
 
