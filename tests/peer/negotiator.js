@@ -593,8 +593,7 @@ describe('Negotiator', () => {
     });
 
     it('should call _pc.addIceCandidate with an RTCIceCandidate', () => {
-      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
-      addIceStub.returns(Promise.resolve());
+      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate').resolves();
 
       assert.equal(addIceStub.callCount, 0);
 
@@ -611,15 +610,16 @@ describe('Negotiator', () => {
 
     it('should call logger.error if addIceCandidate fails', () => {
       const errorStub = sinon.stub(logger, 'error');
-      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
-      addIceStub.returns(Promise.reject());
+      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate').rejects();
 
       negotiator.handleCandidate(candidate);
 
+      // XXX: 0ms is too short...
       setTimeout(() => {
         assert.equal(errorStub.callCount, 1);
         errorStub.restore();
-      });
+        addIceStub.restore();
+      }, 100);
     });
   });
 
