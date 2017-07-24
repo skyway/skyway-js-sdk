@@ -792,7 +792,7 @@ describe('Negotiator', () => {
           it('should emit \'offerCreated\'', done => {
             const offer = 'offer';
             const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
-            cbStub.callsArgWith(1, offer);
+            cbStub.resolves(offer);
             negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
               assert(offer);
               done();
@@ -802,7 +802,7 @@ describe('Negotiator', () => {
           it('should emit \'negotiationNeeded\'', done => {
             const offer = 'offer';
             const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
-            cbStub.callsArgWith(1, offer);
+            cbStub.resolves(offer);
             negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
               done();
             });
@@ -950,7 +950,7 @@ describe('Negotiator', () => {
       it('should return answer when setLocalDescription succeeds', done => {
         const fakeAnswer = 'answer';
         createAnswerStub = createAnswerStub.resolves(fakeAnswer);
-        setLocalDescriptionStub.callsArg(1);
+        setLocalDescriptionStub = setLocalDescriptionStub.resolves();
 
         negotiator._makeAnswerSdp()
           .then(answer => {
@@ -965,7 +965,7 @@ describe('Negotiator', () => {
         const fakeAnswer = 'answer';
         const fakeError = new Error('fakeError');
         createAnswerStub = createAnswerStub.resolves(fakeAnswer);
-        setLocalDescriptionStub.callsArgWith(2, fakeError);
+        setLocalDescriptionStub = setLocalDescriptionStub.rejects(fakeError);
 
         negotiator.on(Negotiator.EVENTS.error.key, err => {
           assert(err instanceof Error);
@@ -1014,16 +1014,19 @@ describe('Negotiator', () => {
 
     it('should call pc.setLocalDescription', () => {
       const offer = 'offer';
+      setLocalDescriptionStub = setLocalDescriptionStub.resolves();
 
       assert.equal(setLocalDescriptionStub.callCount, 0);
-      negotiator._setLocalDescription(offer);
-      assert(setLocalDescriptionStub.calledWith(offer));
-      assert.equal(setLocalDescriptionStub.callCount, 1);
+      negotiator._setLocalDescription(offer)
+        .then(() => {
+          assert(setLocalDescriptionStub.calledWith(offer));
+          assert.equal(setLocalDescriptionStub.callCount, 1);
+        });
     });
 
     it('should emit \'offerCreated\' if setLocalDescription succeeds', done => {
       const offer = 'offer';
-      setLocalDescriptionStub.callsArgWith(1, offer);
+      setLocalDescriptionStub = setLocalDescriptionStub.resolves(offer);
 
       negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
         assert(offer);
@@ -1035,7 +1038,7 @@ describe('Negotiator', () => {
 
     it('should set _isExpectingAnswer to true if setLocalDescription succeeds', done => {
       const offer = 'offer';
-      setLocalDescriptionStub.callsArgWith(1, offer);
+      setLocalDescriptionStub = setLocalDescriptionStub.resolves(offer);
 
       assert.equal(negotiator._isExpectingAnswer, false);
       negotiator.on(Negotiator.EVENTS.offerCreated.key, () => {
@@ -1049,7 +1052,7 @@ describe('Negotiator', () => {
     it('should emit Error if setLocalDescription fails', done => {
       const offer = 'offer';
       const fakeError = new Error('fakeError');
-      setLocalDescriptionStub.callsArgWith(2, fakeError);
+      setLocalDescriptionStub = setLocalDescriptionStub.rejects(fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);

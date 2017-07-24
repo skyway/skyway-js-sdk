@@ -338,46 +338,46 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _makeAnswerSdp() {
-    return new Promise((resolve, reject) => {
-      this._pc.createAnswer()
-        .then(answer => {
-          logger.log('Created answer.');
+    return this._pc.createAnswer()
+      .then(answer => {
+        logger.log('Created answer.');
 
-          if (this._audioBandwidth) {
-            answer.sdp = sdpUtil.addAudioBandwidth(answer.sdp, this._audioBandwidth);
-          }
-          if (this._videoBandwidth) {
-            answer.sdp = sdpUtil.addVideoBandwidth(answer.sdp, this._videoBandwidth);
-          }
-          if (this._audioCodec) {
-            answer.sdp = sdpUtil.filterAudioCodec(answer.sdp, this._audioCodec);
-          }
-          if (this._videoCodec) {
-            answer.sdp = sdpUtil.filterVideoCodec(answer.sdp, this._videoCodec);
-          }
+        if (this._audioBandwidth) {
+          answer.sdp = sdpUtil.addAudioBandwidth(answer.sdp, this._audioBandwidth);
+        }
+        if (this._videoBandwidth) {
+          answer.sdp = sdpUtil.addVideoBandwidth(answer.sdp, this._videoBandwidth);
+        }
+        if (this._audioCodec) {
+          answer.sdp = sdpUtil.filterAudioCodec(answer.sdp, this._audioCodec);
+        }
+        if (this._videoCodec) {
+          answer.sdp = sdpUtil.filterVideoCodec(answer.sdp, this._videoCodec);
+        }
 
-          this._pc.setLocalDescription(answer, () => {
+        return this._pc.setLocalDescription(answer)
+          .then(() => {
             logger.log('Set localDescription: answer');
-            resolve(answer);
-          }, error => {
+            return Promise.resolve(answer);
+          })
+          .catch(error => {
             error.type = 'webrtc';
             logger.error(error);
             this.emit(Negotiator.EVENTS.error.key, error);
 
             logger.log('Failed to setLocalDescription, ', error);
-            reject(error);
+            return Promise.reject(error);
           });
-        })
-        .catch(error => {
-          error.type = 'webrtc';
-          logger.error(error);
-          this.emit(Negotiator.EVENTS.error.key, error);
+      })
+      .catch(error => {
+        error.type = 'webrtc';
+        logger.error(error);
+        this.emit(Negotiator.EVENTS.error.key, error);
 
-          logger.log('Failed to createAnswer, ', error);
+        logger.log('Failed to createAnswer, ', error);
 
-          reject(error);
-        });
-    });
+        return Promise.reject(error);
+      });
   }
 
   /**
@@ -387,21 +387,21 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _setLocalDescription(offer) {
-    return new Promise((resolve, reject) => {
-      this._pc.setLocalDescription(offer, () => {
+    return this._pc.setLocalDescription(offer)
+      .then(() => {
         logger.log('Set localDescription: offer');
         this._isExpectingAnswer = true;
         this.emit(Negotiator.EVENTS.offerCreated.key, offer);
-        resolve(offer);
-      }, error => {
+        return Promise.resolve(offer);
+      })
+      .catch(error => {
         error.type = 'webrtc';
         logger.error(error);
         this.emit(Negotiator.EVENTS.error.key, error);
 
         logger.log('Failed to setLocalDescription, ', error);
-        reject(error);
+        return Promise.reject(error);
       });
-    });
   }
 
   /**
