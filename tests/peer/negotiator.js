@@ -22,6 +22,7 @@ describe('Negotiator', () => {
     let negotiator;
     let handleOfferSpy;
     let createPCStub;
+    let setRemoteDescStub;
 
     beforeEach(() => {
       newPcStub = sinon.stub();
@@ -37,6 +38,8 @@ describe('Negotiator', () => {
       handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
       createPCStub = sinon.stub(negotiator, '_createPeerConnection');
       createPCStub.returns(pcStub);
+      setRemoteDescStub = sinon.stub(negotiator, '_setRemoteDescription');
+      setRemoteDescStub.resolves();
     });
 
     afterEach(() => {
@@ -44,6 +47,7 @@ describe('Negotiator', () => {
       addStreamSpy.reset();
       createDCSpy.reset();
       handleOfferSpy.reset();
+      setRemoteDescStub.restore();
     });
 
     it('should call _createPeerConnection pcConfig and set _pc to the result', () => {
@@ -507,7 +511,7 @@ describe('Negotiator', () => {
       });
 
       it('should setRemoteDescription', done => {
-        const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription');
+        const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription').resolves();
 
         negotiator._pc.createOffer()
           .then(offer => {
