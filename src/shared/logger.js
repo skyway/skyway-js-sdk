@@ -1,6 +1,4 @@
-'use strict';
-
-const Enum = require('enum');
+import Enum from 'enum';
 
 const LOG_PREFIX = 'SkyWayJS: ';
 const LogLevel = new Enum({
@@ -85,4 +83,4 @@ class Logger {
   }
 }
 
-module.exports = new Logger();
+export default new Logger();

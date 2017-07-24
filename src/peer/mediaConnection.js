@@ -1,10 +1,8 @@
-'use strict';
+import Enum from 'enum';
 
-const Enum = require('enum');
-
-const Negotiator = require('./negotiator');
-const Connection = require('./connection');
-const logger     = require('../shared/logger');
+import Negotiator from './negotiator';
+import Connection from './connection';
+import logger     from '../shared/logger';
 
 const MCEvents = new Enum([
   'stream',
@@ -164,4 +162,4 @@ class MediaConnection extends Connection {
    */
 }
 
-module.exports = MediaConnection;
+export default MediaConnection;

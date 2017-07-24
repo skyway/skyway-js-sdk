@@ -1,6 +1,4 @@
-'use strict';
-
-const Enum = require('enum');
+import Enum from 'enum';
 
 const DISPATCHER_HOST = 'dispatcher.skyway.io';
 const DISPATCHER_PORT = 443;
@@ -69,7 +67,7 @@ const defaultConfig = {
   iceTransportPolicy: 'all',
 };
 
-module.exports = {
+export default {
   DISPATCHER_HOST,
   DISPATCHER_PORT,
   DISPATCHER_SECURE,

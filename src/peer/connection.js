@@ -1,12 +1,10 @@
-'use strict';
+import EventEmitter from 'events';
+import Enum         from 'enum';
 
-const EventEmitter = require('events');
-const Enum         = require('enum');
-
-const Negotiator = require('./negotiator');
-const util       = require('../shared/util');
-const logger     = require('../shared/logger');
-const config     = require('../shared/config');
+import Negotiator from './negotiator';
+import util       from '../shared/util';
+import logger     from '../shared/logger';
+import config     from '../shared/config';
 
 const ConnectionEvents = new Enum([
   'candidate',
@@ -254,4 +252,4 @@ class Connection extends EventEmitter {
    */
 }
 
-module.exports = Connection;
+export default Connection;

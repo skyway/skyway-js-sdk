@@ -1,10 +1,8 @@
-'use strict';
+import EventEmitter from 'events';
+import Enum         from 'enum';
 
-const EventEmitter = require('events');
-const Enum         = require('enum');
-
-const sdpUtil = require('../shared/sdpUtil');
-const logger  = require('../shared/logger');
+import sdpUtil from '../shared/sdpUtil';
+import logger  from '../shared/logger';
 
 const NegotiatorEvents = new Enum([
   'addStream',
@@ -491,4 +489,4 @@ class Negotiator extends EventEmitter {
    */
 }
 
-module.exports = Negotiator;
+export default Negotiator;

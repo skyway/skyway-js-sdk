@@ -1,13 +1,13 @@
-'use strict';
+import assert     from 'power-assert';
+import sinon      from 'sinon';
+import BinaryPack from 'js-binarypack';
 
-const assert     = require('power-assert');
-const proxyquire = require('proxyquireify')(require);
-const sinon      = require('sinon');
-const BinaryPack = require('js-binarypack');
+import util       from '../../src/shared/util';
+import config     from '../../src/shared/config';
+import Negotiator from '../../src/peer/negotiator';
 
-const util       = require('../../src/shared/util');
-const config     = require('../../src/shared/config');
-const Negotiator = require('../../src/peer/negotiator');
+import connectionInjector from 'inject-loader!../../src/peer/connection';
+import dataConnectionInjector from 'inject-loader!../../src/peer/dataConnection';
 
 let Connection;
 let DataConnection;
@@ -39,15 +39,11 @@ describe('DataConnection', () => {
       handleAnswer:    answerSpy,
       handleCandidate: candidateSpy,
     });
+    // hoist statics
+    negotiatorStub.EVENTS = Negotiator.EVENTS;
 
-    Connection = proxyquire(
-      '../../src/peer/connection',
-      {'./negotiator': negotiatorStub}
-    );
-    DataConnection = proxyquire(
-      '../../src/peer/dataConnection',
-      {'./connection': Connection}
-    );
+    Connection = connectionInjector({'./negotiator': negotiatorStub}).default;
+    DataConnection = dataConnectionInjector({'./connection': Connection}).default;
   });
 
   afterEach(() => {
@@ -345,32 +341,6 @@ describe('DataConnection', () => {
         });
       });
 
-      it('should correctly handle ArrayBuffer messages', done => {
-        const message = 'foobar';
-        const abMessage = util.binaryStringToArrayBuffer(message);
-
-        const dataMeta = {
-          id:         'test',
-          index:      0,
-          totalParts: 1,
-          data:       BinaryPack.pack(abMessage),
-          type:       'arraybuffer',
-        };
-
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
-
-        dc.on(DataConnection.EVENTS.data.key, data => {
-          // We want to check that the received data is an ArrayBuffer
-          assert.deepEqual(data, abMessage);
-          done();
-        });
-
-        util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
-          dc._handleDataMessage({data: ab});
-        });
-      });
-
       it('should correctly handle Blob messages', done => {
         const message = 'foobar';
         const blob = new Blob([message], {type: 'text/plain'});
@@ -562,26 +532,6 @@ describe('DataConnection', () => {
         }, 100);
 
         dc.send(jsonObj);
-      });
-
-      it('should correctly send ArrayBuffer data', done => {
-        const message = 'foobar';
-        const abMessage = util.binaryStringToArrayBuffer(message);
-        let sendSpy = sinon.spy();
-
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
-        dc._dc.onopen();
-
-        setTimeout(() => {
-          assert(sendSpy.calledOnce);
-
-          const unpacked = BinaryPack.unpack(sendSpy.args[0][0]);
-          assert.deepEqual(unpacked.data, abMessage);
-          done();
-        }, 100);
-
-        dc.send(abMessage);
       });
 
       it('should correctly send Blob data', done => {

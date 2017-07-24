@@ -1,11 +1,11 @@
-'use strict';
+import assert from 'power-assert';
+import sinon  from 'sinon';
 
-const assert     = require('power-assert');
-const proxyquire = require('proxyquireify')(require);
-const sinon      = require('sinon');
+import config     from '../../src/shared/config';
+import Negotiator from '../../src/peer/negotiator';
 
-const config     = require('../../src/shared/config');
-const Negotiator = require('../../src/peer/negotiator');
+import connectionInjector from 'inject-loader!../../src/peer/connection';
+import mediaConnectionInjector from 'inject-loader!../../src/peer/mediaConnection';
 
 let Connection;
 let MediaConnection;
@@ -39,15 +39,11 @@ describe('MediaConnection', () => {
       handleCandidate: candidateSpy,
       replaceStream:   replaceSpy,
     });
+    // hoist statics
+    stub.EVENTS = Negotiator.EVENTS;
 
-    Connection = proxyquire(
-      '../../src/peer/connection',
-      {'./negotiator': stub}
-    );
-    MediaConnection = proxyquire(
-      '../../src/peer/mediaConnection',
-      {'./connection': Connection}
-    );
+    Connection = connectionInjector({'./negotiator': stub}).default;
+    MediaConnection = mediaConnectionInjector({'./connection': Connection}).default;
   });
 
   afterEach(() => {

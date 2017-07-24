@@ -1,17 +1,15 @@
-'use strict';
+import EventEmitter from 'events';
+import Enum         from 'enum';
 
-const EventEmitter = require('events');
-const Enum         = require('enum');
-
-const Socket          = require('./peer/socket');
-const Connection      = require('./peer/connection');
-const DataConnection  = require('./peer/dataConnection');
-const MediaConnection = require('./peer/mediaConnection');
-const SFURoom         = require('./peer/sfuRoom');
-const MeshRoom        = require('./peer/meshRoom');
-const util            = require('./shared/util');
-const logger          = require('./shared/logger');
-const config          = require('./shared/config');
+import Socket          from './peer/socket';
+import Connection      from './peer/connection';
+import DataConnection  from './peer/dataConnection';
+import MediaConnection from './peer/mediaConnection';
+import SFURoom         from './peer/sfuRoom';
+import MeshRoom        from './peer/meshRoom';
+import util            from './shared/util';
+import logger          from './shared/logger';
+import config          from './shared/config';
 
 const PeerEvents = new Enum([
   'open',
@@ -863,4 +861,6 @@ class Peer extends EventEmitter {
    */
 }
 
+export default Peer;
+// for interop exports
 module.exports = Peer;

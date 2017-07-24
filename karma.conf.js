@@ -1,38 +1,50 @@
-module.exports =  {
-  singleRun: true,
+const webpackConfig = require('./webpack.config.js');
 
-  frameworks: ['mocha', 'browserify'],
+webpackConfig.module.rules.push({
+  test:    /\.js$/,
+  exclude: /node_modules/,
+  use:     {
+    loader:  'istanbul-instrumenter-loader',
+    options: {
+      debug:     true,
+      esModules: true,
+    },
+  },
+});
 
-  browserify: {
-    debug:     true,
-    transform: [
-      ['browserify-istanbul', {
-        instrumenter:       require('isparta'),
-        instrumenterConfig: {babel: {presets: ['es2015']}},
-      }],
-      ['babelify', {presets: ['es2015'],
-        plugins: ['babel-plugin-espower']},
-      ],
+module.exports = config => {
+  config.set({
+    files: [
+      // if specify running tests
+      // './tests/peer.js',
+      './tests/index.js'
     ],
-    plugin: ['proxyquireify/plugin'],
-  },
 
-  preprocessors: {
-    'tests/**/*.js': 'browserify',
-    'src/**/*.js':   'browserify',
-  },
+    singleRun: true,
 
-  reporters: [
-    'mocha',
-    'coverage',
-  ],
+    frameworks: ['mocha'],
 
-  browsers: ['ChromeHeadless'],
+    webpack: webpackConfig,
 
-  coverageReporter: {
+    preprocessors: {
+      // if specify running tests
+      // './src/peer.js':   'webpack',
+      // './tests/peer.js': 'webpack',
+      './tests/index.js': 'webpack',
+    },
+
     reporters: [
-      {type: 'html', dir: 'coverage/'},
-      {type: 'text'},
+      'mocha',
+      'coverage',
     ],
-  },
+
+    browsers: ['ChromeHeadless'],
+
+    coverageReporter: {
+      reporters: [
+        {type: 'html', dir: './coverage'},
+        {type: 'text'},
+      ],
+    },
+  });
 };

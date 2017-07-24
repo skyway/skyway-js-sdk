@@ -1,8 +1,5 @@
-'use strict';
-
-const util = require('../../src/shared/util');
-
-const assert = require('power-assert');
+import assert from 'power-assert';
+import util from '../../src/shared/util';
 
 describe('Util', () => {
   describe('validateId', () => {
@@ -68,17 +65,6 @@ describe('Util', () => {
   });
 
   describe('Message type conversion', () => {
-    it('should correctly convert a Binary String to an ArrayBuffer', () => {
-      // Convert to binary String
-      const binary = 'foobar'.toString(2);
-      const arrayBuffer = util.binaryStringToArrayBuffer(binary);
-      assert.equal(arrayBuffer.constructor, ArrayBuffer);
-
-      const result = String.fromCharCode.apply(
-        null, Array.prototype.slice.apply(new Uint8Array(arrayBuffer)));
-      assert.equal(result, binary);
-    });
-
     it('should correctly convert a Blob to an ArrayBuffer', done => {
       const string = 'foobar';
 
@@ -92,23 +78,6 @@ describe('Util', () => {
       util.blobToArrayBuffer(blob, result => {
         assert.deepEqual(result.constructor, ArrayBuffer);
         assert.deepEqual(arrayBuffer, result);
-        done();
-      });
-    });
-
-    it('should correctly convert a Blob to a Binary String', done => {
-      const string = 'foobar';
-
-      let arrayBuffer = new ArrayBuffer(string.length);
-      let bufferView = new Uint8Array(arrayBuffer);
-      for (let i = 0; i < string.length; i++) {
-        bufferView[i] = string.charCodeAt(i);
-      }
-      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
-
-      util.blobToBinaryString(blob, result => {
-        assert.deepEqual(typeof result, 'string');
-        assert.equal(result, string);
         done();
       });
     });

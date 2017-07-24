@@ -1,12 +1,9 @@
-'use strict';
+import Enum from 'enum';
+import {Interop} from 'sdp-interop';
 
-const Enum    = require('enum');
-const Interop = require('sdp-interop').Interop;
-
-const Room       = require('./room');
-const Negotiator = require('./negotiator');
-const logger     = require('../shared/logger');
-
+import Room       from './room';
+import Negotiator from './negotiator';
+import logger     from '../shared/logger';
 
 const interop = new Interop();
 
@@ -324,4 +321,4 @@ class SFURoom extends Room {
    */
 }
 
-module.exports = SFURoom;
+export default SFURoom;

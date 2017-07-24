@@ -1,11 +1,10 @@
-'use strict';
+import assert from 'power-assert';
+import sinon  from 'sinon';
 
-const Connection       = require('../../src/peer/connection');
-const MediaConnection  = require('../../src/peer/mediaConnection');
+import Connection      from '../../src/peer/connection';
+import MediaConnection from '../../src/peer/mediaConnection';
 
-const assert      = require('power-assert');
-const sinon       = require('sinon');
-const proxyquire  = require('proxyquireify')(require);
+import meshRoomInjector from 'inject-loader!../../src/peer/meshRoom';
 
 describe('MeshRoom', () => {
   const meshRoomName = 'testMeshRoom';
@@ -38,16 +37,18 @@ describe('MeshRoom', () => {
       answer:        answerSpy,
       replaceStream: replaceStreamSpy,
     });
+    // hoist statics
+    mcStub.EVENTS = MediaConnection.EVENTS;
 
     dcStub.returns({
       type: 'data',
       on:   onSpy,
     });
 
-    MeshRoom = proxyquire('../../src/peer/meshRoom', {
+    MeshRoom = meshRoomInjector({
       './mediaConnection': mcStub,
       './dataConnection':  dcStub,
-    });
+    }).default;
     meshRoom = new MeshRoom(meshRoomName, peerId, {stream: origStream, pcConfig: pcConfig});
   });
 

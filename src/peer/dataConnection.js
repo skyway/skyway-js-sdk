@@ -1,14 +1,12 @@
-'use strict';
+import BinaryPack from 'js-binarypack';
+import Enum       from 'enum';
+import sizeof     from 'object-sizeof';
 
-const BinaryPack = require('js-binarypack');
-const Enum       = require('enum');
-const sizeof     = require('object-sizeof');
-
-const Negotiator = require('./negotiator');
-const Connection = require('./connection');
-const util       = require('../shared/util');
-const logger     = require('../shared/logger');
-const config     = require('../shared/config');
+import Negotiator from './negotiator';
+import Connection from './connection';
+import util       from '../shared/util';
+import logger     from '../shared/logger';
+import config     from '../shared/config';
 
 const DCEvents = new Enum([
   'open',
@@ -300,4 +298,4 @@ class DataConnection extends Connection {
    */
 }
 
-module.exports = DataConnection;
+export default DataConnection;
