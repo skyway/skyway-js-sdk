@@ -175,15 +175,12 @@ class Negotiator extends EventEmitter {
   /**
    * Set ice candidate with Candidate SDP.
    * @param {object} candidate - An object containing Candidate SDP.
-   * @return {Promise<void>} A promise addIceCandidate
    */
   handleCandidate(candidate) {
-    return this._pc.addIceCandidate(new RTCIceCandidate(candidate)).then(() => {
+    this._pc.addIceCandidate(new RTCIceCandidate(candidate)).then(() => {
       logger.log('Added ICE candidate');
-      return Promise.resolve();
     }).catch(e => {
       logger.error('Failed to add ICE candidate', e);
-      return Promise.reject(e);
     });
   }
 

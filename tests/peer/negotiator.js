@@ -593,7 +593,8 @@ describe('Negotiator', () => {
     });
 
     it('should call _pc.addIceCandidate with an RTCIceCandidate', () => {
-      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate').resolves();
+      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
+      addIceStub.returns(Promise.resolve());
 
       assert.equal(addIceStub.callCount, 0);
 
@@ -608,16 +609,18 @@ describe('Negotiator', () => {
       assert.equal(candidate.sdpMid, addIceArg.sdpMid);
     });
 
-    it('should catch if addIceCandidate fails', () => {
-      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate').rejects();
+    it('should call logger.error if addIceCandidate fails', () => {
+      const errorStub = sinon.stub(logger, 'error');
+      const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
+      addIceStub.returns(Promise.reject());
 
-      negotiator.handleCandidate(candidate)
-        .then(() => {
-          assert.fail();
-        })
-        .catch(() => {
-          addIceStub.restore();
-        });
+      negotiator.handleCandidate(candidate);
+
+      setTimeout(() => {
+        assert.equal(errorStub.callCount, 1);
+        errorStub.restore();
+        addIceStub.restore();
+      });
     });
   });
 
