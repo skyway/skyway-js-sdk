@@ -608,18 +608,16 @@ describe('Negotiator', () => {
       assert.equal(candidate.sdpMid, addIceArg.sdpMid);
     });
 
-    it('should call logger.error if addIceCandidate fails', () => {
-      const errorStub = sinon.stub(logger, 'error');
+    it('should catch if addIceCandidate fails', () => {
       const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate').rejects();
 
-      negotiator.handleCandidate(candidate);
-
-      // XXX: 0ms is too short...
-      setTimeout(() => {
-        assert.equal(errorStub.callCount, 1);
-        errorStub.restore();
-        addIceStub.restore();
-      }, 100);
+      negotiator.handleCandidate(candidate)
+        .then(() => {
+          assert.fail();
+        })
+        .catch(() => {
+          addIceStub.restore();
+        });
     });
   });
 
