@@ -17,7 +17,7 @@ module.exports = config => {
     files: [
       // if specify running tests
       // './tests/peer.js',
-      './tests/index.js'
+      './tests/index.js',
     ],
 
     singleRun: true,
