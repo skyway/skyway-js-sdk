@@ -1,11 +1,12 @@
-'use strict';
+import BinaryPack from 'js-binarypack';
+import Enum       from 'enum';
+import sizeof     from 'object-sizeof';
 
-const Connection = require('./connection');
-const Negotiator = require('./negotiator');
-const util       = require('./util');
-
-const Enum       = require('enum');
-const sizeof     = require('object-sizeof');
+import Negotiator from './negotiator';
+import Connection from './connection';
+import util       from '../shared/util';
+import logger     from '../shared/logger';
+import config     from '../shared/config';
 
 const DCEvents = new Enum([
   'open',
@@ -102,7 +103,7 @@ class DataConnection extends Connection {
    */
   _setupMessageHandlers() {
     this._dc.onopen = () => {
-      util.log('Data channel connection success');
+      logger.log('Data channel connection success');
       this.open = true;
       this.emit(DataConnection.EVENTS.open.key);
     };
@@ -113,12 +114,12 @@ class DataConnection extends Connection {
     };
 
     this._dc.onclose = () => {
-      util.log('DataChannel closed for:', this.id);
+      logger.log('DataChannel closed for:', this.id);
       this.close();
     };
 
     this._dc.onerror = err => {
-      util.error(err);
+      logger.error(err);
     };
   }
 
@@ -129,16 +130,16 @@ class DataConnection extends Connection {
    */
   _handleDataMessage(msg) {
     if (this.serialization === DataConnection.SERIALIZATIONS.none.key) {
-      this.emit(DataConnection.EVENTS.data, msg.data);
+      this.emit(DataConnection.EVENTS.data.key, msg.data);
       return;
     } else if (this.serialization === DataConnection.SERIALIZATIONS.json.key) {
-      this.emit(DataConnection.EVENTS.data, JSON.parse(msg.data));
+      this.emit(DataConnection.EVENTS.data.key, JSON.parse(msg.data));
       return;
     }
 
     // Everything below is for serialization binary or binary-utf8
 
-    const dataMeta = util.unpack(msg.data);
+    const dataMeta = BinaryPack.unpack(msg.data);
 
     // If we haven't started receiving pieces of data with a given id, this will be undefined
     // In that case, we need to initialise receivedData[id] to hold incoming file chunks
@@ -162,7 +163,7 @@ class DataConnection extends Connection {
 
       // recombine the sliced arraybuffers
       let ab = util.joinArrayBuffers(currData.parts);
-      let unpackedData = util.unpack(ab);
+      let unpackedData = BinaryPack.unpack(ab);
 
       this.emit(DataConnection.EVENTS.data.key, unpackedData);
     }
@@ -197,7 +198,7 @@ class DataConnection extends Connection {
 
     // Everything below is for serialization binary or binary-utf8
 
-    let packedData = util.pack(data);
+    let packedData = BinaryPack.pack(data);
     let size = packedData.size;
     let type = data.constructor.name;
 
@@ -217,7 +218,7 @@ class DataConnection extends Connection {
 
     // dataMeta contains all possible parameters by now.
     // Adjust the chunk size to avoid issues with sending
-    const chunkSize = util.maxChunkSize - sizeof(dataMeta);
+    const chunkSize = config.maxChunkSize - sizeof(dataMeta);
     const numSlices = Math.ceil(size / chunkSize);
     dataMeta.totalParts = numSlices;
 
@@ -228,7 +229,7 @@ class DataConnection extends Connection {
       dataMeta.data = slice;
 
       // Add all chunks to our buffer and start the send loop (if we haven't already)
-      util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+      util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
         this._sendBuffer.push(ab);
         this._startSendLoop();
       });
@@ -256,7 +257,7 @@ class DataConnection extends Connection {
           clearInterval(this.sendInterval);
           this.sendInterval = undefined;
         }
-      }, util.sendInterval);
+      }, config.sendInterval);
     }
   }
 
@@ -297,4 +298,4 @@ class DataConnection extends Connection {
    */
 }
 
-module.exports = DataConnection;
+export default DataConnection;

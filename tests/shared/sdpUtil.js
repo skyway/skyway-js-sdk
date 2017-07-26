@@ -1,8 +1,6 @@
-'use strict';
+import assert from 'power-assert';
 
-const sdpUtil = require('../src/sdpUtil');
-
-const assert  = require('power-assert');
+import sdpUtil from '../../src/shared/sdpUtil';
 
 describe('SdpUtil', () => {
   const chromeSdpSingleStream = `v=0

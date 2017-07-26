@@ -1,10 +1,8 @@
-'use strict';
+import assert from 'power-assert';
+import sinon  from 'sinon';
 
-const SFURoom    = require('../src/sfuRoom');
-const Negotiator = require('../src/negotiator');
-
-const assert = require('power-assert');
-const sinon  = require('sinon');
+import SFURoom    from '../../src/peer/sfuRoom';
+import Negotiator from '../../src/peer/negotiator';
 
 describe('SFURoom', () => {
   const sfuRoomName  = 'testSFURoom';

@@ -1,11 +1,11 @@
-'use strict';
+import assert from 'power-assert';
+import sinon  from 'sinon';
 
-const assert     = require('power-assert');
-const proxyquire = require('proxyquireify')(require);
-const sinon      = require('sinon');
+import config     from '../../src/shared/config';
+import Negotiator from '../../src/peer/negotiator';
 
-const util       = require('../src/util');
-const Negotiator = require('../src/negotiator');
+import connectionInjector from 'inject-loader!../../src/peer/connection';
+import mediaConnectionInjector from 'inject-loader!../../src/peer/mediaConnection';
 
 let Connection;
 let MediaConnection;
@@ -39,15 +39,11 @@ describe('MediaConnection', () => {
       handleCandidate: candidateSpy,
       replaceStream:   replaceSpy,
     });
+    // hoist statics
+    stub.EVENTS = Negotiator.EVENTS;
 
-    Connection = proxyquire(
-      '../src/connection',
-      {'./negotiator': stub}
-    );
-    MediaConnection = proxyquire(
-      '../src/mediaConnection',
-      {'./connection': Connection}
-    );
+    Connection = connectionInjector({'./negotiator': stub}).default;
+    MediaConnection = mediaConnectionInjector({'./connection': Connection}).default;
   });
 
   afterEach(() => {
@@ -286,7 +282,7 @@ describe('MediaConnection', () => {
     });
 
     it('should process any queued messages after PeerConnection object is created', () => {
-      const messages = [{type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message'}];
+      const messages = [{type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message'}];
 
       const mc = new MediaConnection('remoteId', {payload: {}, queuedMessages: messages});
 
@@ -324,8 +320,8 @@ describe('MediaConnection', () => {
     });
 
     it('should queue a message if handleMessage is called before PC is available', () => {
-      const message1 = {type: util.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: 'message1'};
-      const message2 = {type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message2'};
+      const message1 = {type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: 'message1'};
+      const message2 = {type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message2'};
       const messages = [message1];
 
       const mc = new MediaConnection('remoteId', {payload: {}, queuedMessages: messages});

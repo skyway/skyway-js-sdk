@@ -1,12 +1,9 @@
-'use strict';
+import io from 'socket.io-client';
+import EventEmitter from 'events';
+import queryString  from 'query-string';
 
-// depends on platform, you have to change the setting of object 'io'.
-const io           = require('socket.io-client'); // for generic browser
-// const io           = require('socket.io-client/socket.io');  // for react-native
-
-const util         = require('./util');
-const EventEmitter = require('events');
-const queryString  = require('query-string');
+import config from '../shared/config';
+import logger from '../shared/logger';
 
 /**
  * Class to handle WS/HTTP communication with the signalling server
@@ -39,9 +36,9 @@ class Socket extends EventEmitter {
       let httpProtocol = options.secure ? 'https://' : 'http://';
       this.signalingServerUrl = `${httpProtocol}${options.host}:${options.port}`;
     } else {
-      const dispatcherHost = options.dispatcherHost || util.DISPATCHER_HOST;
-      const dispatcherPort = options.dispatcherPort || util.DISPATCHER_PORT;
-      const dispatcherSecure = options.dispatcherSecure || util.DISPATCHER_SECURE;
+      const dispatcherHost = options.dispatcherHost || config.DISPATCHER_HOST;
+      const dispatcherPort = options.dispatcherPort || config.DISPATCHER_PORT;
+      const dispatcherSecure = options.dispatcherSecure || config.DISPATCHER_SECURE;
 
       let httpProtocol = dispatcherSecure ? 'https://' : 'http://';
       this._dispatcherUrl = `${httpProtocol}${dispatcherHost}:${dispatcherPort}/signaling`;
@@ -79,17 +76,6 @@ class Socket extends EventEmitter {
       query += `&credential=${encodedCredentialStr}`;
     }
 
-    // depends on runtime platform, transports has to be changed.
-    // case react-native, only websocket can be used.
-    let transports;
-    if (window.navigator.userAgent === 'react-native') {
-      // case react-native, restricted to websocket transport only
-      transports = ['websocket'];
-    } else {
-      // In most cases, keep it as default ( default is ['polling', 'websocket'] )
-      transports = undefined;
-    }
-
     return new Promise(resolve => {
       if (this._dispatcherUrl) {
         this._getSignalingServer().then(serverInfo => {
@@ -104,8 +90,7 @@ class Socket extends EventEmitter {
       this._io = io(this.signalingServerUrl, {
         'force new connection': true,
         'query':                query,
-        'reconnectionAttempts': util.reconnectionAttempts,
-        'transports':           transports,
+        'reconnectionAttempts': config.reconnectionAttempts,
       });
 
       this._io.on('reconnect_failed', () => {
@@ -114,7 +99,7 @@ class Socket extends EventEmitter {
       });
 
       this._io.on('error', e => {
-        util.error(e);
+        logger.error(e);
       });
 
       this._setupMessageHandlers();
@@ -129,7 +114,7 @@ class Socket extends EventEmitter {
   _connectToNewServer(numAttempts = 0) {
     // max number of attempts to get a new server from the dispatcher.
     const maxNumberOfAttempts = 10;
-    if (numAttempts >= maxNumberOfAttempts || this._reconnectAttempts >= util.numberServersToTry) {
+    if (numAttempts >= maxNumberOfAttempts || this._reconnectAttempts >= config.numberServersToTry) {
       this.emit('error', 'Could not connect to server.');
       return;
     }
@@ -157,7 +142,7 @@ class Socket extends EventEmitter {
     return new Promise((resolve, reject) => {
       const http = new XMLHttpRequest();
 
-      http.timeout = util.DISPATCHER_TIMEOUT;
+      http.timeout = config.DISPATCHER_TIMEOUT;
       http.open('GET', this._dispatcherUrl, true);
 
       /* istanbul ignore next */
@@ -196,7 +181,7 @@ class Socket extends EventEmitter {
 
   /**
    * Send a message to the signalling server. Queue the messages if not connected yet.
-   * @param {string} type - The signalling message type. Message types are defined in util.MESSAGE_TYPES.
+   * @param {string} type - The signalling message type. Message types are defined in config.MESSAGE_TYPES.
    * @param {string | object} message - The message to send to the server.
    */
   send(type, message) {
@@ -250,11 +235,11 @@ class Socket extends EventEmitter {
     } else {
       // For future development; here we can tell the the developer
       // which connection(p2p/turn/sfu) should be authenticated.
-      util.warn('Adding a credential when one wasn\'t specified before.');
+      logger.warn('Adding a credential when one wasn\'t specified before.');
     }
     this._io.io.opts.query = queryString.stringify(parseQuery);
 
-    this.send(util.MESSAGE_TYPES.CLIENT.UPDATE_CREDENTIAL.key, newCredential);
+    this.send(config.MESSAGE_TYPES.CLIENT.UPDATE_CREDENTIAL.key, newCredential);
   }
 
   /**
@@ -272,8 +257,8 @@ class Socket extends EventEmitter {
    * @fires Socket#ROOM_DATA
    */
   _setupMessageHandlers() {
-    util.MESSAGE_TYPES.SERVER.enums.forEach(type => {
-      if (type.key === util.MESSAGE_TYPES.SERVER.OPEN.key) {
+    config.MESSAGE_TYPES.SERVER.enums.forEach(type => {
+      if (type.key === config.MESSAGE_TYPES.SERVER.OPEN.key) {
         this._io.on(type.key, openMessage => {
           if (!openMessage || !openMessage.peerId) {
             return;
@@ -321,8 +306,8 @@ class Socket extends EventEmitter {
   _startPings() {
     if (!this._pingIntervalId) {
       this._pingIntervalId = setInterval(() => {
-        this.send(util.MESSAGE_TYPES.CLIENT.PING.key);
-      }, util.pingInterval);
+        this.send(config.MESSAGE_TYPES.CLIENT.PING.key);
+      }, config.pingInterval);
     }
   }
 
@@ -447,4 +432,4 @@ class Socket extends EventEmitter {
    */
 }
 
-module.exports = Socket;
+export default Socket;

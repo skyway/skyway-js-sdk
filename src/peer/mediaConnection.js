@@ -1,10 +1,8 @@
-'use strict';
+import Enum from 'enum';
 
-const Connection = require('./connection');
-const Negotiator = require('./negotiator');
-const util = require('./util');
-
-const Enum = require('enum');
+import Negotiator from './negotiator';
+import Connection from './connection';
+import logger     from '../shared/logger';
 
 const MCEvents = new Enum([
   'stream',
@@ -79,7 +77,7 @@ class MediaConnection extends Connection {
    */
   answer(stream, options = {}) {
     if (this.localStream) {
-      util.warn('localStream already exists on this MediaConnection. Are you answering a call twice?');
+      logger.warn('localStream already exists on this MediaConnection. Are you answering a call twice?');
       return;
     }
 
@@ -123,7 +121,7 @@ class MediaConnection extends Connection {
     super._setupNegotiatorMessageHandlers();
 
     this._negotiator.on(Negotiator.EVENTS.addStream.key, remoteStream => {
-      util.log('Receiving stream', remoteStream);
+      logger.log('Receiving stream', remoteStream);
 
       this.remoteStream = remoteStream;
 
@@ -131,7 +129,7 @@ class MediaConnection extends Connection {
     });
 
     this._negotiator.on(Negotiator.EVENTS.removeStream.key, remoteStream => {
-      util.log('Stream removed', remoteStream);
+      logger.log('Stream removed', remoteStream);
 
       // Don't unset if a new stream has already replaced the old one
       if (this.remoteStream === remoteStream) {
@@ -164,4 +162,4 @@ class MediaConnection extends Connection {
    */
 }
 
-module.exports = MediaConnection;
+export default MediaConnection;

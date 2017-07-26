@@ -1,11 +1,9 @@
-'use strict';
+import assert   from 'power-assert';
+import SocketIO from 'socket.io-client';
+import sinon    from 'sinon';
 
-const assert      = require('power-assert');
-const proxyquire  = require('proxyquireify')(require);
-const SocketIO    = require('socket.io-client');
-const sinon       = require('sinon');
-
-const util = require('../src/util');
+import socketInjector from 'inject-loader!../../src/peer/socket';
+import config from '../../src/shared/config';
 
 describe('Socket', () => {
   const serverPort = 5080;
@@ -39,10 +37,9 @@ describe('Socket', () => {
       }
     );
 
-    Socket = proxyquire('../src/socket', {
+    Socket = socketInjector({
       'socket.io-client': socketIoClientStub,
-      './util':           util,
-    });
+    }).default;
 
     socket = new Socket(apiKey, {
       host: 'localhost',
@@ -62,7 +59,7 @@ describe('Socket', () => {
         it('should be able to connect to a server', done => {
           socket.start(undefined, token).then(() => {
             assert(socketIoClientStub.called);
-            socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+            socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
             assert.equal(socket.isOpen, true);
             done();
           });
@@ -71,7 +68,7 @@ describe('Socket', () => {
         it('should be able to connect to a server with a PeerID', done => {
           socket.start(peerId, token).then(() => {
             assert(socketIoClientStub.called);
-            socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+            socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
             assert.equal(socket.isOpen, true);
             done();
           });
@@ -83,7 +80,7 @@ describe('Socket', () => {
       it('should be able to connect to a server with credential', done => {
         socket.start(peerId, token, {timestamp: 1491285508, ttl: 1000, credential: 'Credential'}).then(() => {
           assert(socketIoClientStub.called);
-          socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+          socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
           assert.equal(socket.isOpen, true);
           done();
         });
@@ -141,7 +138,7 @@ describe('Socket', () => {
     });
     it('should update queryString in this._io and send message to the server', () => {
       const openMessage = {peerId: peerId};
-      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+      socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
       const newCredential = {
         timestamp: 100,
         ttl:       1000,
@@ -153,7 +150,7 @@ describe('Socket', () => {
       // Make sure the queryString contains new credential.
       assert(socket._io.io.opts.query.indexOf(encodeURIComponent(newCredential.authToken)) !== -1);
       // Also sure the socket.send() is called
-      assert(eventSpy.calledWith(util.MESSAGE_TYPES.CLIENT.UPDATE_CREDENTIAL.key, newCredential));
+      assert(eventSpy.calledWith(config.MESSAGE_TYPES.CLIENT.UPDATE_CREDENTIAL.key, newCredential));
     });
   });
 
@@ -164,7 +161,7 @@ describe('Socket', () => {
       socket.start(peerId, token).then(() => {
         assert.equal(socket.isOpen, false);
 
-        socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+        socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
         assert.equal(socket.isOpen, true);
 
         socket.close();
@@ -187,7 +184,7 @@ describe('Socket', () => {
       const stopPingsSpy = sinon.spy(socket, '_stopPings');
 
       socket.start(peerId, token).then(() => {
-        socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+        socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
         assert.equal(stopPingsSpy.callCount, 0);
 
         socket.close();
@@ -207,7 +204,7 @@ describe('Socket', () => {
       const openMessage = {peerId: peerId};
       let data = {type: 'MSG', message: 'hello world'};
 
-      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+      socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
       socket.send(data.type, data.message);
       assert(eventSpy.calledWith(data.type, data.message));
     });
@@ -216,7 +213,7 @@ describe('Socket', () => {
       const openMessage = {peerId: peerId};
       let data = {message: 'hello world'};
 
-      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+      socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
       socket.send(undefined, data.message);
       assert.deepEqual(eventSpy.args[0], ['error', 'Invalid message']);
     });
@@ -234,7 +231,7 @@ describe('Socket', () => {
 
       // Second pass - peerID set, queued messages sent
       // TODO: Headache zone. This invocation of fakeMessage causes a freeze.
-      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+      socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
       assert.deepEqual(socket._queue, []);
       assert.deepEqual(eventSpy.args[0], ['MSG', data1.message]);
 
@@ -265,11 +262,11 @@ describe('Socket', () => {
     it('should set _isOpen and emit peerId on _io \'OPEN\' messages', () => {
       assert.equal(eventSpy.callCount, 0);
 
-      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+      socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
 
       assert(socket._isOpen);
       assert.equal(emitSpy.callCount, 1);
-      assert(emitSpy.calledWith(util.MESSAGE_TYPES.SERVER.OPEN.key, openMessage));
+      assert(emitSpy.calledWith(config.MESSAGE_TYPES.SERVER.OPEN.key, openMessage));
     });
 
     it('should update the _io query on \'OPEN\' messages', () => {
@@ -281,7 +278,7 @@ describe('Socket', () => {
       assert.equal(socket._isPeerIdSet, false);
       assert.equal(peerIdRegex.test(query), false);
 
-      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+      socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
 
       query = socket._io.io.opts.query;
       assert(socket._isPeerIdSet);
@@ -292,7 +289,7 @@ describe('Socket', () => {
       let peerId = 'peerId';
       const openMessage = {peerId: peerId};
 
-      socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+      socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
 
       assert.equal(startPingsStub.callCount, 1);
     });
@@ -300,8 +297,8 @@ describe('Socket', () => {
     it('should emit all non-OPEN message types on socket', () => {
       assert.equal(emitSpy.callCount, 0);
 
-      util.MESSAGE_TYPES.SERVER.enums.forEach(type => {
-        if (type.key === util.MESSAGE_TYPES.SERVER.OPEN.key) {
+      config.MESSAGE_TYPES.SERVER.enums.forEach(type => {
+        if (type.key === config.MESSAGE_TYPES.SERVER.OPEN.key) {
           return;
         }
 
@@ -311,7 +308,7 @@ describe('Socket', () => {
         assert(emitSpy.calledWith(type.key, message));
       });
 
-      assert.equal(emitSpy.callCount, util.MESSAGE_TYPES.SERVER.enums.length - 1);
+      assert.equal(emitSpy.callCount, config.MESSAGE_TYPES.SERVER.enums.length - 1);
     });
   });
 
@@ -331,7 +328,7 @@ describe('Socket', () => {
       });
 
       socket.start(peerId, token).then(() => {
-        socket._io._fakeMessage[util.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
+        socket._io._fakeMessage[config.MESSAGE_TYPES.SERVER.OPEN.key](openMessage);
         done();
       });
     });
@@ -349,9 +346,9 @@ describe('Socket', () => {
 
         assert.equal(eventSpy.callCount, 0);
         for (let i = 0; i < numberOfChecks; i++) {
-          clock.tick(util.pingInterval);
+          clock.tick(config.pingInterval);
 
-          assert(eventSpy.getCall(i).calledWith(util.MESSAGE_TYPES.CLIENT.PING.key));
+          assert(eventSpy.getCall(i).calledWith(config.MESSAGE_TYPES.CLIENT.PING.key));
           assert.equal(eventSpy.callCount, i + 1);
         }
       });
@@ -364,7 +361,7 @@ describe('Socket', () => {
 
         assert.equal(socket._pingIntervalId, undefined);
 
-        clock.tick(util.pingInterval * 10);
+        clock.tick(config.pingInterval * 10);
 
         assert.equal(eventSpy.callCount, 0);
       });
@@ -383,7 +380,7 @@ describe('Socket', () => {
 
       socket.start(undefined, apiKey).then(() => done());
 
-      socket._dispatcherUrl = `https://${util.DISPATCHER_HOST}:${util.DISPATCHER_PORT}`;
+      socket._dispatcherUrl = `https://${config.DISPATCHER_HOST}:${config.DISPATCHER_PORT}`;
     });
 
     afterEach(() => {
@@ -398,7 +395,7 @@ describe('Socket', () => {
         assert.equal(requests.length, 1);
 
         // TODO: Headache zone. Comparing vs the variable `url` causes a freeze.
-        // let url = `https://${util.DISPATCHER_HOST}:${util.DISPATCHER_PORT}/signaling`;
+        // let url = `https://${config.DISPATCHER_HOST}:${config.DISPATCHER_PORT}/signaling`;
         // assert.equal(requests[0].url, url);
         assert.equal(requests[0].method, 'GET');
         done();

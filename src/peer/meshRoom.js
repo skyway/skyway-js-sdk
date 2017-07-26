@@ -1,11 +1,10 @@
-'use strict';
+import Enum from 'enum';
 
-const util            = require('./util');
-const Enum            = require('enum');
-const Room            = require('./room');
-const Connection      = require('./connection');
-const MediaConnection = require('./mediaConnection');
-const DataConnection = require('./dataConnection');
+import Room            from './room';
+import Connection      from './connection';
+import MediaConnection from './mediaConnection';
+import DataConnection  from './dataConnection';
+import logger          from '../shared/logger';
 
 const MessageEvents = [
   'broadcastByDC',
@@ -165,7 +164,7 @@ class MeshRoom extends Room {
           pcConfig:     this._pcConfig,
         }
       );
-      util.log('MediaConnection created in OFFER');
+      logger.log('MediaConnection created in OFFER');
       this._addConnection(offerMessage.src, connection);
       this._setupMessageHandlers(connection);
 
@@ -176,7 +175,7 @@ class MeshRoom extends Room {
         audioCodec:     this._options.audioCodec,
       });
     } else {
-      util.warn(`Received malformed connection type: ${offerMessage.connectionType}`);
+      logger.warn(`Received malformed connection type: ${offerMessage.connectionType}`);
     }
   }
 
@@ -310,7 +309,7 @@ class MeshRoom extends Room {
       this._addConnection(peerId, connection);
       this._setupMessageHandlers(connection);
 
-      util.log(`${type} connection to ${peerId} created in ${this.name}`);
+      logger.log(`${type} connection to ${peerId} created in ${this.name}`);
     });
   }
 
@@ -419,4 +418,4 @@ class MeshRoom extends Room {
    */
 }
 
-module.exports = MeshRoom;
+export default MeshRoom;

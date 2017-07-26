@@ -1,7 +1,5 @@
-'use strict';
-
-const EventEmitter    = require('events');
-const Enum            = require('enum');
+import EventEmitter from 'events';
+import Enum         from 'enum';
 
 const Events = [
   'stream',
@@ -224,4 +222,4 @@ class Room extends EventEmitter {
    */
 }
 
-module.exports = Room;
+export default Room;

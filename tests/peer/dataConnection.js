@@ -1,11 +1,13 @@
-'use strict';
+import assert     from 'power-assert';
+import sinon      from 'sinon';
+import BinaryPack from 'js-binarypack';
 
-const assert     = require('power-assert');
-const proxyquire = require('proxyquireify')(require);
-const sinon      = require('sinon');
+import util       from '../../src/shared/util';
+import config     from '../../src/shared/config';
+import Negotiator from '../../src/peer/negotiator';
 
-const util       = require('../src/util');
-const Negotiator = require('../src/negotiator');
+import connectionInjector from 'inject-loader!../../src/peer/connection';
+import dataConnectionInjector from 'inject-loader!../../src/peer/dataConnection';
 
 let Connection;
 let DataConnection;
@@ -37,15 +39,11 @@ describe('DataConnection', () => {
       handleAnswer:    answerSpy,
       handleCandidate: candidateSpy,
     });
+    // hoist statics
+    negotiatorStub.EVENTS = Negotiator.EVENTS;
 
-    Connection = proxyquire(
-      '../src/connection',
-      {'./negotiator': negotiatorStub}
-    );
-    DataConnection = proxyquire(
-      '../src/dataConnection',
-      {'./connection': Connection}
-    );
+    Connection = connectionInjector({'./negotiator': negotiatorStub}).default;
+    DataConnection = dataConnectionInjector({'./connection': Connection}).default;
   });
 
   afterEach(() => {
@@ -123,10 +121,10 @@ describe('DataConnection', () => {
     });
 
     it('should process any queued messages after PeerConnection object is created', () => {
-      const messages = [{type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message'}];
+      const messages = [{type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message'}];
 
       let spy = sinon.spy();
-      sinon.stub(DataConnection.prototype, 'handleAnswer', spy);
+      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy);
       const dc = new DataConnection('remoteId', {queuedMessages: messages});
 
       assert.deepEqual(dc._queuedMessages, []);
@@ -136,13 +134,13 @@ describe('DataConnection', () => {
     });
 
     it('should correctly handle ALL of multiple queued messages', () => {
-      const messages = [{type: util.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message1'},
-                        {type: util.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: 'message2'}];
+      const messages = [{type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message1'},
+                        {type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: 'message2'}];
 
       let spy1 = sinon.spy();
       let spy2 = sinon.spy();
-      sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
-      sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
+      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
+      sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
 
       const dc = new DataConnection('remoteId', {queuedMessages: messages});
 
@@ -156,8 +154,8 @@ describe('DataConnection', () => {
 
       let spy1 = sinon.spy();
       let spy2 = sinon.spy();
-      sinon.stub(DataConnection.prototype, 'handleAnswer', spy1);
-      sinon.stub(DataConnection.prototype, 'handleCandidate', spy2);
+      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
+      sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
 
       const dc = new DataConnection('remoteId', {queuedMessages: messages});
 
@@ -277,7 +275,7 @@ describe('DataConnection', () => {
           id:         'test',
           index:      0,
           totalParts: 1,
-          data:       util.pack(message),
+          data:       BinaryPack.pack(message),
           type:       typeof message,
         };
 
@@ -289,7 +287,7 @@ describe('DataConnection', () => {
           done();
         });
 
-        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
           dc._handleDataMessage({data: ab});
         });
       });
@@ -300,7 +298,7 @@ describe('DataConnection', () => {
           id:         'test',
           index:      0,
           totalParts: 1,
-          data:       util.pack(message),
+          data:       BinaryPack.pack(message),
           type:       typeof message,
         };
 
@@ -312,7 +310,7 @@ describe('DataConnection', () => {
           done();
         });
 
-        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
           dc._handleDataMessage({data: ab});
         });
       });
@@ -320,7 +318,7 @@ describe('DataConnection', () => {
       it('should correctly unpack JSON messages', done => {
         const jsonObj = {name: 'testObject'};
         // JSON data is binary packed for compression purposes
-        const packedJson = util.pack(jsonObj);
+        const packedJson = BinaryPack.pack(jsonObj);
 
         const dataMeta = {
           id:         'test',
@@ -338,33 +336,7 @@ describe('DataConnection', () => {
           done();
         });
 
-        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
-          dc._handleDataMessage({data: ab});
-        });
-      });
-
-      it('should correctly handle ArrayBuffer messages', done => {
-        const message = 'foobar';
-        const abMessage = util.binaryStringToArrayBuffer(message);
-
-        const dataMeta = {
-          id:         'test',
-          index:      0,
-          totalParts: 1,
-          data:       util.pack(abMessage),
-          type:       'arraybuffer',
-        };
-
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
-
-        dc.on(DataConnection.EVENTS.data.key, data => {
-          // We want to check that the received data is an ArrayBuffer
-          assert.deepEqual(data, abMessage);
-          done();
-        });
-
-        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
           dc._handleDataMessage({data: ab});
         });
       });
@@ -377,7 +349,7 @@ describe('DataConnection', () => {
           id:         'test',
           index:      0,
           totalParts: 1,
-          data:       util.pack(blob),
+          data:       BinaryPack.pack(blob),
           type:       blob.type,
         };
 
@@ -390,7 +362,7 @@ describe('DataConnection', () => {
           done();
         });
 
-        util.blobToArrayBuffer(util.pack(dataMeta), ab => {
+        util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
           dc._handleDataMessage({data: ab});
         });
       });
@@ -398,12 +370,12 @@ describe('DataConnection', () => {
       it('should be able to recombine chunked messages', done => {
         // Chunk size is 16300
         // Each char is 2 bytes
-        const len = util.maxChunkSize + 1000;
+        const len = config.maxChunkSize + 1000;
         const string = new Array(len + 1).join('a');
-        const packedString = util.pack(string);
+        const packedString = BinaryPack.pack(string);
 
-        const slice1 = packedString.slice(0, util.maxChunkSize);
-        const slice2 = packedString.slice(util.maxChunkSize, util.maxChunkSize * 2);
+        const slice1 = packedString.slice(0, config.maxChunkSize);
+        const slice2 = packedString.slice(config.maxChunkSize, config.maxChunkSize * 2);
 
         const dataMeta1 = {
           id:         'test',
@@ -429,10 +401,10 @@ describe('DataConnection', () => {
           done();
         });
 
-        util.blobToArrayBuffer(util.pack(dataMeta1), ab1 => {
+        util.blobToArrayBuffer(BinaryPack.pack(dataMeta1), ab1 => {
           dc._handleDataMessage({data: ab1});
         });
-        util.blobToArrayBuffer(util.pack(dataMeta2), ab2 => {
+        util.blobToArrayBuffer(BinaryPack.pack(dataMeta2), ab2 => {
           dc._handleDataMessage({data: ab2});
         });
       });
@@ -513,8 +485,8 @@ describe('DataConnection', () => {
         setTimeout(() => {
           assert(sendSpy.calledOnce);
 
-          const unpacked = util.unpack(sendSpy.args[0][0]);
-          const reconstructed = util.unpack(unpacked.data);
+          const unpacked = BinaryPack.unpack(sendSpy.args[0][0]);
+          const reconstructed = BinaryPack.unpack(unpacked.data);
           assert.equal(reconstructed, message);
           done();
         }, 100);
@@ -533,8 +505,8 @@ describe('DataConnection', () => {
         setTimeout(() => {
           assert(sendSpy.calledOnce);
 
-          const unpacked = util.unpack(sendSpy.args[0][0]);
-          const reconstructed = util.unpack(unpacked.data);
+          const unpacked = BinaryPack.unpack(sendSpy.args[0][0]);
+          const reconstructed = BinaryPack.unpack(unpacked.data);
           assert.equal(reconstructed, message);
           done();
         }, 100);
@@ -553,33 +525,13 @@ describe('DataConnection', () => {
         setTimeout(() => {
           assert(sendSpy.calledOnce);
 
-          const unpacked = util.unpack(sendSpy.args[0][0]);
-          const data = util.unpack(unpacked.data);
+          const unpacked = BinaryPack.unpack(sendSpy.args[0][0]);
+          const data = BinaryPack.unpack(unpacked.data);
           assert.deepEqual(data, jsonObj);
           done();
         }, 100);
 
         dc.send(jsonObj);
-      });
-
-      it('should correctly send ArrayBuffer data', done => {
-        const message = 'foobar';
-        const abMessage = util.binaryStringToArrayBuffer(message);
-        let sendSpy = sinon.spy();
-
-        const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
-        dc._dc.onopen();
-
-        setTimeout(() => {
-          assert(sendSpy.calledOnce);
-
-          const unpacked = util.unpack(sendSpy.args[0][0]);
-          assert.deepEqual(unpacked.data, abMessage);
-          done();
-        }, 100);
-
-        dc.send(abMessage);
       });
 
       it('should correctly send Blob data', done => {
@@ -594,7 +546,7 @@ describe('DataConnection', () => {
         setTimeout(() => {
           assert(sendSpy.calledOnce);
 
-          const unpacked = util.unpack(sendSpy.args[0][0]);
+          const unpacked = BinaryPack.unpack(sendSpy.args[0][0]);
           assert.deepEqual(unpacked.data, blob);
           done();
         }, 100);
@@ -617,7 +569,7 @@ describe('DataConnection', () => {
         setTimeout(() => {
           assert(sendSpy.calledOnce);
 
-          const unpacked = util.unpack(sendSpy.args[0][0]);
+          const unpacked = BinaryPack.unpack(sendSpy.args[0][0]);
           assert.deepEqual(unpacked.data, file);
           done();
         }, 100);
@@ -626,7 +578,7 @@ describe('DataConnection', () => {
       });
 
       it('should correctly chunk and send a large message', done => {
-        const len = util.maxChunkSize + 1000;
+        const len = config.maxChunkSize + 1000;
         const string = new Array(len + 1).join('a');
 
         let sendSpy = sinon.spy();
@@ -638,11 +590,11 @@ describe('DataConnection', () => {
         setTimeout(() => {
           assert(sendSpy.calledTwice);
 
-          const unpacked1 = util.unpack(sendSpy.args[0][0]);
-          const unpacked2 = util.unpack(sendSpy.args[1][0]);
+          const unpacked1 = BinaryPack.unpack(sendSpy.args[0][0]);
+          const unpacked2 = BinaryPack.unpack(sendSpy.args[1][0]);
 
           const ab = util.joinArrayBuffers([unpacked1.data, unpacked2.data]);
-          const data = util.unpack(ab);
+          const data = BinaryPack.unpack(ab);
           assert.deepEqual(data, string);
           done();
         }, 100);

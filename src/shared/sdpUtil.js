@@ -1,6 +1,4 @@
-'use strict';
-
-const sdpTransform = require('sdp-transform');
+import sdpTransform from 'sdp-transform';
 
 /**
  * Class that contains utility functions for SDP munging.
@@ -151,5 +149,4 @@ class SdpUtil {
   }
 }
 
-const sdpUtilInstance = new SdpUtil();
-module.exports = sdpUtilInstance;
+export default new SdpUtil();
