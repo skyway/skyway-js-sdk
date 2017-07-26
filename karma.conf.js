@@ -1,5 +1,6 @@
 const webpackConfig = require('./webpack.config.js');
 
+// Test env only attrs
 webpackConfig.module.rules.push({
   test:    /\.js$/,
   exclude: /node_modules/,
@@ -12,12 +13,14 @@ webpackConfig.module.rules.push({
   },
 });
 
+webpackConfig.devtool = 'inline-source-map';
+
 module.exports = config => {
   config.set({
     files: [
       // if specify running tests
       // './tests/peer.js',
-      './tests/index.js'
+      './tests/index.js',
     ],
 
     singleRun: true,
@@ -28,9 +31,9 @@ module.exports = config => {
 
     preprocessors: {
       // if specify running tests
-      // './src/peer.js':   'webpack',
-      // './tests/peer.js': 'webpack',
-      './tests/index.js': 'webpack',
+      // './src/peer.js':   ['webpack', 'sourcemap],
+      // './tests/peer.js': ['webpack', 'sourcemap],
+      './tests/index.js': ['webpack', 'sourcemap'],
     },
 
     reporters: [

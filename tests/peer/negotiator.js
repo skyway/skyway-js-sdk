@@ -22,6 +22,7 @@ describe('Negotiator', () => {
     let negotiator;
     let handleOfferSpy;
     let createPCStub;
+    let setRemoteDescStub;
 
     beforeEach(() => {
       newPcStub = sinon.stub();
@@ -37,6 +38,8 @@ describe('Negotiator', () => {
       handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
       createPCStub = sinon.stub(negotiator, '_createPeerConnection');
       createPCStub.returns(pcStub);
+      setRemoteDescStub = sinon.stub(negotiator, '_setRemoteDescription');
+      setRemoteDescStub.resolves();
     });
 
     afterEach(() => {
@@ -44,6 +47,7 @@ describe('Negotiator', () => {
       addStreamSpy.reset();
       createDCSpy.reset();
       handleOfferSpy.reset();
+      setRemoteDescStub.restore();
     });
 
     it('should call _createPeerConnection pcConfig and set _pc to the result', () => {
@@ -424,32 +428,58 @@ describe('Negotiator', () => {
       it('should setRemoteDescription with lastOffer', done => {
         const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
 
-        negotiator._pc.createOffer(offer => {
-          const offerObject = {
-            sdp:  offer.sdp,
-            type: offer.type,
-          };
+        negotiator._pc.createOffer()
+          .then(offer => {
+            const offerObject = {
+              sdp:  offer.sdp,
+              type: offer.type,
+            };
 
-          negotiator._lastOffer = offerObject;
+            negotiator._lastOffer = offerObject;
 
-          negotiator.handleOffer();
+            negotiator.handleOffer();
 
-          // let other async events run
-          setTimeout(() => {
-            assert.equal(setRemoteSpy.callCount, 1);
-            assert(setRemoteSpy.calledWith(offer));
-            done();
+            // let other async events run
+            setTimeout(() => {
+              assert.equal(setRemoteSpy.callCount, 1);
+              assert(setRemoteSpy.calledWith(offer));
+              done();
+            });
+          })
+          .catch(err => {
+            assert.fail(err);
           });
-        }, err => {
-          assert.fail(err);
-        });
       });
     });
 
     describe('when offerSdp is not empty', done => {
       it('should setRemoteDescription', done => {
         const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
-        negotiator._pc.createOffer(offer => {
+        negotiator._pc.createOffer()
+          .then(offer => {
+            const offerObject = {
+              sdp:  offer.sdp,
+              type: offer.type,
+            };
+
+            negotiator.handleOffer(offerObject);
+
+            // let other async events run
+            setTimeout(() => {
+              assert.equal(setRemoteSpy.callCount, 1);
+              assert(setRemoteSpy.calledWith(offer));
+              done();
+            });
+          })
+          .catch(err => {
+            assert.fail(err);
+          });
+      });
+    });
+
+    it('should emit answerCreated', done => {
+      negotiator._pc.createOffer()
+        .then(offer => {
           const offerObject = {
             sdp:  offer.sdp,
             type: offer.type,
@@ -457,35 +487,15 @@ describe('Negotiator', () => {
 
           negotiator.handleOffer(offerObject);
 
-          // let other async events run
-          setTimeout(() => {
-            assert.equal(setRemoteSpy.callCount, 1);
-            assert(setRemoteSpy.calledWith(offer));
+          negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
+            assert.equal(answer.type, 'answer');
+            assert.equal(answer.constructor.name, 'RTCSessionDescription');
             done();
           });
-        }, err => {
+        })
+        .catch(err => {
           assert.fail(err);
         });
-      });
-    });
-
-    it('should emit answerCreated', done => {
-      negotiator._pc.createOffer(offer => {
-        const offerObject = {
-          sdp:  offer.sdp,
-          type: offer.type,
-        };
-
-        negotiator.handleOffer(offerObject);
-
-        negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
-          assert.equal(answer.type, 'answer');
-          assert.equal(answer.constructor.name, 'RTCSessionDescription');
-          done();
-        });
-      }, err => {
-        assert.fail(err);
-      });
     });
   });
 
@@ -501,28 +511,30 @@ describe('Negotiator', () => {
       });
 
       it('should setRemoteDescription', done => {
-        const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription');
+        const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription').resolves();
 
-        negotiator._pc.createOffer(offer => {
-          // creating an answer is complicated so just use an offer
-          const answerObject = {
-            sdp:  offer.sdp,
-            type: 'answer',
-          };
+        negotiator._pc.createOffer()
+          .then(offer => {
+            // creating an answer is complicated so just use an offer
+            const answerObject = {
+              sdp:  offer.sdp,
+              type: 'answer',
+            };
 
-          assert.equal(setRemoteStub.callCount, 0);
+            assert.equal(setRemoteStub.callCount, 0);
 
-          negotiator.handleAnswer(answerObject);
+            negotiator.handleAnswer(answerObject);
 
-          // let other async events run
-          setTimeout(() => {
-            assert.equal(setRemoteStub.callCount, 1);
-            assert(setRemoteStub.calledWith(
-              new RTCSessionDescription(answerObject))
-            );
-            done();
-          });
-        }, err => {
+            // let other async events run
+            setTimeout(() => {
+              assert.equal(setRemoteStub.callCount, 1);
+              assert(setRemoteStub.calledWith(
+                new RTCSessionDescription(answerObject))
+              );
+              done();
+            });
+          })
+          .catch(err => {
           assert.fail(err);
         });
       });
@@ -530,17 +542,18 @@ describe('Negotiator', () => {
       it('should set isExpectingAnswer to false', () => {
         sinon.stub(negotiator._pc, 'setRemoteDescription');
 
-        negotiator._pc.createOffer(offer => {
-          // creating an answer is complicated so just use an offer
-          const answerObject = {
-            sdp:  offer.sdp,
-            type: 'answer',
-          };
+        negotiator._pc.createOffer()
+          .then(offer => {
+            // creating an answer is complicated so just use an offer
+            const answerObject = {
+              sdp:  offer.sdp,
+              type: 'answer',
+            };
 
-          negotiator.handleAnswer(answerObject);
+            negotiator.handleAnswer(answerObject);
 
-          assert.equal(negotiator._isExpectingAnswer, false);
-        });
+            assert.equal(negotiator._isExpectingAnswer, false);
+          });
       });
     });
 
@@ -573,7 +586,7 @@ describe('Negotiator', () => {
       negotiator = new Negotiator();
       const options = {
         type:       'data',
-        originator: false,
+        originator: true,
         offer:      {},
       };
       negotiator.startConnection(options);
@@ -596,7 +609,7 @@ describe('Negotiator', () => {
       assert.equal(candidate.sdpMid, addIceArg.sdpMid);
     });
 
-    it('should call logger.error if addIceCandidate fails', () => {
+    it('should call logger.error if addIceCandidate fails', done => {
       const errorStub = sinon.stub(logger, 'error');
       const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
       addIceStub.returns(Promise.reject());
@@ -606,6 +619,8 @@ describe('Negotiator', () => {
       setTimeout(() => {
         assert.equal(errorStub.callCount, 1);
         errorStub.restore();
+        addIceStub.restore();
+        done();
       });
     });
   });
@@ -783,7 +798,7 @@ describe('Negotiator', () => {
           it('should emit \'offerCreated\'', done => {
             const offer = 'offer';
             const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
-            cbStub.callsArgWith(1, offer);
+            cbStub.resolves(offer);
             negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
               assert(offer);
               done();
@@ -793,7 +808,7 @@ describe('Negotiator', () => {
           it('should emit \'negotiationNeeded\'', done => {
             const offer = 'offer';
             const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
-            cbStub.callsArgWith(1, offer);
+            cbStub.resolves(offer);
             negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
               done();
             });
@@ -872,16 +887,19 @@ describe('Negotiator', () => {
     });
 
     it('should call pc.createOffer', () => {
+      createOfferStub = createOfferStub.resolves();
+
       assert.equal(createOfferStub.callCount, 0);
-      negotiator._makeOfferSdp();
-      assert.equal(createOfferStub.callCount, 1);
-      assert.equal(typeof createOfferStub.args[0][0], 'function');
-      assert.equal(typeof createOfferStub.args[0][1], 'function');
+      negotiator._makeOfferSdp()
+        .then(() => {
+          assert.equal(createOfferStub.callCount, 1);
+        });
     });
 
     it('should return offer when createOffer succeeds', done => {
       const fakeOffer = 'offer';
-      createOfferStub.callsArgWith(0, fakeOffer);
+      createOfferStub = createOfferStub.resolves(fakeOffer);
+
       negotiator._makeOfferSdp()
         .then(offer => {
           assert.equal(offer, fakeOffer);
@@ -893,7 +911,7 @@ describe('Negotiator', () => {
 
     it('should emit Error when createOffer fails', done => {
       const fakeError = new Error('fakeError');
-      createOfferStub.callsArgWith(1, fakeError);
+      createOfferStub = createOfferStub.rejects(fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
@@ -925,18 +943,20 @@ describe('Negotiator', () => {
     });
 
     it('should call pc.createAnswer', () => {
+      createAnswerStub = createAnswerStub.resolves();
+
       assert.equal(createAnswerStub.callCount, 0);
-      negotiator._makeAnswerSdp();
-      assert.equal(createAnswerStub.callCount, 1);
-      assert.equal(typeof createAnswerStub.args[0][0], 'function');
-      assert.equal(typeof createAnswerStub.args[0][1], 'function');
+      negotiator._makeAnswerSdp()
+        .then(() => {
+          assert.equal(createAnswerStub.callCount, 1);
+        });
     });
 
     describe('when createAnswer succeeds', () => {
       it('should return answer when setLocalDescription succeeds', done => {
         const fakeAnswer = 'answer';
-        createAnswerStub.callsArgWith(0, fakeAnswer);
-        setLocalDescriptionStub.callsArg(1);
+        createAnswerStub = createAnswerStub.resolves(fakeAnswer);
+        setLocalDescriptionStub = setLocalDescriptionStub.resolves();
 
         negotiator._makeAnswerSdp()
           .then(answer => {
@@ -950,8 +970,8 @@ describe('Negotiator', () => {
       it('should emit Error when setLocalDescription fails', done => {
         const fakeAnswer = 'answer';
         const fakeError = new Error('fakeError');
-        createAnswerStub.callsArgWith(0, fakeAnswer);
-        setLocalDescriptionStub.callsArgWith(2, fakeError);
+        createAnswerStub = createAnswerStub.resolves(fakeAnswer);
+        setLocalDescriptionStub = setLocalDescriptionStub.rejects(fakeError);
 
         negotiator.on(Negotiator.EVENTS.error.key, err => {
           assert(err instanceof Error);
@@ -969,7 +989,7 @@ describe('Negotiator', () => {
 
     it('should emit Error when createAnswer fails', done => {
       const fakeError = new Error('fakeError');
-      createAnswerStub.callsArgWith(1, fakeError);
+      createAnswerStub = createAnswerStub.rejects(fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
@@ -1000,16 +1020,19 @@ describe('Negotiator', () => {
 
     it('should call pc.setLocalDescription', () => {
       const offer = 'offer';
+      setLocalDescriptionStub = setLocalDescriptionStub.resolves();
 
       assert.equal(setLocalDescriptionStub.callCount, 0);
-      negotiator._setLocalDescription(offer);
-      assert(setLocalDescriptionStub.calledWith(offer));
-      assert.equal(setLocalDescriptionStub.callCount, 1);
+      negotiator._setLocalDescription(offer)
+        .then(() => {
+          assert(setLocalDescriptionStub.calledWith(offer));
+          assert.equal(setLocalDescriptionStub.callCount, 1);
+        });
     });
 
     it('should emit \'offerCreated\' if setLocalDescription succeeds', done => {
       const offer = 'offer';
-      setLocalDescriptionStub.callsArgWith(1, offer);
+      setLocalDescriptionStub = setLocalDescriptionStub.resolves(offer);
 
       negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
         assert(offer);
@@ -1021,7 +1044,7 @@ describe('Negotiator', () => {
 
     it('should set _isExpectingAnswer to true if setLocalDescription succeeds', done => {
       const offer = 'offer';
-      setLocalDescriptionStub.callsArgWith(1, offer);
+      setLocalDescriptionStub = setLocalDescriptionStub.resolves(offer);
 
       assert.equal(negotiator._isExpectingAnswer, false);
       negotiator.on(Negotiator.EVENTS.offerCreated.key, () => {
@@ -1035,7 +1058,7 @@ describe('Negotiator', () => {
     it('should emit Error if setLocalDescription fails', done => {
       const offer = 'offer';
       const fakeError = new Error('fakeError');
-      setLocalDescriptionStub.callsArgWith(2, fakeError);
+      setLocalDescriptionStub = setLocalDescriptionStub.rejects(fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);
@@ -1067,16 +1090,19 @@ describe('Negotiator', () => {
     });
 
     it('should call pc.setRemoteDescription', () => {
+      setRemoteDescriptionStub = setRemoteDescriptionStub.resolves();
+
       assert.equal(setRemoteDescriptionStub.callCount, 0);
-      negotiator._setRemoteDescription(sdp);
-      assert.equal(setRemoteDescriptionStub.callCount, 1);
-      assert.equal(setRemoteDescriptionStub.args[0][0].type, sdp.type);
-      assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
-      assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
+      negotiator._setRemoteDescription(sdp)
+        .then(() => {
+          assert.equal(setRemoteDescriptionStub.callCount, 1);
+          assert.equal(setRemoteDescriptionStub.args[0][0].type, sdp.type);
+          assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
+        });
     });
 
     it('should resolve if setRemoteDescription succeeds', done => {
-      setRemoteDescriptionStub.callsArg(1);
+      setRemoteDescriptionStub = setRemoteDescriptionStub.resolves();
 
       negotiator._setRemoteDescription(sdp)
         .then(() => {
@@ -1086,7 +1112,7 @@ describe('Negotiator', () => {
 
     it('should emit Error if setRemoteDescription fails', done => {
       const fakeError = new Error('fakeError');
-      setRemoteDescriptionStub.callsArgWith(2, fakeError);
+      setRemoteDescriptionStub = setRemoteDescriptionStub.rejects(fakeError);
 
       negotiator.on(Negotiator.EVENTS.error.key, err => {
         assert(err instanceof Error);

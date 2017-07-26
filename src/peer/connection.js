@@ -108,7 +108,11 @@ class Connection extends EventEmitter {
    * @param {object} offerMessage - Message object containing an offer.
    */
   updateOffer(offerMessage) {
-    this._negotiator.handleOffer(offerMessage.offer);
+    if (this.open) {
+      this._negotiator.handleOffer(offerMessage.offer);
+    } else {
+      this._options.payload = offerMessage;
+    }
   }
 
   /**
