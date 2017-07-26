@@ -586,7 +586,7 @@ describe('Negotiator', () => {
       negotiator = new Negotiator();
       const options = {
         type:       'data',
-        originator: false,
+        originator: true,
         offer:      {},
       };
       negotiator.startConnection(options);
@@ -609,7 +609,7 @@ describe('Negotiator', () => {
       assert.equal(candidate.sdpMid, addIceArg.sdpMid);
     });
 
-    it('should call logger.error if addIceCandidate fails', () => {
+    it('should call logger.error if addIceCandidate fails', done => {
       const errorStub = sinon.stub(logger, 'error');
       const addIceStub = sinon.stub(negotiator._pc, 'addIceCandidate');
       addIceStub.returns(Promise.reject());
@@ -620,6 +620,7 @@ describe('Negotiator', () => {
         assert.equal(errorStub.callCount, 1);
         errorStub.restore();
         addIceStub.restore();
+        done();
       });
     });
   });
