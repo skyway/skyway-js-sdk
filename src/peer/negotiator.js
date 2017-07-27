@@ -93,7 +93,6 @@ class Negotiator extends EventEmitter {
     if (!this._pc || this._replaceStreamCalled) {
       return;
     }
-    this._isOnTrackAvailable = this._pc.ontrack === null;
     this._isRtpSenderAvailable = typeof this._pc.getSenders === 'function';
     this._isRtpLocalStreamsAvailable = typeof this._pc.getLocalStreams === 'function';
 
@@ -233,6 +232,7 @@ class Negotiator extends EventEmitter {
    */
   _setupPCListeners() {
     const pc = this._pc;
+    this._isOnTrackAvailable = this._pc.ontrack === null;
     if (this._isOnTrackAvailable) {
       pc.ontrack = evt => {
         logger.log('Received remote media stream');
