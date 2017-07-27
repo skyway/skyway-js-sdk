@@ -9,6 +9,7 @@
     "clean": "del ./dist",
     "lint": "eslint ./src ./tests",
     "build": "NODE_ENV=production webpack",
+    "dev": "webpack -w",
     "doc": "jsdoc -c ./jsdoc.config.js"
   },
   "repository": {
