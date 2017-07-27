@@ -59,7 +59,13 @@ class Negotiator extends EventEmitter {
 
     if (this._type === 'media') {
       if (options.stream) {
-        this._pc.addStream(options.stream);
+        if ('addTrack' in this._pc && false) {
+          options.stream.getTracks().forEach(track => {
+            this._pc.addTrack(track, options.stream);
+          });
+        } else {
+          this._pc.addStream(options.stream);
+        }
       } else if (this._originator) {
         // This means the peer wants to create offer SDP with `recvonly`
         this._makeOfferSdp().then(offer => {
@@ -87,9 +93,9 @@ class Negotiator extends EventEmitter {
     if (!this._pc || this._replaceStreamCalled) {
       return;
     }
-    this._isOnTrackAvailable = typeof this._pc.ontrack !== 'undefined';
+    this._isOnTrackAvailable = this._pc.ontrack === null;
     this._isRtpSenderAvailable = typeof this._pc.getSenders === 'function';
-    this._isRtpLocalStreamsAvailable = typeof this._pc.getLocalStreams !== 'undefined';
+    this._isRtpLocalStreamsAvailable = typeof this._pc.getLocalStreams === 'function';
 
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
@@ -135,7 +141,13 @@ class Negotiator extends EventEmitter {
     // a chance to trigger (and do nothing) on removeStream.
     setTimeout(() => {
       this._pc.onnegotiationneeded = negotiationNeededHandler;
-      this._pc.addStream(newStream);
+      if ('addTrack' in this._pc && false) {
+        newStream.getTracks().forEach(track => {
+          this._pc.addTrack(track, newStream);
+        });
+      } else {
+        this._pc.addStream(newStream);
+      }
     });
   }
 
