@@ -59,7 +59,7 @@ class Negotiator extends EventEmitter {
 
     if (this._type === 'media') {
       if (options.stream) {
-        if ('addTrack' in this._pc && false) {
+        if ('addTrack' in this._pc) {
           options.stream.getTracks().forEach(track => {
             this._pc.addTrack(track, options.stream);
           });
@@ -141,7 +141,7 @@ class Negotiator extends EventEmitter {
     // a chance to trigger (and do nothing) on removeStream.
     setTimeout(() => {
       this._pc.onnegotiationneeded = negotiationNeededHandler;
-      if ('addTrack' in this._pc && false) {
+      if ('addTrack' in this._pc) {
         newStream.getTracks().forEach(track => {
           this._pc.addTrack(track, newStream);
         });
