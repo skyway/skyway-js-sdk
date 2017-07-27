@@ -236,8 +236,9 @@ class Negotiator extends EventEmitter {
     if (this._isOnTrackAvailable) {
       pc.ontrack = evt => {
         logger.log('Received remote media stream');
-        const stream = evt.streams[0];
-        this.emit(Negotiator.EVENTS.addStream.key, stream);
+        evt.streams.forEach(track => {
+          this.emit(Negotiator.EVENTS.addStream.key, track);
+        });
       };
     } else {
       pc.onaddstream = evt => {
