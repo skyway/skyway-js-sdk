@@ -93,8 +93,6 @@ class Negotiator extends EventEmitter {
     if (!this._pc || this._replaceStreamCalled) {
       return;
     }
-    this._isRtpSenderAvailable = typeof this._pc.getSenders === 'function';
-    this._isRtpLocalStreamsAvailable = typeof this._pc.getLocalStreams === 'function';
 
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
@@ -220,6 +218,9 @@ class Negotiator extends EventEmitter {
    */
   _createPeerConnection(pcConfig) {
     logger.log('Creating RTCPeerConnection');
+    this._isOnTrackAvailable = new RTCPeerConnection().ontrack === null;
+    this._isRtpSenderAvailable = typeof RTCPeerConnection.prototype.getSenders === 'function';
+    this._isRtpLocalStreamsAvailable = typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
 
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
@@ -232,7 +233,6 @@ class Negotiator extends EventEmitter {
    */
   _setupPCListeners() {
     const pc = this._pc;
-    this._isOnTrackAvailable = this._pc.ontrack === null;
     if (this._isOnTrackAvailable) {
       pc.ontrack = evt => {
         logger.log('Received remote media stream');
