@@ -161,22 +161,23 @@ class DataConnection extends Connection {
     if (currData.receivedParts === currData.totalParts) {
       delete this._receivedData[dataMeta.id];
 
-      let unpackedData;
       // recombine the sliced arraybuffers
       const ab = util.joinArrayBuffers(currData.parts);
-      unpackedData = BinaryPack.unpack(ab);
+      const unpackedData = BinaryPack.unpack(ab);
 
+      let finalData;
       switch (currData.type) {
         case 'Blob':
-          unpackedData = new Blob([new Uint8Array(unpackedData)], {type: currData.mimeType});
+          finalData = new Blob([new Uint8Array(unpackedData)], {type: currData.mimeType});
           break;
         case 'File':
-          unpackedData = new File([new Uint8Array(unpackedData)], currData.name, {type: currData.mimeType});
+          finalData = new File([new Uint8Array(unpackedData)], currData.name, {type: currData.mimeType});
           break;
         default:
+          finalData = unpackedData;
       }
 
-      this.emit(DataConnection.EVENTS.data.key, unpackedData);
+      this.emit(DataConnection.EVENTS.data.key, finalData);
     }
   }
 
