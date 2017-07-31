@@ -56,13 +56,16 @@ function connect(c) {
   } else if (c.label === 'file') {
     c.on('data', function(data) {
       // If we're getting a file, create a URL for it.
+      var dataBlob;
       if (data.constructor === ArrayBuffer) {
-        var dataView = new Uint8Array(data);
-        var dataBlob = new Blob([dataView]);
-        var url = window.URL.createObjectURL(dataBlob);
-        $('#' + c.remoteId).find('.messages').append('<div><span class="file">' +
-          c.remoteId + ' has sent you a <a target="_blank" href="' + url + '">file</a>.</span></div>');
+        dataBlob = new Blob([new Uint8Array(data)]);
+      } else {
+        dataBlob = data;
       }
+      var filename = dataBlob.name || 'file';
+      var url = window.URL.createObjectURL(dataBlob);
+      $('#' + c.remoteId).find('.messages').append('<div><span class="file">' +
+        c.remoteId + ' has sent you a <a target="_blank" href="' + url + '" download="' + filename + '">file</a>.</span></div>');
     });
   }
   connectedPeers[c.remoteId] = 1;
