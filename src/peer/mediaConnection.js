@@ -123,6 +123,9 @@ class MediaConnection extends Connection {
     this._negotiator.on(Negotiator.EVENTS.addStream.key, remoteStream => {
       logger.log('Receiving stream', remoteStream);
 
+      if (this.remoteStream && this.remoteStream.id === remoteStream.id) {
+        return;
+      }
       this.remoteStream = remoteStream;
 
       this.emit(MediaConnection.EVENTS.stream.key, remoteStream);
