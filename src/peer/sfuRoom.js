@@ -125,6 +125,11 @@ class SFURoom extends Room {
         if (remoteStream.peerId === this._peerId) {
           return;
         }
+
+        const cachedStream = this.remoteStreams[remoteStream.id];
+        if (cachedStream && cachedStream.id === remoteStream.id) {
+          return;
+        }
         this.remoteStreams[remoteStream.id] = remoteStream;
         this.emit(SFURoom.EVENTS.stream.key, remoteStream);
 
