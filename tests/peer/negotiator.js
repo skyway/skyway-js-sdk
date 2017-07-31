@@ -289,6 +289,7 @@ describe('Negotiator', () => {
         negotiator._pc.getSenders = getSendersStub;
         negotiator._pc.removeTrack = removeTrackStub;
         negotiator._pc.onnegotiationneeded = negotiationNeededStub;
+        negotiator._isRtpSenderAvailable = true;
 
         audioSender = {
           track: {
@@ -371,6 +372,7 @@ describe('Negotiator', () => {
         addStreamSpy = sinon.stub();
         negotiator._pc.removeStream = removeStreamSpy;
         negotiator._pc.addStream = addStreamSpy;
+        negotiator._isRtpSenderAvailable = false;
 
         const getLocalStreamsStub = sinon.stub(negotiator._pc, 'getLocalStreams');
         getLocalStreamsStub.returns([remoteStream]);
