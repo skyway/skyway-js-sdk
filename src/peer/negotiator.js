@@ -59,7 +59,7 @@ class Negotiator extends EventEmitter {
 
     if (this._type === 'media') {
       if (options.stream) {
-        if ('addTrack' in this._pc) {
+        if (this._isAddTrackAvailable) {
           options.stream.getTracks().forEach(track => {
             this._pc.addTrack(track, options.stream);
           });
@@ -138,7 +138,7 @@ class Negotiator extends EventEmitter {
     // a chance to trigger (and do nothing) on removeStream.
     setTimeout(() => {
       this._pc.onnegotiationneeded = negotiationNeededHandler;
-      if ('addTrack' in this._pc) {
+      if (this._isAddTrackAvailable) {
         newStream.getTracks().forEach(track => {
           this._pc.addTrack(track, newStream);
         });
@@ -218,7 +218,8 @@ class Negotiator extends EventEmitter {
    */
   _createPeerConnection(pcConfig) {
     logger.log('Creating RTCPeerConnection');
-    this._isOnTrackAvailable = new RTCPeerConnection().ontrack === null;
+    this._isAddTrackAvailable = typeof RTCPeerConnection.prototype.addTrack === 'function';
+    this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
     this._isRtpSenderAvailable = typeof RTCPeerConnection.prototype.getSenders === 'function';
     this._isRtpLocalStreamsAvailable = typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
 
