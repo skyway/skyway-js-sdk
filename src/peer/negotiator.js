@@ -321,6 +321,7 @@ class Negotiator extends EventEmitter {
    */
   _makeOfferSdp() {
     let options;
+    // if this peer is in recvonly mode
     if (this._type === 'media' &&
       ((this._isRtpSenderAvailable && this._pc.getSenders().length === 0) ||
       (this._isRtpLocalStreamsAvailable && this._pc.getLocalStreams().length === 0))) {
