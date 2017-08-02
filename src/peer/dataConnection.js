@@ -162,10 +162,22 @@ class DataConnection extends Connection {
       delete this._receivedData[dataMeta.id];
 
       // recombine the sliced arraybuffers
-      let ab = util.joinArrayBuffers(currData.parts);
-      let unpackedData = BinaryPack.unpack(ab);
+      const ab = util.joinArrayBuffers(currData.parts);
+      const unpackedData = BinaryPack.unpack(ab);
 
-      this.emit(DataConnection.EVENTS.data.key, unpackedData);
+      let finalData;
+      switch (currData.type) {
+        case 'Blob':
+          finalData = new Blob([new Uint8Array(unpackedData)], {type: currData.mimeType});
+          break;
+        case 'File':
+          finalData = new File([new Uint8Array(unpackedData)], currData.name, {type: currData.mimeType});
+          break;
+        default:
+          finalData = unpackedData;
+      }
+
+      this.emit(DataConnection.EVENTS.data.key, finalData);
     }
   }
 
@@ -209,7 +221,7 @@ class DataConnection extends Connection {
       totalParts: 0,
     };
 
-    if (type === 'file') {
+    if (type === 'File') {
       dataMeta.name = data.name;
     }
     if (data instanceof Blob) {
