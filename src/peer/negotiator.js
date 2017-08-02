@@ -59,7 +59,13 @@ class Negotiator extends EventEmitter {
 
     if (this._type === 'media') {
       if (options.stream) {
-        this._pc.addStream(options.stream);
+        if (this._isAddTrackAvailable) {
+          options.stream.getTracks().forEach(track => {
+            this._pc.addTrack(track, options.stream);
+          });
+        } else {
+          this._pc.addStream(options.stream);
+        }
       } else if (this._originator) {
         // This means the peer wants to create offer SDP with `recvonly`
         this._makeOfferSdp().then(offer => {
@@ -90,7 +96,9 @@ class Negotiator extends EventEmitter {
 
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
-    if (this._pc.getSenders) {
+    // Firefox 53 has both getSenders and getLocalStreams,
+    // but Google Chrome 59 has only getLocalStreams.
+    if (this._isRtpSenderAvailable) {
       this._pc.getSenders().forEach(sender => {
         let tracks;
         if (sender.track.kind === 'audio') {
@@ -130,7 +138,13 @@ class Negotiator extends EventEmitter {
     // a chance to trigger (and do nothing) on removeStream.
     setTimeout(() => {
       this._pc.onnegotiationneeded = negotiationNeededHandler;
-      this._pc.addStream(newStream);
+      if (this._isAddTrackAvailable) {
+        newStream.getTracks().forEach(track => {
+          this._pc.addTrack(track, newStream);
+        });
+      } else {
+        this._pc.addStream(newStream);
+      }
     });
   }
 
@@ -204,6 +218,10 @@ class Negotiator extends EventEmitter {
    */
   _createPeerConnection(pcConfig) {
     logger.log('Creating RTCPeerConnection');
+    this._isAddTrackAvailable = typeof RTCPeerConnection.prototype.addTrack === 'function';
+    this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
+    this._isRtpSenderAvailable = typeof RTCPeerConnection.prototype.getSenders === 'function';
+    this._isRtpLocalStreamsAvailable = typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
 
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
@@ -216,11 +234,20 @@ class Negotiator extends EventEmitter {
    */
   _setupPCListeners() {
     const pc = this._pc;
-    pc.onaddstream = evt => {
-      logger.log('Received remote media stream');
-      const stream = evt.stream;
-      this.emit(Negotiator.EVENTS.addStream.key, stream);
-    };
+    if (this._isOnTrackAvailable) {
+      pc.ontrack = evt => {
+        logger.log('Received remote media stream');
+        evt.streams.forEach(stream => {
+          this.emit(Negotiator.EVENTS.addStream.key, stream);
+        });
+      };
+    } else {
+      pc.onaddstream = evt => {
+        logger.log('Received remote media stream');
+        const stream = evt.stream;
+        this.emit(Negotiator.EVENTS.addStream.key, stream);
+      };
+    }
 
     pc.ondatachannel = evt => {
       logger.log('Received data channel');
@@ -295,7 +322,10 @@ class Negotiator extends EventEmitter {
    */
   _makeOfferSdp() {
     let options;
-    if (this._type === 'media' && this._pc.getLocalStreams && this._pc.getLocalStreams().length === 0) {
+    // if this peer is in recvonly mode
+    if (this._type === 'media' &&
+      ((this._isRtpSenderAvailable && this._pc.getSenders().length === 0) ||
+      (this._isRtpLocalStreamsAvailable && this._pc.getLocalStreams().length === 0))) {
       options = {
         offerToReceiveAudio: true,
         offerToReceiveVideo: true,

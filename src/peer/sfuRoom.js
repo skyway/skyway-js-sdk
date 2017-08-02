@@ -122,7 +122,14 @@ class SFURoom extends Room {
       if (this._msidMap[remoteStream.id]) {
         remoteStream.peerId = this._msidMap[remoteStream.id];
 
+        // return if the remoteStream's peerID is my peerID
         if (remoteStream.peerId === this._peerId) {
+          return;
+        }
+
+        // return if the cachedStream which we will add already exists
+        const cachedStream = this.remoteStreams[remoteStream.id];
+        if (cachedStream && cachedStream.id === remoteStream.id) {
           return;
         }
         this.remoteStreams[remoteStream.id] = remoteStream;
