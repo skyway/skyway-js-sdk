@@ -285,10 +285,13 @@ class Peer extends EventEmitter {
       }
       if (http.status === 401) {
         cb([]);
-        throw new Error(
+        const err = new Error(
           'It doesn\'t look like you have permission to list peers IDs. ' +
           'Please enable the SkyWay REST API on https://skyway.io/ds/'
         );
+        err.type = 'list-error';
+        logger.error(err);
+        self.emit(Peer.EVENTS.error.key, err);
       } else if (http.status === 200) {
         cb(JSON.parse(http.responseText));
       } else {
