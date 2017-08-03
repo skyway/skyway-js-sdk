@@ -111,12 +111,14 @@ class DataConnection extends Connection {
    */
   _setupMessageHandlers() {
     this._dc.onopen = () => {
-      if (!this._isOnOpenCalled) {
-        logger.log('Data channel connection success');
-        this.open = true;
-        this._isOnOpenCalled = true;
-        this.emit(DataConnection.EVENTS.open.key);
+      if (this._isOnOpenCalled) {
+        return;
       }
+
+      logger.log('Data channel connection success');
+      this.open = true;
+      this._isOnOpenCalled = true;
+      this.emit(DataConnection.EVENTS.open.key);
     };
 
     // We no longer need the reliable shim here
@@ -257,6 +259,16 @@ class DataConnection extends Connection {
         this._startSendLoop();
       });
     }
+  }
+
+  /**
+   * Disconnect from remote peer.
+   * @fires DataConnection#close
+   */
+  close() {
+    super.close();
+
+    this._isOnOpenCalled = false;
   }
 
   /**
