@@ -222,6 +222,7 @@ class Negotiator extends EventEmitter {
     this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
     this._isRtpSenderAvailable = typeof RTCPeerConnection.prototype.getSenders === 'function';
     this._isRtpLocalStreamsAvailable = typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
+    this._isRtpTransceiverAvailable = typeof RTCPeerConnection.prototype.getTransceivers === 'function';
 
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
@@ -321,18 +322,29 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _makeOfferSdp() {
-    let options;
+    let createOfferPromise;
+
     // if this peer is in recvonly mode
-    if (this._type === 'media' &&
+    const isRecvOnly = this._type === 'media' &&
       ((this._isRtpSenderAvailable && this._pc.getSenders().length === 0) ||
-      (this._isRtpLocalStreamsAvailable && this._pc.getLocalStreams().length === 0))) {
-      options = {
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: true,
-      };
+      (this._isRtpLocalStreamsAvailable && this._pc.getLocalStreams().length === 0));
+
+    if (isRecvOnly) {
+      if (this._isRtpTransceiverAvailable) {
+        // this._pc.addTransceiver('audio').setDirection('recvonly');
+        this._pc.addTransceiver('video').setDirection('recvonly');
+        createOfferPromise = this._pc.createOffer();
+      } else {
+        createOfferPromise = this._pc.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true,
+        });
+      }
+    } else {
+      createOfferPromise = this._pc.createOffer();
     }
 
-    return this._pc.createOffer(options)
+    return createOfferPromise
       .then(offer => {
       logger.log('Created offer.');
 
