@@ -222,7 +222,7 @@ class Negotiator extends EventEmitter {
     this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
     this._isRtpSenderAvailable = typeof RTCPeerConnection.prototype.getSenders === 'function';
     this._isRtpLocalStreamsAvailable = typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
-    this._isRtpTransceiverAvailable = typeof RTCPeerConnection.prototype.getTransceivers === 'function';
+    this._isAddTransceiverAvailable = typeof RTCPeerConnection.prototype.addTransceiver === 'function';
 
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
@@ -330,7 +330,7 @@ class Negotiator extends EventEmitter {
       (this._isRtpLocalStreamsAvailable && this._pc.getLocalStreams().length === 0));
 
     if (isRecvOnly) {
-      if (this._isRtpTransceiverAvailable) {
+      if (this._isAddTransceiverAvailable) {
         this._pc.addTransceiver('audio').setDirection('recvonly');
         this._pc.addTransceiver('video').setDirection('recvonly');
         createOfferPromise = this._pc.createOffer();
