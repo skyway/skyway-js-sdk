@@ -331,7 +331,7 @@ class Negotiator extends EventEmitter {
 
     if (isRecvOnly) {
       if (this._isRtpTransceiverAvailable) {
-        // this._pc.addTransceiver('audio').setDirection('recvonly');
+        this._pc.addTransceiver('audio').setDirection('recvonly');
         this._pc.addTransceiver('video').setDirection('recvonly');
         createOfferPromise = this._pc.createOffer();
       } else {
