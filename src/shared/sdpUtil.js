@@ -1,6 +1,5 @@
 import sdpTransform from 'sdp-transform';
 import {Interop} from 'sdp-interop';
-const interop = new Interop();
 
 /**
  * Class that contains utility functions for SDP munging.
@@ -12,15 +11,13 @@ class SdpUtil {
    * @return {RTCSessionDescription} Plan B SDP
    */
   unifiedToPlanB(offer) {
-    offer = interop.toPlanB(offer);
+    const interop = new Interop();
+    const oldSdp = interop.toPlanB(offer).sdp;
 
-    const oldSdp = offer.sdp;
-
-    // extract msids from the offer sdp
-    const msidRegexp = /a=ssrc:\d+ msid:(\w+)/g;
     // use a set to avoid duplicates
     const msids = new Set();
-
+    // extract msids from the offer sdp
+    const msidRegexp = /a=ssrc:\d+ msid:(\w+)/g;
     let matches;
     // loop while matches is truthy
     // double parentheses for explicit conditional assignment (lint)
@@ -35,7 +32,7 @@ class SdpUtil {
     );
 
     return new RTCSessionDescription({
-      type: offer.type,
+      type: 'offer',
       sdp:  newSdp,
     });
   }
