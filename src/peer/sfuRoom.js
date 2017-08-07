@@ -1,11 +1,10 @@
 import Enum from 'enum';
-import {Interop} from 'sdp-interop';
 
 import Room       from './room';
 import Negotiator from './negotiator';
 import logger     from '../shared/logger';
+import sdpUtil    from '../shared/sdpUtil';
 
-const interop = new Interop();
 
 const MessageEvents = [
   'offerRequest',
@@ -72,28 +71,10 @@ class SFURoom extends Room {
   handleOffer(offerMessage) {
     let offer = offerMessage.offer;
 
-    // Chrome can't handle unified plan messages so convert it to Plan B
+    // Chrome and Safari can't handle unified plan messages so convert it to Plan B
     // We don't need to convert the answer back to Unified Plan because the server can handle Plan B
-    if (navigator.webkitGetUserMedia) {
-      offer = interop.toPlanB(offer);
-
-      // extract msids from the offer sdp
-      const msidRegexp = /a=ssrc:\d+ msid:(\w+)/g;
-      // use a set to avoid duplicates
-      const msids = new Set();
-
-      let matches;
-      // loop while matches is truthy
-      // double parentheses for explicit conditional assignment (lint)
-      while ((matches = msidRegexp.exec(offer.sdp))) {
-        msids.add(matches[1]);
-      }
-
-      // replace msid-semantic line with planB version
-      offer.sdp = offer.sdp.replace(
-        'a=msid-semantic:WMS *',
-        `a=msid-semantic:WMS ${Array.from(msids).join(' ')}`
-      );
+    if (navigator.userAgent.indexOf(/firefox/) === -1) {
+      offer = sdpUtil.unifiedToPlanB(offer);
     }
 
     // Handle SFU Offer and send Answer to Server

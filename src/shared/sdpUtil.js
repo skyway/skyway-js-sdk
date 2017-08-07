@@ -1,9 +1,45 @@
 import sdpTransform from 'sdp-transform';
+import {Interop} from 'sdp-interop';
+const interop = new Interop();
 
 /**
  * Class that contains utility functions for SDP munging.
  */
 class SdpUtil {
+  /**
+   * Convert unified plan SDP to Plan B SDP
+   * @param {RTCSessionDescriptionInit} offer unified plan SDP
+   * @return {RTCSessionDescription} Plan B SDP
+   */
+  unifiedToPlanB(offer) {
+    offer = interop.toPlanB(offer);
+
+    const oldSdp = offer.sdp;
+
+    // extract msids from the offer sdp
+    const msidRegexp = /a=ssrc:\d+ msid:(\w+)/g;
+    // use a set to avoid duplicates
+    const msids = new Set();
+
+    let matches;
+    // loop while matches is truthy
+    // double parentheses for explicit conditional assignment (lint)
+    while ((matches = msidRegexp.exec(oldSdp))) {
+      msids.add(matches[1]);
+    }
+
+    // replace msid-semantic line with planB version
+    const newSdp = oldSdp.replace(
+      'a=msid-semantic:WMS *',
+      `a=msid-semantic:WMS ${Array.from(msids).join(' ')}`
+    );
+
+    return new RTCSessionDescription({
+      type: offer.type,
+      sdp:  newSdp,
+    });
+  }
+
   /**
    * Add b=AS to m=video section and return the SDP.
    * @param {string} sdp - A SDP.
