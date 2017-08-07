@@ -19,7 +19,7 @@ module.exports = config => {
   config.set({
     files: [
       // if specify running tests
-      // './tests/peer.js',
+      // './tests/peer/sfuRoom.js',
       './tests/index.js',
     ],
 
@@ -31,8 +31,7 @@ module.exports = config => {
 
     preprocessors: {
       // if specify running tests
-      // './src/peer.js':   ['webpack', 'sourcemap],
-      // './tests/peer.js': ['webpack', 'sourcemap],
+      // './tests/peer/sfuRoom.js': ['webpack', 'sourcemap'],
       './tests/index.js': ['webpack', 'sourcemap'],
     },
 
