@@ -69,7 +69,7 @@ describe('SFURoom', () => {
       assert.equal(startConnectionArgs.type, 'media');
       assert.equal(startConnectionArgs.stream, origStream);
       assert.equal(startConnectionArgs.pcConfig, pcConfig);
-      assert.equal(startConnectionArgs.offer, dummyOfferMessage.offer);
+      assert.equal(startConnectionArgs.offer.sdp, dummyOfferMessage.offer.sdp);
     });
 
     it('should call _setupNegotiatorMessageHandlers', () => {
@@ -91,7 +91,6 @@ describe('SFURoom', () => {
       sfuRoom.handleOffer(dummyOfferMessage);
 
       assert.equal(handleOfferStub.callCount, 1);
-      assert(handleOfferStub.calledWith(dummyOfferMessage.offer));
 
       assert.equal(setupNegotiatorSpy.called, false);
       assert.equal(startConnectionStub.called, false);
