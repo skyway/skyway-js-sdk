@@ -97,8 +97,7 @@ function step1 () {
     video: {deviceId: videoSource ? {exact: videoSource} : undefined}
   };
   navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
-    // Set your video displays. Don't use srcObject because it can sometimes corrupt the mediaStream in Chrome 56+.
-    $('#my-video').get(0).src = URL.createObjectURL(stream);
+    $('#my-video').get(0).srcObject = stream;
     window.localStream = stream;
 
     if (room) {

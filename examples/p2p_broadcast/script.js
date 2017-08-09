@@ -25,8 +25,7 @@ $(function(){
   $('#broadcast').submit(function(e){
     e.preventDefault();
     navigator.getUserMedia({audio: true, video: true}, function(stream){
-      // Set your video displays. Don't use srcObject because it can sometimes corrupt the mediaStream in Chrome 56+.
-      $('#my-video').get(0).src = URL.createObjectURL(stream);
+      $('#my-video').get(0).srcObject = stream;
       window.localStream = stream;
     }, function(){ $('#step1-error').show(); });
   });
