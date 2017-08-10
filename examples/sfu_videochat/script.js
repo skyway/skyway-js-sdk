@@ -1,3 +1,4 @@
+/* eslint-disable require-jsdoc */
 $(function() {
   // Peer object
   const peer = new Peer({
@@ -8,18 +9,17 @@ $(function() {
   let room;
   peer.on('open', () => {
     $('#my-id').text(peer.id);
-
     // Get things started
     step1();
   });
 
-  peer.on('error', () => {
+  peer.on('error', err => {
     alert(err.message);
     // Return to step 2 if error occurs
     step2();
   });
 
-  $('#make-call').submit(function(e) {
+  $('#make-call').on('submit', e => {
     e.preventDefault();
     // Initiate a call!
     const roomName = $('#join-room').val();
@@ -32,17 +32,16 @@ $(function() {
     step3(room);
   });
 
-  $('#end-call').click(function() {
+  $('#end-call').on('click', () => {
     room.close();
     step2();
   });
 
   // Retry if getUserMedia fails
-  $('#step1-retry').click(function() {
+  $('#step1-retry').on('click', () => {
     $('#step1-error').hide();
     step1();
   });
-
 
   // set up audio and video input selectors
   const audioSelect = $('#audioSource');
@@ -50,11 +49,9 @@ $(function() {
   const selectors = [audioSelect, videoSelect];
 
   navigator.mediaDevices.enumerateDevices()
-    .then(function(deviceInfos) {
-      const values = selectors.map(function(select) {
-        return select.val() || '';
-      });
-      selectors.forEach(function(select) {
+    .then(deviceInfos => {
+      const values = selectors.map(select => select.val() || '');
+      selectors.forEach(select => {
         const children = select.children(':first');
         while (children.length) {
           select.remove(children);
@@ -63,20 +60,21 @@ $(function() {
 
       for (let i = 0; i !== deviceInfos.length; ++i) {
         const deviceInfo = deviceInfos[i];
-        const option = $('<option>');
-        option.val(deviceInfo.deviceId);
+        const option = $('<option>').val(deviceInfo.deviceId);
+
         if (deviceInfo.kind === 'audioinput') {
           option.text(deviceInfo.label ||
             'Microphone ' + (audioSelect.children().length + 1));
           audioSelect.append(option);
         } else if (deviceInfo.kind === 'videoinput') {
-          option.text(deviceInfo.label || 'Camera ' +
-            (videoSelect.children().length + 1));
+          option.text(deviceInfo.label ||
+            'Camera ' + (videoSelect.children().length + 1));
           videoSelect.append(option);
         }
       }
-      selectors.forEach(function(select, selectorIndex) {
-        if (Array.prototype.slice.call(select.children()).some(function(n) {
+
+      selectors.forEach((select, selectorIndex) => {
+        if (Array.prototype.slice.call(select.children()).some(n => {
           return n.value === values[selectorIndex];
         })) {
           select.val(values[selectorIndex]);
@@ -96,7 +94,7 @@ $(function() {
       video: {deviceId: videoSource ? {exact: videoSource} : undefined},
     };
 
-    navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+    navigator.mediaDevices.getUserMedia(constraints).then(stream => {
       $('#my-video').get(0).srcObject = stream;
       window.localStream = stream;
 
@@ -106,7 +104,7 @@ $(function() {
       }
 
       step2();
-    }, function() {
+    }).catch(err => {
       $('#step1-error').show();
       console.error(err);
     });
@@ -120,7 +118,7 @@ $(function() {
 
   function step3(room) {
     // Wait for stream on the call, then set peer video display
-    room.on('stream', function(stream) {
+    room.on('stream', stream => {
       const peerId = stream.peerId;
       const id = 'video_' + peerId + '_' + stream.id.replace('{', '').replace('}', '');
 
@@ -134,14 +132,14 @@ $(function() {
       el.play();
     });
 
-    room.on('removeStream', function(stream) {
+    room.on('removeStream', stream => {
       const peerId = stream.peerId;
       $('#video_' + peerId + '_' + stream.id.replace('{', '').replace('}', '')).remove();
     });
 
     // UI stuff
     room.on('close', step2);
-    room.on('peerLeave', function(peerId) {
+    room.on('peerLeave', peerId => {
       $('.video_' + peerId).remove();
     });
     $('#step1, #step2').hide();
