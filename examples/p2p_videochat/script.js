@@ -6,6 +6,7 @@ $(function() {
     debug: 3,
   });
 
+  let localStream;
   let existingCall;
 
   peer.on('open', () => {
@@ -15,7 +16,7 @@ $(function() {
   // Receiving a call
   peer.on('call', call => {
     // Answer the call automatically (instead of prompting user) for demo purposes
-    call.answer(window.localStream);
+    call.answer(localStream);
     step3(call);
   });
 
@@ -29,7 +30,7 @@ $(function() {
     e.preventDefault();
     // Initiate a call!
     console.log($('#callto-id').val());
-    const call = peer.call($('#callto-id').val(), window.localStream);
+    const call = peer.call($('#callto-id').val(), localStream);
     step3(call);
   });
 
@@ -97,7 +98,7 @@ $(function() {
 
     navigator.mediaDevices.getUserMedia(constraints).then(stream => {
       $('#my-video').get(0).srcObject = stream;
-      window.localStream = stream;
+      localStream = stream;
 
       if (existingCall) {
         existingCall.replaceStream(stream);

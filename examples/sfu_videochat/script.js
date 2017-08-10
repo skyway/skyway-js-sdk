@@ -6,6 +6,7 @@ $(function() {
     debug: 3,
   });
 
+  let localStream;
   let room;
   peer.on('open', () => {
     $('#my-id').text(peer.id);
@@ -26,7 +27,7 @@ $(function() {
     if (!roomName) {
       return;
     }
-    room = peer.joinRoom('sfu_video_' + roomName, {mode: 'sfu', stream: window.localStream});
+    room = peer.joinRoom('sfu_video_' + roomName, {mode: 'sfu', stream: localStream});
 
     $('#room-id').text(roomName);
     step3(room);
@@ -96,7 +97,7 @@ $(function() {
 
     navigator.mediaDevices.getUserMedia(constraints).then(stream => {
       $('#my-video').get(0).srcObject = stream;
-      window.localStream = stream;
+      localStream = stream;
 
       if (room) {
         room.replaceStream(stream);

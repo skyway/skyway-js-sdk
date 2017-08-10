@@ -140,7 +140,7 @@ $(function() {
       if (message.data instanceof ArrayBuffer) {
         const dataView = new Uint8Array(message.data);
         const dataBlob = new Blob([dataView]);
-        const url = window.URL.createObjectURL(dataBlob);
+        const url = URL.createObjectURL(dataBlob);
         messages.append('<div><span class="file">' +
           message.src + ' has sent you a <a target="_blank" href="' + url + '">file</a>.</span></div>');
       } else {
