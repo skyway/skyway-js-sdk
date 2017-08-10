@@ -24,7 +24,6 @@ $(function() {
   peer.on('connection', connect);
   peer.on('error', err => console.log(err));
 
-  // Handle a connection object.
   // Prepare file drop box.
   const box = $('#box');
   box.on('dragenter', doNothing);
@@ -94,6 +93,7 @@ $(function() {
     }
   };
 
+  // Handle a connection object.
   function connect(room) {
     // Handle a chat connection.
     $('#text').focus();
@@ -112,7 +112,7 @@ $(function() {
     $('#connections').append(chatbox);
 
     room.getLog();
-    room.once('log', function(logs) {
+    room.once('log', logs => {
       for (let i = 0; i < logs.length; i++) {
         const log = JSON.parse(logs[i]);
 
