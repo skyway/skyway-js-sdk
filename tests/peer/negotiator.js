@@ -752,20 +752,9 @@ describe('Negotiator', () => {
           pcStub.restore();
         });
 
-        describe('when pc.iceConnectionState is \'disconnected\'', () => {
-          it('should emit \'iceConnectionDisconnected\'', done => {
-            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key, () => {
-              done();
-            });
-            pc.iceConnectionState = 'disconnected';
-
-            pc.oniceconnectionstatechange();
-          });
-        });
-
         describe('when pc.iceConnectionState is \'failed\'', () => {
           it('should emit \'iceConnectionDisconnected\'', done => {
-            negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key,
+            negotiator.on(Negotiator.EVENTS.iceConnectionFailed.key,
             () => {
               done();
             });

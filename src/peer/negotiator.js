@@ -12,7 +12,7 @@ const NegotiatorEvents = new Enum([
   'answerCreated',
   'iceCandidate',
   'iceCandidatesComplete',
-  'iceConnectionDisconnected',
+  'iceConnectionFailed',
   'negotiationNeeded',
   'error',
 ]);
@@ -280,7 +280,7 @@ class Negotiator extends EventEmitter {
           break;
         case 'failed':
           logger.log('iceConnectionState is failed, closing connection');
-          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
+          this.emit(Negotiator.EVENTS.iceConnectionFailed.key);
           break;
         default:
           logger.log(`iceConnectionState is ${pc.iceConnectionState}`);
@@ -522,9 +522,9 @@ class Negotiator extends EventEmitter {
    */
 
   /**
-   * Ice connection disconnected.
+   * Ice connection failed.
    *
-   * @event Negotiator#iceConnectionDisconnected
+   * @event Negotiator#iceConnectionFailed
    */
 
   /**

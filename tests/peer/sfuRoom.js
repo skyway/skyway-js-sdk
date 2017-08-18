@@ -107,7 +107,7 @@ describe('SFURoom', () => {
       assert(onSpy.calledWith(Negotiator.EVENTS.removeStream.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.iceCandidate.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.answerCreated.key));
-      assert(onSpy.calledWith(Negotiator.EVENTS.iceConnectionDisconnected.key));
+      assert(onSpy.calledWith(Negotiator.EVENTS.iceConnectionFailed.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.negotiationNeeded.key));
     });
 
@@ -256,7 +256,7 @@ describe('SFURoom', () => {
         it('should call close', () => {
           const closeStub = sinon.spy(sfuRoom, 'close');
 
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.iceConnectionFailed.key);
 
           assert.equal(closeStub.callCount, 1);
         });
