@@ -276,6 +276,11 @@ class Negotiator extends EventEmitter {
           pc.onicecandidate = () => {};
           break;
         case 'disconnected':
+          /**
+           * Browsers(Chrome/Safari/Firefox) implement iceRestart with createOffer(),
+           * but it seems buggy at 2017/08, so we don't use iceRestart to reconnect intensionally.
+           * Ref: https://github.com/nttcom-webcore/ECLRTC-JS-SDK/pull/37
+           */
           logger.log('iceConnectionState is disconnected, trying reconnect by browser');
           break;
         case 'failed':
