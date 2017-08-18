@@ -11,6 +11,7 @@ $(function() {
 
   peer.on('open', () => {
     $('#my-id').text(peer.id);
+    step1();
   });
 
   // Receiving a call
