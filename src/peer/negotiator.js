@@ -275,9 +275,11 @@ class Negotiator extends EventEmitter {
           // istanbul ignore next
           pc.onicecandidate = () => {};
           break;
-        case 'failed':
         case 'disconnected':
-          logger.log(`iceConnectionState is ${pc.iceConnectionState}, closing connection`);
+          logger.log('iceConnectionState is disconnected, trying reconnect by browser');
+          break;
+        case 'failed':
+          logger.log('iceConnectionState is failed, closing connection');
           this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
           break;
         default:
