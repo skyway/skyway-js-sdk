@@ -1,11 +1,11 @@
 import Enum from 'enum';
 
-const DISPATCHER_HOST = 'dispatcher.skyway.io';
+const DISPATCHER_HOST = 'dispatcher.webrtc.ecl.ntt.com';
 const DISPATCHER_PORT = 443;
 const DISPATCHER_SECURE = true;
 const DISPATCHER_TIMEOUT = 3000;
 
-const TURN_HOST = 'turn.skyway.io';
+const TURN_HOST = 'turn.webrtc.ecl.ntt.com';
 const TURN_PORT = 443;
 
 const MESSAGE_TYPES = {
@@ -61,8 +61,8 @@ const pingInterval = 25000;
 
 const defaultConfig = {
   iceServers: [{
-    urls: 'stun:stun.skyway.io:3478',
-    url:  'stun:stun.skyway.io:3478',
+    urls: 'stun:stun.webrtc.ecl.ntt.com:3478',
+    url:  'stun:stun.webrtc.ecl.ntt.com:3478',
   }],
   iceTransportPolicy: 'all',
 };

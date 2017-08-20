@@ -85,7 +85,7 @@ class Room extends EventEmitter {
   }
 
   /**
-   * Start getting room's logs from SkyWay server.
+   * Start getting room's logs from ECLWebRTC server.
    */
   getLog() {
     const message = {
@@ -214,7 +214,7 @@ class Room extends EventEmitter {
    */
 
   /**
-   * Get room log from SkyWay server.
+   * Get room log from ECLWebRTC server.
    *
    * @event Room#log
    * @type {object}
