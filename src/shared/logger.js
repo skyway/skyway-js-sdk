@@ -1,6 +1,6 @@
 import Enum from 'enum';
 
-const LOG_PREFIX = 'SkyWayJS: ';
+const LOG_PREFIX = 'ECLWebRTC: ';
 const LogLevel = new Enum({
   NONE:  0,
   ERROR: 1,

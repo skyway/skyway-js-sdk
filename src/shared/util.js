@@ -10,7 +10,7 @@ function validateId(id) {
 
 /**
  * Validate the API key.
- * @param {string} [key] A SkyWay API key.
+ * @param {string} [key] A ECLWebRTC API key.
  * @return {boolean} True if the API key format is valid. False if not.
  */
 function validateKey(key) {

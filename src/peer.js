@@ -31,11 +31,11 @@ class Peer extends EventEmitter {
    * Create new Peer instance. This is called by user application.
    * @param {string} [id] - User's peerId.
    * @param {Object} options - Optional arguments for the connection.
-   * @param {string} options.key - SkyWay API key.
+   * @param {string} options.key - ECLWebRTC API key.
    * @param {number} [options.debug=0] - Log level. NONE:0, ERROR:1, WARN:2, FULL:3.
    * @param {string} [options.host] - The host name of signaling server.
    * @param {number} [options.port] - The port number of signaling server.
-   * @param {string} [options.dispatcherPort=dispatcher.skyway.io] - The host name of the dispatcher server.
+   * @param {string} [options.dispatcherPort=dispatcher.webrtc.ecl.ntt.com] - The host name of the dispatcher server.
    * @param {number} [options.dispatcherPort=443] - The port number of dispatcher server.
    * @param {boolean} [options.dispatcherSecure=true] - True if the dispatcher server supports https.
    * @param {string} [options.token=util.randomToken()] - The token used to authorize Peer.
@@ -237,7 +237,7 @@ class Peer extends EventEmitter {
   }
 
   /**
-   * Reconnect to SkyWay server. Does not work after a peer.destroy().
+   * Reconnect to ECLWebRTC server. Does not work after a peer.destroy().
    */
   reconnect() {
     if (!this.open) {
@@ -287,7 +287,7 @@ class Peer extends EventEmitter {
         cb([]);
         const err = new Error(
           'It doesn\'t look like you have permission to list peers IDs. ' +
-          'Please enable the SkyWay REST API on https://skyway.io/ds/'
+          'Please enable the ECLWebRTC REST API on dashboard'
         );
         err.type = 'list-error';
         logger.error(err);
@@ -316,11 +316,11 @@ class Peer extends EventEmitter {
    * Emit not connected error.
    */
   _emitNotConnectedError() {
-    logger.warn('You cannot connect to a new Peer because you are not connecting to SkyWay server now.' +
+    logger.warn('You cannot connect to a new Peer because you are not connecting to ECLWebRTC server now.' +
       'You can create a new Peer to reconnect, or call reconnect() ' +
       'on this peer if you believe its ID to still be available.');
 
-    const err = new Error('Cannot connect to new Peer before connecting to SkyWay server or after disconnecting from the server.');
+    const err = new Error('Cannot connect to new Peer before connecting to ECLWebRTC server or after disconnecting from the server.');
     err.type = 'disconnected';
     logger.error(err);
     this.emit(Peer.EVENTS.error.key, err);
@@ -369,7 +369,7 @@ class Peer extends EventEmitter {
   }
 
   /**
-   * Create and setup a SFURoom instance and emit SFU_JOIN message to SkyWay server.
+   * Create and setup a SFURoom instance and emit SFU_JOIN message to ECLWebRTC server.
    * @param {string} roomName - The name of the room user is joining to.
    * @param {object} [roomOptions] - Optional arguments for the RTCPeerConnection.
    * @param {object} [roomOptions.pcConfig] -  A RTCConfiguration dictionary for the RTCPeerConnection.
@@ -401,7 +401,7 @@ class Peer extends EventEmitter {
   }
 
   /**
-   * Create and setup a MeshRoom instance and emit MESH_JOIN message to SkyWay server.
+   * Create and setup a MeshRoom instance and emit MESH_JOIN message to ECLWebRTC server.
    * @param {string} roomName - The name of the room user is joining to.
    * @param {object} roomOptions - Optional arguments for the RTCPeerConnection.
    * @param {string} roomOptions.pcConfig -  A RTCConfiguration dictionary for the RTCPeerConnection.
@@ -479,9 +479,9 @@ class Peer extends EventEmitter {
           this._pcConfig.iceServers.push(iceServer);
         }
 
-        logger.log('SkyWay TURN Server is available');
+        logger.log('ECLWebRTC TURN Server is available');
       } else {
-        logger.log('SkyWay TURN Server is unavailable');
+        logger.log('ECLWebRTC TURN Server is unavailable');
       }
 
       this.emit(Peer.EVENTS.open.key, this.id);
