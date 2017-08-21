@@ -2,7 +2,7 @@
 $(function() {
   // Peer object
   const peer = new Peer({
-    key:   window.__SKY_WAY_KEY__,
+    key:   window.__ECLWEBRTC_KEY__,
     debug: 3,
   });
 

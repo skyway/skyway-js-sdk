@@ -1,11 +1,11 @@
 /* eslint-disable require-jsdoc */
 $(function() {
-  // Connect to SkyWay, have server assign an ID instead of providing one
-  // Showing off some of the configs available with SkyWay :).
+  // Connect to ECL WebRTC, have server assign an ID instead of providing one
+  // Showing off some of the configs available with ECL WebRTC :).
   const peer = new Peer({
     // Set API key for cloud server (you don't need this if you're running your
     // own.
-    key:         window.__SKY_WAY_KEY__,
+    key:         window.__ECLWEBRTC_KEY__,
     // Set highest debug level (log everything!).
     debug:       3,
     // Set a logging function:

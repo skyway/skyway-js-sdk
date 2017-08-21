@@ -48,7 +48,7 @@ if (process.env.NODE_ENV === 'production') {
 function _getCopyRight() {
   const currentYear = new Date().getFullYear();
   return `
-skywayjs Copyright(c) ${currentYear} NTT Communications Corporation
+ECL WebRTC Copyright(c) ${currentYear} NTT Communications Corporation
 peerjs Copyright(c) 2013 Michelle Bu <michelle@michellebu.com>
   `.trim();
 }
