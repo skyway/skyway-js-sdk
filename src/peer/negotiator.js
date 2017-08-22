@@ -12,7 +12,7 @@ const NegotiatorEvents = new Enum([
   'answerCreated',
   'iceCandidate',
   'iceCandidatesComplete',
-  'iceConnectionDisconnected',
+  'iceConnectionFailed',
   'negotiationNeeded',
   'error',
 ]);
@@ -275,10 +275,17 @@ class Negotiator extends EventEmitter {
           // istanbul ignore next
           pc.onicecandidate = () => {};
           break;
-        case 'failed':
         case 'disconnected':
-          logger.log(`iceConnectionState is ${pc.iceConnectionState}, closing connection`);
-          this.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
+          /**
+           * Browsers(Chrome/Safari/Firefox) implement iceRestart with createOffer(),
+           * but it seems buggy at 2017/08, so we don't use iceRestart to reconnect intensionally.
+           * Ref: https://github.com/nttcom-webcore/ECLRTC-JS-SDK/pull/37
+           */
+          logger.log('iceConnectionState is disconnected, trying reconnect by browser');
+          break;
+        case 'failed':
+          logger.log('iceConnectionState is failed, closing connection');
+          this.emit(Negotiator.EVENTS.iceConnectionFailed.key);
           break;
         default:
           logger.log(`iceConnectionState is ${pc.iceConnectionState}`);
@@ -520,9 +527,9 @@ class Negotiator extends EventEmitter {
    */
 
   /**
-   * Ice connection disconnected.
+   * Ice connection failed.
    *
-   * @event Negotiator#iceConnectionDisconnected
+   * @event Negotiator#iceConnectionFailed
    */
 
   /**

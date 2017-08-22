@@ -146,7 +146,7 @@ describe('MediaConnection', () => {
       mc.open = true;
       let spy = sinon.spy(mc, 'close');
 
-      mc._negotiator.emit(Negotiator.EVENTS.iceConnectionDisconnected.key);
+      mc._negotiator.emit(Negotiator.EVENTS.iceConnectionFailed.key);
 
       assert(spy.calledOnce);
       assert.equal(mc.open, false);

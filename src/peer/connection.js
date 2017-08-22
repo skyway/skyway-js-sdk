@@ -191,7 +191,7 @@ class Connection extends EventEmitter {
       this.emit(Connection.EVENTS.candidate.key, connectionCandidate);
     });
 
-    this._negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key, () => {
+    this._negotiator.on(Negotiator.EVENTS.iceConnectionFailed.key, () => {
       this.close();
     });
   }

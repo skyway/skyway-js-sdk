@@ -145,7 +145,7 @@ class SFURoom extends Room {
       this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
     });
 
-    this._negotiator.on(Negotiator.EVENTS.iceConnectionDisconnected.key, () => {
+    this._negotiator.on(Negotiator.EVENTS.iceConnectionFailed.key, () => {
       this.close();
     });
 
