@@ -105,9 +105,6 @@ class Peer extends EventEmitter {
    * @param {object} [options] - Optional arguments for the connection.
    * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
-   * @param {string} [options.queuedMessages] - An array of messages that were already
-   *                  received before the connection was created.
-   * @param {string} [options.payload] - An offer message that triggered creating this object.
    * @param {number} [options.videoBandwidth] - A max video bandwidth(kbps)
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [options.videoCodec] - A video codec like 'H264'
@@ -136,9 +133,6 @@ class Peer extends EventEmitter {
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
    * @param {string} [options.serialization] - How to serialize data when sending.
    *                  One of 'binary', 'json' or 'none'.
-   * @param {string} [options.queuedMessages] - An array of messages that were already
-   *                  received before the connection was created.
-   * @param {string} [options.payload] - An offer message that triggered creating this object.
    * @return {DataConnection} An instance of DataConnection.
    */
   connect(peerId, options = {}) {
