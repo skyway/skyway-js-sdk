@@ -38,7 +38,6 @@ class Peer extends EventEmitter {
    * @param {string} [options.dispatcherPort=dispatcher.webrtc.ecl.ntt.com] - The host name of the dispatcher server.
    * @param {number} [options.dispatcherPort=443] - The port number of dispatcher server.
    * @param {boolean} [options.dispatcherSecure=true] - True if the dispatcher server supports https.
-   * @param {string} [options.token=util.randomToken()] - The token used to authorize Peer.
    * @param {object} [options.config=config.defaultConfig] - A RTCConfiguration dictionary for the RTCPeerConnection.
    * @param {boolean} [options.turn=true] - Whether using TURN or not.
    * @param {object} [options.credential] - The credential used to authenticate peer.
