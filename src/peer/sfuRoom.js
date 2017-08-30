@@ -290,7 +290,7 @@ class SFURoom extends Room {
   }
 
   /**
-   * Send offer request to ECLWebRTC server.
+   * Send offer request to SkyWay server.
    *
    * @event SFURoom#offerRequest
    * @type {object}

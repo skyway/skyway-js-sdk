@@ -3,7 +3,7 @@ const webpack = require('webpack');
 // base
 const config = {
   entry: {
-    'eclwebrtc': './src/peer.js',
+    'skyway': './src/peer.js',
   },
   output: {
     libraryTarget: 'umd',
@@ -31,7 +31,7 @@ const config = {
 // from `npm run build, exports both `.js`, `.min.js`
 if (process.env.NODE_ENV === 'production') {
   const minConf = Object.assign({}, config, {
-    entry:   {'eclwebrtc.min': './src/peer.js'},
+    entry:   {'skyway.min': './src/peer.js'},
     plugins: [
       ...config.plugins.slice(),
       new webpack.optimize.UglifyJsPlugin(),
@@ -48,7 +48,7 @@ if (process.env.NODE_ENV === 'production') {
 function _getCopyRight() {
   const currentYear = new Date().getFullYear();
   return `
-ECL WebRTC Copyright(c) ${currentYear} NTT Communications Corporation
+SkyWay Copyright(c) ${currentYear} NTT Communications Corporation
 peerjs Copyright(c) 2013 Michelle Bu <michelle@michellebu.com>
   `.trim();
 }

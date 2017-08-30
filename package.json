@@ -1,8 +1,8 @@
 {
-  "name": "eclwebrtc",
+  "name": "skyway",
   "version": "1.0.0",
-  "description": "The JS client library for ECL WebRTC",
-  "main": "dist/eclwebrtc.js",
+  "description": "The JS client library for SkyWay",
+  "main": "dist/skyway.js",
   "module": "src/peer.js",
   "scripts": {
     "test": "karma start ./karma.conf.js",
