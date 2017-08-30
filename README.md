@@ -1,4 +1,4 @@
-# ECL WebRTC JS
+# SkyWay JS
 
 ## Setting up
 
@@ -22,7 +22,7 @@ You can use `/examples` directory for checking your development code.
 Follow these steps.
 
 - Put your key
-  - e.g.) `echo "window.__ECLWEBRTC_KEY__ = '<YOUR_KEY_HERE>';" > ./examples/key.js`
+  - e.g.) `echo "window.__SKYWAY_KEY__ = '<YOUR_KEY_HERE>';" > ./examples/key.js`
 - Start server on project root
   - e.g.) `python -m SimpleHTTPServer 8000`
 
@@ -35,4 +35,4 @@ After making changes in `src/`, you run
 - `npm run lint` to validate
 - `npm test` to run tests
 
-then the `npm run build` and build `eclwebrtc(.min).js` which is stored in `dist` directory!
+then the `npm run build` and build `skyway(.min).js` which is stored in `dist` directory!
