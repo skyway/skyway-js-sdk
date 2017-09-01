@@ -454,7 +454,7 @@ class Peer extends EventEmitter {
         // possible turn types are turn-tcp, turns-tcp, turn-udp
         const turnCombinations = [
           {protocol: 'turn', transport: 'tcp'},
-          {protocol: 'turns', transport: 'tcp'},
+          // {protocol: 'turns', transport: 'tcp'},
           {protocol: 'turn', transport: 'udp'},
         ];
         for (let turnType of turnCombinations) {
