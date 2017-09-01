@@ -80,32 +80,21 @@ function isSecure() {
 
 /**
  * Detect browser.
- * Original code is from https://github.com/webrtc/adapter/blob/master/src/js/utils.js#L80
  * @return {string} Browser name or empty string for not supported.
  */
 function detectBrowser() {
-  // Firefox.
-  if (navigator.mozGetUserMedia) {
-    return 'firefox';
-  } else if (navigator.webkitGetUserMedia) {
-    // Chrome, Chromium, Webview, Opera, all use the chrome shim for now
-    if (window.webkitRTCPeerConnection) {
+  switch (true) {
+    case /Edge/.test(ua):
+      return 'edge';
+    case /Chrome/.test(ua):
       return 'chrome';
-    } else { // Safari (in an unpublished version) or unknown webkit-based.
-      if (navigator.userAgent.match(/Version\/(\d+).(\d+)/)) {
-        return 'safari';
-      } else { // unknown webkit-based browser.
-        return '';
-      }
-    }
-  } else if (navigator.mediaDevices && navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)) { // Edge.
-    return 'edge';
-  } else if (navigator.mediaDevices && navigator.userAgent.match(/AppleWebKit\/(\d+)\./)) {
-    // Safari, with webkitGetUserMedia removed.
-    return 'safari';
+    case /Firefox/.test(ua):
+      return 'firefox';
+    case /Safari\//.test(ua):
+      return 'safari';
+    default:
+      return '';
   }
-
-  return '';
 }
 
 export default {
