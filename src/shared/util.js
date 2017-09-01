@@ -83,6 +83,8 @@ function isSecure() {
  * @return {string} Browser name or empty string for not supported.
  */
 function detectBrowser() {
+  const ua = navigator.userAgent;
+
   switch (true) {
     case /Edge/.test(ua):
       return 'edge';
