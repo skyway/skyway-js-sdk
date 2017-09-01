@@ -454,9 +454,14 @@ class Peer extends EventEmitter {
         // possible turn types are turn-tcp, turns-tcp, turn-udp
         const turnCombinations = [
           {protocol: 'turn', transport: 'tcp'},
-          // {protocol: 'turns', transport: 'tcp'},
           {protocol: 'turn', transport: 'udp'},
         ];
+
+        // Edge can not handle turns-tcp
+        if (util.detectBrowser() !== 'edge') {
+          turnCombinations.push({protocol: 'turns', transport: 'tcp'});
+        }
+
         for (let turnType of turnCombinations) {
           const protocol = turnType.protocol;
           const transport = turnType.transport;

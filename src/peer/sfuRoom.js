@@ -4,6 +4,7 @@ import Room       from './room';
 import Negotiator from './negotiator';
 import logger     from '../shared/logger';
 import sdpUtil    from '../shared/sdpUtil';
+import util       from '../shared/util';
 
 const MessageEvents = [
   'offerRequest',
@@ -72,7 +73,7 @@ class SFURoom extends Room {
 
     // Chrome and Safari can't handle unified plan messages so convert it to Plan B
     // We don't need to convert the answer back to Unified Plan because the server can handle Plan B
-    if (navigator.userAgent.toLowerCase().indexOf('firefox') === -1) {
+    if (util.detectBrowser() !== 'firefox') {
       offer = sdpUtil.unifiedToPlanB(offer);
     }
 
