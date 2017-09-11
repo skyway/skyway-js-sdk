@@ -59,6 +59,16 @@ class SFURoom extends Room {
       roomName: this.name,
     };
 
+    [
+      'videoBandwidth', 'audioBandwidth',
+      'videoCodec', 'audioCodec',
+    ].forEach(codecOpt => {
+      // apply if exists
+      if (this._options[codecOpt]) {
+        data[codecOpt] = this._options[codecOpt];
+      }
+    });
+
     this.emit(SFURoom.MESSAGE_EVENTS.offerRequest.key, data);
   }
 
