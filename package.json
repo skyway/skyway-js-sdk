@@ -1,6 +1,6 @@
 {
   "name": "skyway",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The JS client library for SkyWay",
   "main": "dist/skyway.js",
   "module": "src/peer.js",

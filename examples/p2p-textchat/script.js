@@ -21,7 +21,10 @@ $(function() {
     $('#pid').text(id);
   });
   // Await connections from others
-  peer.on('connection', connect);
+  peer.on('connection', c => {
+    // Show connection when it is completely ready
+    c.on('open', () => connect(c));
+  });
   peer.on('error', err => console.log(err));
 
   // Prepare file drop box.
