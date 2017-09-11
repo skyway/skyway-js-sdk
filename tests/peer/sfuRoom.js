@@ -15,8 +15,9 @@ describe('SFURoom', () => {
   beforeEach(() => {
     sfuRoom = new SFURoom(sfuRoomName, peerId,
       {
-        pcConfig: pcConfig,
-        stream:   origStream,
+        pcConfig:   pcConfig,
+        stream:     origStream,
+        videoCodec: 'H264',
       }
     );
   });
@@ -47,6 +48,16 @@ describe('SFURoom', () => {
       sfuRoom.call(dummyStream);
 
       assert.equal(sfuRoom._localStream, dummyStream);
+    });
+
+    it('codecs applied if exists', done => {
+      sfuRoom.on(SFURoom.MESSAGE_EVENTS.offerRequest.key, message => {
+        assert.equal(message.videoCodec, 'H264');
+        assert.equal(message.audioCodec, undefined);
+        done();
+      });
+
+      sfuRoom.call();
     });
   });
 
