@@ -154,8 +154,10 @@ class Peer extends EventEmitter {
    * @param {MediaStream} [roomOptions.stream] - Media stream user wants to emit.
    * @param {number} [roomOptions.videoBandwidth] - A max video bandwidth(kbps)
    * @param {number} [roomOptions.audioBandwidth] - A max audio bandwidth(kbps)
-   * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'
+   * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'.
+   *                  Available codecs are 'VP8'(for Chrome, Firefox, Edge), 'H264'(for Chrome, Firefox, Edge, Safari) or 'VP9'(for Chrome)
    * @param {string} [roomOptions.audioCodec] - A video codec like 'PCMU'
+   *                  Available codecs are 'opus', 'PCMU' or 'ISAC'
    * @return {SFURoom|MeshRoom} - An instance of SFURoom or MeshRoom.
    */
   joinRoom(roomName, roomOptions = {}) {
