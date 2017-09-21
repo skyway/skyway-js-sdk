@@ -126,7 +126,9 @@ $(function() {
     }
     // Wait for stream on the call, then set peer video display
     call.on('stream', stream => {
-      $('#their-video').get(0).srcObject = stream;
+      const el = $('#their-video').get(0);
+      el.srcObject = stream;
+      el.play();
     });
 
     // UI stuff
