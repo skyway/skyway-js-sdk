@@ -1159,6 +1159,8 @@ describe('Peer', () => {
             const connectionId = util.randomToken();
 
             peer.on(Peer.EVENTS.connection.key, connection => {
+              assert.equal(DataConnectionConstructorSpy.callCount, 1);
+
               assert(connection);
               assert(connection instanceof DataConnection);
               assert.equal(connection._options.connectionId, connectionId);
@@ -1176,13 +1178,6 @@ describe('Peer', () => {
               offer:          {},
             };
             peer.socket.emit(config.MESSAGE_TYPES.SERVER.OFFER.key, offerMsg);
-
-            setTimeout(() => {
-              assert.equal(DataConnectionConstructorSpy.callCount, 1);
-
-              const connection = DataConnectionConstructorSpy.thisValues[0];
-              connection.emit(DataConnection.EVENTS.open.key);
-            });
           });
 
           it('should not create a connection if connectType is invalid', () => {
