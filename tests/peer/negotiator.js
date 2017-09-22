@@ -399,22 +399,6 @@ describe('Negotiator', () => {
           done();
         });
       });
-
-      it('should disable then enable onnegotiationneeded', done => {
-        const negotiationHandler = () => {};
-
-        negotiator._pc.onnegotiationneeded = negotiationHandler;
-        negotiator.replaceStream(newStream);
-
-        assert.notEqual(negotiator._pc.onnegotiationneeded, negotiationHandler);
-
-        // Use timeout as it runs asynchronously
-        setTimeout(() => {
-          assert.equal(negotiator._pc.onnegotiationneeded, negotiationHandler);
-
-          done();
-        });
-      });
     });
   });
 
