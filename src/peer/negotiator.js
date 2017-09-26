@@ -407,6 +407,7 @@ class Negotiator extends EventEmitter {
         return this._pc.setLocalDescription(answer)
           .then(() => {
             logger.log('Set localDescription: answer');
+            logger.log(`Setting local description ${JSON.stringify(answer.sdp)}`);
             return Promise.resolve(answer);
           })
           .catch(error => {
@@ -436,6 +437,7 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _setLocalDescription(offer) {
+    logger.log(`Setting local description ${JSON.stringify(offer.sdp)}`);
     return this._pc.setLocalDescription(offer)
       .then(() => {
         logger.log('Set localDescription: offer');
