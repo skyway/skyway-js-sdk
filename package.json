@@ -27,7 +27,7 @@
     "eslint-config-google": "^0.9.1",
     "inject-loader": "^3.0.0",
     "istanbul": "^0.4.2",
-    "istanbul-instrumenter-loader": "^2.0.0",
+    "istanbul-instrumenter-loader": "^3.0.0",
     "jsdoc": "^3.5.3",
     "karma": "^1.7.0",
     "karma-chrome-launcher": "^2.2.0",
@@ -38,7 +38,7 @@
     "karma-webpack": "^2.0.4",
     "mocha": "^3.4.2",
     "power-assert": "^1.2.0",
-    "sinon": "^2.3.7",
+    "sinon": "^3.2.1",
     "webpack": "^3.3.0"
   },
   "dependencies": {
@@ -46,7 +46,7 @@
     "events": "^1.1.0",
     "js-binarypack": "0.0.9",
     "object-sizeof": "^1.0.10",
-    "query-string": "^4.3.2",
+    "query-string": "^5.0.0",
     "sdp-interop": "^0.1.11",
     "sdp-transform": "^2.3.0",
     "socket.io-client": "^2.0.3"
