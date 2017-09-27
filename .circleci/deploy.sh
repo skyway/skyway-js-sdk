@@ -13,13 +13,13 @@ if [ "${CIRCLE_BRANCH}" == "master" ]; then
     # s3_example_bucket="s3://eclrtc-example-production"
     s3_dist_bucket="s3://eclrtc-cdn-staging/"
     s3_example_bucket="s3://eclrtc-example-staging"
-    examples_sdk_url="https:\/\/cdn.webrtc.ecl.ntt.com\/skyway-latest.js"
+    examples_sdk_url="\/\/cdn.webrtc.ecl.ntt.com\/skyway-latest.js"
 
 elif [[ "${CIRCLE_BRANCH}" =~ "release/" ]]; then 
     # Staging
     s3_dist_bucket="s3://eclrtc-cdn-staging/"
     s3_example_bucket="s3://eclrtc-example-staging/"
-    examples_sdk_url="https:\/\/cdn.stage.ecl.skyway.io\/skyway-latest.js"
+    examples_sdk_url="\/\/cdn.stage.ecl.skyway.io\/skyway-latest.js"
 
 else 
     exit 0
@@ -27,11 +27,10 @@ fi
 
 # Set API key for examples
 skyway_apikey="5bea388b-3f95-4e1e-acb5-a34efdd0c480"
-find ./examples/ -mindepth 1 -type d | xargs -I{} bash -c "echo \"window.__SKYWAY_KEY__ = '${skyway_apikey}'\" > {}/key.js";
+echo "window.__SKYWAY_KEY__ = '${skyway_apikey}';" > ./examples/key.js;
 
 # Set file paths
-find examples -name index.html | xargs sed -i -e "s/\"\/dist\/skyway\.js\"/\"${examples_sdk_url}\"/g"
-find examples -name index.html | xargs sed -i -e "s/\"\/examples\/key\.js\"/\".\/key.js\"/g"
+find examples -name index.html | xargs sed -i -e "s/\"\/\/cdn\.webrtc\.ecl\.ntt\.com\/skyway-latest\.js\"/\"${examples_sdk_url}\"/g"
 
 # Set aws keys
 export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
