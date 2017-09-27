@@ -1,0 +1,30 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: skywayci/skyway-js-sdk
+    working_directory: ~/project
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+      - run: npm install
+
+      # Save dependencies
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+        
+      # run tests
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+
+      # deploy
+      - deploy:
+          name: Deploy
+          command: bash .circleci/deploy.sh ${CIRCLE_BRANCH}
