@@ -9,10 +9,8 @@ fi
 # Set environment variables
 if [ "${CIRCLE_BRANCH}" == "master" ]; then
     # Production
-    # s3_dist_bucket="s3://eclrtc-cdn-production/"
-    # s3_example_bucket="s3://eclrtc-example-production"
-    s3_dist_bucket="s3://eclrtc-cdn-staging/"
-    s3_example_bucket="s3://eclrtc-example-staging"
+    s3_dist_bucket="s3://eclrtc-cdn-production/"
+    s3_example_bucket="s3://eclrtc-example-production"
     examples_sdk_url="\/\/cdn.webrtc.ecl.ntt.com\/skyway-latest.js"
 
 elif [[ "${CIRCLE_BRANCH}" =~ "release/" ]]; then 
@@ -22,6 +20,7 @@ elif [[ "${CIRCLE_BRANCH}" =~ "release/" ]]; then
     examples_sdk_url="\/\/cdn.stage.ecl.skyway.io\/skyway-latest.js"
 
 else 
+    echo "Skipped."
     exit 0
 fi
 
