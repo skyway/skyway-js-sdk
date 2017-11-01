@@ -1073,5 +1073,4 @@ var Peer = function (_EventEmitter) {
 
 exports.default = Peer;
 // for interop exports
-
-module.exports = Peer;
+// module.exports = Peer;
