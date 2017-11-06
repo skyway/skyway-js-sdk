@@ -860,5 +860,3 @@ class Peer extends EventEmitter {
 }
 
 export default Peer;
-// for interop exports
-module.exports = Peer;
