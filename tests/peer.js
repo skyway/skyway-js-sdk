@@ -89,7 +89,7 @@ describe('Peer', () => {
       './peer/dataConnection': DCSpier,
       './shared/config':       config,
       './shared/logger':       logger,
-      './shared/util':         util});
+      './shared/util':         util}).default;
     initializeServerConnectionSpy = sinon.spy(Peer.prototype, '_initializeServerConnection');
   });
 
