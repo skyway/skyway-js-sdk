@@ -58,10 +58,7 @@ class Negotiator extends EventEmitter {
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
     this._type = options.type;
-
-    const recvonlyState = this._getReceiveOnlyState(options.stream, options);
-    this._audioRecvonly = recvonlyState.audio;
-    this._videoRecvonly = recvonlyState.video;
+    this._recvonlyState = this._getReceiveOnlyState(options);
 
     if (this._type === 'media') {
       if (options.stream) {
@@ -343,13 +340,13 @@ class Negotiator extends EventEmitter {
     // MediaConnection
     } else {
       if (this._isAddTransceiverAvailable) {
-        this._audioRecvonly && this._pc.addTransceiver('audio').setDirection('recvonly');
-        this._videoRecvonly && this._pc.addTransceiver('video').setDirection('recvonly');
+        this._recvonlyState.audio && this._pc.addTransceiver('audio').setDirection('recvonly');
+        this._recvonlyState.video && this._pc.addTransceiver('video').setDirection('recvonly');
         createOfferPromise = this._pc.createOffer();
       } else {
         createOfferPromise = this._pc.createOffer({
-          offerToReceiveAudio: this._audioRecvonly,
-          offerToReceiveVideo: this._videoRecvonly,
+          offerToReceiveAudio: this._recvonlyState.audio,
+          offerToReceiveVideo: this._recvonlyState.video,
         });
       }
     }
@@ -481,16 +478,16 @@ class Negotiator extends EventEmitter {
 
   /**
    * Get map object describes which kinds of tracks should be marked as recvonly
-   * @param {MediaStream} stream - MediaStream passed via peer.call()
    * @param {Object} options - Options of peer.call()
    * @return {Object} Map object which streamTrack will be recvonly or not
    */
-  _getReceiveOnlyState(stream, options) {
+  _getReceiveOnlyState(options) {
     const state = {
       audio: false,
       video: false,
     };
 
+    const stream = options.stream;
     const hasStream = stream instanceof MediaStream;
     const hasAudioTrack = hasStream ? stream.getAudioTracks().length !== 0 : false;
     const hasVideoTrack = hasStream ? stream.getVideoTracks().length !== 0 : false;
