@@ -32,6 +32,8 @@ class MeshRoom extends Room {
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [options.videoCodec] - A video codec like 'H264'
    * @param {string} [options.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    */
   constructor(name, peerId, options) {
     super(name, peerId, options);
@@ -78,13 +80,15 @@ class MeshRoom extends Room {
    */
   makeMediaConnections(peerIds) {
     const options = {
-      stream:         this._localStream,
-      pcConfig:       this._pcConfig,
-      originator:     true,
-      videoBandwidth: this._options.videoBandwidth,
-      audioBandwidth: this._options.audioBandwidth,
-      videoCodec:     this._options.videoCodec,
-      audioCodec:     this._options.audioCodec,
+      stream:              this._localStream,
+      pcConfig:            this._pcConfig,
+      originator:          true,
+      videoBandwidth:      this._options.videoBandwidth,
+      audioBandwidth:      this._options.audioBandwidth,
+      videoCodec:          this._options.videoCodec,
+      audioCodec:          this._options.audioCodec,
+      videoReceiveEnabled: this._options.videoReceiveEnabled,
+      audioReceiveEnabled: this._options.audioReceiveEnabled,
     };
 
     this._makeConnections(peerIds, 'media', options);
@@ -169,10 +173,12 @@ class MeshRoom extends Room {
       this._setupMessageHandlers(connection);
 
       connection.answer(this._localStream, {
-        videoBandwidth: this._options.videoBandwidth,
-        audioBandwidth: this._options.audioBandwidth,
-        videoCodec:     this._options.videoCodec,
-        audioCodec:     this._options.audioCodec,
+        videoBandwidth:      this._options.videoBandwidth,
+        audioBandwidth:      this._options.audioBandwidth,
+        videoCodec:          this._options.videoCodec,
+        audioCodec:          this._options.audioCodec,
+        videoReceiveEnabled: this._options.videoReceiveEnabled,
+        audioReceiveEnabled: this._options.audioReceiveEnabled,
       });
     } else {
       logger.warn(`Received malformed connection type: ${offerMessage.connectionType}`);

@@ -46,6 +46,8 @@ class Negotiator extends EventEmitter {
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [options.videoCodec] - A video codec like 'H264'
    * @param {string} [options.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    */
   startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
@@ -56,6 +58,10 @@ class Negotiator extends EventEmitter {
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
     this._type = options.type;
+
+    const recvonlyState = this._getReceiveOnlyState(options.stream, options);
+    this._audioRecvonly = recvonlyState.audio;
+    this._videoRecvonly = recvonlyState.video;
 
     if (this._type === 'media') {
       if (options.stream) {
@@ -474,6 +480,52 @@ class Negotiator extends EventEmitter {
         logger.log('Failed to setRemoteDescription: ', error);
         return Promise.reject(error);
       });
+  }
+
+  /**
+   * Get map object describes which kinds of tracks should be marked as recvonly
+   * @param {MediaStream} stream - MediaStream passed via peer.call()
+   * @param {Object} options - Options of peer.call()
+   * @return {Object} Map object which streamTrack will be recvonly or not
+   */
+  _getReceiveOnlyState(stream, options) {
+    const state = {
+      audio: false,
+      video: false,
+    };
+
+    const hasStream = stream instanceof MediaStream;
+    const hasAudioTrack = hasStream ? stream.getAudioTracks().length !== 0 : false;
+    const hasVideoTrack = hasStream ? stream.getVideoTracks().length !== 0 : false;
+
+    // force true if stream not passed(backward compatibility)
+    if (
+      hasStream === false
+      && 'audioReceiveEnabled' in options === false
+      && 'videoReceiveEnabled' in options === false
+    ) {
+      state.audio = true;
+      state.video = true;
+      return state;
+    }
+
+    // Set recvonly to true if `stream does not have track` and `option is true` case only
+    if (options.audioReceiveEnabled && hasAudioTrack === false) {
+      state.audio = true;
+    }
+    if (options.videoReceiveEnabled && hasVideoTrack === false) {
+      state.video = true;
+    }
+
+    // If stream has track, ignore options
+    if (options.audioReceiveEnabled === false && hasAudioTrack) {
+      logger.warn('Option audioReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = audio)');
+    }
+    if (options.videoReceiveEnabled === false && hasVideoTrack) {
+      logger.warn('Option videoReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = video)');
+    }
+
+    return state;
   }
 
   /**

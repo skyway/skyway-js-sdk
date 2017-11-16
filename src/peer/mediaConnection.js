@@ -31,6 +31,8 @@ class MediaConnection extends Connection {
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [options.videoCodec] - A video codec like 'H264'
    * @param {string} [options.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    */
   constructor(remoteId, options) {
     super(remoteId, options);
@@ -51,14 +53,16 @@ class MediaConnection extends Connection {
     if (this._options.originator) {
       this._negotiator.startConnection(
         {
-          type:           'media',
-          stream:         this.localStream,
-          originator:     this._options.originator,
-          pcConfig:       this._options.pcConfig,
-          videoBandwidth: this._options.videoBandwidth,
-          audioBandwidth: this._options.audioBandwidth,
-          videoCodec:     this._options.videoCodec,
-          audioCodec:     this._options.audioCodec,
+          type:                'media',
+          stream:              this.localStream,
+          originator:          this._options.originator,
+          pcConfig:            this._options.pcConfig,
+          videoBandwidth:      this._options.videoBandwidth,
+          audioBandwidth:      this._options.audioBandwidth,
+          videoCodec:          this._options.videoCodec,
+          audioCodec:          this._options.audioCodec,
+          videoReceiveEnabled: this._options.videoReceiveEnabled,
+          audioReceiveEnabled: this._options.audioReceiveEnabled,
         }
       );
       this._pcAvailable = true;
@@ -74,6 +78,8 @@ class MediaConnection extends Connection {
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [options.videoCodec] - A video codec like 'H264'
    * @param {string} [options.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    */
   answer(stream, options = {}) {
     if (this.localStream) {
@@ -86,15 +92,17 @@ class MediaConnection extends Connection {
     this.localStream = stream;
     this._negotiator.startConnection(
       {
-        type:           'media',
-        stream:         this.localStream,
-        originator:     false,
-        offer:          this._options.payload.offer,
-        pcConfig:       this._options.pcConfig,
-        audioBandwidth: options.audioBandwidth,
-        videoBandwidth: options.videoBandwidth,
-        videoCodec:     options.videoCodec,
-        audioCodec:     options.audioCodec,
+        type:                'media',
+        stream:              this.localStream,
+        originator:          false,
+        offer:               this._options.payload.offer,
+        pcConfig:            this._options.pcConfig,
+        audioBandwidth:      options.audioBandwidth,
+        videoBandwidth:      options.videoBandwidth,
+        videoCodec:          options.videoCodec,
+        audioCodec:          options.audioCodec,
+        videoReceiveEnabled: options.videoReceiveEnabled,
+        audioReceiveEnabled: options.audioReceiveEnabled,
       }
     );
     this._pcAvailable = true;
@@ -149,52 +157,6 @@ class MediaConnection extends Connection {
    */
   static get EVENTS() {
     return MCEvents;
-  }
-
-  /**
-   * Get map object describes which kinds of tracks should be marked as recvonly
-   * @param {MediaStream} stream - MediaStream passed via peer.call()
-   * @param {Object} options - Options of peer.call()
-   * @return {Object} Map object which streamTrack will be recvonly or not
-   */
-  static getReceiveOnlyState(stream, options) {
-    const state = {
-      audio: false,
-      video: false,
-    };
-
-    const hasStream = stream instanceof MediaStream;
-    const hasAudioTrack = hasStream ? stream.getAudioTracks().length !== 0 : false;
-    const hasVideoTrack = hasStream ? stream.getVideoTracks().length !== 0 : false;
-
-    // force true if stream not passed(backward compatibility)
-    if (
-      hasStream === false
-      && 'audioReceiveEnabled' in options === false
-      && 'videoReceiveEnabled' in options === false
-    ) {
-      state.audio = true;
-      state.video = true;
-      return state;
-    }
-
-    // Set recvonly to true if `stream does not have track` and `option is true` case only
-    if (options.audioReceiveEnabled && hasAudioTrack === false) {
-      state.audio = true;
-    }
-    if (options.videoReceiveEnabled && hasVideoTrack === false) {
-      state.video = true;
-    }
-
-    // If stream has track, ignore options
-    if (options.audioReceiveEnabled === false && hasAudioTrack) {
-      logger.warn('Option audioReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = audio)');
-    }
-    if (options.videoReceiveEnabled === false && hasVideoTrack) {
-      logger.warn('Option videoReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = video)');
-    }
-
-    return state;
   }
 
   /**
