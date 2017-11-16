@@ -1115,4 +1115,88 @@ describe('Negotiator', () => {
       negotiator._setRemoteDescription(sdp);
     });
   });
+
+  describe('_getReceiveOnlyState', () => {
+    let negotiator;
+    const audioVideoStream = new MediaStream();
+    const audioOnlyStream = new MediaStream();
+    const videoOnlyStream = new MediaStream();
+
+    before(() => {
+      negotiator = new Negotiator();
+
+      sinon.stub(audioVideoStream, 'getVideoTracks').returns([{}]);
+      sinon.stub(audioVideoStream, 'getAudioTracks').returns([{}]);
+      sinon.stub(audioOnlyStream, 'getAudioTracks').returns([{}]);
+      sinon.stub(videoOnlyStream, 'getVideoTracks').returns([{}]);
+    });
+
+    it('should returns correct state with audio and video stream', () => {
+      [
+        [{stream: audioVideoStream, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: audioVideoStream, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioVideoStream, audioReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: audioVideoStream, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: audioVideoStream, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioVideoStream, audioReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioVideoStream, videoReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: audioVideoStream, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioVideoStream}, {audio: false, video: false}],
+      ].forEach(([options, expect]) => {
+        const res = negotiator._getReceiveOnlyState(options);
+        assert.deepEqual(res, expect);
+      });
+    });
+
+    it('should returns correct state with audio only stream', () => {
+      [
+        [{stream: audioOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: false, video: true}],
+        [{stream: audioOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioOnlyStream, audioReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: audioOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: true}],
+        [{stream: audioOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioOnlyStream, audioReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioOnlyStream, videoReceiveEnabled: true}, {audio: false, video: true}],
+        [{stream: audioOnlyStream, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioOnlyStream}, {audio: false, video: false}],
+      ].forEach(([options, expect]) => {
+        const res = negotiator._getReceiveOnlyState(options);
+        assert.deepEqual(res, expect);
+      });
+    });
+
+    it('should returns correct state with video only stream', () => {
+      [
+        [{stream: videoOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: true, video: false}],
+        [{stream: videoOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: true, video: false}],
+        [{stream: videoOnlyStream, audioReceiveEnabled: true}, {audio: true, video: false}],
+        [{stream: videoOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: videoOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: videoOnlyStream, audioReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: videoOnlyStream, videoReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: videoOnlyStream, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: videoOnlyStream}, {audio: false, video: false}],
+      ].forEach(([options, expect]) => {
+        const res = negotiator._getReceiveOnlyState(options);
+        assert.deepEqual(res, expect);
+      });
+    });
+
+    it('should returns correct state without stream', () => {
+      [
+        [{stream: undefined, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: true, video: true}],
+        [{stream: undefined, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: true, video: false}],
+        [{stream: undefined, audioReceiveEnabled: true}, {audio: true, video: false}],
+        [{stream: undefined, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: true}],
+        [{stream: undefined, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: undefined, audioReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: undefined, videoReceiveEnabled: true}, {audio: false, video: true}],
+        [{stream: undefined, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: undefined}, {audio: true, video: true}], // special case for backward compatibility
+      ].forEach(([options, expect]) => {
+        const res = negotiator._getReceiveOnlyState(options);
+        assert.deepEqual(res, expect);
+      });
+    });
+  });
 });
