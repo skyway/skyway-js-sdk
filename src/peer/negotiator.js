@@ -510,7 +510,7 @@ class Negotiator extends EventEmitter {
       state.video = true;
     }
 
-    // If stream has track, ignore options
+    // If stream has track, ignore options, which results in setting sendrecv internally.
     if (options.audioReceiveEnabled === false && hasAudioTrack) {
       logger.warn('Option audioReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = audio)');
     }
