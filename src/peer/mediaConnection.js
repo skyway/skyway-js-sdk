@@ -152,6 +152,52 @@ class MediaConnection extends Connection {
   }
 
   /**
+   * Get map object describes which kinds of tracks should be marked as recvonly
+   * @param {MediaStream} stream - MediaStream passed via peer.call()
+   * @param {Object} options - Options of peer.call()
+   * @return {Object} Map object which streamTrack will be recvonly or not
+   */
+  static getReceiveOnlyState(stream, options) {
+    const state = {
+      audio: false,
+      video: false,
+    };
+
+    const hasStream = stream instanceof MediaStream;
+    const hasAudioTrack = hasStream ? stream.getAudioTracks().length !== 0 : false;
+    const hasVideoTrack = hasStream ? stream.getVideoTracks().length !== 0 : false;
+
+    // force true if stream not passed(backward compatibility)
+    if (
+      hasStream === false
+      && 'audioReceiveEnabled' in options === false
+      && 'videoReceiveEnabled' in options === false
+    ) {
+      state.audio = true;
+      state.video = true;
+      return state;
+    }
+
+    // Set recvonly to true if `stream does not have track` and `option is true` case only
+    if (options.audioReceiveEnabled && hasAudioTrack === false) {
+      state.audio = true;
+    }
+    if (options.videoReceiveEnabled && hasVideoTrack === false) {
+      state.video = true;
+    }
+
+    // If stream has track, ignore options
+    if (options.audioReceiveEnabled === false && hasAudioTrack) {
+      logger.warn('Option audioReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = audio)');
+    }
+    if (options.videoReceiveEnabled === false && hasVideoTrack) {
+      logger.warn('Option videoReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = video)');
+    }
+
+    return state;
+  }
+
+  /**
    * MediaStream received from peer.
    *
    * @event MediaConnection#stream
