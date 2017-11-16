@@ -481,16 +481,15 @@ class Negotiator extends EventEmitter {
    * @param {Object} options - Options of peer.call()
    * @return {Object} Map object which streamTrack will be recvonly or not
    */
-  _getReceiveOnlyState(options) {
+  _getReceiveOnlyState(options = {}) {
     const state = {
       audio: false,
       video: false,
     };
 
-    const stream = options.stream;
-    const hasStream = stream instanceof MediaStream;
-    const hasAudioTrack = hasStream ? stream.getAudioTracks().length !== 0 : false;
-    const hasVideoTrack = hasStream ? stream.getVideoTracks().length !== 0 : false;
+    const hasStream = options.stream instanceof MediaStream;
+    const hasAudioTrack = hasStream ? options.stream.getAudioTracks().length !== 0 : false;
+    const hasVideoTrack = hasStream ? options.stream.getVideoTracks().length !== 0 : false;
 
     // force true if stream not passed(backward compatibility)
     if (
