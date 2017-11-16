@@ -337,24 +337,21 @@ class Negotiator extends EventEmitter {
   _makeOfferSdp() {
     let createOfferPromise;
 
-    // if this peer is in recvonly mode
-    const isRecvOnly = this._type === 'media' &&
-      ((this._isRtpSenderAvailable && this._pc.getSenders().length === 0) ||
-      (this._isRtpLocalStreamsAvailable && this._pc.getLocalStreams().length === 0));
-
-    if (isRecvOnly) {
+    // DataConnection
+    if (this._type !== 'media') {
+      createOfferPromise = this._pc.createOffer();
+    // MediaConnection
+    } else {
       if (this._isAddTransceiverAvailable) {
-        this._pc.addTransceiver('audio').setDirection('recvonly');
-        this._pc.addTransceiver('video').setDirection('recvonly');
+        this._audioRecvonly && this._pc.addTransceiver('audio').setDirection('recvonly');
+        this._videoRecvonly && this._pc.addTransceiver('video').setDirection('recvonly');
         createOfferPromise = this._pc.createOffer();
       } else {
         createOfferPromise = this._pc.createOffer({
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: true,
+          offerToReceiveAudio: this._audioRecvonly,
+          offerToReceiveVideo: this._videoRecvonly,
         });
       }
-    } else {
-      createOfferPromise = this._pc.createOffer();
     }
 
     return createOfferPromise
