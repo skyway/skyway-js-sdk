@@ -495,8 +495,8 @@ class Negotiator extends EventEmitter {
     // force true if stream not passed(backward compatibility)
     if (
       hasStream === false
-      && 'audioReceiveEnabled' in options === false
-      && 'videoReceiveEnabled' in options === false
+      && options.audioReceiveEnabled === undefined
+      && options.videoReceiveEnabled === undefined
     ) {
       state.audio = true;
       state.video = true;
