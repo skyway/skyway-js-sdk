@@ -108,6 +108,8 @@ class Peer extends EventEmitter {
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [options.videoCodec] - A video codec like 'H264'
    * @param {string} [options.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    * @return {MediaConnection} An instance of MediaConnection.
    */
   call(peerId, stream, options = {}) {
@@ -156,6 +158,8 @@ class Peer extends EventEmitter {
    * @param {number} [roomOptions.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'
    * @param {string} [roomOptions.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    * @return {SFURoom|MeshRoom} - An instance of SFURoom or MeshRoom.
    */
   joinRoom(roomName, roomOptions = {}) {
@@ -373,6 +377,8 @@ class Peer extends EventEmitter {
    * @param {number} [roomOptions.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'
    * @param {string} [roomOptions.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [roomOptions.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [roomOptions.audioReceiveEnabled] - A flag to set audio recvonly
    * @return {SFURoom} - An instance of SFURoom.
    */
   _initializeSfuRoom(roomName, roomOptions = {}) {
@@ -405,6 +411,8 @@ class Peer extends EventEmitter {
    * @param {number} [roomOptions.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'
    * @param {string} [roomOptions.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [roomOptions.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [roomOptions.audioReceiveEnabled] - A flag to set audio recvonly
    * @return {SFURoom} - An instance of MeshRoom.
    */
   _initializeFullMeshRoom(roomName, roomOptions = {}) {

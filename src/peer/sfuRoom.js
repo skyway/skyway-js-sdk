@@ -32,6 +32,8 @@ class SFURoom extends Room {
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [options.videoCodec] - A video codec like 'H264'
    * @param {string} [options.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    */
   constructor(name, peerId, options) {
     super(name, peerId, options);

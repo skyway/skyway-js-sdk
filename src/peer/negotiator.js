@@ -46,6 +46,8 @@ class Negotiator extends EventEmitter {
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [options.videoCodec] - A video codec like 'H264'
    * @param {string} [options.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    */
   startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
@@ -56,6 +58,7 @@ class Negotiator extends EventEmitter {
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
     this._type = options.type;
+    this._recvonlyState = this._getReceiveOnlyState(options);
 
     if (this._type === 'media') {
       if (options.stream) {
@@ -290,24 +293,21 @@ class Negotiator extends EventEmitter {
   _makeOfferSdp() {
     let createOfferPromise;
 
-    // if this peer is in recvonly mode
-    const isRecvOnly = this._type === 'media' &&
-      ((this._isRtpSenderAvailable && this._pc.getSenders().length === 0) ||
-      (this._isRtpLocalStreamsAvailable && this._pc.getLocalStreams().length === 0));
-
-    if (isRecvOnly) {
+    // DataConnection
+    if (this._type !== 'media') {
+      createOfferPromise = this._pc.createOffer();
+    // MediaConnection
+    } else {
       if (this._isAddTransceiverAvailable) {
-        this._pc.addTransceiver('audio').setDirection('recvonly');
-        this._pc.addTransceiver('video').setDirection('recvonly');
+        this._recvonlyState.audio && this._pc.addTransceiver('audio').setDirection('recvonly');
+        this._recvonlyState.video && this._pc.addTransceiver('video').setDirection('recvonly');
         createOfferPromise = this._pc.createOffer();
       } else {
         createOfferPromise = this._pc.createOffer({
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: true,
+          offerToReceiveAudio: this._recvonlyState.audio,
+          offerToReceiveVideo: this._recvonlyState.video,
         });
       }
-    } else {
-      createOfferPromise = this._pc.createOffer();
     }
 
     return createOfferPromise
@@ -438,6 +438,51 @@ class Negotiator extends EventEmitter {
   }
 
   /**
+   * Get map object describes which kinds of tracks should be marked as recvonly
+   * @param {Object} options - Options of peer.call()
+   * @return {Object} Map object which streamTrack will be recvonly or not
+   */
+  _getReceiveOnlyState(options = {}) {
+    const state = {
+      audio: false,
+      video: false,
+    };
+
+    const hasStream = options.stream instanceof MediaStream;
+    const hasAudioTrack = hasStream ? options.stream.getAudioTracks().length !== 0 : false;
+    const hasVideoTrack = hasStream ? options.stream.getVideoTracks().length !== 0 : false;
+
+    // force true if stream not passed(backward compatibility)
+    if (
+      hasStream === false
+      && options.audioReceiveEnabled === undefined
+      && options.videoReceiveEnabled === undefined
+    ) {
+      state.audio = true;
+      state.video = true;
+      return state;
+    }
+
+    // Set recvonly to true if `stream does not have track` and `option is true` case only
+    if (options.audioReceiveEnabled && hasAudioTrack === false) {
+      state.audio = true;
+    }
+    if (options.videoReceiveEnabled && hasVideoTrack === false) {
+      state.video = true;
+    }
+
+    // If stream has track, ignore options, which results in setting sendrecv internally.
+    if (options.audioReceiveEnabled === false && hasAudioTrack) {
+      logger.warn('Option audioReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = audio)');
+    }
+    if (options.videoReceiveEnabled === false && hasVideoTrack) {
+      logger.warn('Option videoReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = video)');
+    }
+
+    return state;
+  }
+
+  /**
    * Replace the stream being sent with a new one.
    * Video and audio are replaced per track by using `xxxTrack` methods.
    * We assume that there is at most 1 audio and at most 1 video in local stream.
@@ -467,7 +512,7 @@ class Negotiator extends EventEmitter {
      * Replace a track being sent with a new one.
      * @param {RTCRtpSender} sender - The sender which type is video or audio.
      * @param {MediaStreamTrack} track - The track of new stream.
-     * @param {MediaStream} stream - The stream which contains the track. 
+     * @param {MediaStream} stream - The stream which contains the track.
      * @private
      */
     function _updateSenderWithTrack(sender, track, stream) {
