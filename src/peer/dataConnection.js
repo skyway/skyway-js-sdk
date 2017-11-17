@@ -316,10 +316,8 @@ class DataConnection extends Connection {
       return false;
     }
 
-    const hasMaxRetransmits = 'maxRetransmits' in dcInit;
-    const hasMaxPacketLifeTime = 'maxPacketLifeTime' in dcInit;
-
-    if (hasMaxRetransmits || hasMaxPacketLifeTime) {
+    // Either of these props are passed, works on unreliable mode.
+    if ('maxRetransmits' in dcInit || 'maxPacketLifeTime' in dcInit) {
       return true;
     }
 
