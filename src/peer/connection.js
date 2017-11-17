@@ -178,6 +178,9 @@ class Connection extends EventEmitter {
       if (this.label) {
         connectionOffer.label = this.label;
       }
+      if (this.dcInit) {
+        connectionOffer.dcInit = this.dcInit;
+      }
       this.emit(Connection.EVENTS.offer.key, connectionOffer);
     });
 
