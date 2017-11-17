@@ -93,6 +93,8 @@ class Negotiator extends EventEmitter {
    * @param {MediaStream} newStream - The stream to replace the old stream with.
    */
   replaceStream(newStream) {
+    // If negotiator is null
+    // or replaceStream was called but `onnegotiationneeded` event has not finished yet.
     if (!this._pc || this._replaceStreamCalled) {
       return;
     }
@@ -100,55 +102,12 @@ class Negotiator extends EventEmitter {
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
     // Firefox 53 has both getSenders and getLocalStreams,
-    // but Google Chrome 59 has only getLocalStreams.
+    // but Google Chrome 61 has only getLocalStreams.
     if (this._isRtpSenderAvailable) {
-      this._pc.getSenders().forEach(sender => {
-        let tracks;
-        if (sender.track.kind === 'audio') {
-          tracks = newStream.getAudioTracks();
-        } else if (sender.track.kind === 'video') {
-          tracks = newStream.getVideoTracks();
-        }
-
-        if (tracks && tracks[0]) {
-          sender.replaceTrack(tracks[0]);
-        } else {
-          this._pc.removeTrack(sender);
-        }
-      });
-
-      // We don't actually need to do renegotiation but force it in order to prevent
-      // problems with the stream.id being mismatched when renegotiation happens anyways
-      this._pc.onnegotiationneeded();
-      return;
+      this._replacePerTrack(newStream);
+    } else {
+      this._replacePerStream(newStream);
     }
-
-    // Manually remove and readd the entire stream if senders aren't available.
-    const negotiationNeededHandler = this._pc.onnegotiationneeded;
-
-    /* istanbul ignore next function */
-    // Unset onnegotiationneeded so that it doesn't trigger on removeStream
-    this._pc.onnegotiationneeded = () => {};
-
-    const localStreams = this._pc.getLocalStreams();
-    if (localStreams && localStreams[0]) {
-      this._pc.removeStream(localStreams[0]);
-    }
-
-    this._replaceStreamCalled = true;
-
-    // Restore onnegotiationneeded and addStream asynchronously to give onnegotiationneeded
-    // a chance to trigger (and do nothing) on removeStream.
-    setTimeout(() => {
-      this._pc.onnegotiationneeded = negotiationNeededHandler;
-      if (this._isAddTrackAvailable) {
-        newStream.getTracks().forEach(track => {
-          this._pc.addTrack(track, newStream);
-        });
-      } else {
-        this._pc.addStream(newStream);
-      }
-    });
   }
 
   /**
@@ -407,6 +366,7 @@ class Negotiator extends EventEmitter {
         return this._pc.setLocalDescription(answer)
           .then(() => {
             logger.log('Set localDescription: answer');
+            logger.log(`Setting local description ${JSON.stringify(answer.sdp)}`);
             return Promise.resolve(answer);
           })
           .catch(error => {
@@ -436,6 +396,7 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _setLocalDescription(offer) {
+    logger.log(`Setting local description ${JSON.stringify(offer.sdp)}`);
     return this._pc.setLocalDescription(offer)
       .then(() => {
         logger.log('Set localDescription: offer');
@@ -519,6 +480,83 @@ class Negotiator extends EventEmitter {
     }
 
     return state;
+  }
+
+  /**
+   * Replace the stream being sent with a new one.
+   * Video and audio are replaced per track by using `xxxTrack` methods.
+   * We assume that there is at most 1 audio and at most 1 video in local stream.
+   * @param {MediaStream} newStream - The stream to replace the old stream with.
+   * @private
+   */
+  _replacePerTrack(newStream) {
+    const _this = this;
+    const vTracks = newStream.getVideoTracks();
+    const aTracks = newStream.getAudioTracks();
+
+    const senders = this._pc.getSenders();
+    const vSender = senders.find(sender => sender.track.kind === 'video');
+    const aSender = senders.find(sender => sender.track.kind === 'audio');
+
+    _updateSenderWithTrack(vSender, vTracks[0], newStream);
+    _updateSenderWithTrack(aSender, aTracks[0], newStream);
+
+    this._replaceStreamCalled = true;
+
+    // We don't actually need to do renegotiation but force it in order to prevent
+    // problems with the stream.id being mismatched when renegotiation happens anyways
+    // Firefox 55 doesn't trigger onnegotiationneeded event when a track in a stream is removed
+    this._pc.onnegotiationneeded();
+
+    /**
+     * Replace a track being sent with a new one.
+     * @param {RTCRtpSender} sender - The sender which type is video or audio.
+     * @param {MediaStreamTrack} track - The track of new stream.
+     * @param {MediaStream} stream - The stream which contains the track.
+     * @private
+     */
+    function _updateSenderWithTrack(sender, track, stream) {
+      if (track === undefined && sender === undefined) {
+        return;
+      }
+      // remove video or audio sender if not passed
+      if (track === undefined) {
+        _this._pc.removeTrack(sender);
+        return;
+      }
+      // if passed, replace track or create sender
+      if (sender === undefined) {
+        _this._pc.addTrack(track, stream);
+        return;
+      }
+      // if track was not replaced, do nothing
+      if (sender.track.id === track.id) {
+        return;
+      }
+      sender.replaceTrack(track);
+    }
+  }
+
+  /**
+   * Replace the stream being sent with a new one.
+   * Video and audio are replaced per stream by using `xxxStream` methods.
+   * This method is used in some browsers which don't implement `xxxTrack` methods.
+   * @param {MediaStream} newStream - The stream to replace the old stream with.
+   * @private
+   */
+  _replacePerStream(newStream) {
+    const localStreams = this._pc.getLocalStreams();
+    // We assume that there is at most 1 stream in localStreams
+    if (localStreams && localStreams[0]) {
+      this._pc.removeStream(localStreams[0]);
+    }
+
+    this._replaceStreamCalled = true;
+
+    // a chance to trigger (and do nothing) on removeStream.
+    setTimeout(() => {
+      this._pc.addStream(newStream);
+    });
   }
 
   /**
