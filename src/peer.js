@@ -130,7 +130,8 @@ class Peer extends EventEmitter {
    * @param {Object} [options] - Optional arguments for DataConnection.
    * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
-   * @param {Object} [options.dcInit] - Config object works as a RTCDataChannelInit.
+   * @param {Object} [options.dcInit] - Options passed to createDataChannel() as a RTCDataChannelInit.
+   *                  See https://www.w3.org/TR/webrtc/#dom-rtcdatachannelinit
    * @param {string} [options.serialization] - How to serialize data when sending.
    *                  One of 'binary', 'json' or 'none'.
    * @return {DataConnection} An instance of DataConnection.

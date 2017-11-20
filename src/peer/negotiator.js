@@ -38,7 +38,8 @@ class Negotiator extends EventEmitter {
    * @param {string} [options.type] - Type of connection. One of 'media' or 'data'.
    * @param {MediaStream} [options._stream] - The MediaStream to be sent to the remote peer.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
-   * @param {Object} [options.dcInit] - Config object works as a RTCDataChannelInit.
+   * @param {Object} [options.dcInit] - Options passed to createDataChannel() as a RTCDataChannelInit.
+   *                  See https://www.w3.org/TR/webrtc/#dom-rtcdatachannelinit
    * @param {boolean} [options.originator] - true means the peer is the originator of the connection.
    * @param {RTCSessionDescription} [options.offer]
    *        - The local description. If the peer is originator, handleOffer is called with it.
