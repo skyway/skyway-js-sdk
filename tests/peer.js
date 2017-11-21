@@ -371,6 +371,42 @@ describe('Peer', () => {
 
         addConnectionSpy.restore();
       });
+
+      it('should create a new DataConnection, default reliable mode', () => {
+        const addConnectionSpy = sinon.spy(peer, '_addConnection');
+
+        const conn = peer.connect(peerId, {});
+
+        // XXX: property reliable is only visible on Chrome / Firefox
+        assert.equal(conn._dc.reliable, true);
+
+        addConnectionSpy.restore();
+      });
+
+      it('should create a new DataConnection, with custom dcInit', () => {
+        const addConnectionSpy = sinon.spy(peer, '_addConnection');
+
+        const conn = peer.connect(peerId, {
+          dcInit: {ordered: false},
+        });
+
+        assert.equal(conn._dc.ordered, false);
+
+        addConnectionSpy.restore();
+      });
+
+      it('should create a new DataConnection, with unreliable mode', () => {
+        const addConnectionSpy = sinon.spy(peer, '_addConnection');
+
+        const conn = peer.connect(peerId, {
+          dcInit: {maxRetransmits: 10},
+        });
+
+        // XXX: property reliable is only visible on Chrome / Firefox
+        assert.equal(conn._dc.reliable, false);
+
+        addConnectionSpy.restore();
+      });
     });
 
     describe('when its socket is not open', () => {
