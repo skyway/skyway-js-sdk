@@ -1,7 +1,7 @@
 {
-  "name": "skyway",
+  "name": "skyway-js",
   "version": "1.0.1",
-  "description": "The JS client library for SkyWay",
+  "description": "The official JavaScript SDK for SkyWay",
   "main": "dist/skyway.js",
   "module": "src/peer.js",
   "scripts": {
@@ -14,8 +14,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/skyway/skyway-js-sdk"
+    "url": "git+https://github.com/skyway/skyway-js-sdk"
   },
+  "files": [
+    "dist/skyway.js",
+    "LICENSE",
+    "CHANGELOG.md",
+    "README.md"
+  ],
   "author": "NTT Communications Corp.",
   "license": "MIT",
   "devDependencies": {
