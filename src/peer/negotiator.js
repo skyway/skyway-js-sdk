@@ -306,10 +306,11 @@ class Negotiator extends EventEmitter {
         this._recvonlyState.video && this._pc.addTransceiver('video').setDirection('recvonly');
         createOfferPromise = this._pc.createOffer();
       } else {
-        createOfferPromise = this._pc.createOffer({
-          offerToReceiveAudio: this._recvonlyState.audio,
-          offerToReceiveVideo: this._recvonlyState.video,
-        });
+        const offerOptions = {};
+        // the offerToReceiveXXX options are defined in the specs as boolean but `undefined` acts differently from false
+        this._recvonlyState.audio && (offerOptions.offerToReceiveAudio = true);
+        this._recvonlyState.video && (offerOptions.offerToReceiveVideo = true);
+        createOfferPromise = this._pc.createOffer(offerOptions);
       }
     }
 
