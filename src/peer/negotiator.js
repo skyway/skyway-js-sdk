@@ -550,8 +550,15 @@ class Negotiator extends EventEmitter {
    */
   _replacePerStream(newStream) {
     const localStreams = this._pc.getLocalStreams();
+
+    // Temporarily unset onnegotiationneeded so that it doesn't do anything.
+    // Leaving this set will cause an extra negotiation on removeStream that will cause the
+    // signalingState on the answer side to enter an unexpected state, leading to errors.
+    const origOnNegotiationNeeded = this._pc.onnegotiationneeded;
+    this._pc.onnegotiationneeded = () => {};
+
     // We assume that there is at most 1 stream in localStreams
-    if (localStreams && localStreams[0]) {
+    if (localStreams.length > 0) {
       this._pc.removeStream(localStreams[0]);
     }
 
@@ -560,6 +567,7 @@ class Negotiator extends EventEmitter {
     // a chance to trigger (and do nothing) on removeStream.
     setTimeout(() => {
       this._pc.addStream(newStream);
+      this._pc.onnegotiationneeded = origOnNegotiationNeeded;
     });
   }
 
