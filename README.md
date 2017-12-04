@@ -17,7 +17,7 @@ For more details, check out the [Tutorial](https://webrtc.ecl.ntt.com/en/js-tuto
 
 With [npm](https://npmjs.org/) installed, run
 
-    $ npm install -g skyway-js
+    $ npm install -s skyway-js
 
 You can then use `require` or `import` to import the package.
 
