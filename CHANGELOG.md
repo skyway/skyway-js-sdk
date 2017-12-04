@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.2](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.2) - 2017-12-04
+
+### Added
+
+- Added contribution guide to README
+
 ## [v1.1.1](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.1) - 2017-12-04
 
 ### Fixed
