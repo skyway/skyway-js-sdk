@@ -72,3 +72,60 @@ After making changes in `src/`, you run
 - `npm test` to run tests
 
 then the `npm run build` and build `skyway(.min).js` which is stored in `dist` directory!
+
+### Bug Reports
+* check if you can reproduce in the latest version
+* check the [FAQ](https://support.skyway.io/hc/en-us/categories/204565748-FAQ) and the [forum](https://support.skyway.io/hc/en-us/community/topics) to make sure the same issue has not already been reported.
+* create an issue by filling in the template.
+
+### Feature requests, proposals
+* We welcome suggestions on the [developer community forums](https://support.skyway.io/hc/en-us/community/topics)
+* GitHub issues are primarily intended for bug reports/fixes
+
+### Pull Requests
+* We do our best to process them quickly but please be understanding if we take a while to respond.
+* Steps
+    * make changes on your fork.
+    * include clear descriptions and references to all the issues by filling the template.
+    * submit tests for your changes.
+    * update docs when creating or changing features.
+    * make sure the test suite & lint passes.
+
+```
+npm run lint
+npm run test
+```
+
+* Branch
+    * send all pull requests (bug fixes, new features) to the master branch.
+    * maintainers will change it to an appropriate branch.
+
+### Templates
+#### Issue
+```
+## Description of the problem
+
+## Environment
+- SDK version (ex. SDK v1.0.1,etc)
+- Device (ex. Windows PC, Nexus6, etc)
+- OS (ex. Windows XX / Android 7.0 etc)
+- Network (Cable/DSL/Fiber + WiFi, MiFi, LTE, etc)
+
+## Steps to reproduce the problem
+
+## Expected behavior
+
+## Other information (Console log etc)
+
+```
+#### PR
+```
+## Description of the Change
+
+## Benefits
+
+## Possible side effects
+
+## Relevant Issues
+
+```
