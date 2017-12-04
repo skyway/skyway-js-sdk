@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.1](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.1) - 2017-12-04
+
+### Fixed
+
+- Fixed npm install instructions in README
+
 ## [v1.1.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.0) - 2017-12-04
 
 ### Added
