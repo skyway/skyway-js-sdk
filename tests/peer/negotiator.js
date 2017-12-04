@@ -273,23 +273,40 @@ describe('Negotiator', () => {
     });
 
     describe('rtpSenders are supported', () => {
+      let addTrackStub;
       let getSendersStub;
       let removeTrackStub;
       let getAudioTracksStub;
       let getVideoTracksStub;
       let negotiationNeededStub;
 
-      const videoTrack = {};
-      const audioTrack = {};
+      // These values are dummy for assert to distinguish audio and video in tests.
+      const videoTrack = {
+        'video': 'video',
+      };
+      const audioTrack = {
+        'audio': 'audio',
+      };
+      const anotherVideoTrack = {
+        'id':    1000,
+        'video': 'video',
+      };
+      const anotherAudioTrack = {
+        'id':    1001,
+        'video': 'audio',
+      };
+
       let audioSender;
       let videoSender;
       let newStream;
 
       beforeEach(() => {
         // We stub everything directly as there is no guarantee that the browser will support them.
+        addTrackStub = sinon.stub();
         getSendersStub = sinon.stub();
         removeTrackStub = sinon.stub();
         negotiationNeededStub = sinon.spy();
+        negotiator._pc.addTrack = addTrackStub;
         negotiator._pc.getSenders = getSendersStub;
         negotiator._pc.removeTrack = removeTrackStub;
         negotiator._pc.onnegotiationneeded = negotiationNeededStub;
@@ -324,14 +341,25 @@ describe('Negotiator', () => {
           getAudioTracksStub.returns([audioTrack]);
         });
 
-        it('should call replaceTrack for each sender', () => {
+        it('should call replaceTrack for each sender if tracks have different id', () => {
+          getVideoTracksStub.returns([anotherVideoTrack]);
+          getAudioTracksStub.returns([anotherAudioTrack]);
+
           negotiator.replaceStream(newStream);
 
           assert.equal(audioSender.replaceTrack.callCount, 1);
-          assert(audioSender.replaceTrack.calledWith(audioTrack));
+          assert(audioSender.replaceTrack.calledWith(anotherAudioTrack));
 
           assert.equal(videoSender.replaceTrack.callCount, 1);
-          assert(videoSender.replaceTrack.calledWith(videoTrack));
+          assert(videoSender.replaceTrack.calledWith(anotherVideoTrack));
+        });
+
+        it('should call replaceTrack for each sender if tracks have same id', () => {
+          negotiator.replaceStream(newStream);
+
+          assert.equal(audioSender.replaceTrack.callCount, 0);
+
+          assert.equal(videoSender.replaceTrack.callCount, 0);
         });
 
         it('should call onnegotiationneeded', () => {
@@ -353,6 +381,39 @@ describe('Negotiator', () => {
           assert.equal(removeTrackStub.callCount, 2);
           assert(removeTrackStub.calledWith(audioSender));
           assert(removeTrackStub.calledWith(videoSender));
+        });
+
+        it('should call onnegotiationneeded', () => {
+          negotiator.replaceStream(newStream);
+
+          assert.equal(negotiationNeededStub.callCount, 1);
+        });
+      });
+
+      describe('new stream has larger number of tracks', () => {
+        beforeEach(() => {
+          getSendersStub.returns([audioSender]);
+
+          getVideoTracksStub.returns([videoTrack]);
+          getAudioTracksStub.returns([audioTrack]);
+        });
+
+        it('should not call replaceTrack for audio sender', () => {
+          negotiator.replaceStream(newStream);
+
+          assert.equal(audioSender.replaceTrack.callCount, 0);
+        });
+
+        it('should not call addTrack for audio sender', () => {
+          negotiator.replaceStream(newStream);
+
+          assert(!addTrackStub.calledWith(audioTrack));
+        });
+
+        it('should call addTrack for video sender', () => {
+          negotiator.replaceStream(newStream);
+
+          assert(addTrackStub.calledWith(videoTrack));
         });
 
         it('should call onnegotiationneeded', () => {
@@ -395,22 +456,6 @@ describe('Negotiator', () => {
 
           assert.equal(addStreamSpy.callCount, 1);
           assert(addStreamSpy.calledWith(newStream));
-
-          done();
-        });
-      });
-
-      it('should disable then enable onnegotiationneeded', done => {
-        const negotiationHandler = () => {};
-
-        negotiator._pc.onnegotiationneeded = negotiationHandler;
-        negotiator.replaceStream(newStream);
-
-        assert.notEqual(negotiator._pc.onnegotiationneeded, negotiationHandler);
-
-        // Use timeout as it runs asynchronously
-        setTimeout(() => {
-          assert.equal(negotiator._pc.onnegotiationneeded, negotiationHandler);
 
           done();
         });
@@ -1113,6 +1158,90 @@ describe('Negotiator', () => {
       });
 
       negotiator._setRemoteDescription(sdp);
+    });
+  });
+
+  describe('_getReceiveOnlyState', () => {
+    let negotiator;
+    const audioVideoStream = new MediaStream();
+    const audioOnlyStream = new MediaStream();
+    const videoOnlyStream = new MediaStream();
+
+    before(() => {
+      negotiator = new Negotiator();
+
+      sinon.stub(audioVideoStream, 'getVideoTracks').returns([{}]);
+      sinon.stub(audioVideoStream, 'getAudioTracks').returns([{}]);
+      sinon.stub(audioOnlyStream, 'getAudioTracks').returns([{}]);
+      sinon.stub(videoOnlyStream, 'getVideoTracks').returns([{}]);
+    });
+
+    it('should returns correct state with audio and video stream', () => {
+      [
+        [{stream: audioVideoStream, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: audioVideoStream, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioVideoStream, audioReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: audioVideoStream, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: audioVideoStream, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioVideoStream, audioReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioVideoStream, videoReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: audioVideoStream, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioVideoStream}, {audio: false, video: false}],
+      ].forEach(([options, expect]) => {
+        const res = negotiator._getReceiveOnlyState(options);
+        assert.deepEqual(res, expect);
+      });
+    });
+
+    it('should returns correct state with audio only stream', () => {
+      [
+        [{stream: audioOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: false, video: true}],
+        [{stream: audioOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioOnlyStream, audioReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: audioOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: true}],
+        [{stream: audioOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioOnlyStream, audioReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioOnlyStream, videoReceiveEnabled: true}, {audio: false, video: true}],
+        [{stream: audioOnlyStream, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: audioOnlyStream}, {audio: false, video: false}],
+      ].forEach(([options, expect]) => {
+        const res = negotiator._getReceiveOnlyState(options);
+        assert.deepEqual(res, expect);
+      });
+    });
+
+    it('should returns correct state with video only stream', () => {
+      [
+        [{stream: videoOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: true, video: false}],
+        [{stream: videoOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: true, video: false}],
+        [{stream: videoOnlyStream, audioReceiveEnabled: true}, {audio: true, video: false}],
+        [{stream: videoOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: videoOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: videoOnlyStream, audioReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: videoOnlyStream, videoReceiveEnabled: true}, {audio: false, video: false}],
+        [{stream: videoOnlyStream, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: videoOnlyStream}, {audio: false, video: false}],
+      ].forEach(([options, expect]) => {
+        const res = negotiator._getReceiveOnlyState(options);
+        assert.deepEqual(res, expect);
+      });
+    });
+
+    it('should returns correct state without stream', () => {
+      [
+        [{stream: undefined, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: true, video: true}],
+        [{stream: undefined, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: true, video: false}],
+        [{stream: undefined, audioReceiveEnabled: true}, {audio: true, video: false}],
+        [{stream: undefined, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: true}],
+        [{stream: undefined, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: undefined, audioReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: undefined, videoReceiveEnabled: true}, {audio: false, video: true}],
+        [{stream: undefined, videoReceiveEnabled: false}, {audio: false, video: false}],
+        [{stream: undefined}, {audio: true, video: true}], // special case for backward compatibility
+      ].forEach(([options, expect]) => {
+        const res = negotiator._getReceiveOnlyState(options);
+        assert.deepEqual(res, expect);
+      });
     });
   });
 });

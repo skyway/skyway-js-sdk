@@ -35,6 +35,8 @@ class DataConnection extends Connection {
    * @param {string} [options.connectionId] - An ID to uniquely identify the connection. Defaults to random string if not specified.
    * @param {string} [options.serialization] - How to serialize data when sending. One of 'binary', 'json' or 'none'.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
+   * @param {Object} [options.dcInit] - Options passed to createDataChannel() as a RTCDataChannelInit.
+   *                  See https://www.w3.org/TR/webrtc/#dom-rtcdatachannelinit
    * @param {string} [options.queuedMessages] - An array of messages that were already received before the connection was created.
    * @param {string} [options.payload] - An offer message that triggered creating this object.
    */
@@ -52,15 +54,22 @@ class DataConnection extends Connection {
      */
     this.label = this._options.label || this.id;
 
+    // Use reliable mode by default
+    this.dcInit = this._options.dcInit || {};
+
     // Serialization is binary by default
+    this.serialization = DataConnection.SERIALIZATIONS.binary.key;
     if (this._options.serialization) {
       if (!DataConnection.SERIALIZATIONS.get(this._options.serialization)) {
         // Can't emit error as there hasn't been a chance to set up listeners
         throw new Error('Invalid serialization');
       }
       this.serialization = this._options.serialization;
-    } else {
-      this.serialization = DataConnection.SERIALIZATIONS.binary.key;
+
+      if (this._isUnreliableDCInit(this.dcInit)) {
+        logger.warn('You can not specify serialization with unreliable mode enabled.');
+        this.serialization = DataConnection.SERIALIZATIONS.binary.key;
+      }
     }
 
     // New send code properties
@@ -97,6 +106,7 @@ class DataConnection extends Connection {
         originator: true,
         type:       'data',
         label:      this.label,
+        dcInit:     this.dcInit,
         pcConfig:   this._options.pcConfig,
       }
     );
@@ -294,6 +304,26 @@ class DataConnection extends Connection {
         }
       }, config.sendInterval);
     }
+  }
+
+  /**
+   * Check dcInit argument is valid to enable unreliable mode.
+   * See https://www.w3.org/TR/webrtc/#dom-rtcdatachannelinit
+   * @param {Object} dcInit - Options passed to createDataChannel() as a RTCDataChannelInit.
+   *                  See https://www.w3.org/TR/webrtc/#dom-rtcdatachannelinit
+   * @return {boolean} Returns this dcInit has valid properties to enable unreliable mode.
+   */
+  _isUnreliableDCInit(dcInit) {
+    if (!dcInit) {
+      return false;
+    }
+
+    // Either of these props are passed, works on unreliable mode.
+    if ('maxRetransmits' in dcInit || 'maxPacketLifeTime' in dcInit) {
+      return true;
+    }
+
+    return false;
   }
 
   /**

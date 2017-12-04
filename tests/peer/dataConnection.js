@@ -69,11 +69,13 @@ describe('DataConnection', () => {
     it('should set properties from arguments properly', () => {
       const id = 'remoteId';
       const label = 'label';
+      const dcInit = {ordered: false};
       const serialization = 'binary';
       const peerBrowser = 'browser';
       const metadata = 'meta';
       const options = {
         label:         label,
+        dcInit:        dcInit,
         serialization: serialization,
         metadata:      metadata,
         payload:       {browser: peerBrowser},
@@ -84,6 +86,7 @@ describe('DataConnection', () => {
       assert.equal(dc.remoteId, id);
       assert.equal(dc.peer, id);
       assert.equal(dc.label, label);
+      assert.equal(dc.dcInit, dcInit);
       assert.equal(dc.serialization, serialization);
       assert.equal(dc.metadata, metadata);
       assert.equal(dc._peerBrowser, peerBrowser);
@@ -249,6 +252,7 @@ describe('DataConnection', () => {
         assert.equal(connectionOffer.connectionType, dc.type);
         assert.equal(connectionOffer.serialization, dc.serialization);
         assert.equal(connectionOffer.label, dc.label);
+        assert.equal(connectionOffer.dcInit, dc.dcInit);
         assert.equal(connectionOffer.metadata, dc.metadata);
         done();
       });
@@ -264,6 +268,29 @@ describe('DataConnection', () => {
 
       assert(spy.calledOnce);
       assert.equal(dc.open, false);
+    });
+  });
+
+  describe('_isUnreliableDCInit', () => {
+    let dc;
+    beforeEach(() => {
+      dc = new DataConnection('remoteId', {});
+    });
+
+    it('should enable unreliable mode with valid props', () => {
+      const res = dc._isUnreliableDCInit({maxRetransmits: 100});
+      assert(res);
+
+      const res2 = dc._isUnreliableDCInit({maxPacketLifeTime: 100});
+      assert(res2);
+    });
+
+    it('should not enable unreliable mode with invalid props', () => {
+      const res = dc._isUnreliableDCInit({ordered: false});
+      assert.equal(res, false);
+
+      const res2 = dc._isUnreliableDCInit({foo: 100});
+      assert.equal(res2, false);
     });
   });
 

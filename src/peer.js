@@ -108,6 +108,8 @@ class Peer extends EventEmitter {
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [options.videoCodec] - A video codec like 'H264'
    * @param {string} [options.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    * @return {MediaConnection} An instance of MediaConnection.
    */
   call(peerId, stream, options = {}) {
@@ -130,6 +132,8 @@ class Peer extends EventEmitter {
    * @param {Object} [options] - Optional arguments for DataConnection.
    * @param {string} [options.connectionId] - An ID to uniquely identify the connection.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
+   * @param {Object} [options.dcInit] - Options passed to createDataChannel() as a RTCDataChannelInit.
+   *                  See https://www.w3.org/TR/webrtc/#dom-rtcdatachannelinit
    * @param {string} [options.serialization] - How to serialize data when sending.
    *                  One of 'binary', 'json' or 'none'.
    * @return {DataConnection} An instance of DataConnection.
@@ -156,6 +160,8 @@ class Peer extends EventEmitter {
    * @param {number} [roomOptions.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'
    * @param {string} [roomOptions.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    * @return {SFURoom|MeshRoom} - An instance of SFURoom or MeshRoom.
    */
   joinRoom(roomName, roomOptions = {}) {
@@ -373,6 +379,8 @@ class Peer extends EventEmitter {
    * @param {number} [roomOptions.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'
    * @param {string} [roomOptions.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [roomOptions.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [roomOptions.audioReceiveEnabled] - A flag to set audio recvonly
    * @return {SFURoom} - An instance of SFURoom.
    */
   _initializeSfuRoom(roomName, roomOptions = {}) {
@@ -405,6 +413,8 @@ class Peer extends EventEmitter {
    * @param {number} [roomOptions.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [roomOptions.videoCodec] - A video codec like 'H264'
    * @param {string} [roomOptions.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [roomOptions.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [roomOptions.audioReceiveEnabled] - A flag to set audio recvonly
    * @return {SFURoom} - An instance of MeshRoom.
    */
   _initializeFullMeshRoom(roomName, roomOptions = {}) {
@@ -547,6 +557,7 @@ class Peer extends EventEmitter {
             payload:        offerMessage,
             metadata:       offerMessage.metadata,
             label:          offerMessage.label,
+            dcInit:         offerMessage.dcInit,
             serialization:  offerMessage.serialization,
             queuedMessages: this._queuedMessages[connectionId],
             pcConfig:       this._pcConfig,

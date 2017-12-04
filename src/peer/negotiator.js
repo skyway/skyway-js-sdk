@@ -38,6 +38,8 @@ class Negotiator extends EventEmitter {
    * @param {string} [options.type] - Type of connection. One of 'media' or 'data'.
    * @param {MediaStream} [options._stream] - The MediaStream to be sent to the remote peer.
    * @param {string} [options.label] - Label to easily identify the connection on either peer.
+   * @param {Object} [options.dcInit] - Options passed to createDataChannel() as a RTCDataChannelInit.
+   *                  See https://www.w3.org/TR/webrtc/#dom-rtcdatachannelinit
    * @param {boolean} [options.originator] - true means the peer is the originator of the connection.
    * @param {RTCSessionDescription} [options.offer]
    *        - The local description. If the peer is originator, handleOffer is called with it.
@@ -46,6 +48,8 @@ class Negotiator extends EventEmitter {
    * @param {number} [options.audioBandwidth] - A max audio bandwidth(kbps)
    * @param {string} [options.videoCodec] - A video codec like 'H264'
    * @param {string} [options.audioCodec] - A video codec like 'PCMU'
+   * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
+   * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
    */
   startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
@@ -56,6 +60,7 @@ class Negotiator extends EventEmitter {
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
     this._type = options.type;
+    this._recvonlyState = this._getReceiveOnlyState(options);
 
     if (this._type === 'media') {
       if (options.stream) {
@@ -77,7 +82,8 @@ class Negotiator extends EventEmitter {
     if (this._originator) {
       if (this._type === 'data') {
         const label = options.label || '';
-        const dc = this._pc.createDataChannel(label);
+        const dcInit = options.dcInit || {};
+        const dc = this._pc.createDataChannel(label, dcInit);
         this.emit(Negotiator.EVENTS.dcCreated.key, dc);
       }
     } else {
@@ -90,6 +96,8 @@ class Negotiator extends EventEmitter {
    * @param {MediaStream} newStream - The stream to replace the old stream with.
    */
   replaceStream(newStream) {
+    // If negotiator is null
+    // or replaceStream was called but `onnegotiationneeded` event has not finished yet.
     if (!this._pc || this._replaceStreamCalled) {
       return;
     }
@@ -97,55 +105,12 @@ class Negotiator extends EventEmitter {
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
     // Firefox 53 has both getSenders and getLocalStreams,
-    // but Google Chrome 59 has only getLocalStreams.
+    // but Google Chrome 61 has only getLocalStreams.
     if (this._isRtpSenderAvailable) {
-      this._pc.getSenders().forEach(sender => {
-        let tracks;
-        if (sender.track.kind === 'audio') {
-          tracks = newStream.getAudioTracks();
-        } else if (sender.track.kind === 'video') {
-          tracks = newStream.getVideoTracks();
-        }
-
-        if (tracks && tracks[0]) {
-          sender.replaceTrack(tracks[0]);
-        } else {
-          this._pc.removeTrack(sender);
-        }
-      });
-
-      // We don't actually need to do renegotiation but force it in order to prevent
-      // problems with the stream.id being mismatched when renegotiation happens anyways
-      this._pc.onnegotiationneeded();
-      return;
+      this._replacePerTrack(newStream);
+    } else {
+      this._replacePerStream(newStream);
     }
-
-    // Manually remove and readd the entire stream if senders aren't available.
-    const negotiationNeededHandler = this._pc.onnegotiationneeded;
-
-    /* istanbul ignore next function */
-    // Unset onnegotiationneeded so that it doesn't trigger on removeStream
-    this._pc.onnegotiationneeded = () => {};
-
-    const localStreams = this._pc.getLocalStreams();
-    if (localStreams && localStreams[0]) {
-      this._pc.removeStream(localStreams[0]);
-    }
-
-    this._replaceStreamCalled = true;
-
-    // Restore onnegotiationneeded and addStream asynchronously to give onnegotiationneeded
-    // a chance to trigger (and do nothing) on removeStream.
-    setTimeout(() => {
-      this._pc.onnegotiationneeded = negotiationNeededHandler;
-      if (this._isAddTrackAvailable) {
-        newStream.getTracks().forEach(track => {
-          this._pc.addTrack(track, newStream);
-        });
-      } else {
-        this._pc.addStream(newStream);
-      }
-    });
   }
 
   /**
@@ -331,24 +296,22 @@ class Negotiator extends EventEmitter {
   _makeOfferSdp() {
     let createOfferPromise;
 
-    // if this peer is in recvonly mode
-    const isRecvOnly = this._type === 'media' &&
-      ((this._isRtpSenderAvailable && this._pc.getSenders().length === 0) ||
-      (this._isRtpLocalStreamsAvailable && this._pc.getLocalStreams().length === 0));
-
-    if (isRecvOnly) {
+    // DataConnection
+    if (this._type !== 'media') {
+      createOfferPromise = this._pc.createOffer();
+    // MediaConnection
+    } else {
       if (this._isAddTransceiverAvailable) {
-        this._pc.addTransceiver('audio').setDirection('recvonly');
-        this._pc.addTransceiver('video').setDirection('recvonly');
+        this._recvonlyState.audio && this._pc.addTransceiver('audio').setDirection('recvonly');
+        this._recvonlyState.video && this._pc.addTransceiver('video').setDirection('recvonly');
         createOfferPromise = this._pc.createOffer();
       } else {
-        createOfferPromise = this._pc.createOffer({
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: true,
-        });
+        const offerOptions = {};
+        // the offerToReceiveXXX options are defined in the specs as boolean but `undefined` acts differently from false
+        this._recvonlyState.audio && (offerOptions.offerToReceiveAudio = true);
+        this._recvonlyState.video && (offerOptions.offerToReceiveVideo = true);
+        createOfferPromise = this._pc.createOffer(offerOptions);
       }
-    } else {
-      createOfferPromise = this._pc.createOffer();
     }
 
     return createOfferPromise
@@ -407,6 +370,7 @@ class Negotiator extends EventEmitter {
         return this._pc.setLocalDescription(answer)
           .then(() => {
             logger.log('Set localDescription: answer');
+            logger.log(`Setting local description ${JSON.stringify(answer.sdp)}`);
             return Promise.resolve(answer);
           })
           .catch(error => {
@@ -436,6 +400,7 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _setLocalDescription(offer) {
+    logger.log(`Setting local description ${JSON.stringify(offer.sdp)}`);
     return this._pc.setLocalDescription(offer)
       .then(() => {
         logger.log('Set localDescription: offer');
@@ -474,6 +439,128 @@ class Negotiator extends EventEmitter {
         logger.log('Failed to setRemoteDescription: ', error);
         return Promise.reject(error);
       });
+  }
+
+  /**
+   * Get map object describes which kinds of tracks should be marked as recvonly
+   * @param {Object} options - Options of peer.call()
+   * @return {Object} Map object which streamTrack will be recvonly or not
+   */
+  _getReceiveOnlyState(options = {}) {
+    const state = {
+      audio: false,
+      video: false,
+    };
+
+    const hasStream = options.stream instanceof MediaStream;
+    const hasAudioTrack = hasStream ? options.stream.getAudioTracks().length !== 0 : false;
+    const hasVideoTrack = hasStream ? options.stream.getVideoTracks().length !== 0 : false;
+
+    // force true if stream not passed(backward compatibility)
+    if (
+      hasStream === false
+      && options.audioReceiveEnabled === undefined
+      && options.videoReceiveEnabled === undefined
+    ) {
+      state.audio = true;
+      state.video = true;
+      return state;
+    }
+
+    // Set recvonly to true if `stream does not have track` and `option is true` case only
+    if (options.audioReceiveEnabled && hasAudioTrack === false) {
+      state.audio = true;
+    }
+    if (options.videoReceiveEnabled && hasVideoTrack === false) {
+      state.video = true;
+    }
+
+    // If stream has track, ignore options, which results in setting sendrecv internally.
+    if (options.audioReceiveEnabled === false && hasAudioTrack) {
+      logger.warn('Option audioReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = audio)');
+    }
+    if (options.videoReceiveEnabled === false && hasVideoTrack) {
+      logger.warn('Option videoReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = video)');
+    }
+
+    return state;
+  }
+
+  /**
+   * Replace the stream being sent with a new one.
+   * Video and audio are replaced per track by using `xxxTrack` methods.
+   * We assume that there is at most 1 audio and at most 1 video in local stream.
+   * @param {MediaStream} newStream - The stream to replace the old stream with.
+   * @private
+   */
+  _replacePerTrack(newStream) {
+    const _this = this;
+    const vTracks = newStream.getVideoTracks();
+    const aTracks = newStream.getAudioTracks();
+
+    const senders = this._pc.getSenders();
+    const vSender = senders.find(sender => sender.track.kind === 'video');
+    const aSender = senders.find(sender => sender.track.kind === 'audio');
+
+    _updateSenderWithTrack(vSender, vTracks[0], newStream);
+    _updateSenderWithTrack(aSender, aTracks[0], newStream);
+
+    this._replaceStreamCalled = true;
+
+    // We don't actually need to do renegotiation but force it in order to prevent
+    // problems with the stream.id being mismatched when renegotiation happens anyways
+    // Firefox 55 doesn't trigger onnegotiationneeded event when a track in a stream is removed
+    this._pc.onnegotiationneeded();
+
+    /**
+     * Replace a track being sent with a new one.
+     * @param {RTCRtpSender} sender - The sender which type is video or audio.
+     * @param {MediaStreamTrack} track - The track of new stream.
+     * @param {MediaStream} stream - The stream which contains the track.
+     * @private
+     */
+    function _updateSenderWithTrack(sender, track, stream) {
+      if (track === undefined && sender === undefined) {
+        return;
+      }
+      // remove video or audio sender if not passed
+      if (track === undefined) {
+        _this._pc.removeTrack(sender);
+        return;
+      }
+      // if passed, replace track or create sender
+      if (sender === undefined) {
+        _this._pc.addTrack(track, stream);
+        return;
+      }
+      // if track was not replaced, do nothing
+      if (sender.track.id === track.id) {
+        return;
+      }
+      sender.replaceTrack(track);
+    }
+  }
+
+  /**
+   * Replace the stream being sent with a new one.
+   * Video and audio are replaced per stream by using `xxxStream` methods.
+   * This method is used in some browsers which don't implement `xxxTrack` methods.
+   * @param {MediaStream} newStream - The stream to replace the old stream with.
+   * @private
+   */
+  _replacePerStream(newStream) {
+    const localStreams = this._pc.getLocalStreams();
+    // We assume that there is at most 1 stream in localStreams
+    if (localStreams && localStreams[0]) {
+      this._pc.removeStream(localStreams[0]);
+    }
+
+    this._replaceStreamCalled = true;
+
+    // a chance to trigger (and do nothing) on removeStream.
+    setTimeout(() => {
+      this._pc.addStream(newStream);
+    });
   }
 
   /**
