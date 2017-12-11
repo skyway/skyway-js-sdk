@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.3](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.3) - 2017-12-11
+
+### Fixed
+
+- add commit of replaceStream bug that was supposed to be fixed in v1.1.0 was somehow misplaced
+
 ## [v1.1.2](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.2) - 2017-12-04
 
 ### Added
