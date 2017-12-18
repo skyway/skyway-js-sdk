@@ -60,10 +60,12 @@ const sendInterval = 1;
 const pingInterval = 25000;
 
 const defaultConfig = {
-  iceServers: [{
-    urls: 'stun:stun.webrtc.ecl.ntt.com:3478',
-    url:  'stun:stun.webrtc.ecl.ntt.com:3478',
-  }],
+  iceServers: [
+    {
+      urls: 'stun:stun.webrtc.ecl.ntt.com:3478',
+      url: 'stun:stun.webrtc.ecl.ntt.com:3478',
+    },
+  ],
   iceTransportPolicy: 'all',
 };
 

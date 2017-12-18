@@ -1,17 +1,17 @@
 import assert from 'power-assert';
-import sinon  from 'sinon';
+import sinon from 'sinon';
 
-import Connection      from '../../src/peer/connection';
+import Connection from '../../src/peer/connection';
 import MediaConnection from '../../src/peer/mediaConnection';
 
 import meshRoomInjector from 'inject-loader!../../src/peer/meshRoom';
 
 describe('MeshRoom', () => {
   const meshRoomName = 'testMeshRoom';
-  const peerId       = 'testId';
+  const peerId = 'testId';
   const remotePeerId = 'differentTestId';
-  const pcConfig     = {iceServers: []};
-  const origStream   = {};
+  const pcConfig = { iceServers: [] };
+  const origStream = {};
 
   let MeshRoom;
   let meshRoom;
@@ -31,10 +31,10 @@ describe('MeshRoom', () => {
     replaceStreamSpy = sinon.spy();
 
     mcStub.returns({
-      type:          'media',
-      on:            onSpy,
-      close:         closeSpy,
-      answer:        answerSpy,
+      type: 'media',
+      on: onSpy,
+      close: closeSpy,
+      answer: answerSpy,
       replaceStream: replaceStreamSpy,
     });
     // hoist statics
@@ -42,14 +42,17 @@ describe('MeshRoom', () => {
 
     dcStub.returns({
       type: 'data',
-      on:   onSpy,
+      on: onSpy,
     });
 
     MeshRoom = meshRoomInjector({
       './mediaConnection': mcStub,
-      './dataConnection':  dcStub,
+      './dataConnection': dcStub,
     }).default;
-    meshRoom = new MeshRoom(meshRoomName, peerId, {stream: origStream, pcConfig: pcConfig});
+    meshRoom = new MeshRoom(meshRoomName, peerId, {
+      stream: origStream,
+      pcConfig: pcConfig,
+    });
   });
 
   afterEach(() => {
@@ -74,7 +77,7 @@ describe('MeshRoom', () => {
   describe('call', () => {
     it('should emit getPeers event', done => {
       meshRoom.on(MeshRoom.MESSAGE_EVENTS.getPeers.key, data => {
-        assert.deepEqual(data, {roomName: meshRoomName, type: 'media'});
+        assert.deepEqual(data, { roomName: meshRoomName, type: 'media' });
         done();
       });
 
@@ -93,7 +96,7 @@ describe('MeshRoom', () => {
   describe('connect', () => {
     it('should emit getPeers event', done => {
       meshRoom.on(MeshRoom.MESSAGE_EVENTS.getPeers.key, data => {
-        assert.deepEqual(data, {roomName: meshRoomName, type: 'data'});
+        assert.deepEqual(data, { roomName: meshRoomName, type: 'data' });
         done();
       });
 
@@ -112,7 +115,12 @@ describe('MeshRoom', () => {
       meshRoom.makeMediaConnections(peerIds);
 
       assert.equal(makeConnectionsStub.callCount, 1);
-      assert(makeConnectionsStub.calledWithMatch(peerIds, 'media', {pcConfig: pcConfig, stream: origStream}));
+      assert(
+        makeConnectionsStub.calledWithMatch(peerIds, 'media', {
+          pcConfig: pcConfig,
+          stream: origStream,
+        })
+      );
     });
   });
 
@@ -127,7 +135,11 @@ describe('MeshRoom', () => {
       meshRoom.makeDataConnections(peerIds);
 
       assert.equal(makeConnectionsStub.callCount, 1);
-      assert(makeConnectionsStub.calledWithMatch(peerIds, 'data', {pcConfig: pcConfig}));
+      assert(
+        makeConnectionsStub.calledWithMatch(peerIds, 'data', {
+          pcConfig: pcConfig,
+        })
+      );
     });
   });
 
@@ -147,7 +159,11 @@ describe('MeshRoom', () => {
 
       it('should not emit a peerJoin event', done => {
         meshRoom.on(MeshRoom.EVENTS.peerJoin.key, () => {
-          assert.fail(undefined, undefined, 'Should not have emitted a peerJoin event');
+          assert.fail(
+            undefined,
+            undefined,
+            'Should not have emitted a peerJoin event'
+          );
         });
 
         meshRoom.handleJoin(joinMessage);
@@ -189,7 +205,7 @@ describe('MeshRoom', () => {
 
   describe('handleLeave', () => {
     it('should call _deleteConnections and emit peerLeave event', done => {
-      const message = {src: remotePeerId};
+      const message = { src: remotePeerId };
 
       meshRoom.on(MeshRoom.EVENTS.peerLeave.key, peerId => {
         assert.equal(peerId, remotePeerId);
@@ -201,7 +217,7 @@ describe('MeshRoom', () => {
     });
 
     it('should call _deleteConnections', () => {
-      const message = {src: remotePeerId};
+      const message = { src: remotePeerId };
 
       const deleteConnectionsStub = sinon.stub(meshRoom, '_deleteConnections');
 
@@ -217,9 +233,9 @@ describe('MeshRoom', () => {
 
     describe('when connectionType is media', () => {
       const data = {
-        connectionId:   connId1,
+        connectionId: connId1,
         connectionType: 'media',
-        src:            remotePeerId,
+        src: remotePeerId,
       };
 
       it('should create new MediaConnection and add it to connections', () => {
@@ -230,13 +246,18 @@ describe('MeshRoom', () => {
         assert.equal(mcStub.callCount, 1);
         assert(mcStub.calledWith(remotePeerId));
 
-        assert(addConnectionStub.calledWith(remotePeerId, mcStub.returnValues[0]));
+        assert(
+          addConnectionStub.calledWith(remotePeerId, mcStub.returnValues[0])
+        );
       });
 
       it('should call updateOffer if connection already exists', () => {
         const updateOfferSpy = sinon.spy();
 
-        meshRoom._addConnection(remotePeerId, {id: connId1, updateOffer: updateOfferSpy});
+        meshRoom._addConnection(remotePeerId, {
+          id: connId1,
+          updateOffer: updateOfferSpy,
+        });
         meshRoom.handleOffer(data);
 
         assert.equal(mcStub.callCount, 0);
@@ -261,9 +282,9 @@ describe('MeshRoom', () => {
 
     describe('when connectionType is not media or data', () => {
       const data = {
-        connectionId:   connId1,
+        connectionId: connId1,
         connectionType: 'foobar',
-        src:            remotePeerId,
+        src: remotePeerId,
       };
 
       it('should not create a media or data connection', () => {
@@ -279,12 +300,12 @@ describe('MeshRoom', () => {
     it('should call connection.handleAnswer method', () => {
       const connId1 = 'connId1';
       const handleSpy = sinon.spy();
-      const connection1 = {id: connId1, handleAnswer: handleSpy};
+      const connection1 = { id: connId1, handleAnswer: handleSpy };
       meshRoom._addConnection(remotePeerId, connection1);
 
       const answerMessage = {
         connectionId: connId1,
-        src:          remotePeerId,
+        src: remotePeerId,
       };
       meshRoom.handleAnswer(answerMessage);
 
@@ -297,12 +318,12 @@ describe('MeshRoom', () => {
     it('should call connection.handleCandidate method', () => {
       const connId1 = 'connId1';
       const handleSpy = sinon.spy();
-      const connection1 = {id: connId1, handleCandidate: handleSpy};
+      const connection1 = { id: connId1, handleCandidate: handleSpy };
       meshRoom._addConnection(remotePeerId, connection1);
 
       const candidateMessage = {
         connectionId: connId1,
-        src:          remotePeerId,
+        src: remotePeerId,
       };
       meshRoom.handleCandidate(candidateMessage);
 
@@ -316,7 +337,7 @@ describe('MeshRoom', () => {
       const data = 'foobar';
 
       meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, dataMessage => {
-        assert.deepEqual(dataMessage, {roomName: meshRoomName, data: data});
+        assert.deepEqual(dataMessage, { roomName: meshRoomName, data: data });
         done();
       });
 
@@ -386,7 +407,10 @@ describe('MeshRoom', () => {
       assert.deepEqual(meshRoom.connections[remotePeerId], [connection1]);
 
       meshRoom._addConnection(remotePeerId, connection2);
-      assert.deepEqual(meshRoom.connections[remotePeerId], [connection1, connection2]);
+      assert.deepEqual(meshRoom.connections[remotePeerId], [
+        connection1,
+        connection2,
+      ]);
     });
   });
 
@@ -410,7 +434,10 @@ describe('MeshRoom', () => {
 
       it('should call addConnection and setupMessageHandlers for each connection', () => {
         const addConnectionStub = sinon.stub(meshRoom, '_addConnection');
-        const setupMessageHandlersStub = sinon.stub(meshRoom, '_setupMessageHandlers');
+        const setupMessageHandlersStub = sinon.stub(
+          meshRoom,
+          '_setupMessageHandlers'
+        );
 
         meshRoom._makeConnections(peerIds, 'data', options);
 
@@ -437,7 +464,7 @@ describe('MeshRoom', () => {
     describe('when type is media', () => {
       const options = {
         pcConfig: pcConfig,
-        stream:   origStream,
+        stream: origStream,
       };
 
       it('should create a MediaConnection for each peerId', () => {
@@ -450,7 +477,10 @@ describe('MeshRoom', () => {
 
       it('should call addConnection and setupMessageHandlers for each connection', () => {
         const addConnectionStub = sinon.stub(meshRoom, '_addConnection');
-        const setupMessageHandlersStub = sinon.stub(meshRoom, '_setupMessageHandlers');
+        const setupMessageHandlersStub = sinon.stub(
+          meshRoom,
+          '_setupMessageHandlers'
+        );
 
         meshRoom._makeConnections(peerIds, 'media', options);
 
@@ -495,8 +525,8 @@ describe('MeshRoom', () => {
     const peerId2 = 'peerId2';
     const connId1 = 'connId1';
     const connId2 = 'connId2';
-    const connection1 = {id: connId1};
-    const connection2 = {id: connId2};
+    const connection1 = { id: connId1 };
+    const connection2 = { id: connId2 };
 
     beforeEach(() => {
       meshRoom._addConnection(peerId1, connection1);
@@ -508,7 +538,7 @@ describe('MeshRoom', () => {
       assert.equal(meshRoom._getConnection(peerId2, connId2), connection2);
     });
 
-    it('should get null if the peerId/connectionId combination doesn\'t exist', () => {
+    it("should get null if the peerId/connectionId combination doesn't exist", () => {
       assert.equal(meshRoom._getConnection(peerId1, connId2), null);
       assert.equal(meshRoom._getConnection(peerId2, connId1), null);
     });
@@ -516,18 +546,27 @@ describe('MeshRoom', () => {
 
   describe('_setupMessageHandlers', () => {
     it('should set up message handlers', () => {
-      meshRoom._setupMessageHandlers({on: onSpy});
+      meshRoom._setupMessageHandlers({ on: onSpy });
 
       assert(onSpy.calledWith(Connection.EVENTS.offer.key, sinon.match.func));
       assert(onSpy.calledWith(Connection.EVENTS.answer.key, sinon.match.func));
-      assert(onSpy.calledWith(Connection.EVENTS.candidate.key, sinon.match.func));
+      assert(
+        onSpy.calledWith(Connection.EVENTS.candidate.key, sinon.match.func)
+      );
     });
 
     it('should handle stream and removeStream events if connection is a MediaConnection', () => {
-      meshRoom._setupMessageHandlers({on: onSpy, type: 'media'});
+      meshRoom._setupMessageHandlers({ on: onSpy, type: 'media' });
 
-      assert(onSpy.calledWith(MediaConnection.EVENTS.stream.key, sinon.match.func));
-      assert(onSpy.calledWith(MediaConnection.EVENTS.removeStream.key, sinon.match.func));
+      assert(
+        onSpy.calledWith(MediaConnection.EVENTS.stream.key, sinon.match.func)
+      );
+      assert(
+        onSpy.calledWith(
+          MediaConnection.EVENTS.removeStream.key,
+          sinon.match.func
+        )
+      );
     });
 
     describe('Event handlers', () => {
@@ -546,12 +585,15 @@ describe('MeshRoom', () => {
             offer: offer,
           };
 
-          meshRoom.on(MeshRoom.MESSAGE_EVENTS.offer.key, emittedOfferMessage => {
-            assert.equal(emittedOfferMessage.offer, offer);
-            assert.equal(emittedOfferMessage.roomName, meshRoomName);
+          meshRoom.on(
+            MeshRoom.MESSAGE_EVENTS.offer.key,
+            emittedOfferMessage => {
+              assert.equal(emittedOfferMessage.offer, offer);
+              assert.equal(emittedOfferMessage.roomName, meshRoomName);
 
-            done();
-          });
+              done();
+            }
+          );
 
           mc.emit(Connection.EVENTS.offer.key, offerMessage);
         });
@@ -564,12 +606,15 @@ describe('MeshRoom', () => {
             answer: answer,
           };
 
-          meshRoom.on(MeshRoom.MESSAGE_EVENTS.answer.key, emittedAnswerMessage => {
-            assert.equal(emittedAnswerMessage.answer, answer);
-            assert.equal(emittedAnswerMessage.roomName, meshRoomName);
+          meshRoom.on(
+            MeshRoom.MESSAGE_EVENTS.answer.key,
+            emittedAnswerMessage => {
+              assert.equal(emittedAnswerMessage.answer, answer);
+              assert.equal(emittedAnswerMessage.roomName, meshRoomName);
 
-            done();
-          });
+              done();
+            }
+          );
 
           mc.emit(Connection.EVENTS.answer.key, answerMessage);
         });
@@ -582,12 +627,15 @@ describe('MeshRoom', () => {
             candidate: candidate,
           };
 
-          meshRoom.on(MeshRoom.MESSAGE_EVENTS.candidate.key, emittedCandidateMessage => {
-            assert.equal(emittedCandidateMessage.candidate, candidate);
-            assert.equal(emittedCandidateMessage.roomName, meshRoomName);
+          meshRoom.on(
+            MeshRoom.MESSAGE_EVENTS.candidate.key,
+            emittedCandidateMessage => {
+              assert.equal(emittedCandidateMessage.candidate, candidate);
+              assert.equal(emittedCandidateMessage.roomName, meshRoomName);
 
-            done();
-          });
+              done();
+            }
+          );
 
           mc.emit(Connection.EVENTS.candidate.key, candidateMessage);
         });
@@ -629,7 +677,7 @@ describe('MeshRoom', () => {
     it('should emit a data event', done => {
       const message = {
         data: 'foobar',
-        src:  remotePeerId,
+        src: remotePeerId,
       };
 
       meshRoom.on(MeshRoom.EVENTS.data.key, receivedMessage => {

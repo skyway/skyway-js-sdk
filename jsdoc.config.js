@@ -1,9 +1,6 @@
 module.exports = {
   source: {
-    include: [
-      './README.md',
-      './src',
-    ],
+    include: ['./README.md', './src'],
   },
   templates: {
     default: {
@@ -12,6 +9,6 @@ module.exports = {
   },
   opts: {
     destination: './docs',
-    recurse:     true,
+    recurse: true,
   },
 };

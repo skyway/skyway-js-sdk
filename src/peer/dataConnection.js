@@ -1,27 +1,18 @@
 import BinaryPack from 'js-binarypack';
-import Enum       from 'enum';
-import sizeof     from 'object-sizeof';
+import Enum from 'enum';
+import sizeof from 'object-sizeof';
 
 import Negotiator from './negotiator';
 import Connection from './connection';
-import util       from '../shared/util';
-import logger     from '../shared/logger';
-import config     from '../shared/config';
+import util from '../shared/util';
+import logger from '../shared/logger';
+import config from '../shared/config';
 
-const DCEvents = new Enum([
-  'open',
-  'data',
-  'error',
-]);
+const DCEvents = new Enum(['open', 'data', 'error']);
 
 DCEvents.extend(Connection.EVENTS.enums);
 
-const DCSerializations = new Enum([
-  'binary',
-  'binary-utf8',
-  'json',
-  'none',
-]);
+const DCSerializations = new Enum(['binary', 'binary-utf8', 'json', 'none']);
 
 /**
  * Class that manages data connections to other peers.
@@ -67,7 +58,9 @@ class DataConnection extends Connection {
       this.serialization = this._options.serialization;
 
       if (this._isUnreliableDCInit(this.dcInit)) {
-        logger.warn('You can not specify serialization with unreliable mode enabled.');
+        logger.warn(
+          'You can not specify serialization with unreliable mode enabled.'
+        );
         this.serialization = DataConnection.SERIALIZATIONS.binary.key;
       }
     }
@@ -104,10 +97,10 @@ class DataConnection extends Connection {
     this._negotiator.startConnection(
       this._options.payload || {
         originator: true,
-        type:       'data',
-        label:      this.label,
-        dcInit:     this.dcInit,
-        pcConfig:   this._options.pcConfig,
+        type: 'data',
+        label: this.label,
+        dcInit: this.dcInit,
+        pcConfig: this._options.pcConfig,
       }
     );
     this._pcAvailable = true;
@@ -169,12 +162,12 @@ class DataConnection extends Connection {
     let currData = this._receivedData[dataMeta.id];
     if (!currData) {
       currData = this._receivedData[dataMeta.id] = {
-        size:          dataMeta.size,
-        type:          dataMeta.type,
-        name:          dataMeta.name,
-        mimeType:      dataMeta.mimeType,
-        totalParts:    dataMeta.totalParts,
-        parts:         new Array(dataMeta.totalParts),
+        size: dataMeta.size,
+        type: dataMeta.type,
+        name: dataMeta.name,
+        mimeType: dataMeta.mimeType,
+        totalParts: dataMeta.totalParts,
+        parts: new Array(dataMeta.totalParts),
         receivedParts: 0,
       };
     }
@@ -191,10 +184,14 @@ class DataConnection extends Connection {
       let finalData;
       switch (currData.type) {
         case 'Blob':
-          finalData = new Blob([new Uint8Array(unpackedData)], {type: currData.mimeType});
+          finalData = new Blob([new Uint8Array(unpackedData)], {
+            type: currData.mimeType,
+          });
           break;
         case 'File':
-          finalData = new File([new Uint8Array(unpackedData)], currData.name, {type: currData.mimeType});
+          finalData = new File([new Uint8Array(unpackedData)], currData.name, {
+            type: currData.mimeType,
+          });
           break;
         default:
           finalData = unpackedData;
@@ -212,7 +209,9 @@ class DataConnection extends Connection {
     if (!this.open) {
       this.emit(
         DataConnection.EVENTS.error.key,
-        new Error('Connection is not open. You should listen for the `open` event before sending messages.')
+        new Error(
+          'Connection is not open. You should listen for the `open` event before sending messages.'
+        )
       );
       return;
     }
@@ -233,14 +232,14 @@ class DataConnection extends Connection {
 
     // Everything below is for serialization binary or binary-utf8
 
-    let packedData = BinaryPack.pack(data);
-    let size = packedData.size;
-    let type = data.constructor.name;
+    const packedData = BinaryPack.pack(data);
+    const size = packedData.size;
+    const type = data.constructor.name;
 
     const dataMeta = {
-      id:         util.randomId(),
-      type:       type,
-      size:       size,
+      id: util.randomId(),
+      type: type,
+      size: size,
       totalParts: 0,
     };
 
@@ -259,7 +258,10 @@ class DataConnection extends Connection {
 
     // Perform any required slicing
     for (let sliceIndex = 0; sliceIndex < numSlices; sliceIndex++) {
-      const slice = packedData.slice(sliceIndex * chunkSize, (sliceIndex + 1) * chunkSize);
+      const slice = packedData.slice(
+        sliceIndex * chunkSize,
+        (sliceIndex + 1) * chunkSize
+      );
       dataMeta.index = sliceIndex;
       dataMeta.data = slice;
 
@@ -291,7 +293,7 @@ class DataConnection extends Connection {
       // Try sending a new chunk with every callback
       this.sendInterval = setInterval(() => {
         // Might need more extensive buffering than this:
-        let currMsg = this._sendBuffer.shift();
+        const currMsg = this._sendBuffer.shift();
         try {
           this._dc.send(currMsg);
         } catch (error) {

@@ -1,7 +1,7 @@
 import logger from '../../src/shared/logger';
 
 import assert from 'power-assert';
-import sinon  from 'sinon';
+import sinon from 'sinon';
 
 describe('Logger', () => {
   describe('Log Related methods', () => {

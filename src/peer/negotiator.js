@@ -1,8 +1,8 @@
 import EventEmitter from 'events';
-import Enum         from 'enum';
+import Enum from 'enum';
 
 import sdpUtil from '../shared/sdpUtil';
-import logger  from '../shared/logger';
+import logger from '../shared/logger';
 
 const NegotiatorEvents = new Enum([
   'addStream',
@@ -132,7 +132,8 @@ class Negotiator extends EventEmitter {
     this._setRemoteDescription(offerSdp)
       .then(() => {
         return this._makeAnswerSdp();
-      }).then(answer => {
+      })
+      .then(answer => {
         this.emit(Negotiator.EVENTS.answerCreated.key, answer);
       });
   }
@@ -156,11 +157,14 @@ class Negotiator extends EventEmitter {
    * @param {object} candidate - An object containing Candidate SDP.
    */
   handleCandidate(candidate) {
-    this._pc.addIceCandidate(new RTCIceCandidate(candidate)).then(() => {
-      logger.log('Added ICE candidate');
-    }).catch(e => {
-      logger.error('Failed to add ICE candidate', e);
-    });
+    this._pc
+      .addIceCandidate(new RTCIceCandidate(candidate))
+      .then(() => {
+        logger.log('Added ICE candidate');
+      })
+      .catch(e => {
+        logger.error('Failed to add ICE candidate', e);
+      });
   }
 
   /**
@@ -169,7 +173,10 @@ class Negotiator extends EventEmitter {
   cleanup() {
     logger.log('Cleaning up PeerConnection');
 
-    if (this._pc && (this._pc.readyState !== 'closed' || this._pc.signalingState !== 'closed')) {
+    if (
+      this._pc &&
+      (this._pc.readyState !== 'closed' || this._pc.signalingState !== 'closed')
+    ) {
       this._pc.close();
     }
     this._pc = null;
@@ -183,11 +190,15 @@ class Negotiator extends EventEmitter {
    */
   _createPeerConnection(pcConfig) {
     logger.log('Creating RTCPeerConnection');
-    this._isAddTrackAvailable = typeof RTCPeerConnection.prototype.addTrack === 'function';
+    this._isAddTrackAvailable =
+      typeof RTCPeerConnection.prototype.addTrack === 'function';
     this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
-    this._isRtpSenderAvailable = typeof RTCPeerConnection.prototype.getSenders === 'function';
-    this._isRtpLocalStreamsAvailable = typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
-    this._isAddTransceiverAvailable = typeof RTCPeerConnection.prototype.addTransceiver === 'function';
+    this._isRtpSenderAvailable =
+      typeof RTCPeerConnection.prototype.getSenders === 'function';
+    this._isRtpLocalStreamsAvailable =
+      typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
+    this._isAddTransceiverAvailable =
+      typeof RTCPeerConnection.prototype.addTransceiver === 'function';
 
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
@@ -229,7 +240,10 @@ class Negotiator extends EventEmitter {
       } else {
         logger.log('ICE candidates gathering complete');
 
-        this.emit(Negotiator.EVENTS.iceCandidatesComplete.key, pc.localDescription);
+        this.emit(
+          Negotiator.EVENTS.iceCandidatesComplete.key,
+          pc.localDescription
+        );
       }
     };
 
@@ -246,7 +260,9 @@ class Negotiator extends EventEmitter {
            * but it seems buggy at 2017/08, so we don't use iceRestart to reconnect intensionally.
            * Ref: https://github.com/nttcom-webcore/ECLRTC-JS-SDK/pull/37
            */
-          logger.log('iceConnectionState is disconnected, trying reconnect by browser');
+          logger.log(
+            'iceConnectionState is disconnected, trying reconnect by browser'
+          );
           break;
         case 'failed':
           logger.log('iceConnectionState is failed, closing connection');
@@ -265,11 +281,10 @@ class Negotiator extends EventEmitter {
       if (pc.signalingState === 'stable') {
         // Emit negotiationNeeded event in case additional handling is needed.
         if (this._originator) {
-          this._makeOfferSdp()
-            .then(offer => {
-              this._setLocalDescription(offer);
-              this.emit(Negotiator.EVENTS.negotiationNeeded.key);
-            });
+          this._makeOfferSdp().then(offer => {
+            this._setLocalDescription(offer);
+            this.emit(Negotiator.EVENTS.negotiationNeeded.key);
+          });
         } else if (this._replaceStreamCalled) {
           this.handleOffer();
         }
@@ -299,11 +314,13 @@ class Negotiator extends EventEmitter {
     // DataConnection
     if (this._type !== 'media') {
       createOfferPromise = this._pc.createOffer();
-    // MediaConnection
+      // MediaConnection
     } else {
       if (this._isAddTransceiverAvailable) {
-        this._recvonlyState.audio && this._pc.addTransceiver('audio').setDirection('recvonly');
-        this._recvonlyState.video && this._pc.addTransceiver('video').setDirection('recvonly');
+        this._recvonlyState.audio &&
+          this._pc.addTransceiver('audio').setDirection('recvonly');
+        this._recvonlyState.video &&
+          this._pc.addTransceiver('video').setDirection('recvonly');
         createOfferPromise = this._pc.createOffer();
       } else {
         const offerOptions = {};
@@ -316,32 +333,38 @@ class Negotiator extends EventEmitter {
 
     return createOfferPromise
       .then(offer => {
-      logger.log('Created offer.');
+        logger.log('Created offer.');
 
-      if (this._audioBandwidth) {
-        offer.sdp = sdpUtil.addAudioBandwidth(offer.sdp, this._audioBandwidth);
-      }
-      if (this._videoBandwidth) {
-        offer.sdp = sdpUtil.addVideoBandwidth(offer.sdp, this._videoBandwidth);
-      }
-      if (this._audioCodec) {
-        offer.sdp = sdpUtil.filterAudioCodec(offer.sdp, this._audioCodec);
-      }
-      if (this._videoCodec) {
-        offer.sdp = sdpUtil.filterVideoCodec(offer.sdp, this._videoCodec);
-      }
+        if (this._audioBandwidth) {
+          offer.sdp = sdpUtil.addAudioBandwidth(
+            offer.sdp,
+            this._audioBandwidth
+          );
+        }
+        if (this._videoBandwidth) {
+          offer.sdp = sdpUtil.addVideoBandwidth(
+            offer.sdp,
+            this._videoBandwidth
+          );
+        }
+        if (this._audioCodec) {
+          offer.sdp = sdpUtil.filterAudioCodec(offer.sdp, this._audioCodec);
+        }
+        if (this._videoCodec) {
+          offer.sdp = sdpUtil.filterVideoCodec(offer.sdp, this._videoCodec);
+        }
 
-      return Promise.resolve(offer);
-    })
-    .catch(error => {
-      error.type = 'webrtc';
-      logger.error(error);
-      this.emit(Negotiator.EVENTS.error.key, error);
+        return Promise.resolve(offer);
+      })
+      .catch(error => {
+        error.type = 'webrtc';
+        logger.error(error);
+        this.emit(Negotiator.EVENTS.error.key, error);
 
-      logger.log('Failed to createOffer, ', error);
+        logger.log('Failed to createOffer, ', error);
 
-      return Promise.reject(error);
-    });
+        return Promise.reject(error);
+      });
   }
 
   /**
@@ -350,15 +373,22 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _makeAnswerSdp() {
-    return this._pc.createAnswer()
+    return this._pc
+      .createAnswer()
       .then(answer => {
         logger.log('Created answer.');
 
         if (this._audioBandwidth) {
-          answer.sdp = sdpUtil.addAudioBandwidth(answer.sdp, this._audioBandwidth);
+          answer.sdp = sdpUtil.addAudioBandwidth(
+            answer.sdp,
+            this._audioBandwidth
+          );
         }
         if (this._videoBandwidth) {
-          answer.sdp = sdpUtil.addVideoBandwidth(answer.sdp, this._videoBandwidth);
+          answer.sdp = sdpUtil.addVideoBandwidth(
+            answer.sdp,
+            this._videoBandwidth
+          );
         }
         if (this._audioCodec) {
           answer.sdp = sdpUtil.filterAudioCodec(answer.sdp, this._audioCodec);
@@ -367,10 +397,13 @@ class Negotiator extends EventEmitter {
           answer.sdp = sdpUtil.filterVideoCodec(answer.sdp, this._videoCodec);
         }
 
-        return this._pc.setLocalDescription(answer)
+        return this._pc
+          .setLocalDescription(answer)
           .then(() => {
             logger.log('Set localDescription: answer');
-            logger.log(`Setting local description ${JSON.stringify(answer.sdp)}`);
+            logger.log(
+              `Setting local description ${JSON.stringify(answer.sdp)}`
+            );
             return Promise.resolve(answer);
           })
           .catch(error => {
@@ -401,7 +434,8 @@ class Negotiator extends EventEmitter {
    */
   _setLocalDescription(offer) {
     logger.log(`Setting local description ${JSON.stringify(offer.sdp)}`);
-    return this._pc.setLocalDescription(offer)
+    return this._pc
+      .setLocalDescription(offer)
       .then(() => {
         logger.log('Set localDescription: offer');
         this._isExpectingAnswer = true;
@@ -426,7 +460,8 @@ class Negotiator extends EventEmitter {
    */
   _setRemoteDescription(sdp) {
     logger.log(`Setting remote description ${JSON.stringify(sdp)}`);
-    return this._pc.setRemoteDescription(new RTCSessionDescription(sdp))
+    return this._pc
+      .setRemoteDescription(new RTCSessionDescription(sdp))
       .then(() => {
         logger.log('Set remoteDescription:', sdp.type);
         return Promise.resolve();
@@ -453,14 +488,18 @@ class Negotiator extends EventEmitter {
     };
 
     const hasStream = options.stream instanceof MediaStream;
-    const hasAudioTrack = hasStream ? options.stream.getAudioTracks().length !== 0 : false;
-    const hasVideoTrack = hasStream ? options.stream.getVideoTracks().length !== 0 : false;
+    const hasAudioTrack = hasStream
+      ? options.stream.getAudioTracks().length !== 0
+      : false;
+    const hasVideoTrack = hasStream
+      ? options.stream.getVideoTracks().length !== 0
+      : false;
 
     // force true if stream not passed(backward compatibility)
     if (
-      hasStream === false
-      && options.audioReceiveEnabled === undefined
-      && options.videoReceiveEnabled === undefined
+      hasStream === false &&
+      options.audioReceiveEnabled === undefined &&
+      options.videoReceiveEnabled === undefined
     ) {
       state.audio = true;
       state.video = true;
@@ -477,10 +516,14 @@ class Negotiator extends EventEmitter {
 
     // If stream has track, ignore options, which results in setting sendrecv internally.
     if (options.audioReceiveEnabled === false && hasAudioTrack) {
-      logger.warn('Option audioReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = audio)');
+      logger.warn(
+        'Option audioReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = audio)'
+      );
     }
     if (options.videoReceiveEnabled === false && hasVideoTrack) {
-      logger.warn('Option videoReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = video)');
+      logger.warn(
+        'Option videoReceiveEnabled will be treated as true, because passed stream has MediaStreamTrack(kind = video)'
+      );
     }
 
     return state;

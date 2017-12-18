@@ -36,7 +36,9 @@ function randomId() {
  * @return {string} A token consisting of random alphabet and integer.
  */
 function randomToken() {
-  return Math.random().toString(36).substr(2);
+  return Math.random()
+    .toString(36)
+    .substr(2);
 }
 
 /**
@@ -45,12 +47,12 @@ function randomToken() {
  * @return {ArrayBuffer} The combined ArrayBuffer.
  */
 function joinArrayBuffers(buffers) {
-  let size = buffers.reduce((sum, buffer) => {
+  const size = buffers.reduce((sum, buffer) => {
     return sum + buffer.byteLength;
   }, 0);
-  let tmpArray = new Uint8Array(size);
+  const tmpArray = new Uint8Array(size);
   let currPos = 0;
-  for (let buffer of buffers) {
+  for (const buffer of buffers) {
     tmpArray.set(new Uint8Array(buffer), currPos);
     currPos += buffer.byteLength;
   }
@@ -63,7 +65,7 @@ function joinArrayBuffers(buffers) {
  * @param {Function} cb - Callback function that called after load event fired.
  */
 function blobToArrayBuffer(blob, cb) {
-  let fr = new FileReader();
+  const fr = new FileReader();
   fr.onload = event => {
     cb(event.target.result);
   };
