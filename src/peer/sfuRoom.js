@@ -1,15 +1,12 @@
 import Enum from 'enum';
 
-import Room       from './room';
+import Room from './room';
 import Negotiator from './negotiator';
-import logger     from '../shared/logger';
-import sdpUtil    from '../shared/sdpUtil';
-import util       from '../shared/util';
+import logger from '../shared/logger';
+import sdpUtil from '../shared/sdpUtil';
+import util from '../shared/util';
 
-const MessageEvents = [
-  'offerRequest',
-  'candidate',
-];
+const MessageEvents = ['offerRequest', 'candidate'];
 
 const SFUEvents = new Enum([]);
 SFUEvents.extend(Room.EVENTS.enums);
@@ -84,10 +81,10 @@ class SFURoom extends Room {
       this._negotiator.handleOffer(offer);
     } else {
       this._negotiator.startConnection({
-        type:     'media',
-        stream:   this._localStream,
+        type: 'media',
+        stream: this._localStream,
         pcConfig: this._options.pcConfig,
-        offer:    offer,
+        offer: offer,
       });
       this._setupNegotiatorMessageHandlers();
       this._connectionStarted = true;
@@ -118,7 +115,11 @@ class SFURoom extends Room {
         this.remoteStreams[remoteStream.id] = remoteStream;
         this.emit(SFURoom.EVENTS.stream.key, remoteStream);
 
-        logger.log(`Received remote media stream for ${remoteStream.peerId} in ${this.name}`);
+        logger.log(
+          `Received remote media stream for ${remoteStream.peerId} in ${
+            this.name
+          }`
+        );
       } else {
         this._unknownStreams[remoteStream.id] = remoteStream;
       }
@@ -143,7 +144,7 @@ class SFURoom extends Room {
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
       const answerMessage = {
         roomName: this.name,
-        answer:   answer,
+        answer: answer,
       };
       this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
     });
@@ -154,7 +155,7 @@ class SFURoom extends Room {
 
     this._negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
       const candidateMessage = {
-        roomName:  this.name,
+        roomName: this.name,
         candidate: candidate,
       };
       this.emit(SFURoom.MESSAGE_EVENTS.candidate.key, candidateMessage);
@@ -217,7 +218,7 @@ class SFURoom extends Room {
 
     const message = {
       roomName: this.name,
-      data:     data,
+      data: data,
     };
     this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
   }
@@ -259,7 +260,7 @@ class SFURoom extends Room {
   updateMsidMap(msids = {}) {
     this._msidMap = msids;
 
-    for (let msid of Object.keys(this._unknownStreams)) {
+    for (const msid of Object.keys(this._unknownStreams)) {
       if (this._msidMap[msid]) {
         const remoteStream = this._unknownStreams[msid];
         remoteStream.peerId = this._msidMap[remoteStream.id];

@@ -1,9 +1,9 @@
-import assert     from 'power-assert';
-import sinon      from 'sinon';
+import assert from 'power-assert';
+import sinon from 'sinon';
 import BinaryPack from 'js-binarypack';
 
-import util       from '../../src/shared/util';
-import config     from '../../src/shared/config';
+import util from '../../src/shared/util';
+import config from '../../src/shared/config';
 import Negotiator from '../../src/peer/negotiator';
 
 import connectionInjector from 'inject-loader!../../src/peer/connection';
@@ -35,15 +35,16 @@ describe('DataConnection', () => {
         this[event](arg);
       },
       startConnection: startSpy,
-      cleanup:         cleanupSpy,
-      handleAnswer:    answerSpy,
+      cleanup: cleanupSpy,
+      handleAnswer: answerSpy,
       handleCandidate: candidateSpy,
     });
     // hoist statics
     negotiatorStub.EVENTS = Negotiator.EVENTS;
 
-    Connection = connectionInjector({'./negotiator': negotiatorStub}).default;
-    DataConnection = dataConnectionInjector({'./connection': Connection}).default;
+    Connection = connectionInjector({ './negotiator': negotiatorStub }).default;
+    DataConnection = dataConnectionInjector({ './connection': Connection })
+      .default;
   });
 
   afterEach(() => {
@@ -54,7 +55,7 @@ describe('DataConnection', () => {
   });
 
   describe('Constructor', () => {
-    it('should call negotiator\'s startConnection method when created', () => {
+    it("should call negotiator's startConnection method when created", () => {
       const dc = new DataConnection('remoteId', {});
 
       assert(dc);
@@ -62,23 +63,25 @@ describe('DataConnection', () => {
     });
 
     it('should store any messages passed in when created', () => {
-      const dc = new DataConnection('remoteId', {queuedMessages: ['message']});
+      const dc = new DataConnection('remoteId', {
+        queuedMessages: ['message'],
+      });
       assert.deepEqual(dc._options.queuedMessages, ['message']);
     });
 
     it('should set properties from arguments properly', () => {
       const id = 'remoteId';
       const label = 'label';
-      const dcInit = {ordered: false};
+      const dcInit = { ordered: false };
       const serialization = 'binary';
       const peerBrowser = 'browser';
       const metadata = 'meta';
       const options = {
-        label:         label,
-        dcInit:        dcInit,
+        label: label,
+        dcInit: dcInit,
         serialization: serialization,
-        metadata:      metadata,
-        payload:       {browser: peerBrowser},
+        metadata: metadata,
+        payload: { browser: peerBrowser },
       };
 
       const dc = new DataConnection(id, options);
@@ -96,7 +99,7 @@ describe('DataConnection', () => {
 
   describe('Initialize', () => {
     it('should appropriately set and configure dc upon intialization', () => {
-      const dcObj = {test: 'foobar'};
+      const dcObj = { test: 'foobar' };
 
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, dcObj);
@@ -116,7 +119,7 @@ describe('DataConnection', () => {
     it('should throw an error if serialization is not valid', done => {
       let dc;
       try {
-        dc = new DataConnection('remoteId', {serialization: 'foobar'});
+        dc = new DataConnection('remoteId', { serialization: 'foobar' });
       } catch (e) {
         assert(dc === undefined);
         done();
@@ -124,11 +127,13 @@ describe('DataConnection', () => {
     });
 
     it('should process any queued messages after PeerConnection object is created', () => {
-      const messages = [{type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message'}];
+      const messages = [
+        { type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message' },
+      ];
 
-      let spy = sinon.spy();
+      const spy = sinon.spy();
       sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy);
-      const dc = new DataConnection('remoteId', {queuedMessages: messages});
+      const dc = new DataConnection('remoteId', { queuedMessages: messages });
 
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy.calledOnce, true);
@@ -137,15 +142,20 @@ describe('DataConnection', () => {
     });
 
     it('should correctly handle ALL of multiple queued messages', () => {
-      const messages = [{type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message1'},
-                        {type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: 'message2'}];
+      const messages = [
+        { type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message1' },
+        {
+          type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
+          payload: 'message2',
+        },
+      ];
 
-      let spy1 = sinon.spy();
-      let spy2 = sinon.spy();
+      const spy1 = sinon.spy();
+      const spy2 = sinon.spy();
       sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
       sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
 
-      const dc = new DataConnection('remoteId', {queuedMessages: messages});
+      const dc = new DataConnection('remoteId', { queuedMessages: messages });
 
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy1.calledOnce, true);
@@ -153,14 +163,14 @@ describe('DataConnection', () => {
     });
 
     it('should not process any invalid queued messages', () => {
-      const messages = [{type: 'WRONG', payload: 'message'}];
+      const messages = [{ type: 'WRONG', payload: 'message' }];
 
-      let spy1 = sinon.spy();
-      let spy2 = sinon.spy();
+      const spy1 = sinon.spy();
+      const spy2 = sinon.spy();
       sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
       sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
 
-      const dc = new DataConnection('remoteId', {queuedMessages: messages});
+      const dc = new DataConnection('remoteId', { queuedMessages: messages });
 
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy1.called, false);
@@ -171,7 +181,7 @@ describe('DataConnection', () => {
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
-      let spy = sinon.spy(dc, 'emit');
+      const spy = sinon.spy(dc, 'emit');
 
       assert.equal(dc.open, false);
       dc._dc.onopen();
@@ -187,11 +197,11 @@ describe('DataConnection', () => {
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
-      let spy = sinon.spy(dc, '_handleDataMessage');
+      const spy = sinon.spy(dc, '_handleDataMessage');
 
-      dc._dc.onmessage({data: message});
+      dc._dc.onmessage({ data: message });
       assert(spy.calledOnce);
-      assert.deepEqual(spy.args[0][0], {data: message});
+      assert.deepEqual(spy.args[0][0], { data: message });
 
       spy.resetHistory();
     });
@@ -200,7 +210,7 @@ describe('DataConnection', () => {
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
-      let spy = sinon.spy(dc, 'close');
+      const spy = sinon.spy(dc, 'close');
       dc._dc.onclose();
       assert(spy.calledOnce);
 
@@ -214,7 +224,7 @@ describe('DataConnection', () => {
       dc = new DataConnection('remoteId', {});
     });
 
-    it('should emit \'candidate\' on negotiator \'iceCandidate\' event', done => {
+    it("should emit 'candidate' on negotiator 'iceCandidate' event", done => {
       const candidate = Symbol();
       dc.on(Connection.EVENTS.candidate.key, connectionCandidate => {
         assert(connectionCandidate);
@@ -228,7 +238,7 @@ describe('DataConnection', () => {
       dc._negotiator.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
     });
 
-    it('should emit \'answer\' on negotiator \'answerCreated\' event', done => {
+    it("should emit 'answer' on negotiator 'answerCreated' event", done => {
       const answer = Symbol();
       dc.on(Connection.EVENTS.answer.key, connectionCandidate => {
         assert(connectionCandidate);
@@ -242,7 +252,7 @@ describe('DataConnection', () => {
       dc._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
     });
 
-    it('should emit \'offer\' on negotiator \'offerCreated\' event', done => {
+    it("should emit 'offer' on negotiator 'offerCreated' event", done => {
       const offer = Symbol();
       dc.on(Connection.EVENTS.offer.key, connectionOffer => {
         assert(connectionOffer);
@@ -260,9 +270,9 @@ describe('DataConnection', () => {
       dc._negotiator.emit(Negotiator.EVENTS.offerCreated.key, offer);
     });
 
-    it('should cleanup the connection on negotiator \'iceConnectionDisconnected\' event', () => {
+    it("should cleanup the connection on negotiator 'iceConnectionDisconnected' event", () => {
       dc.open = true;
-      let spy = sinon.spy(dc, 'close');
+      const spy = sinon.spy(dc, 'close');
 
       dc._negotiator.emit(Negotiator.EVENTS.iceConnectionFailed.key);
 
@@ -278,18 +288,18 @@ describe('DataConnection', () => {
     });
 
     it('should enable unreliable mode with valid props', () => {
-      const res = dc._isUnreliableDCInit({maxRetransmits: 100});
+      const res = dc._isUnreliableDCInit({ maxRetransmits: 100 });
       assert(res);
 
-      const res2 = dc._isUnreliableDCInit({maxPacketLifeTime: 100});
+      const res2 = dc._isUnreliableDCInit({ maxPacketLifeTime: 100 });
       assert(res2);
     });
 
     it('should not enable unreliable mode with invalid props', () => {
-      const res = dc._isUnreliableDCInit({ordered: false});
+      const res = dc._isUnreliableDCInit({ ordered: false });
       assert.equal(res, false);
 
-      const res2 = dc._isUnreliableDCInit({foo: 100});
+      const res2 = dc._isUnreliableDCInit({ foo: 100 });
       assert.equal(res2, false);
     });
   });
@@ -299,11 +309,11 @@ describe('DataConnection', () => {
       it('should correctly unpack a string message', done => {
         const message = 'foobar.　ほげホゲ文字化け。éü£ (ಠل͜ಠ)( ͡° ͜ʖ ͡°)(ง◕ᴥ◕)ง';
         const dataMeta = {
-          id:         'test',
-          index:      0,
+          id: 'test',
+          index: 0,
           totalParts: 1,
-          data:       BinaryPack.pack(message),
-          type:       typeof message,
+          data: BinaryPack.pack(message),
+          type: typeof message,
         };
 
         const dc = new DataConnection('remoteId');
@@ -315,18 +325,18 @@ describe('DataConnection', () => {
         });
 
         util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
-          dc._handleDataMessage({data: ab});
+          dc._handleDataMessage({ data: ab });
         });
       });
 
       it('should correctly unpack an empty string message', done => {
         const message = '';
         const dataMeta = {
-          id:         'test',
-          index:      0,
+          id: 'test',
+          index: 0,
           totalParts: 1,
-          data:       BinaryPack.pack(message),
-          type:       typeof message,
+          data: BinaryPack.pack(message),
+          type: typeof message,
         };
 
         const dc = new DataConnection('remoteId');
@@ -338,21 +348,21 @@ describe('DataConnection', () => {
         });
 
         util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
-          dc._handleDataMessage({data: ab});
+          dc._handleDataMessage({ data: ab });
         });
       });
 
       it('should correctly unpack JSON messages', done => {
-        const jsonObj = {name: 'testObject'};
+        const jsonObj = { name: 'testObject' };
         // JSON data is binary packed for compression purposes
         const packedJson = BinaryPack.pack(jsonObj);
 
         const dataMeta = {
-          id:         'test',
-          index:      0,
+          id: 'test',
+          index: 0,
           totalParts: 1,
-          data:       packedJson,
-          type:       'json',
+          data: packedJson,
+          type: 'json',
         };
 
         const dc = new DataConnection('remoteId', {});
@@ -364,20 +374,20 @@ describe('DataConnection', () => {
         });
 
         util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
-          dc._handleDataMessage({data: ab});
+          dc._handleDataMessage({ data: ab });
         });
       });
 
       it('should correctly handle Blob messages', done => {
         const message = 'foobar';
-        const blob = new Blob([message], {type: 'text/plain'});
+        const blob = new Blob([message], { type: 'text/plain' });
 
         const dataMeta = {
-          id:         'test',
-          index:      0,
+          id: 'test',
+          index: 0,
           totalParts: 1,
-          data:       BinaryPack.pack(blob),
-          type:       blob.type,
+          data: BinaryPack.pack(blob),
+          type: blob.type,
         };
 
         const dc = new DataConnection('remoteId', {});
@@ -390,7 +400,7 @@ describe('DataConnection', () => {
         });
 
         util.blobToArrayBuffer(BinaryPack.pack(dataMeta), ab => {
-          dc._handleDataMessage({data: ab});
+          dc._handleDataMessage({ data: ab });
         });
       });
 
@@ -402,21 +412,24 @@ describe('DataConnection', () => {
         const packedString = BinaryPack.pack(string);
 
         const slice1 = packedString.slice(0, config.maxChunkSize);
-        const slice2 = packedString.slice(config.maxChunkSize, config.maxChunkSize * 2);
+        const slice2 = packedString.slice(
+          config.maxChunkSize,
+          config.maxChunkSize * 2
+        );
 
         const dataMeta1 = {
-          id:         'test',
-          index:      0,
+          id: 'test',
+          index: 0,
           totalParts: 2,
-          data:       slice1,
-          type:       typeof slice1,
+          data: slice1,
+          type: typeof slice1,
         };
         const dataMeta2 = {
-          id:         'test',
-          index:      1,
+          id: 'test',
+          index: 1,
           totalParts: 2,
-          data:       slice2,
-          type:       typeof slice2,
+          data: slice2,
+          type: typeof slice2,
         };
 
         const dc = new DataConnection('remoteId');
@@ -429,19 +442,19 @@ describe('DataConnection', () => {
         });
 
         util.blobToArrayBuffer(BinaryPack.pack(dataMeta1), ab1 => {
-          dc._handleDataMessage({data: ab1});
+          dc._handleDataMessage({ data: ab1 });
         });
         util.blobToArrayBuffer(BinaryPack.pack(dataMeta2), ab2 => {
-          dc._handleDataMessage({data: ab2});
+          dc._handleDataMessage({ data: ab2 });
         });
       });
     });
 
     describe('when serialization is json', () => {
       it('should correctly parse JSON messages', done => {
-        const jsonObj = {name: 'testObject'};
+        const jsonObj = { name: 'testObject' };
 
-        const dc = new DataConnection('remoteId', {serialization: 'json'});
+        const dc = new DataConnection('remoteId', { serialization: 'json' });
         dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
         dc.on(DataConnection.EVENTS.data.key, data => {
@@ -449,7 +462,7 @@ describe('DataConnection', () => {
           done();
         });
 
-        dc._handleDataMessage({data: JSON.stringify(jsonObj)});
+        dc._handleDataMessage({ data: JSON.stringify(jsonObj) });
       });
     });
 
@@ -457,7 +470,7 @@ describe('DataConnection', () => {
       it('should receive objects exactly as received with no processing', done => {
         const message = Symbol();
 
-        const dc = new DataConnection('remoteId', {serialization: 'none'});
+        const dc = new DataConnection('remoteId', { serialization: 'none' });
         dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
         dc.on(DataConnection.EVENTS.data.key, data => {
@@ -465,7 +478,7 @@ describe('DataConnection', () => {
           done();
         });
 
-        dc._handleDataMessage({data: message});
+        dc._handleDataMessage({ data: message });
       });
     });
   });
@@ -484,10 +497,10 @@ describe('DataConnection', () => {
     });
 
     it('should not call dc.send if called with no arguments', done => {
-      let sendSpy = sinon.spy();
+      const sendSpy = sinon.spy();
 
       const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
+      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, { send: sendSpy });
       dc._dc.onopen();
 
       setTimeout(() => {
@@ -503,10 +516,10 @@ describe('DataConnection', () => {
     describe('when serialization is binary', () => {
       it('should correctly send string messages', done => {
         const message = 'foobar.　ほげホゲ文字化け。éü£ (ಠل͜ಠ)( ͡° ͜ʖ ͡°)(ง◕ᴥ◕)ง';
-        let sendSpy = sinon.spy();
+        const sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, { send: sendSpy });
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -523,10 +536,10 @@ describe('DataConnection', () => {
 
       it('should correctly send empty string', done => {
         const message = '';
-        let sendSpy = sinon.spy();
+        const sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, { send: sendSpy });
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -542,11 +555,11 @@ describe('DataConnection', () => {
       });
 
       it('should correctly pack and send JSON data', done => {
-        const jsonObj = {name: 'testObject'};
-        let sendSpy = sinon.spy();
+        const jsonObj = { name: 'testObject' };
+        const sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, { send: sendSpy });
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -563,11 +576,11 @@ describe('DataConnection', () => {
 
       it('should correctly send Blob data', done => {
         const message = 'foobar';
-        const blob = new Blob([message], {type: 'text/plain'});
-        let sendSpy = sinon.spy();
+        const blob = new Blob([message], { type: 'text/plain' });
+        const sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, { send: sendSpy });
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -587,10 +600,10 @@ describe('DataConnection', () => {
           type: mimeType,
         });
 
-        let sendSpy = sinon.spy();
+        const sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, { send: sendSpy });
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -608,10 +621,10 @@ describe('DataConnection', () => {
         const len = config.maxChunkSize + 1000;
         const string = new Array(len + 1).join('a');
 
-        let sendSpy = sinon.spy();
+        const sendSpy = sinon.spy();
 
         const dc = new DataConnection('remoteId', {});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, { send: sendSpy });
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -632,11 +645,11 @@ describe('DataConnection', () => {
 
     describe('when serialization is json', () => {
       it('should correctly stringify and send JSON data', done => {
-        const jsonObj = {name: 'testObject'};
-        let sendSpy = sinon.spy();
+        const jsonObj = { name: 'testObject' };
+        const sendSpy = sinon.spy();
 
-        const dc = new DataConnection('remoteId', {serialization: 'json'});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
+        const dc = new DataConnection('remoteId', { serialization: 'json' });
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, { send: sendSpy });
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -654,10 +667,10 @@ describe('DataConnection', () => {
     describe('when serialization is none', () => {
       it('should send any data exactly as is with no processing', done => {
         const message = Symbol();
-        let sendSpy = sinon.spy();
+        const sendSpy = sinon.spy();
 
-        const dc = new DataConnection('remoteId', {serialization: 'none'});
-        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {send: sendSpy});
+        const dc = new DataConnection('remoteId', { serialization: 'none' });
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, { send: sendSpy });
         dc._dc.onopen();
 
         setTimeout(() => {
@@ -680,7 +693,7 @@ describe('DataConnection', () => {
       // Force to be open
       dc.open = true;
 
-      let spy = sinon.spy(dc, 'close');
+      const spy = sinon.spy(dc, 'close');
 
       dc.close();
       assert(dc);

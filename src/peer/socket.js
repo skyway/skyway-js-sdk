@@ -1,6 +1,6 @@
 import io from 'socket.io-client';
 import EventEmitter from 'events';
-import queryString  from 'query-string';
+import queryString from 'query-string';
 
 import config from '../shared/config';
 import logger from '../shared/logger';
@@ -28,19 +28,22 @@ class Socket extends EventEmitter {
     this._isPeerIdSet = false;
     this._queue = [];
 
-    this._io  = null;
+    this._io = null;
     this._key = key;
     this._reconnectAttempts = 0;
 
     if (options.host && options.port) {
-      let httpProtocol = options.secure ? 'https://' : 'http://';
-      this.signalingServerUrl = `${httpProtocol}${options.host}:${options.port}`;
+      const httpProtocol = options.secure ? 'https://' : 'http://';
+      this.signalingServerUrl = `${httpProtocol}${options.host}:${
+        options.port
+      }`;
     } else {
       const dispatcherHost = options.dispatcherHost || config.DISPATCHER_HOST;
       const dispatcherPort = options.dispatcherPort || config.DISPATCHER_PORT;
-      const dispatcherSecure = options.dispatcherSecure || config.DISPATCHER_SECURE;
+      const dispatcherSecure =
+        options.dispatcherSecure || config.DISPATCHER_SECURE;
 
-      let httpProtocol = dispatcherSecure ? 'https://' : 'http://';
+      const httpProtocol = dispatcherSecure ? 'https://' : 'http://';
       this._dispatcherUrl = `${httpProtocol}${dispatcherHost}:${dispatcherPort}/signaling`;
     }
   }
@@ -50,7 +53,7 @@ class Socket extends EventEmitter {
    * @type {boolean}
    */
   get isOpen() {
-    return Boolean((this._io && this._io.connected) && this._isOpen);
+    return Boolean(this._io && this._io.connected && this._isOpen);
   }
 
   /**
@@ -72,15 +75,19 @@ class Socket extends EventEmitter {
     }
 
     if (credential) {
-      const encodedCredentialStr = encodeURIComponent(JSON.stringify(credential));
+      const encodedCredentialStr = encodeURIComponent(
+        JSON.stringify(credential)
+      );
       query += `&credential=${encodedCredentialStr}`;
     }
 
     return new Promise(resolve => {
       if (this._dispatcherUrl) {
         this._getSignalingServer().then(serverInfo => {
-          let httpProtocol = serverInfo.secure ? 'https://' : 'http://';
-          this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${serverInfo.port}`;
+          const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
+          this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
+            serverInfo.port
+          }`;
           resolve();
         });
       } else {
@@ -89,8 +96,8 @@ class Socket extends EventEmitter {
     }).then(() => {
       this._io = io(this.signalingServerUrl, {
         'force new connection': true,
-        'query':                query,
-        'reconnectionAttempts': config.reconnectionAttempts,
+        query: query,
+        reconnectionAttempts: config.reconnectionAttempts,
       });
 
       this._io.on('reconnect_failed', () => {
@@ -114,7 +121,10 @@ class Socket extends EventEmitter {
   _connectToNewServer(numAttempts = 0) {
     // max number of attempts to get a new server from the dispatcher.
     const maxNumberOfAttempts = 10;
-    if (numAttempts >= maxNumberOfAttempts || this._reconnectAttempts >= config.numberServersToTry) {
+    if (
+      numAttempts >= maxNumberOfAttempts ||
+      this._reconnectAttempts >= config.numberServersToTry
+    ) {
       this.emit('error', 'Could not connect to server.');
       return;
     }
@@ -122,8 +132,10 @@ class Socket extends EventEmitter {
     // Keep trying until we connect to a new server because consul can take some time to remove from the active list.
     this._getSignalingServer().then(serverInfo => {
       if (this.signalingServerUrl.indexOf(serverInfo.host) === -1) {
-        let httpProtocol = serverInfo.secure ? 'https://' : 'http://';
-        this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${serverInfo.port}`;
+        const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
+        this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
+          serverInfo.port
+        }`;
         this._io.io.uri = this.signalingServerUrl;
         this._io.connect();
         this._reconnectAttempts++;
@@ -162,7 +174,7 @@ class Socket extends EventEmitter {
         const res = JSON.parse(http.responseText);
         if (http.status === 200) {
           if (res && res.domain) {
-            resolve({host: res.domain, port: 443, secure: true});
+            resolve({ host: res.domain, port: 443, secure: true });
             return;
           }
         }
@@ -192,7 +204,7 @@ class Socket extends EventEmitter {
 
     // If we are not connected yet, queue the message
     if (!this.isOpen) {
-      this._queue.push({type: type, message: message});
+      this._queue.push({ type: type, message: message });
       return;
     }
 
@@ -235,7 +247,7 @@ class Socket extends EventEmitter {
     } else {
       // For future development; here we can tell the the developer
       // which connection(p2p/turn/sfu) should be authenticated.
-      logger.warn('Adding a credential when one wasn\'t specified before.');
+      logger.warn("Adding a credential when one wasn't specified before.");
     }
     this._io.io.opts.query = queryString.stringify(parseQuery);
 
@@ -293,7 +305,7 @@ class Socket extends EventEmitter {
    * @private
    */
   _sendQueuedMessages() {
-    for (let data of this._queue) {
+    for (const data of this._queue) {
       this.send(data.type, data.message);
     }
     this._queue = [];

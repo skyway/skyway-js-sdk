@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import Enum         from 'enum';
+import Enum from 'enum';
 
 const Events = [
   'stream',
@@ -72,7 +72,7 @@ class Room extends EventEmitter {
   handleData(dataMessage) {
     const message = {
       data: dataMessage.data,
-      src:  dataMessage.src,
+      src: dataMessage.src,
     };
     this.emit(Room.EVENTS.data.key, message);
   }

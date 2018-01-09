@@ -2,12 +2,12 @@ const webpackConfig = require('./webpack.config.js');
 
 // Test env only attrs
 webpackConfig.module.rules.push({
-  test:    /\.js$/,
+  test: /\.js$/,
   exclude: /node_modules/,
-  use:     {
-    loader:  'istanbul-instrumenter-loader',
+  use: {
+    loader: 'istanbul-instrumenter-loader',
     options: {
-      debug:     true,
+      debug: true,
       esModules: true,
     },
   },
@@ -35,24 +35,18 @@ module.exports = config => {
       './tests/index.js': ['webpack', 'sourcemap'],
     },
 
-    reporters: [
-      'mocha',
-      'coverage',
-    ],
+    reporters: ['mocha', 'coverage'],
 
     browsers: ['ChromeHeadlessNoSandbox'],
     customLaunchers: {
       ChromeHeadlessNoSandbox: {
         base: 'ChromeHeadless',
-        flags: ['--no-sandbox']
-      }
+        flags: ['--no-sandbox'],
+      },
     },
 
     coverageReporter: {
-      reporters: [
-        {type: 'html', dir: './coverage'},
-        {type: 'text'},
-      ],
+      reporters: [{ type: 'html', dir: './coverage' }, { type: 'text' }],
     },
   });
 };

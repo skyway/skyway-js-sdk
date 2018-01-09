@@ -2,10 +2,10 @@ import Enum from 'enum';
 
 const LOG_PREFIX = 'SkyWay: ';
 const LogLevel = new Enum({
-  NONE:  0,
+  NONE: 0,
   ERROR: 1,
-  WARN:  2,
-  FULL:  3,
+  WARN: 2,
+  FULL: 3,
 });
 
 /**

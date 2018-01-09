@@ -1,8 +1,8 @@
 import assert from 'power-assert';
-import sinon  from 'sinon';
+import sinon from 'sinon';
 
 import Negotiator from '../../src/peer/negotiator';
-import logger     from '../../src/shared/logger';
+import logger from '../../src/shared/logger';
 
 describe('Negotiator', () => {
   describe('Constructor', () => {
@@ -29,7 +29,7 @@ describe('Negotiator', () => {
       addStreamSpy = sinon.spy();
       createDCSpy = sinon.spy();
       pcStub = {
-        addStream:         addStreamSpy,
+        addStream: addStreamSpy,
         createDataChannel: createDCSpy,
       };
       newPcStub.returns(pcStub);
@@ -53,7 +53,7 @@ describe('Negotiator', () => {
     it('should call _createPeerConnection pcConfig and set _pc to the result', () => {
       const options = {
         originator: true,
-        pcConfig:   {},
+        pcConfig: {},
       };
 
       negotiator.startConnection(options);
@@ -63,14 +63,14 @@ describe('Negotiator', () => {
       assert.equal(negotiator._pc, pcStub);
     });
 
-    describe('when type is \'media\'', () => {
+    describe("when type is 'media'", () => {
       describe('when originator is true', () => {
         it('should call pc.addStream when stream exists', () => {
           const options = {
-            type:       'media',
-            stream:     {},
+            type: 'media',
+            stream: {},
             originator: true,
-            pcConfig:   {},
+            pcConfig: {},
           };
 
           assert.equal(addStreamSpy.callCount, 0);
@@ -87,9 +87,9 @@ describe('Negotiator', () => {
           makeOfferStub.returns(Promise.resolve('offer'));
 
           const options = {
-            type:       'media',
+            type: 'media',
             originator: true,
-            pcConfig:   {},
+            pcConfig: {},
           };
 
           negotiator.startConnection(options);
@@ -102,11 +102,11 @@ describe('Negotiator', () => {
       describe('when originator is false', () => {
         it('should call pc.addStream and handleOffer', () => {
           const options = {
-            type:       'media',
-            stream:     {},
+            type: 'media',
+            stream: {},
             originator: false,
-            pcConfig:   {},
-            offer:      {},
+            pcConfig: {},
+            offer: {},
           };
 
           assert.equal(addStreamSpy.callCount, 0);
@@ -123,10 +123,10 @@ describe('Negotiator', () => {
       describe('when originator is undefined', () => {
         it('should call pc.addStream and handleOffer', () => {
           const options = {
-            type:     'media',
-            stream:   {},
+            type: 'media',
+            stream: {},
             pcConfig: {},
-            offer:    {},
+            offer: {},
           };
 
           assert.equal(addStreamSpy.callCount, 0);
@@ -141,13 +141,13 @@ describe('Negotiator', () => {
       });
     });
 
-    describe('when type is \'data\'', () => {
+    describe("when type is 'data'", () => {
       describe('when originator is true', () => {
-        it('should call createDataChannel and emit \'dcCreated\'', done => {
+        it("should call createDataChannel and emit 'dcCreated'", done => {
           const options = {
-            type:       'data',
+            type: 'data',
             originator: true,
-            pcConfig:   {},
+            pcConfig: {},
           };
 
           negotiator.on(Negotiator.EVENTS.dcCreated.key, () => {
@@ -167,10 +167,10 @@ describe('Negotiator', () => {
       describe('when originator is false', () => {
         it('should call handleOffer with options.offer', () => {
           const options = {
-            type:       'data',
+            type: 'data',
             originator: false,
-            pcConfig:   {},
-            offer:      {},
+            pcConfig: {},
+            offer: {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -187,10 +187,10 @@ describe('Negotiator', () => {
       describe('when originator is undefined', () => {
         it('should call handleOffer with options.offer', () => {
           const options = {
-            type:       'data',
+            type: 'data',
             originator: false,
-            pcConfig:   {},
-            offer:      {},
+            pcConfig: {},
+            offer: {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -207,10 +207,10 @@ describe('Negotiator', () => {
 
     describe('when type is undefined', () => {
       describe('when originator is true', () => {
-        it('shouldn\'t call createDataConnection or addStream', () => {
+        it("shouldn't call createDataConnection or addStream", () => {
           const options = {
             originator: true,
-            pcConfig:   {},
+            pcConfig: {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -228,10 +228,10 @@ describe('Negotiator', () => {
       describe('when originator is false', () => {
         it('should call handleOffer', () => {
           const options = {
-            type:       'data',
+            type: 'data',
             originator: false,
-            pcConfig:   {},
-            offer:      {},
+            pcConfig: {},
+            offer: {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -247,9 +247,9 @@ describe('Negotiator', () => {
       describe('when originator is undefined', () => {
         it('should call handleOffer', () => {
           const options = {
-            type:     'data',
+            type: 'data',
             pcConfig: {},
-            offer:    {},
+            offer: {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
@@ -282,18 +282,18 @@ describe('Negotiator', () => {
 
       // These values are dummy for assert to distinguish audio and video in tests.
       const videoTrack = {
-        'video': 'video',
+        video: 'video',
       };
       const audioTrack = {
-        'audio': 'audio',
+        audio: 'audio',
       };
       const anotherVideoTrack = {
-        'id':    1000,
-        'video': 'video',
+        id: 1000,
+        video: 'video',
       };
       const anotherAudioTrack = {
-        'id':    1001,
-        'video': 'audio',
+        id: 1001,
+        video: 'audio',
       };
 
       let audioSender;
@@ -424,7 +424,7 @@ describe('Negotiator', () => {
       });
     });
 
-    describe('rtpSenders aren\'t supported', () => {
+    describe("rtpSenders aren't supported", () => {
       const remoteStream = {};
       const newStream = {};
 
@@ -439,7 +439,10 @@ describe('Negotiator', () => {
         negotiator._pc.addStream = addStreamSpy;
         negotiator._isRtpSenderAvailable = false;
 
-        const getLocalStreamsStub = sinon.stub(negotiator._pc, 'getLocalStreams');
+        const getLocalStreamsStub = sinon.stub(
+          negotiator._pc,
+          'getLocalStreams'
+        );
         getLocalStreamsStub.returns([remoteStream]);
 
         // disable getSenders if available
@@ -471,14 +474,15 @@ describe('Negotiator', () => {
       negotiator._pc = negotiator._createPeerConnection();
     });
 
-    describe('when offerSdp is empty', done => {
+    describe('when offerSdp is empty', () => {
       it('should setRemoteDescription with lastOffer', done => {
         const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
 
-        negotiator._pc.createOffer()
+        negotiator._pc
+          .createOffer()
           .then(offer => {
             const offerObject = {
-              sdp:  offer.sdp,
+              sdp: offer.sdp,
               type: offer.type,
             };
 
@@ -499,13 +503,14 @@ describe('Negotiator', () => {
       });
     });
 
-    describe('when offerSdp is not empty', done => {
+    describe('when offerSdp is not empty', () => {
       it('should setRemoteDescription', done => {
         const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
-        negotiator._pc.createOffer()
+        negotiator._pc
+          .createOffer()
           .then(offer => {
             const offerObject = {
-              sdp:  offer.sdp,
+              sdp: offer.sdp,
               type: offer.type,
             };
 
@@ -525,10 +530,11 @@ describe('Negotiator', () => {
     });
 
     it('should emit answerCreated', done => {
-      negotiator._pc.createOffer()
+      negotiator._pc
+        .createOffer()
         .then(offer => {
           const offerObject = {
-            sdp:  offer.sdp,
+            sdp: offer.sdp,
             type: offer.type,
           };
 
@@ -558,13 +564,16 @@ describe('Negotiator', () => {
       });
 
       it('should setRemoteDescription', done => {
-        const setRemoteStub = sinon.stub(negotiator._pc, 'setRemoteDescription').resolves();
+        const setRemoteStub = sinon
+          .stub(negotiator._pc, 'setRemoteDescription')
+          .resolves();
 
-        negotiator._pc.createOffer()
+        negotiator._pc
+          .createOffer()
           .then(offer => {
             // creating an answer is complicated so just use an offer
             const answerObject = {
-              sdp:  offer.sdp,
+              sdp: offer.sdp,
               type: 'answer',
             };
 
@@ -575,32 +584,33 @@ describe('Negotiator', () => {
             // let other async events run
             setTimeout(() => {
               assert.equal(setRemoteStub.callCount, 1);
-              assert(setRemoteStub.calledWith(
-                new RTCSessionDescription(answerObject))
+              assert(
+                setRemoteStub.calledWith(
+                  new RTCSessionDescription(answerObject)
+                )
               );
               done();
             });
           })
           .catch(err => {
-          assert.fail(err);
-        });
+            assert.fail(err);
+          });
       });
 
       it('should set isExpectingAnswer to false', () => {
         sinon.stub(negotiator._pc, 'setRemoteDescription');
 
-        negotiator._pc.createOffer()
-          .then(offer => {
-            // creating an answer is complicated so just use an offer
-            const answerObject = {
-              sdp:  offer.sdp,
-              type: 'answer',
-            };
+        negotiator._pc.createOffer().then(offer => {
+          // creating an answer is complicated so just use an offer
+          const answerObject = {
+            sdp: offer.sdp,
+            type: 'answer',
+          };
 
-            negotiator.handleAnswer(answerObject);
+          negotiator.handleAnswer(answerObject);
 
-            assert.equal(negotiator._isExpectingAnswer, false);
-          });
+          assert.equal(negotiator._isExpectingAnswer, false);
+        });
       });
     });
 
@@ -622,9 +632,10 @@ describe('Negotiator', () => {
 
   describe('handleCandidate', () => {
     const candidate = {
-      candidate:     'candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0',
+      candidate:
+        'candidate:678703848 1 udp 2122260223 192.168.100.1 61209 typ host generation 0',
       sdpMLineIndex: 0,
-      sdpMid:        'data',
+      sdpMid: 'data',
     };
 
     let negotiator;
@@ -632,9 +643,9 @@ describe('Negotiator', () => {
     beforeEach(() => {
       negotiator = new Negotiator();
       const options = {
-        type:       'data',
+        type: 'data',
         originator: true,
-        offer:      {},
+        offer: {},
       };
       negotiator.startConnection(options);
     });
@@ -698,7 +709,7 @@ describe('Negotiator', () => {
   describe('_setupPCListeners', () => {
     it('should set up PeerConnection listeners', () => {
       const negotiator = new Negotiator();
-      const pc = negotiator._pc = negotiator._createPeerConnection();
+      const pc = (negotiator._pc = negotiator._createPeerConnection());
 
       negotiator._setupPCListeners();
       assert.equal(typeof pc.onaddstream, 'function');
@@ -710,7 +721,7 @@ describe('Negotiator', () => {
       assert.equal(typeof pc.onsignalingstatechange, 'function');
     });
 
-    describe('RTCPeerConnection\'s event listeners', () => {
+    describe("RTCPeerConnection's event listeners", () => {
       let negotiator;
       let pc;
 
@@ -721,8 +732,8 @@ describe('Negotiator', () => {
       });
 
       describe('onaddstream', () => {
-        it('should emit \'addStream\' with remote stream', done => {
-          let ev = {stream: 'stream'};
+        it("should emit 'addStream' with remote stream", done => {
+          const ev = { stream: 'stream' };
           negotiator.on(Negotiator.EVENTS.addStream.key, stream => {
             assert.equal(stream, ev.stream);
             done();
@@ -733,8 +744,8 @@ describe('Negotiator', () => {
       });
 
       describe('ondatachannel', () => {
-        it('should emit \'dcCreated\' with datachannel', done => {
-          let ev = {channel: 'dc'};
+        it("should emit 'dcCreated' with datachannel", done => {
+          const ev = { channel: 'dc' };
           negotiator.on(Negotiator.EVENTS.dcCreated.key, dc => {
             assert(dc, ev.channel);
             done();
@@ -745,8 +756,8 @@ describe('Negotiator', () => {
       });
 
       describe('onicecandidate', () => {
-        it('should emit \'iceCandidate\' with ice candidate', done => {
-          let ev = {candidate: 'candidate'};
+        it("should emit 'iceCandidate' with ice candidate", done => {
+          const ev = { candidate: 'candidate' };
           negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
             assert(candidate, ev.candidate);
             done();
@@ -755,18 +766,21 @@ describe('Negotiator', () => {
           pc.onicecandidate(ev);
         });
 
-        it('should emit \'iceCandidatesComplete\' when out of candidates', done => {
-          let ev = {};
-          negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, description => {
-            assert(description instanceof RTCSessionDescription);
-            done();
-          });
+        it("should emit 'iceCandidatesComplete' when out of candidates", done => {
+          const ev = {};
+          negotiator.on(
+            Negotiator.EVENTS.iceCandidatesComplete.key,
+            description => {
+              assert(description instanceof RTCSessionDescription);
+              done();
+            }
+          );
 
           pc.onicecandidate(ev);
         });
 
-        it('should not emit \'iceCandidate\' when out of candidates', done => {
-          let ev = {};
+        it("should not emit 'iceCandidate' when out of candidates", done => {
+          const ev = {};
           negotiator.on(Negotiator.EVENTS.iceCandidate.key, () => {
             assert.fail('Should not emit iceCandidate event');
           });
@@ -797,10 +811,9 @@ describe('Negotiator', () => {
           pcStub.restore();
         });
 
-        describe('when pc.iceConnectionState is \'failed\'', () => {
-          it('should emit \'iceConnectionDisconnected\'', done => {
-            negotiator.on(Negotiator.EVENTS.iceConnectionFailed.key,
-            () => {
+        describe("when pc.iceConnectionState is 'failed'", () => {
+          it("should emit 'iceConnectionDisconnected'", done => {
+            negotiator.on(Negotiator.EVENTS.iceConnectionFailed.key, () => {
               done();
             });
             pc.iceConnectionState = 'failed';
@@ -809,7 +822,7 @@ describe('Negotiator', () => {
           });
         });
 
-        describe('when pc.iceConnectionState is \'completed\'', () => {
+        describe("when pc.iceConnectionState is 'completed'", () => {
           it('should set pc.onicecandidate empty function', () => {
             pc.iceConnectionState = 'completed';
             pc.onicecandidate = 'string';
@@ -831,7 +844,7 @@ describe('Negotiator', () => {
             pc.onnegotiationneeded();
             assert.equal(makeOfferSdpSpy.callCount, 1);
           });
-          it('should emit \'offerCreated\'', done => {
+          it("should emit 'offerCreated'", done => {
             const offer = 'offer';
             const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
             cbStub.resolves(offer);
@@ -841,7 +854,7 @@ describe('Negotiator', () => {
             });
             pc.onnegotiationneeded();
           });
-          it('should emit \'negotiationNeeded\'', done => {
+          it("should emit 'negotiationNeeded'", done => {
             const offer = 'offer';
             const cbStub = sinon.stub(negotiator._pc, 'setLocalDescription');
             cbStub.resolves(offer);
@@ -864,11 +877,11 @@ describe('Negotiator', () => {
               assert.equal(handleOfferSpy.callCount, 1);
             });
           });
-          describe('if replaceStream hasn\'t been called', () => {
+          describe("if replaceStream hasn't been called", () => {
             beforeEach(() => {
               negotiator._replaceStreamCalled = false;
             });
-            it('should not emit \'negotiationNeeded\'', done => {
+            it("should not emit 'negotiationNeeded'", done => {
               negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
                 assert.fail('Should not emit negotiationNeeded event');
               });
@@ -881,7 +894,7 @@ describe('Negotiator', () => {
       });
 
       describe('onremovestream', () => {
-        const evt = {stream: 'stream'};
+        const evt = { stream: 'stream' };
         let logSpy;
 
         beforeEach(() => {
@@ -897,7 +910,7 @@ describe('Negotiator', () => {
           logSpy.calledWith('`removestream` triggered');
         });
 
-        it('should emit \'removeStream\'', done => {
+        it("should emit 'removeStream'", done => {
           negotiator.on(Negotiator.EVENTS.removeStream.key, stream => {
             assert.equal(stream, evt.stream);
             done();
@@ -926,21 +939,22 @@ describe('Negotiator', () => {
       createOfferStub = createOfferStub.resolves();
 
       assert.equal(createOfferStub.callCount, 0);
-      negotiator._makeOfferSdp()
-        .then(() => {
-          assert.equal(createOfferStub.callCount, 1);
-        });
+      negotiator._makeOfferSdp().then(() => {
+        assert.equal(createOfferStub.callCount, 1);
+      });
     });
 
     it('should return offer when createOffer succeeds', done => {
       const fakeOffer = 'offer';
       createOfferStub = createOfferStub.resolves(fakeOffer);
 
-      negotiator._makeOfferSdp()
+      negotiator
+        ._makeOfferSdp()
         .then(offer => {
           assert.equal(offer, fakeOffer);
           done();
-        }).catch(() => {
+        })
+        .catch(() => {
           assert.fail();
         });
     });
@@ -956,10 +970,9 @@ describe('Negotiator', () => {
         done();
       });
 
-      negotiator._makeOfferSdp()
-        .then(() => {
-          assert.fail();
-        });
+      negotiator._makeOfferSdp().then(() => {
+        assert.fail();
+      });
     });
   });
 
@@ -982,10 +995,9 @@ describe('Negotiator', () => {
       createAnswerStub = createAnswerStub.resolves();
 
       assert.equal(createAnswerStub.callCount, 0);
-      negotiator._makeAnswerSdp()
-        .then(() => {
-          assert.equal(createAnswerStub.callCount, 1);
-        });
+      negotiator._makeAnswerSdp().then(() => {
+        assert.equal(createAnswerStub.callCount, 1);
+      });
     });
 
     describe('when createAnswer succeeds', () => {
@@ -994,11 +1006,13 @@ describe('Negotiator', () => {
         createAnswerStub = createAnswerStub.resolves(fakeAnswer);
         setLocalDescriptionStub = setLocalDescriptionStub.resolves();
 
-        negotiator._makeAnswerSdp()
+        negotiator
+          ._makeAnswerSdp()
           .then(answer => {
             assert.equal(answer, fakeAnswer);
             done();
-          }).catch(() => {
+          })
+          .catch(() => {
             assert.fail();
           });
       });
@@ -1016,10 +1030,9 @@ describe('Negotiator', () => {
           done();
         });
 
-        negotiator._makeAnswerSdp()
-          .then(() => {
-            assert.fail();
-          });
+        negotiator._makeAnswerSdp().then(() => {
+          assert.fail();
+        });
       });
     });
 
@@ -1034,10 +1047,9 @@ describe('Negotiator', () => {
         done();
       });
 
-      negotiator._makeAnswerSdp()
-        .then(() => {
-          assert.fail();
-        });
+      negotiator._makeAnswerSdp().then(() => {
+        assert.fail();
+      });
     });
   });
 
@@ -1059,14 +1071,13 @@ describe('Negotiator', () => {
       setLocalDescriptionStub = setLocalDescriptionStub.resolves();
 
       assert.equal(setLocalDescriptionStub.callCount, 0);
-      negotiator._setLocalDescription(offer)
-        .then(() => {
-          assert(setLocalDescriptionStub.calledWith(offer));
-          assert.equal(setLocalDescriptionStub.callCount, 1);
-        });
+      negotiator._setLocalDescription(offer).then(() => {
+        assert(setLocalDescriptionStub.calledWith(offer));
+        assert.equal(setLocalDescriptionStub.callCount, 1);
+      });
     });
 
-    it('should emit \'offerCreated\' if setLocalDescription succeeds', done => {
+    it("should emit 'offerCreated' if setLocalDescription succeeds", done => {
       const offer = 'offer';
       setLocalDescriptionStub = setLocalDescriptionStub.resolves(offer);
 
@@ -1114,7 +1125,7 @@ describe('Negotiator', () => {
 
     const sdp = {
       type: 'offer',
-      sdp:  'sdp',
+      sdp: 'sdp',
     };
 
     beforeEach(() => {
@@ -1129,21 +1140,19 @@ describe('Negotiator', () => {
       setRemoteDescriptionStub = setRemoteDescriptionStub.resolves();
 
       assert.equal(setRemoteDescriptionStub.callCount, 0);
-      negotiator._setRemoteDescription(sdp)
-        .then(() => {
-          assert.equal(setRemoteDescriptionStub.callCount, 1);
-          assert.equal(setRemoteDescriptionStub.args[0][0].type, sdp.type);
-          assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
-        });
+      negotiator._setRemoteDescription(sdp).then(() => {
+        assert.equal(setRemoteDescriptionStub.callCount, 1);
+        assert.equal(setRemoteDescriptionStub.args[0][0].type, sdp.type);
+        assert.equal(setRemoteDescriptionStub.args[0][0].sdp, sdp.sdp);
+      });
     });
 
     it('should resolve if setRemoteDescription succeeds', done => {
       setRemoteDescriptionStub = setRemoteDescriptionStub.resolves();
 
-      negotiator._setRemoteDescription(sdp)
-        .then(() => {
-          done();
-        });
+      negotiator._setRemoteDescription(sdp).then(() => {
+        done();
+      });
     });
 
     it('should emit Error if setRemoteDescription fails', done => {
@@ -1178,15 +1187,55 @@ describe('Negotiator', () => {
 
     it('should returns correct state with audio and video stream', () => {
       [
-        [{stream: audioVideoStream, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: false, video: false}],
-        [{stream: audioVideoStream, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: audioVideoStream, audioReceiveEnabled: true}, {audio: false, video: false}],
-        [{stream: audioVideoStream, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: false}],
-        [{stream: audioVideoStream, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: audioVideoStream, audioReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: audioVideoStream, videoReceiveEnabled: true}, {audio: false, video: false}],
-        [{stream: audioVideoStream, videoReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: audioVideoStream}, {audio: false, video: false}],
+        [
+          {
+            stream: audioVideoStream,
+            audioReceiveEnabled: true,
+            videoReceiveEnabled: true,
+          },
+          { audio: false, video: false },
+        ],
+        [
+          {
+            stream: audioVideoStream,
+            audioReceiveEnabled: true,
+            videoReceiveEnabled: false,
+          },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: audioVideoStream, audioReceiveEnabled: true },
+          { audio: false, video: false },
+        ],
+        [
+          {
+            stream: audioVideoStream,
+            audioReceiveEnabled: false,
+            videoReceiveEnabled: true,
+          },
+          { audio: false, video: false },
+        ],
+        [
+          {
+            stream: audioVideoStream,
+            audioReceiveEnabled: false,
+            videoReceiveEnabled: false,
+          },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: audioVideoStream, audioReceiveEnabled: false },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: audioVideoStream, videoReceiveEnabled: true },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: audioVideoStream, videoReceiveEnabled: false },
+          { audio: false, video: false },
+        ],
+        [{ stream: audioVideoStream }, { audio: false, video: false }],
       ].forEach(([options, expect]) => {
         const res = negotiator._getReceiveOnlyState(options);
         assert.deepEqual(res, expect);
@@ -1195,15 +1244,55 @@ describe('Negotiator', () => {
 
     it('should returns correct state with audio only stream', () => {
       [
-        [{stream: audioOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: false, video: true}],
-        [{stream: audioOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: audioOnlyStream, audioReceiveEnabled: true}, {audio: false, video: false}],
-        [{stream: audioOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: true}],
-        [{stream: audioOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: audioOnlyStream, audioReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: audioOnlyStream, videoReceiveEnabled: true}, {audio: false, video: true}],
-        [{stream: audioOnlyStream, videoReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: audioOnlyStream}, {audio: false, video: false}],
+        [
+          {
+            stream: audioOnlyStream,
+            audioReceiveEnabled: true,
+            videoReceiveEnabled: true,
+          },
+          { audio: false, video: true },
+        ],
+        [
+          {
+            stream: audioOnlyStream,
+            audioReceiveEnabled: true,
+            videoReceiveEnabled: false,
+          },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: audioOnlyStream, audioReceiveEnabled: true },
+          { audio: false, video: false },
+        ],
+        [
+          {
+            stream: audioOnlyStream,
+            audioReceiveEnabled: false,
+            videoReceiveEnabled: true,
+          },
+          { audio: false, video: true },
+        ],
+        [
+          {
+            stream: audioOnlyStream,
+            audioReceiveEnabled: false,
+            videoReceiveEnabled: false,
+          },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: audioOnlyStream, audioReceiveEnabled: false },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: audioOnlyStream, videoReceiveEnabled: true },
+          { audio: false, video: true },
+        ],
+        [
+          { stream: audioOnlyStream, videoReceiveEnabled: false },
+          { audio: false, video: false },
+        ],
+        [{ stream: audioOnlyStream }, { audio: false, video: false }],
       ].forEach(([options, expect]) => {
         const res = negotiator._getReceiveOnlyState(options);
         assert.deepEqual(res, expect);
@@ -1212,15 +1301,55 @@ describe('Negotiator', () => {
 
     it('should returns correct state with video only stream', () => {
       [
-        [{stream: videoOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: true, video: false}],
-        [{stream: videoOnlyStream, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: true, video: false}],
-        [{stream: videoOnlyStream, audioReceiveEnabled: true}, {audio: true, video: false}],
-        [{stream: videoOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: false}],
-        [{stream: videoOnlyStream, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: videoOnlyStream, audioReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: videoOnlyStream, videoReceiveEnabled: true}, {audio: false, video: false}],
-        [{stream: videoOnlyStream, videoReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: videoOnlyStream}, {audio: false, video: false}],
+        [
+          {
+            stream: videoOnlyStream,
+            audioReceiveEnabled: true,
+            videoReceiveEnabled: true,
+          },
+          { audio: true, video: false },
+        ],
+        [
+          {
+            stream: videoOnlyStream,
+            audioReceiveEnabled: true,
+            videoReceiveEnabled: false,
+          },
+          { audio: true, video: false },
+        ],
+        [
+          { stream: videoOnlyStream, audioReceiveEnabled: true },
+          { audio: true, video: false },
+        ],
+        [
+          {
+            stream: videoOnlyStream,
+            audioReceiveEnabled: false,
+            videoReceiveEnabled: true,
+          },
+          { audio: false, video: false },
+        ],
+        [
+          {
+            stream: videoOnlyStream,
+            audioReceiveEnabled: false,
+            videoReceiveEnabled: false,
+          },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: videoOnlyStream, audioReceiveEnabled: false },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: videoOnlyStream, videoReceiveEnabled: true },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: videoOnlyStream, videoReceiveEnabled: false },
+          { audio: false, video: false },
+        ],
+        [{ stream: videoOnlyStream }, { audio: false, video: false }],
       ].forEach(([options, expect]) => {
         const res = negotiator._getReceiveOnlyState(options);
         assert.deepEqual(res, expect);
@@ -1229,15 +1358,55 @@ describe('Negotiator', () => {
 
     it('should returns correct state without stream', () => {
       [
-        [{stream: undefined, audioReceiveEnabled: true, videoReceiveEnabled: true}, {audio: true, video: true}],
-        [{stream: undefined, audioReceiveEnabled: true, videoReceiveEnabled: false}, {audio: true, video: false}],
-        [{stream: undefined, audioReceiveEnabled: true}, {audio: true, video: false}],
-        [{stream: undefined, audioReceiveEnabled: false, videoReceiveEnabled: true}, {audio: false, video: true}],
-        [{stream: undefined, audioReceiveEnabled: false, videoReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: undefined, audioReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: undefined, videoReceiveEnabled: true}, {audio: false, video: true}],
-        [{stream: undefined, videoReceiveEnabled: false}, {audio: false, video: false}],
-        [{stream: undefined}, {audio: true, video: true}], // special case for backward compatibility
+        [
+          {
+            stream: undefined,
+            audioReceiveEnabled: true,
+            videoReceiveEnabled: true,
+          },
+          { audio: true, video: true },
+        ],
+        [
+          {
+            stream: undefined,
+            audioReceiveEnabled: true,
+            videoReceiveEnabled: false,
+          },
+          { audio: true, video: false },
+        ],
+        [
+          { stream: undefined, audioReceiveEnabled: true },
+          { audio: true, video: false },
+        ],
+        [
+          {
+            stream: undefined,
+            audioReceiveEnabled: false,
+            videoReceiveEnabled: true,
+          },
+          { audio: false, video: true },
+        ],
+        [
+          {
+            stream: undefined,
+            audioReceiveEnabled: false,
+            videoReceiveEnabled: false,
+          },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: undefined, audioReceiveEnabled: false },
+          { audio: false, video: false },
+        ],
+        [
+          { stream: undefined, videoReceiveEnabled: true },
+          { audio: false, video: true },
+        ],
+        [
+          { stream: undefined, videoReceiveEnabled: false },
+          { audio: false, video: false },
+        ],
+        [{ stream: undefined }, { audio: true, video: true }], // special case for backward compatibility
       ].forEach(([options, expect]) => {
         const res = negotiator._getReceiveOnlyState(options);
         assert.deepEqual(res, expect);
