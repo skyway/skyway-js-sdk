@@ -1,24 +1,22 @@
 import assert from 'power-assert';
-import sinon  from 'sinon';
+import sinon from 'sinon';
 
-import SFURoom    from '../../src/peer/sfuRoom';
+import SFURoom from '../../src/peer/sfuRoom';
 import Negotiator from '../../src/peer/negotiator';
 
 describe('SFURoom', () => {
-  const sfuRoomName  = 'testSFURoom';
-  const peerId       = 'testId';
+  const sfuRoomName = 'testSFURoom';
+  const peerId = 'testId';
   const remotePeerId = 'differentTestId';
-  const pcConfig     = {iceServers: []};
-  const origStream   = {};
+  const pcConfig = { iceServers: [] };
+  const origStream = {};
   let sfuRoom;
 
   beforeEach(() => {
-    sfuRoom = new SFURoom(sfuRoomName, peerId,
-      {
-        pcConfig: pcConfig,
-        stream:   origStream,
-      }
-    );
+    sfuRoom = new SFURoom(sfuRoomName, peerId, {
+      pcConfig: pcConfig,
+      stream: origStream,
+    });
   });
 
   describe('Constructor', () => {
@@ -51,13 +49,16 @@ describe('SFURoom', () => {
   });
 
   describe('handleOffer', () => {
-    const dummyOfferMessage = {offer: {sdp: '', type: 'offer'}};
+    const dummyOfferMessage = { offer: { sdp: '', type: 'offer' } };
     let startConnectionStub;
     let setupNegotiatorSpy;
 
     beforeEach(() => {
-      startConnectionStub =  sinon.stub(sfuRoom._negotiator, 'startConnection');
-      setupNegotiatorSpy = sinon.spy(sfuRoom, '_setupNegotiatorMessageHandlers');
+      startConnectionStub = sinon.stub(sfuRoom._negotiator, 'startConnection');
+      setupNegotiatorSpy = sinon.spy(
+        sfuRoom,
+        '_setupNegotiatorMessageHandlers'
+      );
     });
 
     it('should call negotiator.startConnection', () => {
@@ -117,7 +118,7 @@ describe('SFURoom', () => {
       });
 
       describe('addStream', () => {
-        const stream = {id: 'streamId'};
+        const stream = { id: 'streamId' };
 
         describe('when stream.id is in _msidMap', () => {
           describe('when stream belongs to another peer', () => {
@@ -140,7 +141,7 @@ describe('SFURoom', () => {
 
               sfuRoom._negotiator.emit(Negotiator.EVENTS.addStream.key, stream);
 
-              assert.deepEqual(sfuRoom.remoteStreams, {[stream.id]: stream});
+              assert.deepEqual(sfuRoom.remoteStreams, { [stream.id]: stream });
             });
           });
 
@@ -148,7 +149,11 @@ describe('SFURoom', () => {
             it('should not emit an event or add to remoteStreams', () => {
               sfuRoom._msidMap[stream.id] = peerId;
               sfuRoom.on(SFURoom.EVENTS.stream.key, () => {
-                assert.fail(undefined, undefined, 'Should not have emitted a stream event');
+                assert.fail(
+                  undefined,
+                  undefined,
+                  'Should not have emitted a stream event'
+                );
               });
 
               sfuRoom._negotiator.emit(Negotiator.EVENTS.addStream.key, stream);
@@ -166,14 +171,14 @@ describe('SFURoom', () => {
 
             sfuRoom._negotiator.emit(Negotiator.EVENTS.addStream.key, stream);
 
-            assert.deepEqual(sfuRoom._unknownStreams, {[stream.id]: stream});
+            assert.deepEqual(sfuRoom._unknownStreams, { [stream.id]: stream });
           });
         });
       });
 
       describe('removeStream', () => {
-        const stream = {id: 'streamId', peerId: peerId};
-        const otherStream = {id: 'otherStream', peerId: remotePeerId};
+        const stream = { id: 'streamId', peerId: peerId };
+        const otherStream = { id: 'otherStream', peerId: remotePeerId };
 
         it('should delete the stream from remoteStreams', () => {
           sfuRoom.remoteStreams[stream.id] = stream;
@@ -217,10 +222,13 @@ describe('SFURoom', () => {
 
       describe('negotiationNeeded', () => {
         it('should emit an offerRequest message event', done => {
-          sfuRoom.on(SFURoom.MESSAGE_EVENTS.offerRequest.key, offerRequestMessage => {
-            assert.equal(offerRequestMessage.roomName, sfuRoomName);
-            done();
-          });
+          sfuRoom.on(
+            SFURoom.MESSAGE_EVENTS.offerRequest.key,
+            offerRequestMessage => {
+              assert.equal(offerRequestMessage.roomName, sfuRoomName);
+              done();
+            }
+          );
 
           sfuRoom._negotiator.emit(Negotiator.EVENTS.negotiationNeeded.key);
         });
@@ -248,7 +256,10 @@ describe('SFURoom', () => {
             done();
           });
 
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
+          sfuRoom._negotiator.emit(
+            Negotiator.EVENTS.iceCandidate.key,
+            candidate
+          );
         });
       });
 
@@ -288,7 +299,11 @@ describe('SFURoom', () => {
 
       it('should not emit a peerJoin event', done => {
         sfuRoom.on(SFURoom.EVENTS.peerJoin.key, () => {
-          assert.fail(undefined, undefined, 'Should not have emitted a peerJoin event');
+          assert.fail(
+            undefined,
+            undefined,
+            'Should not have emitted a peerJoin event'
+          );
         });
 
         sfuRoom.handleJoin(joinMessage);
@@ -359,7 +374,7 @@ describe('SFURoom', () => {
         assert.equal(sfuRoom.members.indexOf(removePeerId), -1);
       });
 
-      it('should not change members if user isn\'t in it', () => {
+      it("should not change members if user isn't in it", () => {
         const leaveMessage = {
           src: 'notAMember',
         };
@@ -404,7 +419,11 @@ describe('SFURoom', () => {
         };
 
         sfuRoom.on(SFURoom.EVENTS.peerLeave.key, () => {
-          assert.fail(undefined, undefined, 'Should not have emitted a peerLeave event');
+          assert.fail(
+            undefined,
+            undefined,
+            'Should not have emitted a peerLeave event'
+          );
         });
 
         sfuRoom.handleLeave(leaveMessage);
@@ -438,7 +457,11 @@ describe('SFURoom', () => {
       sfuRoom._open = false;
 
       sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, () => {
-        assert.fail(undefined, undefined, 'Should not have emitted a broadcast event');
+        assert.fail(
+          undefined,
+          undefined,
+          'Should not have emitted a broadcast event'
+        );
       });
 
       sfuRoom.send(data);
@@ -450,7 +473,7 @@ describe('SFURoom', () => {
 
   describe('close', () => {
     it('should emit close and leave events when close() is called', () => {
-      const message = {roomName: sfuRoomName};
+      const message = { roomName: sfuRoomName };
       sfuRoom._open = true;
 
       const emitSpy = sinon.spy(sfuRoom, 'emit');
@@ -476,7 +499,10 @@ describe('SFURoom', () => {
     });
 
     it('should call replaceStream on room._negotiator', () => {
-      const negotiatorReplaceStreamStub = sinon.stub(sfuRoom._negotiator, 'replaceStream');
+      const negotiatorReplaceStreamStub = sinon.stub(
+        sfuRoom._negotiator,
+        'replaceStream'
+      );
 
       sfuRoom.replaceStream(newStream);
 
@@ -487,7 +513,7 @@ describe('SFURoom', () => {
 
   describe('updateMsidMap', () => {
     it('should update room._msidMap', () => {
-      const newMsidMap = {stream1: {}, stream2: {}};
+      const newMsidMap = { stream1: {}, stream2: {} };
 
       assert.deepEqual(sfuRoom._msidMap, {});
       sfuRoom.updateMsidMap(newMsidMap);
@@ -495,7 +521,7 @@ describe('SFURoom', () => {
     });
 
     it('should emit stream if previously unknown stream is in msidMap', done => {
-      const stream = {id: 'streamId'};
+      const stream = { id: 'streamId' };
 
       const newMsidMap = {};
       newMsidMap[stream.id] = remotePeerId;
@@ -518,7 +544,7 @@ describe('SFURoom', () => {
     it('should emit a data event', done => {
       const message = {
         data: 'foobar',
-        src:  remotePeerId,
+        src: remotePeerId,
       };
 
       sfuRoom.on(SFURoom.EVENTS.data.key, receivedMessage => {

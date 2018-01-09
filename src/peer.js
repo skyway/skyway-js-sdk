@@ -1,15 +1,15 @@
 import EventEmitter from 'events';
-import Enum         from 'enum';
+import Enum from 'enum';
 
-import Socket          from './peer/socket';
-import Connection      from './peer/connection';
-import DataConnection  from './peer/dataConnection';
+import Socket from './peer/socket';
+import Connection from './peer/connection';
+import DataConnection from './peer/dataConnection';
 import MediaConnection from './peer/mediaConnection';
-import SFURoom         from './peer/sfuRoom';
-import MeshRoom        from './peer/meshRoom';
-import util            from './shared/util';
-import logger          from './shared/logger';
-import config          from './shared/config';
+import SFURoom from './peer/sfuRoom';
+import MeshRoom from './peer/meshRoom';
+import util from './shared/util';
+import logger from './shared/logger';
+import config from './shared/config';
 
 const PeerEvents = new Enum([
   'open',
@@ -62,15 +62,15 @@ class Peer extends EventEmitter {
     }
 
     const defaultOptions = {
-      debug:  logger.LOG_LEVELS.NONE,
+      debug: logger.LOG_LEVELS.NONE,
       secure: true,
-      token:  util.randomToken(),
+      token: util.randomToken(),
       config: config.defaultConfig,
-      turn:   true,
+      turn: true,
 
       dispatcherSecure: config.DISPATCHER_SECURE,
-      dispatcherHost:   config.DISPATCHER_HOST,
-      dispatcherPort:   config.DISPATCHER_PORT,
+      dispatcherHost: config.DISPATCHER_HOST,
+      dispatcherPort: config.DISPATCHER_PORT,
     };
 
     this.options = Object.assign({}, defaultOptions, options);
@@ -200,7 +200,7 @@ class Peer extends EventEmitter {
     }
 
     if (this.connections[peerId]) {
-      for (let connection of this.connections[peerId]) {
+      for (const connection of this.connections[peerId]) {
         if (connection.id === connectionId) {
           return connection;
         }
@@ -268,7 +268,9 @@ class Peer extends EventEmitter {
     const self = this;
     const http = new XMLHttpRequest();
 
-    const url = `${this.socket.signalingServerUrl}/api/apikeys/${this.options.key}/clients/`;
+    const url = `${this.socket.signalingServerUrl}/api/apikeys/${
+      this.options.key
+    }/clients/`;
 
     // If there's no ID we need to wait for one before trying to init socket.
     http.open('get', url, true);
@@ -285,8 +287,8 @@ class Peer extends EventEmitter {
       if (http.status === 401) {
         cb([]);
         const err = new Error(
-          'It doesn\'t look like you have permission to list peers IDs. ' +
-          'Please enable the SkyWay REST API on dashboard'
+          "It doesn't look like you have permission to list peers IDs. " +
+            'Please enable the SkyWay REST API on dashboard'
         );
         err.type = 'list-error';
         logger.error(err);
@@ -315,11 +317,15 @@ class Peer extends EventEmitter {
    * Emit not connected error.
    */
   _emitNotConnectedError() {
-    logger.warn('You cannot connect to a new Peer because you are not connecting to SkyWay server now.' +
-      'You can create a new Peer to reconnect, or call reconnect() ' +
-      'on this peer if you believe its ID to still be available.');
+    logger.warn(
+      'You cannot connect to a new Peer because you are not connecting to SkyWay server now.' +
+        'You can create a new Peer to reconnect, or call reconnect() ' +
+        'on this peer if you believe its ID to still be available.'
+    );
 
-    const err = new Error('Cannot connect to new Peer before connecting to SkyWay server or after disconnecting from the server.');
+    const err = new Error(
+      'Cannot connect to new Peer before connecting to SkyWay server or after disconnecting from the server.'
+    );
     err.type = 'disconnected';
     logger.error(err);
     this.emit(Peer.EVENTS.error.key, err);
@@ -331,18 +337,15 @@ class Peer extends EventEmitter {
    * @private
    */
   _initializeServerConnection(id) {
-    this.socket = new Socket(
-      this.options.key,
-      {
-        secure: this.options.secure,
-        host:   this.options.host,
-        port:   this.options.port,
+    this.socket = new Socket(this.options.key, {
+      secure: this.options.secure,
+      host: this.options.host,
+      port: this.options.port,
 
-        dispatcherSecure: this.options.dispatcherSecure,
-        dispatcherHost:   this.options.dispatcherHost,
-        dispatcherPort:   this.options.dispatcherPort,
-      }
-    );
+      dispatcherSecure: this.options.dispatcherSecure,
+      dispatcherHost: this.options.dispatcherHost,
+      dispatcherPort: this.options.dispatcherPort,
+    });
 
     this._setupMessageHandlers();
 
@@ -463,24 +466,28 @@ class Peer extends EventEmitter {
       if (this.options.turn === true && turnUserName && turnPassword) {
         // possible turn types are turn-tcp, turns-tcp, turn-udp
         const turnCombinations = [
-          {protocol: 'turn', transport: 'tcp'},
-          {protocol: 'turn', transport: 'udp'},
+          { protocol: 'turn', transport: 'tcp' },
+          { protocol: 'turn', transport: 'udp' },
         ];
 
         // Edge can not handle turns-tcp
         if (util.detectBrowser() !== 'edge') {
-          turnCombinations.push({protocol: 'turns', transport: 'tcp'});
+          turnCombinations.push({ protocol: 'turns', transport: 'tcp' });
         }
 
-        for (let turnType of turnCombinations) {
+        for (const turnType of turnCombinations) {
           const protocol = turnType.protocol;
           const transport = turnType.transport;
 
           const iceServer = {
-            urls: `${protocol}:${config.TURN_HOST}:${config.TURN_PORT}?transport=${transport}`,
-            url:  `${protocol}:${config.TURN_HOST}:${config.TURN_PORT}?transport=${transport}`,
+            urls: `${protocol}:${config.TURN_HOST}:${
+              config.TURN_PORT
+            }?transport=${transport}`,
+            url: `${protocol}:${config.TURN_HOST}:${
+              config.TURN_PORT
+            }?transport=${transport}`,
 
-            username:   turnUserName,
+            username: turnUserName,
             credential: turnPassword,
           };
 
@@ -507,10 +514,13 @@ class Peer extends EventEmitter {
       this._cleanupPeer(peerId);
     });
 
-    this.socket.on(config.MESSAGE_TYPES.SERVER.AUTH_EXPIRES_IN.key, remainingSec => {
-      logger.log(`Credential expires in ${remainingSec}`);
-      this.emit(Peer.EVENTS.expiresin.key, remainingSec);
-    });
+    this.socket.on(
+      config.MESSAGE_TYPES.SERVER.AUTH_EXPIRES_IN.key,
+      remainingSec => {
+        logger.log(`Credential expires in ${remainingSec}`);
+        this.emit(Peer.EVENTS.expiresin.key, remainingSec);
+      }
+    );
 
     this.socket.on(config.MESSAGE_TYPES.SERVER.OFFER.key, offerMessage => {
       // handle mesh room offers
@@ -534,42 +544,39 @@ class Peer extends EventEmitter {
       }
 
       if (offerMessage.connectionType === 'media') {
-        connection = new MediaConnection(
-          offerMessage.src,
-          {
-            connectionId:   connectionId,
-            payload:        offerMessage,
-            metadata:       offerMessage.metadata,
-            originator:     false,
-            queuedMessages: this._queuedMessages[connectionId],
-            pcConfig:       this._pcConfig,
-          }
-        );
+        connection = new MediaConnection(offerMessage.src, {
+          connectionId: connectionId,
+          payload: offerMessage,
+          metadata: offerMessage.metadata,
+          originator: false,
+          queuedMessages: this._queuedMessages[connectionId],
+          pcConfig: this._pcConfig,
+        });
 
         logger.log('MediaConnection created in OFFER');
         this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.call.key, connection);
       } else if (offerMessage.connectionType === 'data') {
-        connection = new DataConnection(
-          offerMessage.src,
-          {
-            connectionId:   connectionId,
-            payload:        offerMessage,
-            metadata:       offerMessage.metadata,
-            label:          offerMessage.label,
-            dcInit:         offerMessage.dcInit,
-            serialization:  offerMessage.serialization,
-            queuedMessages: this._queuedMessages[connectionId],
-            pcConfig:       this._pcConfig,
-          }
-        );
+        connection = new DataConnection(offerMessage.src, {
+          connectionId: connectionId,
+          payload: offerMessage,
+          metadata: offerMessage.metadata,
+          label: offerMessage.label,
+          dcInit: offerMessage.dcInit,
+          serialization: offerMessage.serialization,
+          queuedMessages: this._queuedMessages[connectionId],
+          pcConfig: this._pcConfig,
+        });
 
         logger.log('DataConnection created in OFFER');
 
         this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.connection.key, connection);
       } else {
-        logger.warn('Received malformed connection type: ', offerMessage.connectionType);
+        logger.warn(
+          'Received malformed connection type: ',
+          offerMessage.connectionType
+        );
       }
 
       delete this._queuedMessages[connectionId];
@@ -596,73 +603,97 @@ class Peer extends EventEmitter {
       if (connection) {
         connection.handleAnswer(answerMessage);
       } else {
-        this._storeMessage(config.MESSAGE_TYPES.SERVER.ANSWER.key, answerMessage);
+        this._storeMessage(
+          config.MESSAGE_TYPES.SERVER.ANSWER.key,
+          answerMessage
+        );
       }
     });
 
-    this.socket.on(config.MESSAGE_TYPES.SERVER.CANDIDATE.key, candidateMessage => {
-      // handle mesh room candidates
-      const roomName = candidateMessage.roomName;
-      if (roomName) {
-        const room = this.rooms[roomName];
+    this.socket.on(
+      config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
+      candidateMessage => {
+        // handle mesh room candidates
+        const roomName = candidateMessage.roomName;
+        if (roomName) {
+          const room = this.rooms[roomName];
 
-        if (room) {
-          room.handleCandidate(candidateMessage);
+          if (room) {
+            room.handleCandidate(candidateMessage);
+          }
+          return;
         }
-        return;
-      }
 
-      // handle p2p candidates
-      const connection = this.getConnection(
-        candidateMessage.src,
-        candidateMessage.connectionId
-      );
+        // handle p2p candidates
+        const connection = this.getConnection(
+          candidateMessage.src,
+          candidateMessage.connectionId
+        );
 
-      if (connection) {
-        connection.handleCandidate(candidateMessage);
-      } else {
-        this._storeMessage(config.MESSAGE_TYPES.SERVER.CANDIDATE.key, candidateMessage);
-      }
-    });
-
-    this.socket.on(config.MESSAGE_TYPES.SERVER.ROOM_USER_JOIN.key, roomUserJoinMessage => {
-      const room = this.rooms[roomUserJoinMessage.roomName];
-      if (room) {
-        room.handleJoin(roomUserJoinMessage);
-      }
-    });
-
-    this.socket.on(config.MESSAGE_TYPES.SERVER.ROOM_USER_LEAVE.key, roomUserLeaveMessage => {
-      const room = this.rooms[roomUserLeaveMessage.roomName];
-      if (room) {
-        room.handleLeave(roomUserLeaveMessage);
-      }
-    });
-
-    this.socket.on(config.MESSAGE_TYPES.SERVER.ROOM_DATA.key, roomDataMessage => {
-      const room = this.rooms[roomDataMessage.roomName];
-      if (room) {
-        room.handleData(roomDataMessage);
-      }
-    });
-
-    this.socket.on(config.MESSAGE_TYPES.SERVER.ROOM_LOGS.key, roomLogMessage => {
-      const room = this.rooms[roomLogMessage.roomName];
-      if (room) {
-        room.handleLog(roomLogMessage.log);
-      }
-    });
-
-    this.socket.on(config.MESSAGE_TYPES.SERVER.ROOM_USERS.key, roomUserListMessage => {
-      const room = this.rooms[roomUserListMessage.roomName];
-      if (room) {
-        if (roomUserListMessage.type === 'media') {
-          room.makeMediaConnections(roomUserListMessage.userList);
+        if (connection) {
+          connection.handleCandidate(candidateMessage);
         } else {
-          room.makeDataConnections(roomUserListMessage.userList);
+          this._storeMessage(
+            config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
+            candidateMessage
+          );
         }
       }
-    });
+    );
+
+    this.socket.on(
+      config.MESSAGE_TYPES.SERVER.ROOM_USER_JOIN.key,
+      roomUserJoinMessage => {
+        const room = this.rooms[roomUserJoinMessage.roomName];
+        if (room) {
+          room.handleJoin(roomUserJoinMessage);
+        }
+      }
+    );
+
+    this.socket.on(
+      config.MESSAGE_TYPES.SERVER.ROOM_USER_LEAVE.key,
+      roomUserLeaveMessage => {
+        const room = this.rooms[roomUserLeaveMessage.roomName];
+        if (room) {
+          room.handleLeave(roomUserLeaveMessage);
+        }
+      }
+    );
+
+    this.socket.on(
+      config.MESSAGE_TYPES.SERVER.ROOM_DATA.key,
+      roomDataMessage => {
+        const room = this.rooms[roomDataMessage.roomName];
+        if (room) {
+          room.handleData(roomDataMessage);
+        }
+      }
+    );
+
+    this.socket.on(
+      config.MESSAGE_TYPES.SERVER.ROOM_LOGS.key,
+      roomLogMessage => {
+        const room = this.rooms[roomLogMessage.roomName];
+        if (room) {
+          room.handleLog(roomLogMessage.log);
+        }
+      }
+    );
+
+    this.socket.on(
+      config.MESSAGE_TYPES.SERVER.ROOM_USERS.key,
+      roomUserListMessage => {
+        const room = this.rooms[roomUserListMessage.roomName];
+        if (room) {
+          if (roomUserListMessage.type === 'media') {
+            room.makeMediaConnections(roomUserListMessage.userList);
+          } else {
+            room.makeDataConnections(roomUserListMessage.userList);
+          }
+        }
+      }
+    );
 
     this.socket.on(config.MESSAGE_TYPES.SERVER.SFU_OFFER.key, offerMessage => {
       const room = this.rooms[offerMessage.roomName];
@@ -680,13 +711,22 @@ class Peer extends EventEmitter {
    */
   _setupConnectionMessageHandlers(connection) {
     connection.on(Connection.EVENTS.candidate.key, candidateMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_CANDIDATE.key, candidateMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SEND_CANDIDATE.key,
+        candidateMessage
+      );
     });
     connection.on(Connection.EVENTS.answer.key, answerMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_ANSWER.key, answerMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SEND_ANSWER.key,
+        answerMessage
+      );
     });
     connection.on(Connection.EVENTS.offer.key, offerMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_OFFER.key, offerMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SEND_OFFER.key,
+        offerMessage
+      );
     });
   }
 
@@ -697,14 +737,23 @@ class Peer extends EventEmitter {
    */
   _setupRoomMessageHandlers(room) {
     room.on(SFURoom.MESSAGE_EVENTS.broadcast.key, sendMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.ROOM_SEND_DATA.key, sendMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.ROOM_SEND_DATA.key,
+        sendMessage
+      );
     });
     room.on(SFURoom.MESSAGE_EVENTS.getLog.key, getLogMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.ROOM_GET_LOGS.key, getLogMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.ROOM_GET_LOGS.key,
+        getLogMessage
+      );
     });
     room.on(SFURoom.MESSAGE_EVENTS.leave.key, leaveMessage => {
       delete this.rooms[room.name];
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.ROOM_LEAVE.key, leaveMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.ROOM_LEAVE.key,
+        leaveMessage
+      );
     });
   }
 
@@ -717,13 +766,22 @@ class Peer extends EventEmitter {
     this._setupRoomMessageHandlers(room);
 
     room.on(SFURoom.MESSAGE_EVENTS.offerRequest.key, sendMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.SFU_GET_OFFER.key, sendMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SFU_GET_OFFER.key,
+        sendMessage
+      );
     });
     room.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.SFU_ANSWER.key, answerMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SFU_ANSWER.key,
+        answerMessage
+      );
     });
     room.on(SFURoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.SFU_CANDIDATE.key, candidateMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SFU_CANDIDATE.key,
+        candidateMessage
+      );
     });
   }
 
@@ -736,16 +794,28 @@ class Peer extends EventEmitter {
     this._setupRoomMessageHandlers(room);
 
     room.on(MeshRoom.MESSAGE_EVENTS.offer.key, offerMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_OFFER.key, offerMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SEND_OFFER.key,
+        offerMessage
+      );
     });
     room.on(MeshRoom.MESSAGE_EVENTS.answer.key, answerMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_ANSWER.key, answerMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SEND_ANSWER.key,
+        answerMessage
+      );
     });
     room.on(MeshRoom.MESSAGE_EVENTS.candidate.key, candidateMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_CANDIDATE.key, candidateMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SEND_CANDIDATE.key,
+        candidateMessage
+      );
     });
     room.on(MeshRoom.MESSAGE_EVENTS.getPeers.key, requestMessage => {
-      this.socket.send(config.MESSAGE_TYPES.CLIENT.ROOM_GET_USERS.key, requestMessage);
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.ROOM_GET_USERS.key,
+        requestMessage
+      );
     });
   }
 
@@ -790,8 +860,10 @@ class Peer extends EventEmitter {
     if (!this._queuedMessages[message.connectionId]) {
       this._queuedMessages[message.connectionId] = [];
     }
-    this._queuedMessages[message.connectionId]
-      .push({type: type, payload: message});
+    this._queuedMessages[message.connectionId].push({
+      type: type,
+      payload: message,
+    });
   }
 
   /**
@@ -800,7 +872,7 @@ class Peer extends EventEmitter {
    */
   _cleanup() {
     if (this.connections) {
-      for (let peer of Object.keys(this.connections)) {
+      for (const peer of Object.keys(this.connections)) {
         this._cleanupPeer(peer);
       }
     }
@@ -814,7 +886,7 @@ class Peer extends EventEmitter {
    */
   _cleanupPeer(peer) {
     if (this.connections[peer]) {
-      for (let connection of this.connections[peer]) {
+      for (const connection of this.connections[peer]) {
         connection.close();
       }
     }

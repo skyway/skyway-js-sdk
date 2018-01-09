@@ -68,12 +68,12 @@ describe('Util', () => {
     it('should correctly convert a Blob to an ArrayBuffer', done => {
       const string = 'foobar';
 
-      let arrayBuffer = new ArrayBuffer(string.length);
-      let bufferView = new Uint8Array(arrayBuffer);
+      const arrayBuffer = new ArrayBuffer(string.length);
+      const bufferView = new Uint8Array(arrayBuffer);
       for (let i = 0; i < string.length; i++) {
         bufferView[i] = string.charCodeAt(i);
       }
-      const blob = new Blob([arrayBuffer], {type: 'text/plain'});
+      const blob = new Blob([arrayBuffer], { type: 'text/plain' });
 
       util.blobToArrayBuffer(blob, result => {
         assert.deepEqual(result.constructor, ArrayBuffer);

@@ -1,5 +1,5 @@
 import sdpTransform from 'sdp-transform';
-import {Interop} from 'sdp-interop';
+import { Interop } from 'sdp-interop';
 
 /**
  * Class that contains utility functions for SDP munging.
@@ -33,7 +33,7 @@ class SdpUtil {
 
     return new RTCSessionDescription({
       type: 'offer',
-      sdp:  newSdp,
+      sdp: newSdp,
     });
   }
 
@@ -151,15 +151,18 @@ class SdpUtil {
     const sdpObject = sdpTransform.parse(sdp);
     sdpObject.media = sdpObject.media.map(media => {
       if (media.type === mediaType) {
-        media.bandwidth = [{
-          // Chrome supports only 'AS'
-          type:  'AS',
-          limit: bandwidth.toString(),
-        }, {
-          // Firefox Supports only 'TIAS' from M49
-          type:  'TIAS',
-          limit: (bandwidth * 1000).toString(),
-        }];
+        media.bandwidth = [
+          {
+            // Chrome supports only 'AS'
+            type: 'AS',
+            limit: bandwidth.toString(),
+          },
+          {
+            // Firefox Supports only 'TIAS' from M49
+            type: 'TIAS',
+            limit: (bandwidth * 1000).toString(),
+          },
+        ];
       }
       return media;
     });
@@ -176,7 +179,7 @@ class SdpUtil {
       throw new Error('bandwidth is not passed');
     }
 
-    if (!(/^\d+$/.test(bandwidth))) {
+    if (!/^\d+$/.test(bandwidth)) {
       throw new Error(`${bandwidth} is not a number`);
     }
   }

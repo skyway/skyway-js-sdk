@@ -7,7 +7,7 @@
   "scripts": {
     "test": "karma start ./karma.conf.js",
     "clean": "del ./dist",
-    "lint": "eslint ./examples ./src ./tests",
+    "lint": "eslint .",
     "build": "NODE_ENV=production webpack",
     "dev": "webpack -w",
     "doc": "jsdoc -c ./jsdoc.config.js"
@@ -31,6 +31,8 @@
     "del-cli": "^1.1.0",
     "eslint": "^4.2.0",
     "eslint-config-google": "^0.9.1",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-prettier": "^2.4.0",
     "inject-loader": "^3.0.0",
     "istanbul": "^0.4.2",
     "istanbul-instrumenter-loader": "^3.0.0",
@@ -44,6 +46,7 @@
     "karma-webpack": "^2.0.4",
     "mocha": "^3.4.2",
     "power-assert": "^1.2.0",
+    "prettier": "^1.9.2",
     "sinon": "^3.2.1",
     "webpack": "^3.3.0"
   },

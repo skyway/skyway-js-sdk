@@ -1,7 +1,7 @@
 import assert from 'power-assert';
-import sinon  from 'sinon';
+import sinon from 'sinon';
 
-import config     from '../../src/shared/config';
+import config from '../../src/shared/config';
 import Negotiator from '../../src/peer/negotiator';
 
 import connectionInjector from 'inject-loader!../../src/peer/connection';
@@ -34,16 +34,17 @@ describe('MediaConnection', () => {
         this[event](arg);
       },
       startConnection: startSpy,
-      cleanup:         cleanupSpy,
-      handleAnswer:    answerSpy,
+      cleanup: cleanupSpy,
+      handleAnswer: answerSpy,
       handleCandidate: candidateSpy,
-      replaceStream:   replaceSpy,
+      replaceStream: replaceSpy,
     });
     // hoist statics
     stub.EVENTS = Negotiator.EVENTS;
 
-    Connection = connectionInjector({'./negotiator': stub}).default;
-    MediaConnection = mediaConnectionInjector({'./connection': Connection}).default;
+    Connection = connectionInjector({ './negotiator': stub }).default;
+    MediaConnection = mediaConnectionInjector({ './connection': Connection })
+      .default;
   });
 
   afterEach(() => {
@@ -55,22 +56,26 @@ describe('MediaConnection', () => {
   });
 
   describe('Constructor', () => {
-    it('should call negotiator\'s startConnection method when created and originator', () => {
-      const mc = new MediaConnection('remoteId', {stream: {}, originator: true});
+    it("should call negotiator's startConnection method when created and originator", () => {
+      const mc = new MediaConnection('remoteId', {
+        stream: {},
+        originator: true,
+      });
       assert(mc);
       assert(startSpy.calledOnce);
     });
 
-    it('should not call negotiator\'s startConnection method when created and not originator', () => {
-      const mc = new MediaConnection('remoteId', {stream: {}});
+    it("should not call negotiator's startConnection method when created and not originator", () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
       assert(mc);
       assert(startSpy.notCalled);
     });
 
     it('should store any messages passed in when created', () => {
-      const mc = new MediaConnection('remoteId',
-        {stream: {}, queuedMessages: ['message']}
-      );
+      const mc = new MediaConnection('remoteId', {
+        stream: {},
+        queuedMessages: ['message'],
+      });
       assert.deepEqual(mc._options.queuedMessages, ['message']);
     });
 
@@ -79,7 +84,7 @@ describe('MediaConnection', () => {
       const metadata = 'meta';
       const stream = Symbol();
       const options = {
-        stream:   stream,
+        stream: stream,
         metadata: metadata,
       };
 
@@ -99,7 +104,7 @@ describe('MediaConnection', () => {
       mc = new MediaConnection('remoteId', {});
     });
 
-    it('should emit \'candidate\' on negotiator \'iceCandidate\' event', done => {
+    it("should emit 'candidate' on negotiator 'iceCandidate' event", done => {
       const candidate = Symbol();
       mc.on(Connection.EVENTS.candidate.key, connectionCandidate => {
         assert(connectionCandidate);
@@ -113,7 +118,7 @@ describe('MediaConnection', () => {
       mc._negotiator.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
     });
 
-    it('should emit \'answer\' on negotiator \'answerCreated\' event', done => {
+    it("should emit 'answer' on negotiator 'answerCreated' event", done => {
       const answer = Symbol();
       mc.on(Connection.EVENTS.answer.key, connectionCandidate => {
         assert(connectionCandidate);
@@ -127,7 +132,7 @@ describe('MediaConnection', () => {
       mc._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
     });
 
-    it('should emit \'offer\' on negotiator \'offerCreated\' event', done => {
+    it("should emit 'offer' on negotiator 'offerCreated' event", done => {
       const offer = Symbol();
       mc.on(Connection.EVENTS.offer.key, connectionOffer => {
         assert(connectionOffer);
@@ -142,9 +147,9 @@ describe('MediaConnection', () => {
       mc._negotiator.emit(Negotiator.EVENTS.offerCreated.key, offer);
     });
 
-    it('should cleanup the connection on negotiator \'iceConnectionDisconnected\' event', () => {
+    it("should cleanup the connection on negotiator 'iceConnectionDisconnected' event", () => {
       mc.open = true;
-      let spy = sinon.spy(mc, 'close');
+      const spy = sinon.spy(mc, 'close');
 
       mc._negotiator.emit(Negotiator.EVENTS.iceConnectionFailed.key);
 
@@ -152,57 +157,64 @@ describe('MediaConnection', () => {
       assert.equal(mc.open, false);
     });
 
-    it('should set remoteStream on \'addStream\' being emitted', () => {
-      const mc = new MediaConnection('remoteId', {stream: {}});
+    it("should set remoteStream on 'addStream' being emitted", () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
       mc._negotiator.emit(Negotiator.EVENTS.addStream.key, 'fakeStream');
 
       assert.equal(mc.remoteStream, 'fakeStream');
     });
 
-    it('should emit a \'stream\' event upon \'addStream\' being emitted', () => {
-      const mc = new MediaConnection('remoteId', {stream: {}});
+    it("should emit a 'stream' event upon 'addStream' being emitted", () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
 
-      let spy = sinon.spy(mc, 'emit');
+      const spy = sinon.spy(mc, 'emit');
 
       mc._negotiator.emit(Negotiator.EVENTS.addStream.key, 'fakeStream');
 
       assert(mc);
       assert(spy.calledOnce);
-      assert(spy.calledWith(MediaConnection.EVENTS.stream.key, 'fakeStream') === true);
+      assert(
+        spy.calledWith(MediaConnection.EVENTS.stream.key, 'fakeStream') === true
+      );
 
       spy.restore();
     });
 
-    it('should set remoteStream to null on \'removeStream\' being emitted', () => {
+    it("should set remoteStream to null on 'removeStream' being emitted", () => {
       const remoteStream = {};
-      const mc = new MediaConnection('remoteId', {stream: {}});
+      const mc = new MediaConnection('remoteId', { stream: {} });
       mc.remoteStream = remoteStream;
       mc._negotiator.emit(Negotiator.EVENTS.removeStream.key, remoteStream);
 
       assert.equal(mc.remoteStream, null);
     });
 
-    it('should not change remoteStream on \'removeStream\' being emitted if remoteStream is different', () => {
+    it("should not change remoteStream on 'removeStream' being emitted if remoteStream is different", () => {
       const origStream = {};
       const removeStream = {};
-      const mc = new MediaConnection('remoteId', {stream: {}});
+      const mc = new MediaConnection('remoteId', { stream: {} });
       mc.remoteStream = origStream;
       mc._negotiator.emit(Negotiator.EVENTS.removeStream.key, removeStream);
 
       assert.equal(mc.remoteStream, origStream);
     });
 
-    it('should emit a \'removeStream\' event upon \'removeStream\' being emitted', () => {
+    it("should emit a 'removeStream' event upon 'removeStream' being emitted", () => {
       const remoteStream = {};
-      const mc = new MediaConnection('remoteId', {stream: {}});
+      const mc = new MediaConnection('remoteId', { stream: {} });
 
-      let spy = sinon.spy(mc, 'emit');
+      const spy = sinon.spy(mc, 'emit');
 
       mc._negotiator.emit(Negotiator.EVENTS.removeStream.key, remoteStream);
 
       assert(mc);
       assert(spy.calledOnce);
-      assert(spy.calledWith(MediaConnection.EVENTS.removeStream.key, remoteStream) === true);
+      assert(
+        spy.calledWith(
+          MediaConnection.EVENTS.removeStream.key,
+          remoteStream
+        ) === true
+      );
 
       spy.restore();
     });
@@ -230,10 +242,10 @@ describe('MediaConnection', () => {
   });
 
   describe('Handling messages', () => {
-    it('should call negotiator\'s handleAnswer with an answer', () => {
+    it("should call negotiator's handleAnswer with an answer", () => {
       const answer = 'message';
 
-      const mc = new MediaConnection('remoteId', {stream: {}});
+      const mc = new MediaConnection('remoteId', { stream: {} });
       mc._pcAvailable = true;
 
       assert(answerSpy.called === false);
@@ -242,10 +254,10 @@ describe('MediaConnection', () => {
       assert(answerSpy.calledOnce === true);
     });
 
-    it('should call negotiator\'s handleCandidate with a candidate', () => {
+    it("should call negotiator's handleCandidate with a candidate", () => {
       const candidate = 'message';
 
-      const mc = new MediaConnection('remoteId', {stream: {}});
+      const mc = new MediaConnection('remoteId', { stream: {} });
       mc._pcAvailable = true;
 
       assert(candidateSpy.called === false);
@@ -258,7 +270,7 @@ describe('MediaConnection', () => {
   describe('Answering', () => {
     it('should set the localStream upon answering', () => {
       // Callee, so no stream option provided at first
-      const mc = new MediaConnection('remoteId', {payload: {}});
+      const mc = new MediaConnection('remoteId', { payload: {} });
       assert.equal(mc.localStream, undefined);
       mc.answer('foobar');
       assert.equal(mc.localStream, 'foobar');
@@ -267,26 +279,34 @@ describe('MediaConnection', () => {
 
     it('should not set the localStream if already set', () => {
       // Caller, so stream option is initially provided
-      const mc = new MediaConnection('remoteId', {stream: 'exists', payload: {}});
+      const mc = new MediaConnection('remoteId', {
+        stream: 'exists',
+        payload: {},
+      });
       assert.equal(mc.localStream, 'exists');
       mc.answer('foobar');
       assert.equal(mc.localStream, 'exists');
       assert.equal(mc.open, false);
     });
 
-    it('should call negotiator\'s startConnection method upon answering', () => {
-      const mc = new MediaConnection('remoteId', {payload: {}});
+    it("should call negotiator's startConnection method upon answering", () => {
+      const mc = new MediaConnection('remoteId', { payload: {} });
       assert(startSpy.called === false);
       mc.answer('foobar');
       assert(startSpy.calledOnce === true);
     });
 
     it('should process any queued messages after PeerConnection object is created', () => {
-      const messages = [{type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message'}];
+      const messages = [
+        { type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message' },
+      ];
 
-      const mc = new MediaConnection('remoteId', {payload: {}, queuedMessages: messages});
+      const mc = new MediaConnection('remoteId', {
+        payload: {},
+        queuedMessages: messages,
+      });
 
-      let spy = sinon.spy(mc, 'handleAnswer');
+      const spy = sinon.spy(mc, 'handleAnswer');
 
       assert.deepEqual(mc._queuedMessages, messages);
       assert.equal(spy.called, false);
@@ -299,12 +319,15 @@ describe('MediaConnection', () => {
     });
 
     it('should not process any invalid queued messages', () => {
-      const messages = [{type: 'WRONG', payload: 'message'}];
+      const messages = [{ type: 'WRONG', payload: 'message' }];
 
-      const mc = new MediaConnection('remoteId', {payload: {}, queuedMessages: messages});
+      const mc = new MediaConnection('remoteId', {
+        payload: {},
+        queuedMessages: messages,
+      });
 
-      let spy1 = sinon.spy(mc, 'handleAnswer');
-      let spy2 = sinon.spy(mc, 'handleCandidate');
+      const spy1 = sinon.spy(mc, 'handleAnswer');
+      const spy2 = sinon.spy(mc, 'handleCandidate');
 
       assert.deepEqual(mc._queuedMessages, messages);
       assert.equal(spy1.called, false);
@@ -320,11 +343,20 @@ describe('MediaConnection', () => {
     });
 
     it('should queue a message if handleMessage is called before PC is available', () => {
-      const message1 = {type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: 'message1'};
-      const message2 = {type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message2'};
+      const message1 = {
+        type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
+        payload: 'message1',
+      };
+      const message2 = {
+        type: config.MESSAGE_TYPES.SERVER.ANSWER.key,
+        payload: 'message2',
+      };
       const messages = [message1];
 
-      const mc = new MediaConnection('remoteId', {payload: {}, queuedMessages: messages});
+      const mc = new MediaConnection('remoteId', {
+        payload: {},
+        queuedMessages: messages,
+      });
 
       assert.equal(mc._pcAvailable, false);
       mc.handleAnswer(message2.payload);
@@ -337,12 +369,12 @@ describe('MediaConnection', () => {
 
   describe('Cleanup', () => {
     it('should close the socket and call the negotiator to cleanup on close()', () => {
-      const mc = new MediaConnection('remoteId', {stream: {}});
+      const mc = new MediaConnection('remoteId', { stream: {} });
 
       // Force to be open
       mc.open = true;
 
-      let spy = sinon.spy(mc, 'close');
+      const spy = sinon.spy(mc, 'close');
 
       mc.close();
       assert(mc);

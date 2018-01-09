@@ -1,15 +1,12 @@
 import Enum from 'enum';
 
-import Room            from './room';
-import Connection      from './connection';
+import Room from './room';
+import Connection from './connection';
 import MediaConnection from './mediaConnection';
-import DataConnection  from './dataConnection';
-import logger          from '../shared/logger';
+import DataConnection from './dataConnection';
+import logger from '../shared/logger';
 
-const MessageEvents = [
-  'broadcastByDC',
-  'getPeers',
-];
+const MessageEvents = ['broadcastByDC', 'getPeers'];
 
 const MeshEvents = new Enum([]);
 MeshEvents.extend(Room.EVENTS.enums);
@@ -54,7 +51,7 @@ class MeshRoom extends Room {
 
     const data = {
       roomName: this.name,
-      type:     'media',
+      type: 'media',
     };
 
     this.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, data);
@@ -68,7 +65,7 @@ class MeshRoom extends Room {
   connect() {
     const data = {
       roomName: this.name,
-      type:     'data',
+      type: 'data',
     };
 
     this.emit(MeshRoom.MESSAGE_EVENTS.getPeers.key, data);
@@ -80,13 +77,13 @@ class MeshRoom extends Room {
    */
   makeMediaConnections(peerIds) {
     const options = {
-      stream:              this._localStream,
-      pcConfig:            this._pcConfig,
-      originator:          true,
-      videoBandwidth:      this._options.videoBandwidth,
-      audioBandwidth:      this._options.audioBandwidth,
-      videoCodec:          this._options.videoCodec,
-      audioCodec:          this._options.audioCodec,
+      stream: this._localStream,
+      pcConfig: this._pcConfig,
+      originator: true,
+      videoBandwidth: this._options.videoBandwidth,
+      audioBandwidth: this._options.audioBandwidth,
+      videoCodec: this._options.videoCodec,
+      audioCodec: this._options.audioCodec,
       videoReceiveEnabled: this._options.videoReceiveEnabled,
       audioReceiveEnabled: this._options.audioReceiveEnabled,
     };
@@ -159,29 +156,28 @@ class MeshRoom extends Room {
     }
 
     if (offerMessage.connectionType === 'media') {
-      connection = new MediaConnection(
-        offerMessage.src,
-        {
-          connectionId: connectionId,
-          payload:      offerMessage,
-          metadata:     offerMessage.metadata,
-          pcConfig:     this._pcConfig,
-        }
-      );
+      connection = new MediaConnection(offerMessage.src, {
+        connectionId: connectionId,
+        payload: offerMessage,
+        metadata: offerMessage.metadata,
+        pcConfig: this._pcConfig,
+      });
       logger.log('MediaConnection created in OFFER');
       this._addConnection(offerMessage.src, connection);
       this._setupMessageHandlers(connection);
 
       connection.answer(this._localStream, {
-        videoBandwidth:      this._options.videoBandwidth,
-        audioBandwidth:      this._options.audioBandwidth,
-        videoCodec:          this._options.videoCodec,
-        audioCodec:          this._options.audioCodec,
+        videoBandwidth: this._options.videoBandwidth,
+        audioBandwidth: this._options.audioBandwidth,
+        videoCodec: this._options.videoCodec,
+        audioCodec: this._options.audioCodec,
         videoReceiveEnabled: this._options.videoReceiveEnabled,
         audioReceiveEnabled: this._options.audioReceiveEnabled,
       });
     } else {
-      logger.warn(`Received malformed connection type: ${offerMessage.connectionType}`);
+      logger.warn(
+        `Received malformed connection type: ${offerMessage.connectionType}`
+      );
     }
   }
 
@@ -235,7 +231,7 @@ class MeshRoom extends Room {
   send(data) {
     const message = {
       roomName: this.name,
-      data:     data,
+      data: data,
     };
     this.emit(MeshRoom.MESSAGE_EVENTS.broadcast.key, message);
   }
@@ -244,7 +240,7 @@ class MeshRoom extends Room {
    * Close all connections in the room.
    */
   close() {
-    for (let peerId in this.connections) {
+    for (const peerId in this.connections) {
       if (this.connections.hasOwnProperty(peerId)) {
         this.connections[peerId].forEach(connection => {
           connection.close();
@@ -264,7 +260,7 @@ class MeshRoom extends Room {
    */
   replaceStream(newStream) {
     this._localStream = newStream;
-    for (let peerId in this.connections) {
+    for (const peerId in this.connections) {
       if (this.connections.hasOwnProperty(peerId)) {
         this.connections[peerId].forEach(connection => {
           if (connection.type === 'media') {
@@ -296,27 +292,29 @@ class MeshRoom extends Room {
    * @private
    */
   _makeConnections(peerIds, type, options) {
-    peerIds.filter(peerId => {
-      return peerId !== this._peerId;
-    }).forEach(peerId => {
-      let connection;
+    peerIds
+      .filter(peerId => {
+        return peerId !== this._peerId;
+      })
+      .forEach(peerId => {
+        let connection;
 
-      switch (type) {
-        case 'data':
-          connection = new DataConnection(peerId, options);
-          break;
-        case 'media':
-          connection = new MediaConnection(peerId, options);
-          break;
-        default:
-          return;
-      }
+        switch (type) {
+          case 'data':
+            connection = new DataConnection(peerId, options);
+            break;
+          case 'media':
+            connection = new MediaConnection(peerId, options);
+            break;
+          default:
+            return;
+        }
 
-      this._addConnection(peerId, connection);
-      this._setupMessageHandlers(connection);
+        this._addConnection(peerId, connection);
+        this._setupMessageHandlers(connection);
 
-      logger.log(`${type} connection to ${peerId} created in ${this.name}`);
-    });
+        logger.log(`${type} connection to ${peerId} created in ${this.name}`);
+      });
   }
 
   /**
@@ -339,7 +337,7 @@ class MeshRoom extends Room {
    */
   _getConnection(peerId, connectionId) {
     if (this.connections && this.connections[peerId]) {
-      let conn = this.connections[peerId].filter(connection => {
+      const conn = this.connections[peerId].filter(connection => {
         return connection.id === connectionId;
       });
       return conn[0];

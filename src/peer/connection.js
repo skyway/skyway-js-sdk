@@ -1,17 +1,12 @@
 import EventEmitter from 'events';
-import Enum         from 'enum';
+import Enum from 'enum';
 
 import Negotiator from './negotiator';
-import util       from '../shared/util';
-import logger     from '../shared/logger';
-import config     from '../shared/config';
+import util from '../shared/util';
+import logger from '../shared/logger';
+import config from '../shared/config';
 
-const ConnectionEvents = new Enum([
-  'candidate',
-  'offer',
-  'answer',
-  'close',
-]);
+const ConnectionEvents = new Enum(['candidate', 'offer', 'answer', 'close']);
 
 /**
  * Class that manages connections to other peers.
@@ -86,7 +81,10 @@ class Connection extends EventEmitter {
       this.open = true;
     } else {
       logger.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
-      this._queuedMessages.push({type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: answerMessage});
+      this._queuedMessages.push({
+        type: config.MESSAGE_TYPES.SERVER.ANSWER.key,
+        payload: answerMessage,
+      });
     }
   }
 
@@ -98,8 +96,13 @@ class Connection extends EventEmitter {
     if (this._pcAvailable) {
       this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
-      logger.log(`Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`);
-      this._queuedMessages.push({type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key, payload: candidateMessage});
+      logger.log(
+        `Queuing CANDIDATE message in ${this.id} from ${this.remoteId}`
+      );
+      this._queuedMessages.push({
+        type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
+        payload: candidateMessage,
+      });
     }
   }
 
@@ -120,7 +123,7 @@ class Connection extends EventEmitter {
    * @private
    */
   _handleQueuedMessages() {
-    for (let message of this._queuedMessages) {
+    for (const message of this._queuedMessages) {
       switch (message.type) {
         case config.MESSAGE_TYPES.SERVER.ANSWER.key:
           this.handleAnswer(message.payload);
@@ -129,7 +132,12 @@ class Connection extends EventEmitter {
           this.handleCandidate(message.payload);
           break;
         default:
-          logger.warn('Unrecognized message type:', message.type, 'from peer:', this.remoteId);
+          logger.warn(
+            'Unrecognized message type:',
+            message.type,
+            'from peer:',
+            this.remoteId
+          );
           break;
       }
     }
@@ -156,9 +164,9 @@ class Connection extends EventEmitter {
   _setupNegotiatorMessageHandlers() {
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
       const connectionAnswer = {
-        answer:         answer,
-        dst:            this.remoteId,
-        connectionId:   this.id,
+        answer: answer,
+        dst: this.remoteId,
+        connectionId: this.id,
         connectionType: this.type,
       };
       this.emit(Connection.EVENTS.answer.key, connectionAnswer);
@@ -166,11 +174,11 @@ class Connection extends EventEmitter {
 
     this._negotiator.on(Negotiator.EVENTS.offerCreated.key, offer => {
       const connectionOffer = {
-        offer:          offer,
-        dst:            this.remoteId,
-        connectionId:   this.id,
+        offer: offer,
+        dst: this.remoteId,
+        connectionId: this.id,
         connectionType: this.type,
-        metadata:       this.metadata,
+        metadata: this.metadata,
       };
       if (this.serialization) {
         connectionOffer.serialization = this.serialization;
@@ -186,9 +194,9 @@ class Connection extends EventEmitter {
 
     this._negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
       const connectionCandidate = {
-        candidate:      candidate,
-        dst:            this.remoteId,
-        connectionId:   this.id,
+        candidate: candidate,
+        dst: this.remoteId,
+        connectionId: this.id,
         connectionType: this.type,
       };
       this.emit(Connection.EVENTS.candidate.key, connectionCandidate);
@@ -205,8 +213,12 @@ class Connection extends EventEmitter {
    * @deprecated Use remoteId instead.
    */
   get peer() {
-    logger.warn(`${this.constructor.name}.peer is deprecated and may be removed from a future version.` +
-        ` Please use ${this.constructor.name}.remoteId instead.`);
+    logger.warn(
+      `${
+        this.constructor.name
+      }.peer is deprecated and may be removed from a future version.` +
+        ` Please use ${this.constructor.name}.remoteId instead.`
+    );
     return this.remoteId;
   }
 
