@@ -49,7 +49,7 @@ describe('Socket', () => {
 
   afterEach(() => {
     socketIoClientStub.restore();
-    eventSpy.reset();
+    eventSpy.resetHistory();
   });
 
   describe('Connecting to the server', () => {

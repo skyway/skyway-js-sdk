@@ -47,11 +47,11 @@ describe('MediaConnection', () => {
   });
 
   afterEach(() => {
-    startSpy.reset();
-    cleanupSpy.reset();
-    answerSpy.reset();
-    candidateSpy.reset();
-    replaceSpy.reset();
+    startSpy.resetHistory();
+    cleanupSpy.resetHistory();
+    answerSpy.resetHistory();
+    candidateSpy.resetHistory();
+    replaceSpy.resetHistory();
   });
 
   describe('Constructor', () => {
@@ -295,7 +295,7 @@ describe('MediaConnection', () => {
       assert.deepEqual(mc._queuedMessages, []);
       assert.equal(spy.calledOnce, true);
 
-      spy.reset();
+      spy.resetHistory();
     });
 
     it('should not process any invalid queued messages', () => {
@@ -315,8 +315,8 @@ describe('MediaConnection', () => {
       assert.equal(spy1.called, false);
       assert.equal(spy2.called, false);
 
-      spy1.reset();
-      spy2.reset();
+      spy1.resetHistory();
+      spy2.resetHistory();
     });
 
     it('should queue a message if handleMessage is called before PC is available', () => {
