@@ -58,10 +58,10 @@ describe('MeshRoom', () => {
   afterEach(() => {
     mcStub.reset();
     dcStub.reset();
-    onSpy.reset();
-    closeSpy.reset();
-    answerSpy.reset();
-    replaceStreamSpy.reset();
+    onSpy.resetHistory();
+    closeSpy.resetHistory();
+    answerSpy.resetHistory();
+    replaceStreamSpy.resetHistory();
   });
 
   describe('Constructor', () => {

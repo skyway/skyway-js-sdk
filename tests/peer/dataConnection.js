@@ -48,10 +48,10 @@ describe('DataConnection', () => {
   });
 
   afterEach(() => {
-    startSpy.reset();
-    cleanupSpy.reset();
-    answerSpy.reset();
-    candidateSpy.reset();
+    startSpy.resetHistory();
+    cleanupSpy.resetHistory();
+    answerSpy.resetHistory();
+    candidateSpy.resetHistory();
   });
 
   describe('Constructor', () => {
@@ -138,7 +138,7 @@ describe('DataConnection', () => {
       assert.deepEqual(dc._queuedMessages, []);
       assert.equal(spy.calledOnce, true);
 
-      spy.reset();
+      spy.resetHistory();
     });
 
     it('should correctly handle ALL of multiple queued messages', () => {
@@ -188,7 +188,7 @@ describe('DataConnection', () => {
       assert.equal(dc.open, true);
       assert(spy.calledOnce);
 
-      spy.reset();
+      spy.resetHistory();
     });
 
     it('should handle a message upon _dc.onmessage()', () => {
@@ -203,7 +203,7 @@ describe('DataConnection', () => {
       assert(spy.calledOnce);
       assert.deepEqual(spy.args[0][0], { data: message });
 
-      spy.reset();
+      spy.resetHistory();
     });
 
     it('should close the DataConnection upon _dc.onclose()', () => {
@@ -214,7 +214,7 @@ describe('DataConnection', () => {
       dc._dc.onclose();
       assert(spy.calledOnce);
 
-      spy.reset();
+      spy.resetHistory();
     });
   });
 

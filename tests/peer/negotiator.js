@@ -44,9 +44,9 @@ describe('Negotiator', () => {
 
     afterEach(() => {
       newPcStub.reset();
-      addStreamSpy.reset();
-      createDCSpy.reset();
-      handleOfferSpy.reset();
+      addStreamSpy.resetHistory();
+      createDCSpy.resetHistory();
+      handleOfferSpy.resetHistory();
       setRemoteDescStub.restore();
     });
 
