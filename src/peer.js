@@ -259,12 +259,11 @@ class Peer extends EventEmitter {
    * Call Rest API and get the list of peerIds assciated with API key.
    * @param {function} cb - The callback function that is called after XHR.
    */
-  listAllPeers(cb) {
+  listAllPeers(cb = function() {}) {
     if (!this._checkOpenStatus()) {
       return;
     }
 
-    cb = cb || function() {};
     const self = this;
     const http = new XMLHttpRequest();
 
@@ -280,25 +279,35 @@ class Peer extends EventEmitter {
       self._abort('server-error', 'Could not get peers from the server.');
       cb([]);
     };
+
     http.onreadystatechange = function() {
       if (http.readyState !== 4) {
         return;
       }
-      if (http.status === 401) {
-        cb([]);
-        const err = new Error(
-          "It doesn't look like you have permission to list peers IDs. " +
-            'Please enable the SkyWay REST API on dashboard'
-        );
-        err.type = 'list-error';
-        logger.error(err);
-        self.emit(Peer.EVENTS.error.key, err);
-      } else if (http.status === 200) {
-        cb(JSON.parse(http.responseText));
-      } else {
-        cb([]);
+
+      switch (http.status) {
+        case 401: {
+          const err = new Error(
+            "It doesn't look like you have permission to list peers IDs. " +
+              'Please enable the SkyWay REST API on dashboard'
+          );
+          err.type = 'list-error';
+          logger.error(err);
+          self.emit(Peer.EVENTS.error.key, err);
+          cb([]);
+          break;
+        }
+        case 200: {
+          cb(JSON.parse(http.responseText));
+          break;
+        }
+        default: {
+          cb([]);
+          break;
+        }
       }
     };
+
     http.send(null);
   }
 
