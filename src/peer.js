@@ -262,11 +262,9 @@ class Peer extends EventEmitter {
   listAllPeers(cb) {
     // for Promise API
     if (typeof cb !== 'function') {
-      console.log('promise api');
       return this._listAllPeersPromise();
     }
 
-    console.log('callback api');
     // for Callback API
     this._listAllPeersPromise()
       .then(cb)
@@ -307,12 +305,10 @@ class Peer extends EventEmitter {
    * @return {Promise} Promise resolved with results of API call.
    */
   _listAllPeersPromise() {
-    console.log('open check');
     if (!this._checkOpenStatus()) {
       return Promise.reject(new Error('OPEN_ERROR'));
     }
 
-    console.log('return promise');
     return new Promise((resolve, reject) => {
       const http = new XMLHttpRequest();
       const url = `${this.socket.signalingServerUrl}/api/apikeys/${
