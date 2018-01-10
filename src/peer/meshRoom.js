@@ -58,6 +58,22 @@ class MeshRoom extends Room {
   }
 
   /**
+   * Gets the RTCPeerConnection objects used by Connections in this room. Modifying the
+   * RTCPeerConnection can cause unexpected errors. Suggested for advanced users only.
+   * @return {Object} - An object containing the media RTCPeerConnections used by this room with the peerId as the key.
+   */
+  getRTCPeerConnections() {
+    // TODO: add a `type` argument specifying connection type after we implement data connections in meshRoom.
+    const peerConnections = {};
+    for (const [peerId, connections] of Object.entries(this.connections)) {
+      if (Array.isArray(connections) && connections.length > 0) {
+        peerConnections[peerId] = connections[0].getRTCPeerConnection();
+      }
+    }
+    return peerConnections;
+  }
+
+  /**
    * Called by client app to create DataConnections.
    * It emit getPeers event for getting peerIds of all of room participant.
    * After getting peerIds, makeDCs is called.

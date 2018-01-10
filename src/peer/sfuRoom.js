@@ -62,6 +62,15 @@ class SFURoom extends Room {
   }
 
   /**
+   * Gets the RTCPeerConnection object used by this room. Modifying the
+   * RTCPeerConnection can cause unexpected errors. Suggested for advanced users only.
+   * @return {RTCPeerConnection} - The RTCPeerConnection used by this room.
+   */
+  getRTCPeerConnection() {
+    return this._negotiator._pc;
+  }
+
+  /**
    * Handles Offer message from SFU server.
    * It create new RTCPeerConnection object.
    * @param {object} offerMessage - Message object containing Offer SDP.

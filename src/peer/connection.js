@@ -72,6 +72,15 @@ class Connection extends EventEmitter {
   }
 
   /**
+   * Gets the RTCPeerConnection object used by this connection. Modifying the
+   * RTCPeerConnection can cause unexpected errors. Suggested for advanced users only.
+   * @return {RTCPeerConnection} - The RTCPeerConnection used by this connection.
+   */
+  getRTCPeerConnection() {
+    return this._negotiator._pc;
+  }
+
+  /**
    * Handle an sdp answer message from the remote peer.
    * @param {object} answerMessage - Message object containing sdp answer.
    */
