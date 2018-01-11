@@ -66,7 +66,7 @@ class MeshRoom extends Room {
     // TODO: add a `type` argument specifying connection type after we implement data connections in meshRoom.
     const peerConnections = {};
     for (const [peerId, connections] of Object.entries(this.connections)) {
-      if (Array.isArray(connections) && connections.length > 0) {
+      if (connections.length > 0) {
         peerConnections[peerId] = connections[0].getRTCPeerConnection();
       }
     }
