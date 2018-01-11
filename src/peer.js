@@ -275,9 +275,10 @@ class Peer extends EventEmitter {
             break;
           }
           case 'HTTP_ERROR': {
-            this._abort('server-error', 'Could not get peers from the server.');
-
             cb([]);
+
+            // will throw
+            this._abort('server-error', 'Could not get peers from the server.');
             break;
           }
           case 'SERVER_ERROR': {
@@ -285,15 +286,16 @@ class Peer extends EventEmitter {
             break;
           }
           case 'PERMISSION_ERROR': {
+            cb([]);
+
             const err = new Error(
               "It doesn't look like you have permission to list peers IDs. " +
                 'Please enable the SkyWay REST API on dashboard'
             );
             err.type = 'list-error';
             logger.error(err);
+            // will throw
             this.emit(Peer.EVENTS.error.key, err);
-
-            cb([]);
             break;
           }
         }
