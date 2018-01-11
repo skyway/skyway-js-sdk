@@ -5,8 +5,6 @@ import queryString from 'query-string';
 import config from '../shared/config';
 import logger from '../shared/logger';
 
-import { version } from '../../package.json';
-
 /**
  * Class to handle WS/HTTP communication with the signalling server
  * @extends EventEmitter
@@ -70,10 +68,7 @@ class Socket extends EventEmitter {
    * @fires Socket#error
    */
   start(id, token, credential) {
-    let query =
-      `apiKey=${this._key}&token=${token}` +
-      `&platform=javascript&sdk_version=${version}`;
-
+    let query = `apiKey=${this._key}&token=${token}`;
     if (id) {
       query += `&peerId=${id}`;
       this._isPeerIdSet = true;
