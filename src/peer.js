@@ -257,7 +257,7 @@ class Peer extends EventEmitter {
 
   /**
    * Call Rest API and get the list of peerIds assciated with API key.
-   * @param {function} cb - The callback function that is called after XHR.
+   * @param {function} [cb] - The callback function that is called after XHR.
    */
   listAllPeers(cb) {
     // for Promise API
@@ -271,7 +271,7 @@ class Peer extends EventEmitter {
       .catch(err => {
         switch (err.message) {
           case 'OPEN_ERROR': {
-            // do nothing(backward compatible)
+            // do nothing(for backward compatible)
             break;
           }
           case 'HTTP_ERROR': {
@@ -329,12 +329,12 @@ class Peer extends EventEmitter {
         }
 
         switch (http.status) {
-          case 401: {
-            reject(new Error('PERMISSION_ERROR'));
-            break;
-          }
           case 200: {
             resolve(JSON.parse(http.responseText));
+            break;
+          }
+          case 401: {
+            reject(new Error('PERMISSION_ERROR'));
             break;
           }
           default: {
