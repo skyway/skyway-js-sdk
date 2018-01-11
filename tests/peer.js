@@ -743,8 +743,8 @@ describe('Peer', () => {
 
   describe('listAllPeers', () => {
     let peer;
-    let server;
-    let endpointUrl;
+    let requests = [];
+    let xhr;
     beforeEach(() => {
       peer = new Peer({
         key: apiKey,
@@ -754,34 +754,18 @@ describe('Peer', () => {
 
       const protocol = peer.options.secure ? 'https://' : 'http://';
       peer.socket.signalingServerUrl = `${protocol}${signalingHost}:${signalingPort}`;
-      endpointUrl = `${
-        peer.socket.signalingServerUrl
-      }/api/apikeys/${apiKey}/clients/`;
 
-      server = sinon.fakeServer.create();
+      xhr = sinon.useFakeXMLHttpRequest();
+      xhr.onCreate = function(request) {
+        requests.push(request);
+      };
     });
 
     afterEach(() => {
+      xhr.restore();
+      requests = [];
+
       peer.destroy();
-      server.restore();
-    });
-
-    describe('API signature', () => {
-      beforeEach(() => {
-        sinon.stub(peer.socket, 'isOpen').get(() => true);
-      });
-
-      it('should return promise calling w/o callback', () => {
-        const p = peer.listAllPeers();
-        assert.equal(typeof p, 'object');
-        assert.equal(typeof p.then, 'function');
-        assert.equal(typeof p.catch, 'function');
-      });
-
-      it('should not return promise calling w/ callback', () => {
-        const p = peer.listAllPeers(() => {});
-        assert.notEqual(typeof p, 'object');
-      });
     });
 
     describe('when its socket is open', () => {
@@ -791,87 +775,70 @@ describe('Peer', () => {
 
       it('should send a "GET" request to the right URL', () => {
         peer.listAllPeers();
-        assert.equal(server.requests.length, 1);
+        assert.equal(requests.length, 1);
 
-        assert(server.requests[0].url === endpointUrl);
-        assert(server.requests[0].method === 'get');
+        const protocol = peer.options.secure ? 'https://' : 'http://';
+        const url =
+          `${protocol}${peer.options.host}:` +
+          `${peer.options.port}/api/apikeys/${apiKey}/clients/`;
+        assert(requests[0].url === url);
+        assert(requests[0].method === 'get');
       });
 
       it('should call the callback with the response as the argument', done => {
-        const peerList = ['peerId1', 'peerId2', 'peerId3'];
-        server.respondWith(endpointUrl, [
-          200,
-          { 'Content-Type': 'application/json' },
-          JSON.stringify(peerList),
-        ]);
-
+        const spy = sinon.spy();
         peer.listAllPeers(ids => {
-          assert.equal(server.requests.length, 1);
-          assert.equal(server.requests[0].status, 200);
-          assert.deepEqual(ids, peerList);
+          spy(ids);
+          assert.equal(requests.length, 1);
 
+          assert.equal(spy.callCount, 1);
+          assert(spy.calledWith(peerList));
           done();
         });
 
-        server.respond();
+        const peerList = ['peerId1', 'peerId2', 'peerId3'];
+        requests[0].respond(200, {}, JSON.stringify(peerList));
       });
 
-      it('should reject when the status is 401', done => {
-        server.respondWith(endpointUrl, [
-          401,
-          { 'Content-Type': 'application/json' },
-          'error',
-        ]);
-
-        peer
-          .listAllPeers()
-          .then(() => {
-            assert.fail("Didn't throw an error");
-            done();
-          })
-          .catch(err => {
-            assert(err instanceof Error);
-            done();
-          });
-
-        server.respond();
-      });
-
-      it('should reject when any other status returned', done => {
-        const responseCodes = [202, 400, 403, 404, 408, 500, 503];
-        const promises = [];
-        for (const code of responseCodes) {
-          server.respondWith(endpointUrl, [
-            code,
-            { 'Content-Type': 'application/json' },
-            'error',
-          ]);
-          promises.push(peer.listAllPeers());
+      it('should throw an error when the status is 401', () => {
+        try {
+          peer.listAllPeers();
+          requests.respond(401);
+        } catch (e) {
+          assert(e instanceof Error);
+          return;
         }
 
-        Promise.all(promises)
-          .then(() => {
-            assert.fail("Didn't throw an error");
-            done();
-          })
-          .catch(err => {
-            assert(err instanceof Error);
-            done();
-          });
+        assert.fail("Didn't throw an error");
+      });
 
-        server.respond();
+      it('should call the callback with an empty array any other status', done => {
+        const spy = sinon.spy();
+        const peerList = JSON.stringify(['peerId1', 'peerId2', 'peerId3']);
+        const responseCodes = [202, 400, 403, 404, 408, 500, 503];
+
+        const promises = [];
+        for (
+          let codeIndex = 0;
+          codeIndex <= responseCodes.length;
+          codeIndex++
+        ) {
+          promises.push(
+            new Promise(resolve => peer.listAllPeers(ids => resolve(spy(ids))))
+          );
+          requests[codeIndex].respond(responseCodes[codeIndex], {}, peerList);
+        }
+
+        Promise.all(promises).then(() => {
+          assert.equal(spy.withArgs([]).callCount, responseCodes.length);
+          done();
+        });
       });
 
       it("should not throw an error if cb isn't provided", () => {
-        server.respondWith(endpointUrl, [
-          200,
-          { 'Content-Type': 'application/json' },
-          JSON.stringify([]),
-        ]);
-
         try {
           peer.listAllPeers();
-          server.respond();
+          requests[0].respond(200, {}, JSON.stringify([]));
         } catch (e) {
           assert.fail('Should not have thrown an error');
         }
@@ -886,7 +853,7 @@ describe('Peer', () => {
         });
 
         peer.listAllPeers();
-        server.requests[0].abort();
+        requests[0].abort();
       });
     });
 
