@@ -257,49 +257,95 @@ class Peer extends EventEmitter {
 
   /**
    * Call Rest API and get the list of peerIds assciated with API key.
-   * @param {function} cb - The callback function that is called after XHR.
+   * @param {function} [cb] - The callback function that is called after XHR.
    */
   listAllPeers(cb) {
-    if (!this._checkOpenStatus()) {
-      return;
+    // for Promise API
+    if (typeof cb !== 'function') {
+      return this._listAllPeersPromise();
     }
 
-    cb = cb || function() {};
-    const self = this;
-    const http = new XMLHttpRequest();
+    // for Callback API
+    this._listAllPeersPromise()
+      .then(cb)
+      .catch(err => {
+        switch (err.message) {
+          case 'OPEN_ERROR': {
+            // do nothing(for backward compatible)
+            break;
+          }
+          case 'HTTP_ERROR': {
+            this._abort('server-error', 'Could not get peers from the server.');
 
-    const url = `${this.socket.signalingServerUrl}/api/apikeys/${
-      this.options.key
-    }/clients/`;
+            cb([]);
+            break;
+          }
+          case 'SERVER_ERROR': {
+            cb([]);
+            break;
+          }
+          case 'PERMISSION_ERROR': {
+            const err = new Error(
+              "It doesn't look like you have permission to list peers IDs. " +
+                'Please enable the SkyWay REST API on dashboard'
+            );
+            err.type = 'list-error';
+            logger.error(err);
+            this.emit(Peer.EVENTS.error.key, err);
 
-    // If there's no ID we need to wait for one before trying to init socket.
-    http.open('get', url, true);
+            cb([]);
+            break;
+          }
+        }
+      });
+  }
 
-    /* istanbul ignore next */
-    http.onerror = function() {
-      self._abort('server-error', 'Could not get peers from the server.');
-      cb([]);
-    };
-    http.onreadystatechange = function() {
-      if (http.readyState !== 4) {
-        return;
-      }
-      if (http.status === 401) {
-        cb([]);
-        const err = new Error(
-          "It doesn't look like you have permission to list peers IDs. " +
-            'Please enable the SkyWay REST API on dashboard'
-        );
-        err.type = 'list-error';
-        logger.error(err);
-        self.emit(Peer.EVENTS.error.key, err);
-      } else if (http.status === 200) {
-        cb(JSON.parse(http.responseText));
-      } else {
-        cb([]);
-      }
-    };
-    http.send(null);
+  /**
+   * Call Rest API and get the list of peerIds assciated with API key with Promise.
+   * @return {Promise} Promise resolved with results of API call.
+   */
+  _listAllPeersPromise() {
+    if (!this._checkOpenStatus()) {
+      return Promise.reject(new Error('OPEN_ERROR'));
+    }
+
+    return new Promise((resolve, reject) => {
+      const http = new XMLHttpRequest();
+      const url = `${this.socket.signalingServerUrl}/api/apikeys/${
+        this.options.key
+      }/clients/`;
+
+      // If there's no ID we need to wait for one before trying to init socket.
+      http.open('get', url, true);
+
+      /* istanbul ignore next */
+      http.onerror = function() {
+        reject(new Error('HTTP_ERROR'));
+      };
+
+      http.onreadystatechange = function() {
+        if (http.readyState !== 4) {
+          return;
+        }
+
+        switch (http.status) {
+          case 200: {
+            resolve(JSON.parse(http.responseText));
+            break;
+          }
+          case 401: {
+            reject(new Error('PERMISSION_ERROR'));
+            break;
+          }
+          default: {
+            reject(new Error('SERVER_ERROR'));
+            break;
+          }
+        }
+      };
+
+      http.send(null);
+    });
   }
 
   /**
