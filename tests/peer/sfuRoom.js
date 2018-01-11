@@ -582,4 +582,22 @@ describe('SFURoom', () => {
       sfuRoom.getLog();
     });
   });
+
+  describe('getRTCPeerConnection', () => {
+    beforeEach(() => {
+      // We create a new sfuRoom here instead of using the default one since we don't want the stream.
+      sfuRoom = new SFURoom(sfuRoomName, peerId, {
+        pcConfig: pcConfig,
+      });
+    });
+
+    it('should get the media RTCPeerConnection from the negotiator', () => {
+      // need to call handleOffer to set up the Negotiator.
+      sfuRoom.handleOffer({ offer: { sdp: '', type: 'offer' } });
+
+      const pc = sfuRoom.getRTCPeerConnection();
+      assert(pc);
+      assert.equal(pc, sfuRoom._negotiator._pc);
+    });
+  });
 });

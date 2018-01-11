@@ -38,6 +38,7 @@ describe('DataConnection', () => {
       cleanup: cleanupSpy,
       handleAnswer: answerSpy,
       handleCandidate: candidateSpy,
+      _pc: {},
     });
     // hoist statics
     negotiatorStub.EVENTS = Negotiator.EVENTS;
@@ -701,6 +702,16 @@ describe('DataConnection', () => {
       assert.equal(dc.open, false);
 
       assert(cleanupSpy.called);
+    });
+  });
+
+  describe('getRTCPeerConnection', () => {
+    it('should get the RTCPeerConnection from the negotiator', () => {
+      const dc = new DataConnection('remoteId', {});
+
+      const pc = dc.getRTCPeerConnection();
+      assert(pc);
+      assert.equal(pc, dc._negotiator._pc);
     });
   });
 });

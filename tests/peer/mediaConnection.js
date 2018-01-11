@@ -38,6 +38,7 @@ describe('MediaConnection', () => {
       handleAnswer: answerSpy,
       handleCandidate: candidateSpy,
       replaceStream: replaceSpy,
+      _pc: {},
     });
     // hoist statics
     stub.EVENTS = Negotiator.EVENTS;
@@ -382,6 +383,16 @@ describe('MediaConnection', () => {
       assert.equal(mc.open, false);
 
       assert(cleanupSpy.called);
+    });
+  });
+
+  describe('getRTCPeerConnection', () => {
+    it('should get the RTCPeerConnection from the negotiator', () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+
+      const pc = mc.getRTCPeerConnection();
+      assert(pc);
+      assert.equal(pc, mc._negotiator._pc);
     });
   });
 });

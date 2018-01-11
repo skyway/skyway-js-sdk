@@ -711,4 +711,42 @@ describe('MeshRoom', () => {
       meshRoom.getLog();
     });
   });
+
+  describe('getRTCPeerConnections', () => {
+    it('should get the RTCPeerConnections from the connections', () => {
+      // Don't use the mcStub for this test as we want to uniquely identify each connection.
+      // Injecting mcStub will always returns the same object so its impossible to distinguish between them.
+      const MeshRoom = meshRoomInjector({
+        './mediaConnection': MediaConnection,
+        './dataConnection': dcStub,
+      }).default;
+      const meshRoom = new MeshRoom(meshRoomName, peerId, {
+        pcConfig: pcConfig,
+      });
+
+      const peerIds = ['peerId1', 'peerId2', 'peerId3'];
+
+      // Add connections to the meshRoom
+      meshRoom.makeMediaConnections(peerIds);
+
+      // Set up stubs so that getRTCPeerConnection on the media connections returns an object which we can identify.
+      for (const [peerId, conns] of Object.entries(meshRoom.connections)) {
+        conns.forEach(conn => {
+          conn.getRTCPeerConnection = sinon.stub().returns({ id: peerId });
+        });
+      }
+
+      const pcs = meshRoom.getRTCPeerConnections();
+
+      // calculate our expected output
+      const expectedPCs = peerIds.reduce((pcs, peerId) => {
+        pcs[peerId] = {
+          id: peerId,
+        };
+        return pcs;
+      }, {});
+
+      assert.deepEqual(pcs, expectedPCs);
+    });
+  });
 });
