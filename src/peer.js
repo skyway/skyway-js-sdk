@@ -303,6 +303,53 @@ class Peer extends EventEmitter {
   }
 
   /**
+   * Call Rest API and get the list of rooms assciated with API key.
+   */
+  listAllRooms() {
+    if (!this._checkOpenStatus()) {
+      return Promise.reject(new Error('OPEN_ERROR'));
+    }
+
+    return new Promise((resolve, reject) => {
+      const http = new XMLHttpRequest();
+      const url = `${this.socket.signalingServerUrl}/api/apikeys/${
+        this.options.key
+      }/rooms/`;
+
+      // If there's no ID we need to wait for one before trying to init socket.
+      http.open('get', url, true);
+
+      /* istanbul ignore next */
+      http.onerror = function() {
+        reject(new Error('HTTP_ERROR'));
+      };
+
+      http.onreadystatechange = function() {
+        if (http.readyState !== 4) {
+          return;
+        }
+
+        switch (http.status) {
+          case 200: {
+            resolve(JSON.parse(http.responseText));
+            break;
+          }
+          case 401: {
+            reject(new Error('PERMISSION_ERROR'));
+            break;
+          }
+          default: {
+            reject(new Error('SERVER_ERROR'));
+            break;
+          }
+        }
+      };
+
+      http.send(null);
+    });
+  }
+
+  /**
    * Call Rest API and get the list of peerIds assciated with API key with Promise.
    * @return {Promise} Promise resolved with results of API call.
    */
