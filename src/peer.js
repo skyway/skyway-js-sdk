@@ -352,16 +352,17 @@ class Peer extends EventEmitter {
 
   /**
    * Call Rest API and get the room info assciated with API key and rooms.
+   * @param {Array} rooms - Array of room names to get info.
    * @return {Promise} Promise resolved with results of API call.
    */
   fetchRoomInfo(rooms = []) {
+    if (!this._checkOpenStatus()) {
+      return Promise.reject(new Error('OPEN_ERROR'));
+    }
+
     if (Array.isArray(rooms) === false) {
       rooms = [rooms];
     }
-
-    // if (!this._checkOpenStatus()) {
-    //   return Promise.reject(new Error('OPEN_ERROR'));
-    // }
 
     return new Promise((resolve, reject) => {
       const http = new XMLHttpRequest();
