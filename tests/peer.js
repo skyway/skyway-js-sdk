@@ -991,6 +991,142 @@ describe('Peer', () => {
     });
   });
 
+  describe('fetchRoomInfo', () => {
+    let peer;
+    let requests = [];
+    let xhr;
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey,
+        host: signalingHost,
+        port: signalingPort,
+      });
+
+      const protocol = peer.options.secure ? 'https://' : 'http://';
+      peer.socket.signalingServerUrl = `${protocol}${signalingHost}:${signalingPort}`;
+
+      xhr = sinon.useFakeXMLHttpRequest();
+      xhr.onCreate = function(request) {
+        requests.push(request);
+      };
+    });
+
+    afterEach(() => {
+      xhr.restore();
+      requests = [];
+
+      peer.destroy();
+    });
+
+    describe('when its socket is open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen').get(() => true);
+      });
+
+      it('should send a "GET" request to the right URL', () => {
+        peer.fetchRoomInfo();
+        assert.equal(requests.length, 1);
+
+        const protocol = peer.options.secure ? 'https://' : 'http://';
+        const url =
+          `${protocol}${peer.options.host}:` +
+          `${peer.options.port}/api/apikeys/${apiKey}/rooms/info?rooms=[]`;
+        assert(requests[0].url === url);
+        assert(requests[0].method === 'get');
+      });
+
+      it('should send a "GET" request with specified query parameters', () => {
+        peer.fetchRoomInfo('r1');
+        const rooms = ['r1'];
+        peer.fetchRoomInfo(rooms);
+
+        assert.equal(requests.length, 2);
+
+        const protocol = peer.options.secure ? 'https://' : 'http://';
+        const url =
+          `${protocol}${peer.options.host}:` +
+          `${
+            peer.options.port
+          }/api/apikeys/${apiKey}/rooms/info?rooms=${JSON.stringify(rooms)}`;
+        assert(requests[0].url === url);
+        assert(requests[0].method === 'get');
+        assert(requests[1].url === url);
+        assert(requests[1].method === 'get');
+      });
+
+      it('should resolve with the response as the argument', done => {
+        const spy = sinon.spy();
+
+        peer
+          .fetchRoomInfo([])
+          .then(spy)
+          .then(() => {
+            assert.equal(requests.length, 1);
+
+            assert.equal(spy.callCount, 1);
+            assert(spy.calledWith([]));
+            done();
+          });
+
+        requests[0].respond(200, {}, JSON.stringify([]));
+      });
+
+      it('should reject when the status is 401', done => {
+        peer
+          .fetchRoomInfo()
+          .then(() => {
+            assert.fail("Didn't throw an error");
+          })
+          .catch(e => {
+            assert(e instanceof Error);
+            done();
+          });
+
+        requests[0].respond(401);
+      });
+
+      it('should reject any other status', done => {
+        const responseCodes = [202, 400, 403, 404, 408, 500, 503];
+
+        let isAllRejected = true;
+        const promises = [];
+        for (let idx = 0; idx < responseCodes.length; idx++) {
+          promises.push(
+            peer
+              .fetchRoomInfo()
+              // ensure all promises are rejected
+              .then(() => {
+                isAllRejected = false;
+              })
+          );
+          requests[idx].respond(responseCodes[idx], {}, '[]');
+        }
+
+        Promise.all(promises).catch(() => {
+          if (!isAllRejected) {
+            assert.fail("Didn't throw an error");
+          }
+          done();
+        });
+      });
+    });
+
+    describe('when its socket is not open', () => {
+      beforeEach(() => {
+        sinon.stub(peer.socket, 'isOpen').get(() => false);
+      });
+
+      it('should emit error and return', done => {
+        peer.on('error', err => {
+          assert.equal(err.type, 'disconnected');
+          done();
+        });
+
+        peer.fetchRoomInfo();
+      });
+    });
+  });
+
   describe('_checkOpenStatus', () => {
     const peerId = 'testPeerId';
     let peer;
