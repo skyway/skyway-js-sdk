@@ -106,7 +106,7 @@ class Negotiator extends EventEmitter {
     // This doesn't require renegotiation.
     // Firefox 53 has both getSenders and getLocalStreams,
     // but Google Chrome 61 has only getLocalStreams.
-    if (this._isRtpSenderAvailable) {
+    if (this._isReplaceTrackAvailable) {
       this._replacePerTrack(newStream);
     } else {
       this._replacePerStream(newStream);
@@ -195,6 +195,8 @@ class Negotiator extends EventEmitter {
     this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
     this._isRtpSenderAvailable =
       typeof RTCPeerConnection.prototype.getSenders === 'function';
+    this._isReplaceTrackAvailable =
+      typeof RTCRtpSender.prototype.replaceTrack === 'function';
     this._isRtpLocalStreamsAvailable =
       typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
     this._isAddTransceiverAvailable =
