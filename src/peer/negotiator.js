@@ -215,7 +215,9 @@ class Negotiator extends EventEmitter {
    */
   _setupPCListeners() {
     const pc = this._pc;
-    if (this._isOnTrackAvailable) {
+    // To check Chrome M64 or not. This is a tentative fix.
+    // M65 should be handled soon because it implements replaceTrack.
+    if (this._isOnTrackAvailable && this._isReplaceTrackAvailable) {
       pc.ontrack = evt => {
         logger.log('Received remote media stream');
         evt.streams.forEach(stream => {
