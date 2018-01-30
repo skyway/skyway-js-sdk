@@ -108,7 +108,7 @@ class Negotiator extends EventEmitter {
     // This doesn't require renegotiation.
     // Firefox 53 has both getSenders and getLocalStreams,
     // but Google Chrome 61 has only getLocalStreams.
-    if (this._isRtpSenderAvailable) {
+    if (this._isRtpSenderAvailable && this._isReplaceTrackAvailable) {
       this._replacePerTrack(newStream);
     } else {
       this._replacePerStream(newStream);
