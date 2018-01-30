@@ -27,4 +27,7 @@ module.exports = {
     es6: true,
     mocha: true,
   },
+  globals: {
+    RTCRtpSender: true,
+  },
 };
