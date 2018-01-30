@@ -64,7 +64,9 @@ class Negotiator extends EventEmitter {
 
     if (this._type === 'media') {
       if (options.stream) {
-        if (this._isAddTrackAvailable) {
+        // To check Chrome M64 or not. This is a tentative fix.
+        // M65 should be handled soon because it implements replaceTrack.
+        if (this._isAddTrackAvailable && this._isReplaceTrackAvailable) {
           options.stream.getTracks().forEach(track => {
             this._pc.addTrack(track, options.stream);
           });
@@ -195,6 +197,8 @@ class Negotiator extends EventEmitter {
     this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
     this._isRtpSenderAvailable =
       typeof RTCPeerConnection.prototype.getSenders === 'function';
+    this._isReplaceTrackAvailable =
+      typeof RTCRtpSender.prototype.replaceTrack === 'function';
     this._isRtpLocalStreamsAvailable =
       typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
     this._isAddTransceiverAvailable =
