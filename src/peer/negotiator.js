@@ -106,7 +106,7 @@ class Negotiator extends EventEmitter {
     // This doesn't require renegotiation.
     // Firefox 53 has both getSenders and getLocalStreams,
     // but Google Chrome 61 has only getLocalStreams.
-    if (this._isRtpSenderAvailable) {
+    if (this._isReplaceTrackAvailable) {
       this._replacePerTrack(newStream);
     } else {
       this._replacePerStream(newStream);
@@ -195,6 +195,8 @@ class Negotiator extends EventEmitter {
     this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
     this._isRtpSenderAvailable =
       typeof RTCPeerConnection.prototype.getSenders === 'function';
+    this._isReplaceTrackAvailable =
+      typeof RTCRtpSender.prototype.replaceTrack === 'function';
     this._isRtpLocalStreamsAvailable =
       typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
     this._isAddTransceiverAvailable =
@@ -592,8 +594,6 @@ class Negotiator extends EventEmitter {
    * @private
    */
   _replacePerStream(newStream) {
-    const localStreams = this._pc.getLocalStreams();
-
     // Temporarily unset onnegotiationneeded so that it doesn't do anything.
     // Leaving this set will cause an extra negotiation on removeStream that will cause the
     // signalingState on the answer side to enter an unexpected state, leading to errors.
@@ -601,8 +601,12 @@ class Negotiator extends EventEmitter {
     this._pc.onnegotiationneeded = () => {};
 
     // We assume that there is at most 1 stream in localStreams
-    if (localStreams.length > 0) {
-      this._pc.removeStream(localStreams[0]);
+    const localSenders = this._pc.getSenders();
+    if (localSenders.length > 0) {
+      localSenders.forEach(rtpSender => {
+        // Chrome M64(Stable) has already implemented removeTrack. (replaceTrack will come at M65)
+        this._pc.removeTrack(rtpSender);
+      });
     }
 
     this._replaceStreamCalled = true;
