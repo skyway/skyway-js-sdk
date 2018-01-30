@@ -199,8 +199,6 @@ class Negotiator extends EventEmitter {
       typeof RTCPeerConnection.prototype.getSenders === 'function';
     this._isReplaceTrackAvailable =
       typeof RTCRtpSender.prototype.replaceTrack === 'function';
-    this._isRtpLocalStreamsAvailable =
-      typeof RTCPeerConnection.prototype.getLocalStreams === 'function';
     this._isAddTransceiverAvailable =
       typeof RTCPeerConnection.prototype.addTransceiver === 'function';
 
