@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.4](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.4) - 2018-01-30
+
+### Fixed
+
+- Fixed a bug that replaceStream does not work correctly on Google Chrome 64.
+
 ## [v1.1.3](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.3) - 2017-12-11
 
 ### Fixed
