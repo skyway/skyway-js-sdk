@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.5](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.5) - 2018-01-31
+
+### Fixed
+
+- Fixed a bug that SkyWay is broken on Google Chrome 63 and earlier.
+
 ## [v1.1.4](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.4) - 2018-01-30
 
 ### Fixed
