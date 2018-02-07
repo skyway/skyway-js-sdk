@@ -52,3 +52,29 @@ done
 
 # Upload examples
 s3cmd --no-mime-magic --guess-mime-type put -r ./examples/* $s3_example_bucket
+
+if [ "${CIRCLE_BRANCH}" == "master" ]; then
+    FIRSTLINE=$(cat CHANGELOG.md | grep -nE "^##[^#]" | head -n 1 | cut -d ":" -f 1)
+    LASTLINE=$(($(cat CHANGELOG.md | grep -nE "^##[^#]" | head -n 2 | tail -n 1 | cut -d ":" -f 1) - 1))
+    CHANGELOG=$(cat CHANGELOG.md | head -n $LASTLINE | tail -n +$FIRSTLINE)
+    curl -X POST $NOTIFICATION_ENDOPOINT --data-urlencode 'payload={
+        "username": "release bot",
+        "icon_emoji": ":tada:",
+        "attachments":[{
+            "fallback":"<https://github.com/skyway/skyway-js-sdk|New Release>",
+            "pretext":"<https://github.com/skyway/skyway-js-sdk|New Release>",
+            "color":"good",
+            "author_name": "Circle CI",
+            "author_link": "'"$CIRCLE_BUILD_URL"'",
+            "fields":[
+                {
+                    "title":"Change Log",
+                    "value":"'"$CHANGELOG"'",
+                    "short":false
+                }
+            ],
+            "footer": "Send from deploy.sh on circleci",
+            "ts": "'"$(date +%s)"'"
+        }]
+    }'
+fi
