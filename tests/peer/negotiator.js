@@ -311,7 +311,7 @@ describe('Negotiator', () => {
         negotiator._pc.removeTrack = removeTrackStub;
         negotiator._pc.onnegotiationneeded = negotiationNeededStub;
         negotiator._isRtpSenderAvailable = true;
-        negotiator._isReplaceTrackAvailable = true;
+        negotiator._isForceUseStreamMethods = false;
 
         audioSender = {
           track: {
