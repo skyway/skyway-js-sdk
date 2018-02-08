@@ -53,6 +53,7 @@ done
 # Upload examples
 s3cmd --no-mime-magic --guess-mime-type put -r ./examples/* $s3_example_bucket
 
+# Notify SkyWay team Slack of the new release
 if [ "${CIRCLE_BRANCH}" == "master" ]; then
     FIRSTLINE=$(cat CHANGELOG.md | grep -nE "^##[^#]" | head -n 1 | cut -d ":" -f 1)
     LASTLINE=$(($(cat CHANGELOG.md | grep -nE "^##[^#]" | head -n 2 | tail -n 1 | cut -d ":" -f 1) - 1))
