@@ -3,6 +3,7 @@ import Enum from 'enum';
 
 import sdpUtil from '../shared/sdpUtil';
 import logger from '../shared/logger';
+import util from '../shared/util';
 
 const NegotiatorEvents = new Enum([
   'addStream',
@@ -64,9 +65,7 @@ class Negotiator extends EventEmitter {
 
     if (this._type === 'media') {
       if (options.stream) {
-        // To check Chrome M64 or not. This is a tentative fix.
-        // M65 should be handled soon because it implements replaceTrack.
-        if (this._isAddTrackAvailable && this._isReplaceTrackAvailable) {
+        if (this._isAddTrackAvailable && !this._isForceUseStreamMethods) {
           options.stream.getTracks().forEach(track => {
             this._pc.addTrack(track, options.stream);
           });
@@ -106,9 +105,7 @@ class Negotiator extends EventEmitter {
 
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
-    // Firefox 53 has both getSenders and getLocalStreams,
-    // but Google Chrome 61 has only getLocalStreams.
-    if (this._isRtpSenderAvailable && this._isReplaceTrackAvailable) {
+    if (this._isRtpSenderAvailable && !this._isForceUseStreamMethods) {
       this._replacePerTrack(newStream);
     } else {
       this._replacePerStream(newStream);
@@ -197,11 +194,12 @@ class Negotiator extends EventEmitter {
     this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
     this._isRtpSenderAvailable =
       typeof RTCPeerConnection.prototype.getSenders === 'function';
-    this._isReplaceTrackAvailable =
-      window.RTCRtpSender &&
-      typeof RTCRtpSender.prototype.replaceTrack === 'function';
     this._isAddTransceiverAvailable =
       typeof RTCPeerConnection.prototype.addTransceiver === 'function';
+
+    // If browser is Chrome, we use addStream/replaceStream instead of addTrack/replaceTrack.
+    // Because Chrome can't call properly to Firefox using track methods.
+    this._isForceUseStreamMethods = util.detectBrowser() === 'chrome';
 
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
@@ -214,9 +212,7 @@ class Negotiator extends EventEmitter {
    */
   _setupPCListeners() {
     const pc = this._pc;
-    // To check Chrome M64 or not. This is a tentative fix.
-    // M65 should be handled soon because it implements replaceTrack.
-    if (this._isOnTrackAvailable && this._isReplaceTrackAvailable) {
+    if (this._isOnTrackAvailable && !this._isForceUseStreamMethods) {
       pc.ontrack = evt => {
         logger.log('Received remote media stream');
         evt.streams.forEach(stream => {
