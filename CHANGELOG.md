@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.6](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.6) - 2018-03-01
+
+### Fixed
+
+- Use addStream for SkyWay to Work with Google Chrome 65
+
 ## [v1.1.5](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.5) - 2018-01-31
 
 ### Fixed
