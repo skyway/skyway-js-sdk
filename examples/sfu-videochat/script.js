@@ -112,6 +112,7 @@ $(function() {
   }
 
   function step2() {
+    $('#their-videos').empty();
     $('#step1, #step3').hide();
     $('#step2').show();
     $('#join-room').focus();

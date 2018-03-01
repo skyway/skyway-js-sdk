@@ -52,3 +52,16 @@ done
 
 # Upload examples
 s3cmd --no-mime-magic --guess-mime-type put -r ./examples/* $s3_example_bucket
+
+# Notify SkyWay team Slack of the new release
+if [ "${CIRCLE_BRANCH}" == "master" ]; then
+    FIRSTLINE=$(cat CHANGELOG.md | grep -nE "^##[^#]" | head -n 1 | cut -d ":" -f 1)
+    LASTLINE=$(($(cat CHANGELOG.md | grep -nE "^##[^#]" | head -n 2 | tail -n 1 | cut -d ":" -f 1) - 1))
+    CHANGELOG=$(cat CHANGELOG.md | head -n $LASTLINE | tail -n +$FIRSTLINE)
+    VERSION_NUM=$(cat CHANGELOG.md | grep -E "^##[^#]" | grep -Eo "\d+\.\d+\.\d+" | head -n 1)
+    curl -X POST $NOTIFICATION_ENDOPOINT --data-urlencode 'payload={
+        "username": "release bot",
+        "icon_emoji": ":tada:",
+        "text": "<'"$CIRCLE_BUILD_URL"'|skyway-js-sdk version '"$VERSION_NUM"' released>\n*Change Log*\n```'"$CHANGELOG"'```"
+    }'
+fi
