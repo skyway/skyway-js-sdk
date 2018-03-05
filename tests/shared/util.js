@@ -89,11 +89,4 @@ describe('Util', () => {
       assert(util.isSecure(location.protocol) === false);
     });
   });
-
-  describe('detectBrowser', () => {
-    // Karma only runs on 'chrome'
-    it('should return chrome', () => {
-      assert(util.detectBrowser() === 'chrome');
-    });
-  });
 });

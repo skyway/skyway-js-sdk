@@ -100,6 +100,7 @@ class MediaConnection extends Connection {
       videoReceiveEnabled: options.videoReceiveEnabled,
       audioReceiveEnabled: options.audioReceiveEnabled,
     });
+    this._negotiator.setRemoteBrowser(this._options.payload.browser);
     this._pcAvailable = true;
 
     this._handleQueuedMessages();

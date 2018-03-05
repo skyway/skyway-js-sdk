@@ -80,27 +80,6 @@ function isSecure() {
   return location.protocol === 'https:';
 }
 
-/**
- * Detect browser.
- * @return {string} Browser name or empty string for not supported.
- */
-function detectBrowser() {
-  const ua = navigator.userAgent;
-
-  switch (true) {
-    case /Edge/.test(ua):
-      return 'edge';
-    case /Chrome/.test(ua):
-      return 'chrome';
-    case /Firefox/.test(ua):
-      return 'firefox';
-    case /Safari\//.test(ua):
-      return 'safari';
-    default:
-      return '';
-  }
-}
-
 export default {
   validateId,
   validateKey,
@@ -109,5 +88,4 @@ export default {
   joinArrayBuffers,
   blobToArrayBuffer,
   isSecure,
-  detectBrowser,
 };
