@@ -362,12 +362,6 @@ describe('Negotiator', () => {
 
           assert.equal(videoSender.replaceTrack.callCount, 0);
         });
-
-        it('should call onnegotiationneeded', () => {
-          negotiator.replaceStream(newStream);
-
-          assert.equal(negotiationNeededStub.callCount, 1);
-        });
       });
 
       describe('new stream has fewer number of tracks', () => {
@@ -382,12 +376,6 @@ describe('Negotiator', () => {
           assert.equal(removeTrackStub.callCount, 2);
           assert(removeTrackStub.calledWith(audioSender));
           assert(removeTrackStub.calledWith(videoSender));
-        });
-
-        it('should call onnegotiationneeded', () => {
-          negotiator.replaceStream(newStream);
-
-          assert.equal(negotiationNeededStub.callCount, 1);
         });
       });
 
@@ -415,12 +403,6 @@ describe('Negotiator', () => {
           negotiator.replaceStream(newStream);
 
           assert(addTrackStub.calledWith(videoTrack));
-        });
-
-        it('should call onnegotiationneeded', () => {
-          negotiator.replaceStream(newStream);
-
-          assert.equal(negotiationNeededStub.callCount, 1);
         });
       });
     });
