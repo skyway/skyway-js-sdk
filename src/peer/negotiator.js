@@ -31,6 +31,7 @@ class Negotiator extends EventEmitter {
     super();
     this._isExpectingAnswer = false;
     this._replaceStreamCalled = false;
+    this._isNegotiationAllowed = true;
   }
 
   /**
@@ -63,6 +64,7 @@ class Negotiator extends EventEmitter {
     this._type = options.type;
     this._recvonlyState = this._getReceiveOnlyState(options);
     this._remoteBrowser = '';
+    this._initialStream = options.stream;
 
     if (this._type === 'media') {
       if (options.stream) {
@@ -108,6 +110,8 @@ class Negotiator extends EventEmitter {
       return;
     }
 
+    this._isNegotiationAllowed = true;
+
     // Replace the tracks in the rtpSenders if possible.
     // This doesn't require renegotiation.
     if (this._isRtpSenderAvailable && !this._isForceUseStreamMethods) {
@@ -128,6 +132,8 @@ class Negotiator extends EventEmitter {
     if (this._lastOffer && offerSdp && this._lastOffer.sdp === offerSdp.sdp) {
       return;
     }
+
+    this._isNegotiationAllowed = true;
 
     if (!offerSdp) {
       offerSdp = this._lastOffer;
@@ -152,6 +158,8 @@ class Negotiator extends EventEmitter {
    * @param {object} answerSdp - An object containing Answer SDP.
    */
   handleAnswer(answerSdp) {
+    this._isNegotiationAllowed = true;
+
     if (this._isExpectingAnswer) {
       this._setRemoteDescription(answerSdp);
       this._isExpectingAnswer = false;
@@ -292,8 +300,10 @@ class Negotiator extends EventEmitter {
     pc.onnegotiationneeded = () => {
       logger.log('`negotiationneeded` triggered');
 
-      // Don't make a new offer if it's not stable.
-      if (pc.signalingState === 'stable') {
+      // Don't make a new offer if it's not stable or if onnegotiationneeded is called consecutively.
+      // Chrome 65 called onnegotiationneeded once per addTrack so force it to run only once.
+      if (pc.signalingState === 'stable' && this._isNegotiationAllowed) {
+        this._isNegotiationAllowed = false;
         // Emit negotiationNeeded event in case additional handling is needed.
         if (this._originator) {
           this._makeOfferSdp().then(offer => {
