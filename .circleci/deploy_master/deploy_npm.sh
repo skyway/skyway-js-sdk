@@ -3,5 +3,5 @@
 set -e
 set -o pipefail
 
-echo -e "$NPM_USER\n$NPM_PASS\n$NPM_EMAIL" | npm login
+echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > .npmrc
 npm publish --access public
