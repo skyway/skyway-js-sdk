@@ -637,6 +637,9 @@ class Negotiator extends EventEmitter {
             })
             .then(() => {
               return this._pc.setRemoteDescription(this._pc.remoteDescription);
+            })
+            .catch(err => {
+              logger.error(err);
             });
         } else {
           promise = this._pc
@@ -646,6 +649,9 @@ class Negotiator extends EventEmitter {
             })
             .then(answer => {
               return this._pc.setLocalDescription(answer);
+            })
+            .catch(err => {
+              logger.error(err);
             });
         }
         // restore onnegotiationneeded in case we need it later.
