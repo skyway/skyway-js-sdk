@@ -1,6 +1,5 @@
 import EventEmitter from 'events';
 import Enum from 'enum';
-import { detect as detectBrowser } from 'detect-browser';
 
 import Negotiator from './negotiator';
 import util from '../shared/util';
@@ -164,15 +163,14 @@ class Connection extends EventEmitter {
    * @private
    */
   _setupNegotiatorMessageHandlers() {
-    const browserInfo = detectBrowser();
-    const browserName = browserInfo ? browserInfo.name : '';
+    const browserInfo = util.detectBrowser();
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
       const connectionAnswer = {
         answer: answer,
         dst: this.remoteId,
         connectionId: this.id,
         connectionType: this.type,
-        browser: browserName,
+        browser: browserInfo,
       };
       this.emit(Connection.EVENTS.answer.key, connectionAnswer);
     });
@@ -184,7 +182,7 @@ class Connection extends EventEmitter {
         connectionId: this.id,
         connectionType: this.type,
         metadata: this.metadata,
-        browser: browserName,
+        browser: browserInfo,
       };
       if (this.serialization) {
         connectionOffer.serialization = this.serialization;

@@ -10,7 +10,6 @@ import MeshRoom from './peer/meshRoom';
 import util from './shared/util';
 import logger from './shared/logger';
 import config from './shared/config';
-import { detect as detectBrowser } from 'detect-browser';
 
 const PeerEvents = new Enum([
   'open',
@@ -472,8 +471,8 @@ class Peer extends EventEmitter {
         ];
 
         // Edge can not handle turns-tcp
-        const browser = detectBrowser();
-        if (browser && browser.name !== 'edge') {
+        const browser = util.detectBrowser();
+        if (browser.name !== 'edge') {
           turnCombinations.push({ protocol: 'turns', transport: 'tcp' });
         }
 

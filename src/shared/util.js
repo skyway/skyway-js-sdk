@@ -1,3 +1,5 @@
+import { detect } from 'detect-browser';
+
 /**
  * Validate the Peer ID format.
  * @param {string} [id] - A Peer ID.
@@ -80,6 +82,21 @@ function isSecure() {
   return location.protocol === 'https:';
 }
 
+/**
+ * Detect browser name and version.
+ * @return {Object} Browser name and major, minor and patch versions. Object is empty if info can't be obtained.
+ */
+function detectBrowser() {
+  const { name, version } = detect();
+  const [major, minor, patch] = version.split('.').map(i => parseInt(i));
+  return {
+    name,
+    major,
+    minor,
+    patch,
+  };
+}
+
 export default {
   validateId,
   validateKey,
@@ -88,4 +105,5 @@ export default {
   joinArrayBuffers,
   blobToArrayBuffer,
   isSecure,
+  detectBrowser,
 };

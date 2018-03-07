@@ -3,7 +3,7 @@ import Enum from 'enum';
 
 import sdpUtil from '../shared/sdpUtil';
 import logger from '../shared/logger';
-import { detect as detectBrowser } from 'detect-browser';
+import util from '../shared/util';
 
 const NegotiatorEvents = new Enum([
   'addStream',
@@ -63,8 +63,7 @@ class Negotiator extends EventEmitter {
     this._videoCodec = options.videoCodec;
     this._type = options.type;
     this._recvonlyState = this._getReceiveOnlyState(options);
-    this._remoteBrowser = '';
-    this._initialStream = options.stream;
+    this._remoteBrowser = {};
 
     if (this._type === 'media') {
       if (options.stream) {
@@ -217,11 +216,9 @@ class Negotiator extends EventEmitter {
 
     // If browser is Chrome 64, we use addStream/replaceStream instead of addTrack/replaceTrack.
     // Because Chrome can't call properly to Firefox using track methods.
-    const browserInfo = detectBrowser();
+    const browserInfo = util.detectBrowser();
     this._isForceUseStreamMethods =
-      browserInfo &&
-      browserInfo.name === 'chrome' &&
-      parseInt(browserInfo.version.split('.')[0]) <= 64;
+      browserInfo.name === 'chrome' && browserInfo.major <= 64;
 
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
@@ -623,7 +620,7 @@ class Negotiator extends EventEmitter {
     // HACK: For some reason FF59 doesn't work when Chrome 64 renegotiates after updating the stream.
     // However, simply updating the localDescription updates the remote stream if the other browser is firefox.
     // Chrome 64 probably uses replaceTrack-like functions internally.
-    if (this._remoteBrowser === 'firefox') {
+    if (this._remoteBrowser && this._remoteBrowser.name === 'firefox') {
       this._pc.addStream(newStream);
 
       // use setTimeout to trigger (and do nothing) on add/removeStream.
