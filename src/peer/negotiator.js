@@ -634,9 +634,6 @@ class Negotiator extends EventEmitter {
             })
             .then(() => {
               return this._pc.setRemoteDescription(this._pc.remoteDescription);
-            })
-            .catch(err => {
-              logger.error(err);
             });
         } else {
           promise = this._pc
@@ -646,15 +643,17 @@ class Negotiator extends EventEmitter {
             })
             .then(answer => {
               return this._pc.setLocalDescription(answer);
-            })
-            .catch(err => {
-              logger.error(err);
             });
         }
         // restore onnegotiationneeded in case we need it later.
-        promise.finally(() => {
-          this._pc.onnegotiationneeded = origOnNegotiationNeeded;
-        });
+        promise
+          .then(() => {
+            this._pc.onnegotiationneeded = origOnNegotiationNeeded;
+          })
+          .catch(err => {
+            logger.error(err);
+            this._pc.onnegotiationneeded = origOnNegotiationNeeded;
+          });
       });
     } else {
       // this is the normal flow where we renegotiate.
