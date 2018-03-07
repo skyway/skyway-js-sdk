@@ -618,9 +618,13 @@ class Negotiator extends EventEmitter {
     }
 
     // HACK: For some reason FF59 doesn't work when Chrome 64 renegotiates after updating the stream.
-    // However, simply updating the localDescription updates the remote stream if the other browser is firefox.
+    // However, simply updating the localDescription updates the remote stream if the other browser is firefox 59+.
     // Chrome 64 probably uses replaceTrack-like functions internally.
-    if (this._remoteBrowser && this._remoteBrowser.name === 'firefox') {
+    const isRemoteBrowserNeedRenegotiation =
+      this._remoteBrowser &&
+      this._remoteBrowser.name === 'firefox' &&
+      this._remoteBrowser.major >= 59;
+    if (isRemoteBrowserNeedRenegotiation) {
       this._pc.addStream(newStream);
 
       // use setTimeout to trigger (and do nothing) on add/removeStream.
