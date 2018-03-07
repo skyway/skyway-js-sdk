@@ -50,6 +50,7 @@
     "webpack": "^3.3.0"
   },
   "dependencies": {
+    "detect-browser": "^2.1.0",
     "enum": "git+https://github.com/eastandwest/enum.git#react-native",
     "events": "^1.1.0",
     "js-binarypack": "0.0.9",

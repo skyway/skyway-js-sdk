@@ -1,3 +1,5 @@
+import { detect } from 'detect-browser';
+
 /**
  * Validate the Peer ID format.
  * @param {string} [id] - A Peer ID.
@@ -81,24 +83,18 @@ function isSecure() {
 }
 
 /**
- * Detect browser.
- * @return {string} Browser name or empty string for not supported.
+ * Detect browser name and version.
+ * @return {Object} Browser name and major, minor and patch versions. Object is empty if info can't be obtained.
  */
 function detectBrowser() {
-  const ua = navigator.userAgent;
-
-  switch (true) {
-    case /Edge/.test(ua):
-      return 'edge';
-    case /Chrome/.test(ua):
-      return 'chrome';
-    case /Firefox/.test(ua):
-      return 'firefox';
-    case /Safari\//.test(ua):
-      return 'safari';
-    default:
-      return '';
-  }
+  const { name, version } = detect();
+  const [major, minor, patch] = version.split('.').map(i => parseInt(i));
+  return {
+    name,
+    major,
+    minor,
+    patch,
+  };
 }
 
 export default {

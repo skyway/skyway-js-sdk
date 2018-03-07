@@ -78,6 +78,7 @@ class Connection extends EventEmitter {
   handleAnswer(answerMessage) {
     if (this._pcAvailable) {
       this._negotiator.handleAnswer(answerMessage.answer);
+      this._negotiator.setRemoteBrowser(answerMessage.browser);
       this.open = true;
     } else {
       logger.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
@@ -162,12 +163,14 @@ class Connection extends EventEmitter {
    * @private
    */
   _setupNegotiatorMessageHandlers() {
+    const browserInfo = util.detectBrowser();
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
       const connectionAnswer = {
         answer: answer,
         dst: this.remoteId,
         connectionId: this.id,
         connectionType: this.type,
+        browser: browserInfo,
       };
       this.emit(Connection.EVENTS.answer.key, connectionAnswer);
     });
@@ -179,6 +182,7 @@ class Connection extends EventEmitter {
         connectionId: this.id,
         connectionType: this.type,
         metadata: this.metadata,
+        browser: browserInfo,
       };
       if (this.serialization) {
         connectionOffer.serialization = this.serialization;

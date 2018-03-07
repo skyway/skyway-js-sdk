@@ -93,7 +93,14 @@ describe('Util', () => {
   describe('detectBrowser', () => {
     // Karma only runs on 'chrome'
     it('should return chrome', () => {
-      assert(util.detectBrowser() === 'chrome');
+      assert(util.detectBrowser().name === 'chrome');
+    });
+
+    it('should return major, minor and patch versions', () => {
+      const { major, minor, patch } = util.detectBrowser();
+      assert(typeof major === 'number');
+      assert(typeof minor === 'number');
+      assert(typeof patch === 'number');
     });
   });
 });
