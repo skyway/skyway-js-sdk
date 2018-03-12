@@ -1,5 +1,15 @@
 # Changelog
 
+## [v1.1.7](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.7) - 2018-03-12
+
+### Fixed
+
+- Fix Chrome 64 and Firefox 59 replaceStream interoperability
+
+### Known Issues
+
+- remote stream freezes in an SFU room for clients using Firefox 59 and replaceStream is called on Chrome 64
+
 ## [v1.1.6](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.6) - 2018-03-01
 
 ### Fixed
