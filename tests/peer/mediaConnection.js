@@ -38,6 +38,7 @@ describe('MediaConnection', () => {
       handleAnswer: answerSpy,
       handleCandidate: candidateSpy,
       replaceStream: replaceSpy,
+      setRemoteBrowser: sinon.spy(),
     });
     // hoist statics
     stub.EVENTS = Negotiator.EVENTS;

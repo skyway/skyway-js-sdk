@@ -471,7 +471,8 @@ class Peer extends EventEmitter {
         ];
 
         // Edge can not handle turns-tcp
-        if (util.detectBrowser() !== 'edge') {
+        const browser = util.detectBrowser();
+        if (browser.name !== 'edge') {
           turnCombinations.push({ protocol: 'turns', transport: 'tcp' });
         }
 
