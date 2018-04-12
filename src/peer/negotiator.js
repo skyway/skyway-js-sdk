@@ -29,6 +29,7 @@ class Negotiator extends EventEmitter {
    */
   constructor() {
     super();
+    this._offerQueue = [];
     this._isExpectingAnswer = false;
     this._replaceStreamCalled = false;
     this._isNegotiationAllowed = true;
@@ -139,6 +140,11 @@ class Negotiator extends EventEmitter {
     }
 
     this._lastOffer = offerSdp;
+
+    if (this._pc.signalingState === 'have-local-offer') {
+      this._offerQueue.push(offerSdp);
+      return;
+    }
 
     this._setRemoteDescription(offerSdp)
       .then(() => {
@@ -322,6 +328,11 @@ class Negotiator extends EventEmitter {
 
     pc.onsignalingstatechange = () => {
       logger.log(`signalingState is ${pc.signalingState}`);
+
+      if (this._pc.signalingState === 'stable') {
+        const offer = this._offerQueue.shift();
+        offer && this.handleOffer(offer);
+      }
     };
   }
 
