@@ -331,7 +331,10 @@ class Negotiator extends EventEmitter {
 
       if (this._pc.signalingState === 'stable') {
         const offer = this._offerQueue.shift();
-        offer && this.handleOffer(offer);
+        if (offer) {
+          console.warn('delayed handleOffer');
+          this.handleOffer(offer);
+        }
       }
     };
   }
