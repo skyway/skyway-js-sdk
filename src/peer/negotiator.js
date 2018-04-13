@@ -141,7 +141,9 @@ class Negotiator extends EventEmitter {
 
     this._lastOffer = offerSdp;
 
-    if (this._pc.signalingState === 'have-local-offer') {
+    // Enqueue and skip while signalingState is wrong state.
+    // (when room is SFU and there are multiple conns in a same time, it happens)
+    if (this._pc.signalingState === 'have-remote-offer') {
       this._offerQueue.push(offerSdp);
       return;
     }
@@ -332,7 +334,6 @@ class Negotiator extends EventEmitter {
       if (this._pc.signalingState === 'stable') {
         const offer = this._offerQueue.shift();
         if (offer) {
-          console.warn('delayed handleOffer');
           this.handleOffer(offer);
         }
       }
