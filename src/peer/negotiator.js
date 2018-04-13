@@ -331,6 +331,11 @@ class Negotiator extends EventEmitter {
     pc.onsignalingstatechange = () => {
       logger.log(`signalingState is ${pc.signalingState}`);
 
+      // After signaling state is getting back to 'stable',
+      // apply pended remote offer, which was stored when simultaneous multiple conns happened in SFU room,
+      // Note that this code very rarely applies the old remote offer.
+      // E.g. "Offer A -> Offer B" should be the right order but for some reason like NW unstablity,
+      //      offerQueue might keep "Offer B" first and handle "Offer A" later.
       if (this._pc.signalingState === 'stable') {
         const offer = this._offerQueue.shift();
         if (offer) {
