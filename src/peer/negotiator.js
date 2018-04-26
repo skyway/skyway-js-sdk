@@ -360,9 +360,9 @@ class Negotiator extends EventEmitter {
     } else {
       if (this._isAddTransceiverAvailable) {
         this._recvonlyState.audio &&
-          this._pc.addTransceiver('audio').setDirection('recvonly');
+          this._pc.addTransceiver('audio', { direction: 'recvonly' });
         this._recvonlyState.video &&
-          this._pc.addTransceiver('video').setDirection('recvonly');
+          this._pc.addTransceiver('video', { direction: 'recvonly' });
         createOfferPromise = this._pc.createOffer();
       } else {
         const offerOptions = {};
