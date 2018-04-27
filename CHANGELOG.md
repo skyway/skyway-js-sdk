@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.1.8](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.8) - 2018-04-27
+
+### Fixed
+
+- Fix Firefox 59 receive only mode not working
+- Prevent DOMException by settting remote SDP when signaling state is not stable
+
 ## [v1.1.7](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.7) - 2018-03-12
 
 ### Fixed
