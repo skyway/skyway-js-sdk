@@ -81,7 +81,7 @@ workflows:
             - test
           filters:
             branches:
-              only: staging
+              ignore: master
       # Build and deploy to the production environment
       - build_deploy_master:
           requires:
