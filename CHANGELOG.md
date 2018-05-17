@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.9](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.9) - 2018-05-07
+
+### Fixed
+
+- Fix referring to null variable after calling close()
+
 ## [v1.1.8](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.8) - 2018-04-27
 
 ### Fixed
