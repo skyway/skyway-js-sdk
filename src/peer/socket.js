@@ -95,7 +95,7 @@ class Socket extends EventEmitter {
         })
       : Promise.resolve();
 
-    getSignalingServerPromise
+    return getSignalingServerPromise
       .then(() => {
         this._io = io(this.signalingServerUrl, {
           'force new connection': true,
