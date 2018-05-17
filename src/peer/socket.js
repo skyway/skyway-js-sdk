@@ -86,36 +86,35 @@ class Socket extends EventEmitter {
       query += `&credential=${encodedCredentialStr}`;
     }
 
-    return new Promise(resolve => {
-      if (this._dispatcherUrl) {
-        this._getSignalingServer().then(serverInfo => {
+    const getSignalingServerPromise = this._dispatcherUrl
+      ? this._getSignalingServer().then(serverInfo => {
           const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
           this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
             serverInfo.port
           }`;
-          resolve();
+        })
+      : Promise.resolve();
+
+    return getSignalingServerPromise
+      .then(() => {
+        this._io = io(this.signalingServerUrl, {
+          'force new connection': true,
+          query: query,
+          reconnectionAttempts: config.reconnectionAttempts,
         });
-      } else {
-        resolve();
-      }
-    }).then(() => {
-      this._io = io(this.signalingServerUrl, {
-        'force new connection': true,
-        query: query,
-        reconnectionAttempts: config.reconnectionAttempts,
-      });
 
-      this._io.on('reconnect_failed', () => {
-        this._stopPings();
-        this._connectToNewServer();
-      });
+        this._io.on('reconnect_failed', () => {
+          this._stopPings();
+          this._connectToNewServer();
+        });
 
-      this._io.on('error', e => {
-        logger.error(e);
-      });
+        this._io.on('error', e => {
+          logger.error(e);
+        });
 
-      this._setupMessageHandlers();
-    });
+        this._setupMessageHandlers();
+      })
+      .catch(err => this.emit('error', err));
   }
 
   /**
@@ -135,19 +134,21 @@ class Socket extends EventEmitter {
     }
 
     // Keep trying until we connect to a new server because consul can take some time to remove from the active list.
-    this._getSignalingServer().then(serverInfo => {
-      if (this.signalingServerUrl.indexOf(serverInfo.host) === -1) {
-        const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
-        this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
-          serverInfo.port
-        }`;
-        this._io.io.uri = this.signalingServerUrl;
-        this._io.connect();
-        this._reconnectAttempts++;
-      } else {
-        this._connectToNewServer(++numAttempts);
-      }
-    });
+    this._getSignalingServer()
+      .then(serverInfo => {
+        if (this.signalingServerUrl.indexOf(serverInfo.host) === -1) {
+          const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
+          this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
+            serverInfo.port
+          }`;
+          this._io.io.uri = this.signalingServerUrl;
+          this._io.connect();
+          this._reconnectAttempts++;
+        } else {
+          this._connectToNewServer(++numAttempts);
+        }
+      })
+      .catch(err => this.emit('error', err));
   }
 
   /**
