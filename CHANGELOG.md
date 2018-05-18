@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.10](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.10) - 2018-05-21
+
+### Fixed
+
+- Catch error when fetching signaling server fails with a timeout
+
 ## [v1.1.9](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.9) - 2018-05-07
 
 ### Fixed
