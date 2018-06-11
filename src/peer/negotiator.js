@@ -65,6 +65,7 @@ class Negotiator extends EventEmitter {
     this._type = options.type;
     this._recvonlyState = this._getReceiveOnlyState(options);
     this._remoteBrowser = {};
+    this._hasRemoteDescription = false;
 
     if (this._type === 'media') {
       if (options.stream) {
@@ -189,6 +190,14 @@ class Negotiator extends EventEmitter {
       .catch(e => {
         logger.error('Failed to add ICE candidate', e);
       });
+  }
+
+  /**
+   * Return true if setRemoteDescription resolved.
+   * @returns {boolean} true if setRemoteDescription resolved
+   */
+  hasRemoteDescription() {
+    return this._hasRemoteDescription;
   }
 
   /**
@@ -506,6 +515,7 @@ class Negotiator extends EventEmitter {
       .setRemoteDescription(new RTCSessionDescription(sdp))
       .then(() => {
         logger.log('Set remoteDescription:', sdp.type);
+        this._hasRemoteDescription = true;
         return Promise.resolve();
       })
       .catch(error => {

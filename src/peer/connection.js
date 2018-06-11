@@ -94,7 +94,7 @@ class Connection extends EventEmitter {
    * @param {object} candidateMessage - Message object containing a candidate.
    */
   handleCandidate(candidateMessage) {
-    if (this._pcAvailable) {
+    if (this._negotiator.hasRemoteDescription()) {
       this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
       logger.log(
