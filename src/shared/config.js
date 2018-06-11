@@ -3,7 +3,7 @@ import Enum from 'enum';
 const DISPATCHER_HOST = 'dispatcher.webrtc.ecl.ntt.com';
 const DISPATCHER_PORT = 443;
 const DISPATCHER_SECURE = true;
-const DISPATCHER_TIMEOUT = 3000;
+const DISPATCHER_TIMEOUT = 10000;
 
 const TURN_HOST = 'turn.webrtc.ecl.ntt.com';
 const TURN_PORT = 443;
