@@ -180,45 +180,6 @@ describe('MediaConnection', () => {
 
       spy.restore();
     });
-
-    it("should set remoteStream to null on 'removeStream' being emitted", () => {
-      const remoteStream = {};
-      const mc = new MediaConnection('remoteId', { stream: {} });
-      mc.remoteStream = remoteStream;
-      mc._negotiator.emit(Negotiator.EVENTS.removeStream.key, remoteStream);
-
-      assert.equal(mc.remoteStream, null);
-    });
-
-    it("should not change remoteStream on 'removeStream' being emitted if remoteStream is different", () => {
-      const origStream = {};
-      const removeStream = {};
-      const mc = new MediaConnection('remoteId', { stream: {} });
-      mc.remoteStream = origStream;
-      mc._negotiator.emit(Negotiator.EVENTS.removeStream.key, removeStream);
-
-      assert.equal(mc.remoteStream, origStream);
-    });
-
-    it("should emit a 'removeStream' event upon 'removeStream' being emitted", () => {
-      const remoteStream = {};
-      const mc = new MediaConnection('remoteId', { stream: {} });
-
-      const spy = sinon.spy(mc, 'emit');
-
-      mc._negotiator.emit(Negotiator.EVENTS.removeStream.key, remoteStream);
-
-      assert(mc);
-      assert(spy.calledOnce);
-      assert(
-        spy.calledWith(
-          MediaConnection.EVENTS.removeStream.key,
-          remoteStream
-        ) === true
-      );
-
-      spy.restore();
-    });
   });
 
   describe('replaceStream', () => {
