@@ -90,6 +90,8 @@ class Negotiator extends EventEmitter {
 
   /**
    * Replace the stream being sent with a new one.
+   * We assume that there is at most 1 audio and at most 1 video in local stream.
+   * Replace the tracks in the rtpSenders, this doesn't require renegotiation.
    * @param {MediaStream} newStream - The stream to replace the old stream with.
    */
   replaceStream(newStream) {
@@ -101,8 +103,44 @@ class Negotiator extends EventEmitter {
 
     this._isNegotiationAllowed = true;
 
-    // Replace the tracks in the rtpSenders, this doesn't require renegotiation.
-    this._replacePerTrack(newStream);
+    const vTracks = newStream.getVideoTracks();
+    const aTracks = newStream.getAudioTracks();
+
+    const senders = this._pc.getSenders();
+    const vSender = senders.find(sender => sender.track.kind === 'video');
+    const aSender = senders.find(sender => sender.track.kind === 'audio');
+
+    const _this = this;
+    _updateSenderWithTrack(vSender, vTracks[0], newStream);
+    _updateSenderWithTrack(aSender, aTracks[0], newStream);
+
+    /**
+     * Replace a track being sent with a new one.
+     * @param {RTCRtpSender} sender - The sender which type is video or audio.
+     * @param {MediaStreamTrack} track - The track of new stream.
+     * @param {MediaStream} stream - The stream which contains the track.
+     * @private
+     */
+    function _updateSenderWithTrack(sender, track, stream) {
+      if (track === undefined && sender === undefined) {
+        return;
+      }
+      // remove video or audio sender if not passed
+      if (track === undefined) {
+        _this._pc.removeTrack(sender);
+        return;
+      }
+      // if passed, replace track or create sender
+      if (sender === undefined) {
+        _this._pc.addTrack(track, stream);
+        return;
+      }
+      // if track was not replaced, do nothing
+      if (sender.track.id === track.id) {
+        return;
+      }
+      sender.replaceTrack(track);
+    }
   }
 
   /**
@@ -531,54 +569,6 @@ class Negotiator extends EventEmitter {
     }
 
     return state;
-  }
-
-  /**
-   * Replace the stream being sent with a new one.
-   * Video and audio are replaced per track by using `xxxTrack` methods.
-   * We assume that there is at most 1 audio and at most 1 video in local stream.
-   * @param {MediaStream} newStream - The stream to replace the old stream with.
-   * @private
-   */
-  _replacePerTrack(newStream) {
-    const _this = this;
-    const vTracks = newStream.getVideoTracks();
-    const aTracks = newStream.getAudioTracks();
-
-    const senders = this._pc.getSenders();
-    const vSender = senders.find(sender => sender.track.kind === 'video');
-    const aSender = senders.find(sender => sender.track.kind === 'audio');
-
-    _updateSenderWithTrack(vSender, vTracks[0], newStream);
-    _updateSenderWithTrack(aSender, aTracks[0], newStream);
-
-    /**
-     * Replace a track being sent with a new one.
-     * @param {RTCRtpSender} sender - The sender which type is video or audio.
-     * @param {MediaStreamTrack} track - The track of new stream.
-     * @param {MediaStream} stream - The stream which contains the track.
-     * @private
-     */
-    function _updateSenderWithTrack(sender, track, stream) {
-      if (track === undefined && sender === undefined) {
-        return;
-      }
-      // remove video or audio sender if not passed
-      if (track === undefined) {
-        _this._pc.removeTrack(sender);
-        return;
-      }
-      // if passed, replace track or create sender
-      if (sender === undefined) {
-        _this._pc.addTrack(track, stream);
-        return;
-      }
-      // if track was not replaced, do nothing
-      if (sender.track.id === track.id) {
-        return;
-      }
-      sender.replaceTrack(track);
-    }
   }
 
   /**
