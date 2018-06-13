@@ -126,14 +126,6 @@ class SFURoom extends Room {
       }
     });
 
-    this._negotiator.on(Negotiator.EVENTS.removeStream.key, stream => {
-      delete this.remoteStreams[stream.id];
-      delete this._msidMap[stream.id];
-      delete this._unknownStreams[stream.id];
-
-      this.emit(SFURoom.EVENTS.removeStream.key, stream);
-    });
-
     this._negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
       // Renegotiate by requesting an offer then sending an answer when one is created.
       const offerRequestMessage = {

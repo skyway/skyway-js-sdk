@@ -6,7 +6,6 @@ import logger from '../shared/logger';
 
 const NegotiatorEvents = new Enum([
   'addStream',
-  'removeStream',
   'dcCreated',
   'offerCreated',
   'answerCreated',
@@ -321,11 +320,6 @@ class Negotiator extends EventEmitter {
           });
         }
       }
-    };
-
-    pc.onremovestream = evt => {
-      logger.log('`removestream` triggered');
-      this.emit(Negotiator.EVENTS.removeStream.key, evt.stream);
     };
 
     pc.onsignalingstatechange = () => {
