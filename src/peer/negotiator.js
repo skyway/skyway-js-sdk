@@ -3,7 +3,6 @@ import Enum from 'enum';
 
 import sdpUtil from '../shared/sdpUtil';
 import logger from '../shared/logger';
-import util from '../shared/util';
 
 const NegotiatorEvents = new Enum([
   'addStream',
@@ -66,13 +65,9 @@ class Negotiator extends EventEmitter {
 
     if (this._type === 'media') {
       if (options.stream) {
-        if (this._isAddTrackAvailable && !this._isForceUseStreamMethods) {
-          options.stream.getTracks().forEach(track => {
-            this._pc.addTrack(track, options.stream);
-          });
-        } else {
-          this._pc.addStream(options.stream);
-        }
+        options.stream.getTracks().forEach(track => {
+          this._pc.addTrack(track, options.stream);
+        });
       } else if (this._originator) {
         // This means the peer wants to create offer SDP with `recvonly`
         this._makeOfferSdp().then(offer => {
@@ -106,11 +101,8 @@ class Negotiator extends EventEmitter {
 
     this._isNegotiationAllowed = true;
 
-    // Replace the tracks in the rtpSenders if possible.
-    // This doesn't require renegotiation.
-    if (this._isRtpSenderAvailable && !this._isForceUseStreamMethods) {
-      this._replacePerTrack(newStream);
-    }
+    // Replace the tracks in the rtpSenders, this doesn't require renegotiation.
+    this._replacePerTrack(newStream);
   }
 
   /**
@@ -207,16 +199,8 @@ class Negotiator extends EventEmitter {
     this._isAddTrackAvailable =
       typeof RTCPeerConnection.prototype.addTrack === 'function';
     this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
-    this._isRtpSenderAvailable =
-      typeof RTCPeerConnection.prototype.getSenders === 'function';
     this._isAddTransceiverAvailable =
       typeof RTCPeerConnection.prototype.addTransceiver === 'function';
-
-    // If browser is Chrome 64, we use addStream/replaceStream instead of addTrack/replaceTrack.
-    // Because Chrome can't call properly to Firefox using track methods.
-    const browserInfo = util.detectBrowser();
-    this._isForceUseStreamMethods =
-      browserInfo.name === 'chrome' && browserInfo.major <= 64;
 
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
@@ -229,20 +213,12 @@ class Negotiator extends EventEmitter {
    */
   _setupPCListeners() {
     const pc = this._pc;
-    if (this._isOnTrackAvailable && !this._isForceUseStreamMethods) {
-      pc.ontrack = evt => {
-        logger.log('Received remote media stream');
-        evt.streams.forEach(stream => {
-          this.emit(Negotiator.EVENTS.addStream.key, stream);
-        });
-      };
-    } else {
-      pc.onaddstream = evt => {
-        logger.log('Received remote media stream');
-        const stream = evt.stream;
+    pc.ontrack = evt => {
+      logger.log('Received remote media stream');
+      evt.streams.forEach(stream => {
         this.emit(Negotiator.EVENTS.addStream.key, stream);
-      };
-    }
+      });
+    };
 
     pc.ondatachannel = evt => {
       logger.log('Received data channel');
