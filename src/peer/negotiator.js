@@ -116,10 +116,6 @@ class Negotiator extends EventEmitter {
     // This doesn't require renegotiation.
     if (this._isRtpSenderAvailable && !this._isForceUseStreamMethods) {
       this._replacePerTrack(newStream);
-    } else if (!this._replaceStreamCalled) {
-      // _replacePerStream is used for Chrome 64 and below. All other browsers should have track methods implemented.
-      // We can delete _replacePerStream after Chrome 64 is no longer supported.
-      this._replacePerStream(newStream);
     }
   }
 
@@ -616,79 +612,6 @@ class Negotiator extends EventEmitter {
         return;
       }
       sender.replaceTrack(track);
-    }
-  }
-
-  /**
-   * Replace the stream being sent with a new one.
-   * Video and audio are replaced per stream by using `xxxStream` methods.
-   * This method is used in some browsers which don't implement `xxxTrack` methods.
-   * @param {MediaStream} newStream - The stream to replace the old stream with.
-   * @private
-   */
-  _replacePerStream(newStream) {
-    const localStreams = this._pc.getLocalStreams();
-
-    const origOnNegotiationNeeded = this._pc.onnegotiationneeded;
-    this._pc.onnegotiationneeded = () => {};
-
-    // We assume that there is at most 1 stream in localStreams
-    if (localStreams.length > 0) {
-      this._pc.removeStream(localStreams[0]);
-    }
-
-    // HACK: For some reason FF59 doesn't work when Chrome 64 renegotiates after updating the stream.
-    // However, simply updating the localDescription updates the remote stream if the other browser is firefox 59+.
-    // Chrome 64 probably uses replaceTrack-like functions internally.
-    const isRemoteBrowserNeedRenegotiation =
-      this._remoteBrowser &&
-      this._remoteBrowser.name === 'firefox' &&
-      this._remoteBrowser.major >= 59;
-    if (isRemoteBrowserNeedRenegotiation) {
-      this._pc.addStream(newStream);
-
-      // use setTimeout to trigger (and do nothing) on add/removeStream.
-      setTimeout(() => {
-        // update the localDescription with the new stream information (after getting to the right state)
-        let promise;
-        if (this._originator) {
-          promise = this._makeOfferSdp()
-            .then(offer => {
-              return this._pc.setLocalDescription(offer);
-            })
-            .then(() => {
-              return this._pc.setRemoteDescription(this._pc.remoteDescription);
-            });
-        } else {
-          promise = this._pc
-            .setRemoteDescription(this._pc.remoteDescription)
-            .then(() => {
-              return this._pc.createAnswer();
-            })
-            .then(answer => {
-              return this._pc.setLocalDescription(answer);
-            });
-        }
-        // restore onnegotiationneeded in case we need it later.
-        promise
-          .then(() => {
-            this._pc.onnegotiationneeded = origOnNegotiationNeeded;
-          })
-          .catch(err => {
-            logger.error(err);
-            this._pc.onnegotiationneeded = origOnNegotiationNeeded;
-          });
-      });
-    } else {
-      // this is the normal flow where we renegotiate.
-      this._replaceStreamCalled = true;
-
-      // use setTimeout to trigger (and do nothing) on removeStream.
-      setTimeout(() => {
-        // onnegotiationneeded will be triggered by addStream.
-        this._pc.addStream(newStream);
-        this._pc.onnegotiationneeded = origOnNegotiationNeeded;
-      });
     }
   }
 
