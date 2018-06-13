@@ -74,14 +74,12 @@ describe('DataConnection', () => {
       const label = 'label';
       const dcInit = { ordered: false };
       const serialization = 'binary';
-      const peerBrowser = 'browser';
       const metadata = 'meta';
       const options = {
         label: label,
         dcInit: dcInit,
         serialization: serialization,
         metadata: metadata,
-        payload: { browser: peerBrowser },
       };
 
       const dc = new DataConnection(id, options);
@@ -92,7 +90,6 @@ describe('DataConnection', () => {
       assert.equal(dc.dcInit, dcInit);
       assert.equal(dc.serialization, serialization);
       assert.equal(dc.metadata, metadata);
-      assert.equal(dc._peerBrowser, peerBrowser);
       assert.equal(dc._options, options);
     });
   });
