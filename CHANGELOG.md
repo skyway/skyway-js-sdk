@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.1.11](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.11) - 2018-06-07
+
+### Fixed
+
+- Change the timeout setting of the request to dispatcher server for stabilization
+
+## [v1.1.10](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.10) - 2018-05-21
+
+### Fixed
+
+- Catch error when fetching signaling server fails with a timeout
+
+## [v1.1.9](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.9) - 2018-05-07
+
+### Fixed
+
+- Fix referring to null variable after calling close()
+
 ## [v1.1.8](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.8) - 2018-04-27
 
 ### Fixed
