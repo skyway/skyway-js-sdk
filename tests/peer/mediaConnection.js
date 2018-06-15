@@ -16,6 +16,7 @@ describe('MediaConnection', () => {
   let cleanupSpy;
   let answerSpy;
   let candidateSpy;
+  let hasRemoteDescriptionStub;
   let replaceSpy;
 
   beforeEach(() => {
@@ -24,6 +25,7 @@ describe('MediaConnection', () => {
     cleanupSpy = sinon.spy();
     answerSpy = sinon.spy();
     candidateSpy = sinon.spy();
+    hasRemoteDescriptionStub = sinon.stub().returns(false);
     replaceSpy = sinon.spy();
 
     stub.returns({
@@ -37,6 +39,7 @@ describe('MediaConnection', () => {
       cleanup: cleanupSpy,
       handleAnswer: answerSpy,
       handleCandidate: candidateSpy,
+      hasRemoteDescription: hasRemoteDescriptionStub,
       replaceStream: replaceSpy,
       setRemoteBrowser: sinon.spy(),
     });
@@ -53,6 +56,7 @@ describe('MediaConnection', () => {
     cleanupSpy.resetHistory();
     answerSpy.resetHistory();
     candidateSpy.resetHistory();
+    hasRemoteDescriptionStub.resetBehavior();
     replaceSpy.resetHistory();
   });
 
@@ -260,6 +264,7 @@ describe('MediaConnection', () => {
 
       const mc = new MediaConnection('remoteId', { stream: {} });
       mc._pcAvailable = true;
+      hasRemoteDescriptionStub.returns(true);
 
       assert(candidateSpy.called === false);
 
