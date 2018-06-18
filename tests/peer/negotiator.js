@@ -695,7 +695,6 @@ describe('Negotiator', () => {
       const pc = (negotiator._pc = negotiator._createPeerConnection());
 
       negotiator._setupPCListeners();
-      assert.equal(typeof pc.onaddstream, 'function');
       assert.equal(typeof pc.ondatachannel, 'function');
       assert.equal(typeof pc.onicecandidate, 'function');
       assert.equal(typeof pc.oniceconnectionstatechange, 'function');
@@ -712,18 +711,6 @@ describe('Negotiator', () => {
         negotiator = new Negotiator();
         pc = negotiator._pc = negotiator._createPeerConnection();
         negotiator._setupPCListeners();
-      });
-
-      describe('onaddstream', () => {
-        it("should emit 'addStream' with remote stream", done => {
-          const ev = { stream: 'stream' };
-          negotiator.on(Negotiator.EVENTS.addStream.key, stream => {
-            assert.equal(stream, ev.stream);
-            done();
-          });
-
-          pc.onaddstream(ev);
-        });
       });
 
       describe('ondatachannel', () => {
