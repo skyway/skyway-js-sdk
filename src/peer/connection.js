@@ -94,7 +94,7 @@ class Connection extends EventEmitter {
    * @param {object} candidateMessage - Message object containing a candidate.
    */
   handleCandidate(candidateMessage) {
-    if (this._pcAvailable) {
+    if (this._negotiator.hasRemoteDescription()) {
       this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
       logger.log(
@@ -204,6 +204,10 @@ class Connection extends EventEmitter {
         connectionType: this.type,
       };
       this.emit(Connection.EVENTS.candidate.key, connectionCandidate);
+    });
+
+    this._negotiator.on(Negotiator.EVENTS.handleQueue.key, () => {
+      this._handleQueuedMessages();
     });
 
     this._negotiator.on(Negotiator.EVENTS.iceConnectionFailed.key, () => {
