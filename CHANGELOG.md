@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.12](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.12) - 2018-06-20
+
+### Fixed
+
+- Revert v1.1.11 because of bugs
+
 ## [v1.1.11](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.11) - 2018-06-19
 
 ### Fixed
