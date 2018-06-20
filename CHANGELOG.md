@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.13](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.13) - 2018-06-21
+
+### Added
+
+- Add error which is occured when the request to dispatcher server has aborted.
+
 ## [v1.1.12](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.12) - 2018-06-20
 
 ### Fixed
