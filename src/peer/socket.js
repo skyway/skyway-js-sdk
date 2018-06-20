@@ -164,12 +164,8 @@ class Socket extends EventEmitter {
       http.open('GET', this._dispatcherUrl, true);
 
       /* istanbul ignore next */
-      http.onerror = () => {
+      http.onerror = function() {
         reject(new Error('There was a problem with the dispatcher.'));
-      };
-
-      http.onabort = () => {
-        reject(new Error('The request aborted.'));
       };
 
       http.ontimeout = () => {
@@ -178,12 +174,6 @@ class Socket extends EventEmitter {
 
       http.onreadystatechange = () => {
         if (http.readyState !== 4) {
-          return;
-        }
-
-        // maybe aborted or something
-        if (http.status === 0) {
-          reject(new Error('There was a problem with the dispatcher.'));
           return;
         }
 
