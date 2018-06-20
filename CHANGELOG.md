@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.1.12](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.12) - 2018-06-20
+
+### Fixed
+
+- Revert v1.1.11 because of bugs
+
+## [v1.1.11](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.11) - 2018-06-19
+
+### Fixed
+
+- Change the timeout setting of the request to dispatcher server for stabilization
+- Fix the severe timing bug which happens during setRemoteDescription and its resolution
+
 ## [v1.1.10](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.10) - 2018-05-21
 
 ### Fixed
