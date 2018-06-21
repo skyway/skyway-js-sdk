@@ -77,8 +77,9 @@ class Negotiator extends EventEmitter {
         }
       } else if (this._originator) {
         // This means the peer wants to create offer SDP with `recvonly`
-        this._makeOfferSdp().then(offer => {
+        return this._makeOfferSdp().then(offer => {
           this._setLocalDescription(offer);
+          return Promise.resolve();
         });
       }
     }
@@ -90,8 +91,9 @@ class Negotiator extends EventEmitter {
         const dc = this._pc.createDataChannel(label, dcInit);
         this.emit(Negotiator.EVENTS.dcCreated.key, dc);
       }
+      return Promise.resolve();
     } else {
-      this.handleOffer(options.offer);
+      return this.handleOffer(options.offer);
     }
   }
 
@@ -130,7 +132,7 @@ class Negotiator extends EventEmitter {
   handleOffer(offerSdp) {
     // Avoid unnecessary processing by short circuiting the code if nothing has changed in the sdp.
     if (this._lastOffer && offerSdp && this._lastOffer.sdp === offerSdp.sdp) {
-      return;
+      return Promise.resolve();
     }
 
     this._isNegotiationAllowed = true;
@@ -145,10 +147,10 @@ class Negotiator extends EventEmitter {
     // (when room is SFU and there are multiple conns in a same time, it happens)
     if (this._pc.signalingState === 'have-remote-offer') {
       this._offerQueue.push(offerSdp);
-      return;
+      return Promise.resolve();
     }
 
-    this._setRemoteDescription(offerSdp)
+    return this._setRemoteDescription(offerSdp)
       .then(() => {
         return this._makeAnswerSdp();
       })
