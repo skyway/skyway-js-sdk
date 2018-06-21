@@ -48,20 +48,23 @@ class MediaConnection extends Connection {
     this._pcAvailable = false;
 
     if (this._options.originator) {
-      this._negotiator.startConnection({
-        type: 'media',
-        stream: this.localStream,
-        originator: this._options.originator,
-        pcConfig: this._options.pcConfig,
-        videoBandwidth: this._options.videoBandwidth,
-        audioBandwidth: this._options.audioBandwidth,
-        videoCodec: this._options.videoCodec,
-        audioCodec: this._options.audioCodec,
-        videoReceiveEnabled: this._options.videoReceiveEnabled,
-        audioReceiveEnabled: this._options.audioReceiveEnabled,
-      });
-      this._pcAvailable = true;
-      this._handleQueuedMessages();
+      this._negotiator
+        .startConnection({
+          type: 'media',
+          stream: this.localStream,
+          originator: this._options.originator,
+          pcConfig: this._options.pcConfig,
+          videoBandwidth: this._options.videoBandwidth,
+          audioBandwidth: this._options.audioBandwidth,
+          videoCodec: this._options.videoCodec,
+          audioCodec: this._options.audioCodec,
+          videoReceiveEnabled: this._options.videoReceiveEnabled,
+          audioReceiveEnabled: this._options.audioReceiveEnabled,
+        })
+        .then(() => {
+          this._pcAvailable = true;
+          this._handleQueuedMessages();
+        });
     }
   }
 
@@ -87,25 +90,28 @@ class MediaConnection extends Connection {
     this._options.payload.stream = stream;
 
     this.localStream = stream;
-    this._negotiator.startConnection({
-      type: 'media',
-      stream: this.localStream,
-      originator: false,
-      offer: this._options.payload.offer,
-      pcConfig: this._options.pcConfig,
-      audioBandwidth: options.audioBandwidth,
-      videoBandwidth: options.videoBandwidth,
-      videoCodec: options.videoCodec,
-      audioCodec: options.audioCodec,
-      videoReceiveEnabled: options.videoReceiveEnabled,
-      audioReceiveEnabled: options.audioReceiveEnabled,
-    });
-    this._negotiator.setRemoteBrowser(this._options.payload.browser);
-    this._pcAvailable = true;
+    this._negotiator
+      .startConnection({
+        type: 'media',
+        stream: this.localStream,
+        originator: false,
+        offer: this._options.payload.offer,
+        pcConfig: this._options.pcConfig,
+        audioBandwidth: options.audioBandwidth,
+        videoBandwidth: options.videoBandwidth,
+        videoCodec: options.videoCodec,
+        audioCodec: options.audioCodec,
+        videoReceiveEnabled: options.videoReceiveEnabled,
+        audioReceiveEnabled: options.audioReceiveEnabled,
+      })
+      .then(() => {
+        this._negotiator.setRemoteBrowser(this._options.payload.browser);
+        this._pcAvailable = true;
 
-    this._handleQueuedMessages();
+        this._handleQueuedMessages();
 
-    this.open = true;
+        this.open = true;
+      });
   }
 
   /**

@@ -94,18 +94,20 @@ class DataConnection extends Connection {
       this._options.payload.pcConfig = this._options.pcConfig;
     }
 
-    this._negotiator.startConnection(
-      this._options.payload || {
-        originator: true,
-        type: 'data',
-        label: this.label,
-        dcInit: this.dcInit,
-        pcConfig: this._options.pcConfig,
-      }
-    );
-    this._pcAvailable = true;
-
-    this._handleQueuedMessages();
+    this._negotiator
+      .startConnection(
+        this._options.payload || {
+          originator: true,
+          type: 'data',
+          label: this.label,
+          dcInit: this.dcInit,
+          pcConfig: this._options.pcConfig,
+        }
+      )
+      .then(() => {
+        this._pcAvailable = true;
+        this._handleQueuedMessages();
+      });
   }
 
   /**
