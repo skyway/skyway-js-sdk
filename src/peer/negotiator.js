@@ -77,10 +77,9 @@ class Negotiator extends EventEmitter {
         }
       } else if (this._originator) {
         // This means the peer wants to create offer SDP with `recvonly`
-        return this._makeOfferSdp().then(offer => {
-          this._setLocalDescription(offer);
-          return Promise.resolve();
-        });
+        return this._makeOfferSdp().then(offer =>
+          this._setLocalDescription(offer)
+        );
       }
     }
 
