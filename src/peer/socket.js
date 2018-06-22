@@ -187,8 +187,6 @@ class Socket extends EventEmitter {
           return;
         }
 
-        // check if the response text is valid JSON
-        // NOTE: because of its blcok scope, the response cannot be a constant
         let res = null;
         try {
           res = JSON.parse(http.responseText);
