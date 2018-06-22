@@ -187,7 +187,14 @@ class Socket extends EventEmitter {
           return;
         }
 
-        const res = JSON.parse(http.responseText);
+        // check if the response text is valid JSON
+        try {
+          const res = JSON.parse(http.responseText);
+        } catch(err) {
+          reject(new Error('The dispathcer server responded invalid JSON.'));
+          return;
+        }
+
         if (http.status === 200) {
           if (res && res.domain) {
             resolve({ host: res.domain, port: 443, secure: true });
