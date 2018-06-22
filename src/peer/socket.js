@@ -188,9 +188,11 @@ class Socket extends EventEmitter {
         }
 
         // check if the response text is valid JSON
+        // NOTE: because of its blcok scope, the response cannot be a constant
+        let res = null;
         try {
-          const res = JSON.parse(http.responseText);
-        } catch(err) {
+          res = JSON.parse(http.responseText);
+        } catch (err) {
           reject(new Error('The dispathcer server responded invalid JSON.'));
           return;
         }
