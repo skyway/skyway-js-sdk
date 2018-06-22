@@ -191,7 +191,11 @@ class Socket extends EventEmitter {
         try {
           res = JSON.parse(http.responseText);
         } catch (err) {
-          reject(new Error('The dispatcher server returned an invalid JSON response.'));
+          reject(
+            new Error(
+              'The dispatcher server returned an invalid JSON response.'
+            )
+          );
           return;
         }
 
