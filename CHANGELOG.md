@@ -5,7 +5,7 @@
 ### Fixed
 
 - Add errors which occur when the request to the dispatcher server has aborted.
-- Avoid fault of parsing JSON with failure of the request to the dispatcher server.
+- Avoid fault of parsing JSON with a failure of the request to the dispatcher server.
 
 ## [v1.1.12](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.12) - 2018-06-20
 
