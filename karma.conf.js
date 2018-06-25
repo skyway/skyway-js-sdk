@@ -30,7 +30,11 @@ module.exports = config =>
       './tests/index.js': ['webpack', 'sourcemap'],
     },
 
-    reporters: ['mocha'],
+    reporters: ['mocha', 'coverage'],
+    coverageReporter: {
+      dir: './coverage',
+      reporters: [{ type: 'html' }, { type: 'text' }],
+    },
 
     browsers: ['ChromeHeadlessNoSandbox'],
     customLaunchers: {
