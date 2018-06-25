@@ -347,7 +347,7 @@ class Negotiator extends EventEmitter {
 
   /**
    * Create Offer SDP.
-   * @return {Promise} A promise that resolves with Offer SDP.
+   * @return {Promise<Object>} A promise that resolves with Offer SDP.
    * @private
    */
   _makeOfferSdp() {
@@ -411,7 +411,7 @@ class Negotiator extends EventEmitter {
 
   /**
    * Make Answer SDP and set it as local description.
-   * @return {Promise} A promise that is resolved when setting local SDP is completed.
+   * @return {Promise<Object>} A promise that is resolved with answer when setting local SDP is completed.
    * @private
    */
   _makeAnswerSdp() {
@@ -471,7 +471,7 @@ class Negotiator extends EventEmitter {
   /**
    * Set local description with Offer SDP and emit offerCreated event.
    * @param {RTCSessionDescription} offer - Offer SDP.
-   * @return {Promise} A promise that is resolved with Offer SDP.
+   * @return {Promise<Object>} A promise that is resolved with Offer SDP.
    * @private
    */
   _setLocalDescription(offer) {
@@ -497,7 +497,7 @@ class Negotiator extends EventEmitter {
   /**
    * Set remote SDP.
    * @param {object} sdp - An object containing remote SDP.
-   * @return {Promise} A promise that is resolved when setting remote SDP is completed.
+   * @return {Promise<void>} A promise that is resolved when setting remote SDP is completed.
    * @private
    */
   _setRemoteDescription(sdp) {

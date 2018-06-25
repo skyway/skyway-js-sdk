@@ -66,7 +66,7 @@ class Socket extends EventEmitter {
    * @param {number} [credential.timestamp] - Current UNIX timestamp.
    + @param {number} [credential.ttl] - Time to live; The credential expires at timestamp + ttl.
    + @param {string} [credential.authToken] - Credential token calculated with HMAC.
-   * @return {Promise} Promise that resolves when starting is done.
+   * @return {Promise<void>} Promise that resolves when starting is done.
    * @fires Socket#error
    */
   start(id, token, credential) {
@@ -153,7 +153,7 @@ class Socket extends EventEmitter {
 
   /**
    * Return object including signaling server info.
-   * @return {Promise} A promise that resolves with signaling server info
+   * @return {Promise<Object>} A promise that resolves with signaling server info
    and rejects if there's no response or status code isn't 200.
    */
   _getSignalingServer() {
