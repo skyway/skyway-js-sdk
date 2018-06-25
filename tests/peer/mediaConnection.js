@@ -16,8 +16,8 @@ describe('MediaConnection', () => {
   let cleanupSpy;
   let answerSpy;
   let candidateSpy;
-  let hasRemoteDescriptionStub;
   let replaceSpy;
+  let hasRemoteDescriptionStub;
 
   beforeEach(() => {
     stub = sinon.stub();
@@ -25,8 +25,8 @@ describe('MediaConnection', () => {
     cleanupSpy = sinon.spy();
     answerSpy = sinon.spy();
     candidateSpy = sinon.spy();
-    hasRemoteDescriptionStub = sinon.stub().returns(false);
     replaceSpy = sinon.spy();
+    hasRemoteDescriptionStub = sinon.stub().returns(false);
 
     stub.returns({
       on: function(event, callback) {
@@ -39,12 +39,9 @@ describe('MediaConnection', () => {
       cleanup: cleanupSpy,
       handleAnswer: answerSpy,
       handleCandidate: candidateSpy,
-      hasRemoteDescription: hasRemoteDescriptionStub,
       replaceStream: replaceSpy,
       setRemoteBrowser: sinon.spy(),
-      hasRemoteDescription: function() {
-        return true;
-      },
+      hasRemoteDescription: hasRemoteDescriptionStub,
     });
     // hoist statics
     stub.EVENTS = Negotiator.EVENTS;
@@ -59,8 +56,8 @@ describe('MediaConnection', () => {
     cleanupSpy.resetHistory();
     answerSpy.resetHistory();
     candidateSpy.resetHistory();
-    hasRemoteDescriptionStub.resetBehavior();
     replaceSpy.resetHistory();
+    hasRemoteDescriptionStub.resetBehavior();
   });
 
   describe('Constructor', () => {
@@ -262,17 +259,14 @@ describe('MediaConnection', () => {
       assert(answerSpy.calledOnce === true);
     });
 
-    it("should call negotiator's handleCandidate with a candidate", () => {
-      const candidate = 'message';
-
+    it("should not call negotiator's handleCandidate before calling handleAnswer", () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
       mc._pcAvailable = true;
-      hasRemoteDescriptionStub.returns(true);
 
       assert(candidateSpy.called === false);
 
-      mc.handleCandidate(candidate);
-      assert(candidateSpy.calledOnce === true);
+      mc.handleCandidate('message');
+      assert(candidateSpy.calledOnce === false);
     });
   });
 
@@ -328,6 +322,8 @@ describe('MediaConnection', () => {
     });
 
     it('should not process any invalid queued messages', () => {
+      hasRemoteDescriptionStub.returns(true);
+
       const messages = [{ type: 'WRONG', payload: 'message' }];
 
       const mc = new MediaConnection('remoteId', {

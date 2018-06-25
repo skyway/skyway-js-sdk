@@ -18,6 +18,7 @@ describe('DataConnection', () => {
   let cleanupSpy;
   let answerSpy;
   let candidateSpy;
+  let hasRemoteDescriptionStub;
 
   beforeEach(() => {
     // Negotiator stub and spies
@@ -26,6 +27,7 @@ describe('DataConnection', () => {
     cleanupSpy = sinon.spy();
     answerSpy = sinon.spy();
     candidateSpy = sinon.spy();
+    hasRemoteDescriptionStub = sinon.stub().returns(false);
 
     negotiatorStub.returns({
       on: function(event, callback) {
@@ -38,9 +40,7 @@ describe('DataConnection', () => {
       cleanup: cleanupSpy,
       handleAnswer: answerSpy,
       handleCandidate: candidateSpy,
-      hasRemoteDescription: function() {
-        return true;
-      },
+      hasRemoteDescription: hasRemoteDescriptionStub,
     });
     // hoist statics
     negotiatorStub.EVENTS = Negotiator.EVENTS;
@@ -55,6 +55,7 @@ describe('DataConnection', () => {
     cleanupSpy.resetHistory();
     answerSpy.resetHistory();
     candidateSpy.resetHistory();
+    hasRemoteDescriptionStub.resetBehavior();
   });
 
   describe('Constructor', () => {
@@ -172,6 +173,7 @@ describe('DataConnection', () => {
       const spy2 = sinon.spy();
       sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
       sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
+      hasRemoteDescriptionStub.returns(true);
 
       const dc = new DataConnection('remoteId', { queuedMessages: messages });
 
