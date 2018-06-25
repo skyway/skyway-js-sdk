@@ -10,12 +10,12 @@ webpackConfig.module.rules.push({
 // enable-sourcemap
 webpackConfig.devtool = 'inline-source-map';
 
-module.exports = config => {
+module.exports = config =>
   config.set({
     files: [
       // if specify running tests
-      './tests/peer/sfuRoom.js',
-      // './tests/index.js',
+      // './tests/peer/sfuRoom.js',
+      './tests/index.js',
     ],
 
     singleRun: true,
@@ -26,8 +26,8 @@ module.exports = config => {
 
     preprocessors: {
       // if specify running tests
-      './tests/peer/sfuRoom.js': ['webpack', 'sourcemap'],
-      // './tests/index.js': ['webpack', 'sourcemap'],
+      // './tests/peer/sfuRoom.js': ['webpack', 'sourcemap'],
+      './tests/index.js': ['webpack', 'sourcemap'],
     },
 
     reporters: ['mocha'],
@@ -40,4 +40,3 @@ module.exports = config => {
       },
     },
   });
-};
