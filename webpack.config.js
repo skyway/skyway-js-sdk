@@ -1,6 +1,5 @@
 const webpack = require('webpack');
 
-// base
 const config = {
   mode: 'development',
   entry: {
@@ -14,7 +13,7 @@ const config = {
   },
   module: {
     rules: [
-      // keep this for karma
+      // keep this place for karma
     ],
   },
   plugins: [
@@ -23,7 +22,7 @@ const config = {
   ],
 };
 
-// from `npm run build, exports both `.js`, `.min.js`
+// from `npm run build`, exports both `.js`, `.min.js`
 if (process.env.NODE_ENV === 'production') {
   const minConf = Object.assign({}, config, {
     mode: 'production',
@@ -31,7 +30,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 
   module.exports = [config, minConf];
-  // from karma, exports only not minified
+  // from `npm run dev` and `npm t`(= karma-webpack), exports dev config
 } else {
   module.exports = config;
 }
