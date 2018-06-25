@@ -7,6 +7,7 @@ const config = {
   },
   output: {
     libraryTarget: 'umd',
+    libraryExport: 'default',
     library: 'Peer',
     path: `${__dirname}/dist`,
     filename: '[name].js',
