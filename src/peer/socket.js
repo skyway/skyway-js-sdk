@@ -145,9 +145,11 @@ class Socket extends EventEmitter {
     }
 
     if (this.signalingServerUrl.indexOf(serverInfo.host) === -1) {
-      this.signalingServerUrl = `${serverInfo.secure ? 'https://' : 'http://'}${
-        serverInfo.host
-      }:${serverInfo.port}`;
+      const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
+      this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
+        serverInfo.port
+      }`;
+
       this._io.io.uri = this.signalingServerUrl;
       this._io.connect();
       this._reconnectAttempts++;
