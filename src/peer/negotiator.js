@@ -53,8 +53,9 @@ class Negotiator extends EventEmitter {
    * @param {string} [options.audioCodec] - A video codec like 'PCMU'
    * @param {boolean} [options.videoReceiveEnabled] - A flag to set video recvonly
    * @param {boolean} [options.audioReceiveEnabled] - A flag to set audio recvonly
+   * @return {Promise<void>} Promise that resolves when starting is done.
    */
-  startConnection(options = {}) {
+  async startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
     this._setupPCListeners();
     this._originator = options.originator;
@@ -77,9 +78,8 @@ class Negotiator extends EventEmitter {
         }
       } else if (this._originator) {
         // This means the peer wants to create offer SDP with `recvonly`
-        this._makeOfferSdp().then(offer => {
-          this._setLocalDescription(offer);
-        });
+        const offer = await this._makeOfferSdp();
+        this._setLocalDescription(offer);
       }
     }
 
@@ -126,8 +126,9 @@ class Negotiator extends EventEmitter {
   /**
    * Set remote description with remote Offer SDP, then create Answer SDP and emit it.
    * @param {object} [offerSdp] - An object containing Offer SDP.
+   * @return {Promise<void>} Promise that resolves when handling offer is done.
    */
-  handleOffer(offerSdp) {
+  async handleOffer(offerSdp) {
     // Avoid unnecessary processing by short circuiting the code if nothing has changed in the sdp.
     if (this._lastOffer && offerSdp && this._lastOffer.sdp === offerSdp.sdp) {
       return;
@@ -148,16 +149,9 @@ class Negotiator extends EventEmitter {
       return;
     }
 
-    this._setRemoteDescription(offerSdp)
-      .then(() => {
-        return this._makeAnswerSdp();
-      })
-      .then(answer => {
-        this.emit(Negotiator.EVENTS.answerCreated.key, answer);
-      })
-      .catch(err => {
-        logger.error(err);
-      });
+    await this._setRemoteDescription(offerSdp);
+    const answer = await this._makeAnswerSdp().catch(err => logger.error(err));
+    this.emit(Negotiator.EVENTS.answerCreated.key, answer);
   }
 
   /**
@@ -179,16 +173,13 @@ class Negotiator extends EventEmitter {
   /**
    * Set ice candidate with Candidate SDP.
    * @param {object} candidate - An object containing Candidate SDP.
+   * @return {Promise<void>} Promise that resolves when handling candidate is done.
    */
-  handleCandidate(candidate) {
-    this._pc
+  async handleCandidate(candidate) {
+    await this._pc
       .addIceCandidate(new RTCIceCandidate(candidate))
-      .then(() => {
-        logger.log('Added ICE candidate');
-      })
-      .catch(e => {
-        logger.error('Failed to add ICE candidate', e);
-      });
+      .catch(err => logger.error('Failed to add ICE candidate', err));
+    logger.log('Added ICE candidate');
   }
 
   /**
@@ -302,7 +293,7 @@ class Negotiator extends EventEmitter {
       }
     };
 
-    pc.onnegotiationneeded = () => {
+    pc.onnegotiationneeded = async () => {
       logger.log('`negotiationneeded` triggered');
 
       // Don't make a new offer if it's not stable or if onnegotiationneeded is called consecutively.
@@ -311,10 +302,9 @@ class Negotiator extends EventEmitter {
         this._isNegotiationAllowed = false;
         // Emit negotiationNeeded event in case additional handling is needed.
         if (this._originator) {
-          this._makeOfferSdp().then(offer => {
-            this._setLocalDescription(offer);
-            this.emit(Negotiator.EVENTS.negotiationNeeded.key);
-          });
+          const offer = await this._makeOfferSdp();
+          this._setLocalDescription(offer);
+          this.emit(Negotiator.EVENTS.negotiationNeeded.key);
         } else if (this._replaceStreamCalled) {
           this.handleOffer();
         }
@@ -350,63 +340,56 @@ class Negotiator extends EventEmitter {
    * @return {Promise<Object>} A promise that resolves with Offer SDP.
    * @private
    */
-  _makeOfferSdp() {
-    let createOfferPromise;
+  async _makeOfferSdp() {
+    let offer;
 
-    // DataConnection
-    if (this._type !== 'media') {
-      createOfferPromise = this._pc.createOffer();
-      // MediaConnection
-    } else {
-      if (this._isAddTransceiverAvailable) {
-        this._recvonlyState.audio &&
-          this._pc.addTransceiver('audio', { direction: 'recvonly' });
-        this._recvonlyState.video &&
-          this._pc.addTransceiver('video', { direction: 'recvonly' });
-        createOfferPromise = this._pc.createOffer();
+    try {
+      // DataConnection
+      if (this._type !== 'media') {
+        offer = await this._pc.createOffer();
+        // MediaConnection
       } else {
-        const offerOptions = {};
-        // the offerToReceiveXXX options are defined in the specs as boolean but `undefined` acts differently from false
-        this._recvonlyState.audio && (offerOptions.offerToReceiveAudio = true);
-        this._recvonlyState.video && (offerOptions.offerToReceiveVideo = true);
-        createOfferPromise = this._pc.createOffer(offerOptions);
+        if (this._isAddTransceiverAvailable) {
+          this._recvonlyState.audio &&
+            this._pc.addTransceiver('audio', { direction: 'recvonly' });
+          this._recvonlyState.video &&
+            this._pc.addTransceiver('video', { direction: 'recvonly' });
+          offer = await this._pc.createOffer();
+        } else {
+          const offerOptions = {};
+          // the offerToReceiveXXX options are defined in the specs as boolean but `undefined` acts differently from false
+          this._recvonlyState.audio &&
+            (offerOptions.offerToReceiveAudio = true);
+          this._recvonlyState.video &&
+            (offerOptions.offerToReceiveVideo = true);
+          offer = await this._pc.createOffer(offerOptions);
+        }
       }
+    } catch (err) {
+      err.type = 'webrtc';
+      logger.error(err);
+      this.emit(Negotiator.EVENTS.error.key, err);
+
+      logger.log('Failed to createOffer, ', err);
+      throw err;
     }
 
-    return createOfferPromise
-      .then(offer => {
-        logger.log('Created offer.');
+    logger.log('Created offer.');
 
-        if (this._audioBandwidth) {
-          offer.sdp = sdpUtil.addAudioBandwidth(
-            offer.sdp,
-            this._audioBandwidth
-          );
-        }
-        if (this._videoBandwidth) {
-          offer.sdp = sdpUtil.addVideoBandwidth(
-            offer.sdp,
-            this._videoBandwidth
-          );
-        }
-        if (this._audioCodec) {
-          offer.sdp = sdpUtil.filterAudioCodec(offer.sdp, this._audioCodec);
-        }
-        if (this._videoCodec) {
-          offer.sdp = sdpUtil.filterVideoCodec(offer.sdp, this._videoCodec);
-        }
+    if (this._audioBandwidth) {
+      offer.sdp = sdpUtil.addAudioBandwidth(offer.sdp, this._audioBandwidth);
+    }
+    if (this._videoBandwidth) {
+      offer.sdp = sdpUtil.addVideoBandwidth(offer.sdp, this._videoBandwidth);
+    }
+    if (this._audioCodec) {
+      offer.sdp = sdpUtil.filterAudioCodec(offer.sdp, this._audioCodec);
+    }
+    if (this._videoCodec) {
+      offer.sdp = sdpUtil.filterVideoCodec(offer.sdp, this._videoCodec);
+    }
 
-        return Promise.resolve(offer);
-      })
-      .catch(error => {
-        error.type = 'webrtc';
-        logger.error(error);
-        this.emit(Negotiator.EVENTS.error.key, error);
-
-        logger.log('Failed to createOffer, ', error);
-
-        return Promise.reject(error);
-      });
+    return offer;
   }
 
   /**
@@ -414,84 +397,74 @@ class Negotiator extends EventEmitter {
    * @return {Promise<Object>} A promise that is resolved with answer when setting local SDP is completed.
    * @private
    */
-  _makeAnswerSdp() {
-    return this._pc
-      .createAnswer()
-      .then(answer => {
-        logger.log('Created answer.');
+  async _makeAnswerSdp() {
+    let answer;
+    try {
+      answer = await this._pc.createAnswer();
+    } catch (err) {
+      err.type = 'webrtc';
+      logger.error(err);
+      this.emit(Negotiator.EVENTS.error.key, err);
 
-        if (this._audioBandwidth) {
-          answer.sdp = sdpUtil.addAudioBandwidth(
-            answer.sdp,
-            this._audioBandwidth
-          );
-        }
-        if (this._videoBandwidth) {
-          answer.sdp = sdpUtil.addVideoBandwidth(
-            answer.sdp,
-            this._videoBandwidth
-          );
-        }
-        if (this._audioCodec) {
-          answer.sdp = sdpUtil.filterAudioCodec(answer.sdp, this._audioCodec);
-        }
-        if (this._videoCodec) {
-          answer.sdp = sdpUtil.filterVideoCodec(answer.sdp, this._videoCodec);
-        }
+      logger.log('Failed to createAnswer, ', err);
+      throw err;
+    }
 
-        return this._pc
-          .setLocalDescription(answer)
-          .then(() => {
-            logger.log('Set localDescription: answer');
-            logger.log(
-              `Setting local description ${JSON.stringify(answer.sdp)}`
-            );
-            return Promise.resolve(answer);
-          })
-          .catch(error => {
-            error.type = 'webrtc';
-            logger.error(error);
-            this.emit(Negotiator.EVENTS.error.key, error);
+    logger.log('Created answer.');
 
-            logger.log('Failed to setLocalDescription, ', error);
-            return Promise.reject(error);
-          });
-      })
-      .catch(error => {
-        error.type = 'webrtc';
-        logger.error(error);
-        this.emit(Negotiator.EVENTS.error.key, error);
+    if (this._audioBandwidth) {
+      answer.sdp = sdpUtil.addAudioBandwidth(answer.sdp, this._audioBandwidth);
+    }
+    if (this._videoBandwidth) {
+      answer.sdp = sdpUtil.addVideoBandwidth(answer.sdp, this._videoBandwidth);
+    }
+    if (this._audioCodec) {
+      answer.sdp = sdpUtil.filterAudioCodec(answer.sdp, this._audioCodec);
+    }
+    if (this._videoCodec) {
+      answer.sdp = sdpUtil.filterVideoCodec(answer.sdp, this._videoCodec);
+    }
 
-        logger.log('Failed to createAnswer, ', error);
+    try {
+      await this._pc.setLocalDescription(answer);
+    } catch (err) {
+      err.type = 'webrtc';
+      logger.error(err);
+      this.emit(Negotiator.EVENTS.error.key, err);
 
-        return Promise.reject(error);
-      });
+      logger.log('Failed to setLocalDescription, ', err);
+      throw err;
+    }
+
+    logger.log('Set localDescription: answer');
+    logger.log(`Setting local description ${JSON.stringify(answer.sdp)}`);
+
+    return answer;
   }
 
   /**
    * Set local description with Offer SDP and emit offerCreated event.
    * @param {RTCSessionDescription} offer - Offer SDP.
-   * @return {Promise<Object>} A promise that is resolved with Offer SDP.
+   * @return {Promise<void>} A promise that is resolved when setting local SDP is completed.
    * @private
    */
-  _setLocalDescription(offer) {
+  async _setLocalDescription(offer) {
     logger.log(`Setting local description ${JSON.stringify(offer.sdp)}`);
-    return this._pc
-      .setLocalDescription(offer)
-      .then(() => {
-        logger.log('Set localDescription: offer');
-        this._isExpectingAnswer = true;
-        this.emit(Negotiator.EVENTS.offerCreated.key, offer);
-        return Promise.resolve(offer);
-      })
-      .catch(error => {
-        error.type = 'webrtc';
-        logger.error(error);
-        this.emit(Negotiator.EVENTS.error.key, error);
 
-        logger.log('Failed to setLocalDescription, ', error);
-        return Promise.reject(error);
-      });
+    try {
+      await this._pc.setLocalDescription(offer);
+    } catch (err) {
+      err.type = 'webrtc';
+      logger.error(err);
+      this.emit(Negotiator.EVENTS.error.key, err);
+
+      logger.log('Failed to setLocalDescription, ', err);
+      throw err;
+    }
+
+    logger.log('Set localDescription: offer');
+    this._isExpectingAnswer = true;
+    this.emit(Negotiator.EVENTS.offerCreated.key, offer);
   }
 
   /**
@@ -500,22 +473,21 @@ class Negotiator extends EventEmitter {
    * @return {Promise<void>} A promise that is resolved when setting remote SDP is completed.
    * @private
    */
-  _setRemoteDescription(sdp) {
+  async _setRemoteDescription(sdp) {
     logger.log(`Setting remote description ${JSON.stringify(sdp)}`);
-    return this._pc
-      .setRemoteDescription(new RTCSessionDescription(sdp))
-      .then(() => {
-        logger.log('Set remoteDescription:', sdp.type);
-        return Promise.resolve();
-      })
-      .catch(error => {
-        error.type = 'webrtc';
-        logger.error(error);
-        this.emit(Negotiator.EVENTS.error.key, error);
 
-        logger.log('Failed to setRemoteDescription: ', error);
-        return Promise.reject(error);
-      });
+    try {
+      await this._pc.setRemoteDescription(new RTCSessionDescription(sdp));
+    } catch (err) {
+      err.type = 'webrtc';
+      logger.error(err);
+      this.emit(Negotiator.EVENTS.error.key, err);
+
+      logger.log('Failed to setRemoteDescription: ', err);
+      throw err;
+    }
+
+    logger.log('Set remoteDescription:', sdp.type);
   }
 
   /**
@@ -648,36 +620,22 @@ class Negotiator extends EventEmitter {
       this._pc.addStream(newStream);
 
       // use setTimeout to trigger (and do nothing) on add/removeStream.
-      setTimeout(() => {
+      setTimeout(async () => {
         // update the localDescription with the new stream information (after getting to the right state)
-        let promise;
-        if (this._originator) {
-          promise = this._makeOfferSdp()
-            .then(offer => {
-              return this._pc.setLocalDescription(offer);
-            })
-            .then(() => {
-              return this._pc.setRemoteDescription(this._pc.remoteDescription);
-            });
-        } else {
-          promise = this._pc
-            .setRemoteDescription(this._pc.remoteDescription)
-            .then(() => {
-              return this._pc.createAnswer();
-            })
-            .then(answer => {
-              return this._pc.setLocalDescription(answer);
-            });
+        try {
+          if (this._originator) {
+            const offer = await this._makeOfferSdp();
+            await this._pc.setLocalDescription(offer);
+            await this._pc.setRemoteDescription(this._pc.remoteDescription);
+          } else {
+            await this._pc.setRemoteDescription(this._pc.remoteDescription);
+            const answer = await this._pc.createAnswer();
+            await this._pc.setLocalDescription(answer);
+          }
+        } catch (err) {
+          logger.error(err);
         }
-        // restore onnegotiationneeded in case we need it later.
-        promise
-          .then(() => {
-            this._pc.onnegotiationneeded = origOnNegotiationNeeded;
-          })
-          .catch(err => {
-            logger.error(err);
-            this._pc.onnegotiationneeded = origOnNegotiationNeeded;
-          });
+        this._pc.onnegotiationneeded = origOnNegotiationNeeded;
       });
     } else {
       // this is the normal flow where we renegotiate.
