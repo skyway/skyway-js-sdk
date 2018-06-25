@@ -1,26 +1,21 @@
-const webpackConfig = require('./webpack.config.js');
+const webpackConfig = require('./webpack.config');
 
-// Test env only attrs
+webpackConfig.mode = 'none';
+// still need Babel to use inject-loader
 webpackConfig.module.rules.push({
   test: /\.js$/,
-  exclude: /node_modules/,
-  use: {
-    loader: 'istanbul-instrumenter-loader',
-    options: {
-      debug: true,
-      esModules: true,
-    },
-  },
+  loader: 'babel-loader',
+  exclude: /(\/node_modules$)/,
 });
-
+// enable-sourcemap
 webpackConfig.devtool = 'inline-source-map';
 
 module.exports = config => {
   config.set({
     files: [
       // if specify running tests
-      // './tests/peer/sfuRoom.js',
-      './tests/index.js',
+      './tests/peer/sfuRoom.js',
+      // './tests/index.js',
     ],
 
     singleRun: true,
@@ -31,11 +26,11 @@ module.exports = config => {
 
     preprocessors: {
       // if specify running tests
-      // './tests/peer/sfuRoom.js': ['webpack', 'sourcemap'],
-      './tests/index.js': ['webpack', 'sourcemap'],
+      './tests/peer/sfuRoom.js': ['webpack', 'sourcemap'],
+      // './tests/index.js': ['webpack', 'sourcemap'],
     },
 
-    reporters: ['mocha', 'coverage'],
+    reporters: ['mocha'],
 
     browsers: ['ChromeHeadlessNoSandbox'],
     customLaunchers: {
@@ -43,10 +38,6 @@ module.exports = config => {
         base: 'ChromeHeadless',
         flags: ['--no-sandbox'],
       },
-    },
-
-    coverageReporter: {
-      reporters: [{ type: 'html', dir: './coverage' }, { type: 'text' }],
     },
   });
 };

@@ -2,6 +2,7 @@ const webpack = require('webpack');
 
 // base
 const config = {
+  mode: 'development',
   entry: {
     skyway: './src/peer.js',
   },
@@ -13,13 +14,7 @@ const config = {
   },
   module: {
     rules: [
-      {
-        test: /.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-        },
-      },
+      // keep this for karma
     ],
   },
   plugins: [
@@ -31,8 +26,8 @@ const config = {
 // from `npm run build, exports both `.js`, `.min.js`
 if (process.env.NODE_ENV === 'production') {
   const minConf = Object.assign({}, config, {
+    mode: 'production',
     entry: { 'skyway.min': './src/peer.js' },
-    plugins: [...config.plugins.slice(), new webpack.optimize.UglifyJsPlugin()],
   });
 
   module.exports = [config, minConf];
