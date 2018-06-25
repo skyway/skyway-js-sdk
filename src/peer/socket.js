@@ -69,7 +69,7 @@ class Socket extends EventEmitter {
    * @return {Promise<void>} Promise that resolves when starting is done.
    * @fires Socket#error
    */
-  start(id, token, credential) {
+  async start(id, token, credential) {
     let query =
       `apiKey=${this._key}&token=${token}` +
       `&platform=javascript&sdk_version=${version}`;
@@ -86,43 +86,45 @@ class Socket extends EventEmitter {
       query += `&credential=${encodedCredentialStr}`;
     }
 
-    const getSignalingServerPromise = this._dispatcherUrl
-      ? this._getSignalingServer().then(serverInfo => {
-          const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
-          this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
-            serverInfo.port
-          }`;
-        })
-      : Promise.resolve();
+    if (this._dispatcherUrl) {
+      let serverInfo;
+      try {
+        serverInfo = await this._getSignalingServer();
+      } catch (err) {
+        this.emit('error', err);
+        return;
+      }
+      const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
+      this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
+        serverInfo.port
+      }`;
+    }
 
-    return getSignalingServerPromise
-      .then(() => {
-        this._io = io(this.signalingServerUrl, {
-          'force new connection': true,
-          query: query,
-          reconnectionAttempts: config.reconnectionAttempts,
-        });
+    this._io = io(this.signalingServerUrl, {
+      'force new connection': true,
+      query: query,
+      reconnectionAttempts: config.reconnectionAttempts,
+    });
 
-        this._io.on('reconnect_failed', () => {
-          this._stopPings();
-          this._connectToNewServer();
-        });
+    this._io.on('reconnect_failed', () => {
+      this._stopPings();
+      this._connectToNewServer();
+    });
 
-        this._io.on('error', e => {
-          logger.error(e);
-        });
+    this._io.on('error', e => {
+      logger.error(e);
+    });
 
-        this._setupMessageHandlers();
-      })
-      .catch(err => this.emit('error', err));
+    this._setupMessageHandlers();
   }
 
   /**
    * Connect to "new" signaling server. Attempts up to 10 times before giving up and emitting an error on the socket.
    * @param {number} [numAttempts=0] - Current number of attempts.
+   * @return {Promise<void>} A promise that resolves with new connection has done.
    * @private
    */
-  _connectToNewServer(numAttempts = 0) {
+  async _connectToNewServer(numAttempts = 0) {
     // max number of attempts to get a new server from the dispatcher.
     const maxNumberOfAttempts = 10;
     if (
@@ -134,21 +136,24 @@ class Socket extends EventEmitter {
     }
 
     // Keep trying until we connect to a new server because consul can take some time to remove from the active list.
-    this._getSignalingServer()
-      .then(serverInfo => {
-        if (this.signalingServerUrl.indexOf(serverInfo.host) === -1) {
-          const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
-          this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
-            serverInfo.port
-          }`;
-          this._io.io.uri = this.signalingServerUrl;
-          this._io.connect();
-          this._reconnectAttempts++;
-        } else {
-          this._connectToNewServer(++numAttempts);
-        }
-      })
-      .catch(err => this.emit('error', err));
+    let serverInfo;
+    try {
+      serverInfo = await this._getSignalingServer();
+    } catch (err) {
+      this.emit('error', err);
+      return;
+    }
+
+    if (this.signalingServerUrl.indexOf(serverInfo.host) === -1) {
+      this.signalingServerUrl = `${serverInfo.secure ? 'https://' : 'http://'}${
+        serverInfo.host
+      }:${serverInfo.port}`;
+      this._io.io.uri = this.signalingServerUrl;
+      this._io.connect();
+      this._reconnectAttempts++;
+    } else {
+      this._connectToNewServer(++numAttempts);
+    }
   }
 
   /**
