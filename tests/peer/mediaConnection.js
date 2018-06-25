@@ -42,6 +42,9 @@ describe('MediaConnection', () => {
       hasRemoteDescription: hasRemoteDescriptionStub,
       replaceStream: replaceSpy,
       setRemoteBrowser: sinon.spy(),
+      hasRemoteDescription: function() {
+        return true;
+      },
     });
     // hoist statics
     stub.EVENTS = Negotiator.EVENTS;

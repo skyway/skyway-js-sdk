@@ -38,6 +38,9 @@ describe('DataConnection', () => {
       cleanup: cleanupSpy,
       handleAnswer: answerSpy,
       handleCandidate: candidateSpy,
+      hasRemoteDescription: function() {
+        return true;
+      },
     });
     // hoist statics
     negotiatorStub.EVENTS = Negotiator.EVENTS;
