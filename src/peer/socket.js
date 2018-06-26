@@ -169,7 +169,7 @@ class Socket extends EventEmitter {
       };
 
       http.onabort = () => {
-        reject(new Error('The request aborted.'));
+        reject(new Error('The request was aborted.'));
       };
 
       http.ontimeout = () => {
