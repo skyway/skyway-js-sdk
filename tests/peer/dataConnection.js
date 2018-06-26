@@ -55,11 +55,11 @@ describe('DataConnection', () => {
   });
 
   describe('Constructor', () => {
-    it("should call negotiator's startConnection method when created", () => {
+    it("should not call negotiator's startConnection method when created", () => {
       const dc = new DataConnection('remoteId', {});
 
       assert(dc);
-      assert(startSpy.calledOnce);
+      assert(startSpy.calledOnce === false);
     });
 
     it('should store any messages passed in when created', () => {
@@ -126,57 +126,6 @@ describe('DataConnection', () => {
       }
     });
 
-    it('should process any queued messages after PeerConnection object is created', () => {
-      const messages = [
-        { type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message' },
-      ];
-
-      const spy = sinon.spy();
-      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy);
-      const dc = new DataConnection('remoteId', { queuedMessages: messages });
-
-      assert.deepEqual(dc._queuedMessages, []);
-      assert.equal(spy.calledOnce, true);
-
-      spy.resetHistory();
-    });
-
-    it('should correctly handle ALL of multiple queued messages', () => {
-      const messages = [
-        { type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message1' },
-        {
-          type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
-          payload: 'message2',
-        },
-      ];
-
-      const spy1 = sinon.spy();
-      const spy2 = sinon.spy();
-      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
-      sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
-
-      const dc = new DataConnection('remoteId', { queuedMessages: messages });
-
-      assert.deepEqual(dc._queuedMessages, []);
-      assert.equal(spy1.calledOnce, true);
-      assert.equal(spy2.calledOnce, true);
-    });
-
-    it('should not process any invalid queued messages', () => {
-      const messages = [{ type: 'WRONG', payload: 'message' }];
-
-      const spy1 = sinon.spy();
-      const spy2 = sinon.spy();
-      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
-      sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
-
-      const dc = new DataConnection('remoteId', { queuedMessages: messages });
-
-      assert.deepEqual(dc._queuedMessages, []);
-      assert.equal(spy1.called, false);
-      assert.equal(spy2.called, false);
-    });
-
     it('should open the DataConnection and emit upon _dc.onopen()', () => {
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
@@ -215,6 +164,62 @@ describe('DataConnection', () => {
       assert(spy.calledOnce);
 
       spy.resetHistory();
+    });
+  });
+
+  describe('startConnection', () => {
+    it('should process any queued messages after startConnection is called', async () => {
+      const messages = [
+        { type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message' },
+      ];
+
+      const spy = sinon.spy();
+      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy);
+      const dc = new DataConnection('remoteId', { queuedMessages: messages });
+      await dc.startConnection();
+
+      assert.deepEqual(dc._queuedMessages, []);
+      assert.equal(spy.calledOnce, true);
+
+      spy.resetHistory();
+    });
+
+    it('should correctly handle ALL of multiple queued messages after startConnection is called', async () => {
+      const messages = [
+        { type: config.MESSAGE_TYPES.SERVER.ANSWER.key, payload: 'message1' },
+        {
+          type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
+          payload: 'message2',
+        },
+      ];
+
+      const spy1 = sinon.spy();
+      const spy2 = sinon.spy();
+      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
+      sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
+
+      const dc = new DataConnection('remoteId', { queuedMessages: messages });
+      await dc.startConnection();
+
+      assert.deepEqual(dc._queuedMessages, []);
+      assert.equal(spy1.calledOnce, true);
+      assert.equal(spy2.calledOnce, true);
+    });
+
+    it('should not process any invalid queued messages', async () => {
+      const messages = [{ type: 'WRONG', payload: 'message' }];
+
+      const spy1 = sinon.spy();
+      const spy2 = sinon.spy();
+      sinon.stub(DataConnection.prototype, 'handleAnswer').callsFake(spy1);
+      sinon.stub(DataConnection.prototype, 'handleCandidate').callsFake(spy2);
+
+      const dc = new DataConnection('remoteId', { queuedMessages: messages });
+      await dc.startConnection();
+
+      assert.deepEqual(dc._queuedMessages, []);
+      assert.equal(spy1.called, false);
+      assert.equal(spy2.called, false);
     });
   });
 

@@ -42,6 +42,7 @@ describe('MeshRoom', () => {
 
     dcStub.returns({
       type: 'data',
+      startConnection: sinon.spy(),
       on: onSpy,
     });
 
