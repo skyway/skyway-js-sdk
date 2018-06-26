@@ -57,17 +57,11 @@ describe('MediaConnection', () => {
   });
 
   describe('Constructor', () => {
-    it("should call negotiator's startConnection method when created and originator", () => {
+    it("should not call negotiator's startConnection method when created and originator", () => {
       const mc = new MediaConnection('remoteId', {
         stream: {},
         originator: true,
       });
-      assert(mc);
-      assert(startSpy.calledOnce);
-    });
-
-    it("should not call negotiator's startConnection method when created and not originator", () => {
-      const mc = new MediaConnection('remoteId', { stream: {} });
       assert(mc);
       assert(startSpy.notCalled);
     });
@@ -96,6 +90,26 @@ describe('MediaConnection', () => {
       assert.equal(mc.localStream, stream);
       assert.equal(mc.metadata, metadata);
       assert.equal(mc._options, options);
+    });
+  });
+
+  describe('startConnection', () => {
+    it("should call negotiator's startConnection method when created and originator", async () => {
+      const mc = new MediaConnection('remoteId', {
+        stream: {},
+        originator: true,
+      });
+      await mc.startConnection();
+
+      assert(mc);
+      assert(startSpy.calledOnce);
+    });
+    it("should not call negotiator's startConnection method when created and not originator", async () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      await mc.startConnection();
+
+      assert(mc);
+      assert(startSpy.notCalled);
     });
   });
 

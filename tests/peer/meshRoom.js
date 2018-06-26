@@ -32,6 +32,7 @@ describe('MeshRoom', () => {
 
     mcStub.returns({
       type: 'media',
+      startConnection: sinon.spy(),
       on: onSpy,
       close: closeSpy,
       answer: answerSpy,
