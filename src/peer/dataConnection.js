@@ -93,8 +93,10 @@ class DataConnection extends Connection {
     if (this._options.payload) {
       this._options.payload.pcConfig = this._options.pcConfig;
     }
+  }
 
-    this._negotiator.startConnection(
+  async startConnection() {
+    await this._negotiator.startConnection(
       this._options.payload || {
         originator: true,
         type: 'data',
@@ -103,8 +105,8 @@ class DataConnection extends Connection {
         pcConfig: this._options.pcConfig,
       }
     );
-    this._pcAvailable = true;
 
+    this._pcAvailable = true;
     this._handleQueuedMessages();
   }
 

@@ -302,6 +302,7 @@ class MeshRoom extends Room {
         switch (type) {
           case 'data':
             connection = new DataConnection(peerId, options);
+            connection.startConnection();
             break;
           case 'media':
             connection = new MediaConnection(peerId, options);

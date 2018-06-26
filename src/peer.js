@@ -145,6 +145,7 @@ class Peer extends EventEmitter {
 
     options.pcConfig = this._pcConfig;
     const connection = new DataConnection(peerId, options);
+    connection.startConnection();
     logger.log('DataConnection created in connect method');
     this._addConnection(peerId, connection);
     return connection;
@@ -568,6 +569,7 @@ class Peer extends EventEmitter {
           queuedMessages: this._queuedMessages[connectionId],
           pcConfig: this._pcConfig,
         });
+        connection.startConnection();
 
         logger.log('DataConnection created in OFFER');
 
