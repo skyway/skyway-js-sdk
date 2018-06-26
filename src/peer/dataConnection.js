@@ -95,6 +95,10 @@ class DataConnection extends Connection {
     }
   }
 
+  /**
+   * Start connection via negotiator and handle queued messages.
+   * @return {Promise<void>} Promise that resolves when starting is done.
+   */
   async startConnection() {
     await this._negotiator.startConnection(
       this._options.payload || {
