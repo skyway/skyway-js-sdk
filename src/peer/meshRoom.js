@@ -162,6 +162,8 @@ class MeshRoom extends Room {
         metadata: offerMessage.metadata,
         pcConfig: this._pcConfig,
       });
+      connection.startConnection();
+
       logger.log('MediaConnection created in OFFER');
       this._addConnection(offerMessage.src, connection);
       this._setupMessageHandlers(connection);
@@ -302,7 +304,6 @@ class MeshRoom extends Room {
         switch (type) {
           case 'data':
             connection = new DataConnection(peerId, options);
-            connection.startConnection();
             break;
           case 'media':
             connection = new MediaConnection(peerId, options);
@@ -311,6 +312,7 @@ class MeshRoom extends Room {
             return;
         }
 
+        connection.startConnection();
         this._addConnection(peerId, connection);
         this._setupMessageHandlers(connection);
 

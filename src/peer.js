@@ -121,6 +121,7 @@ class Peer extends EventEmitter {
     options.stream = stream;
     options.pcConfig = this._pcConfig;
     const mc = new MediaConnection(peerId, options);
+    mc.startConnection();
     logger.log('MediaConnection created in call method');
     this._addConnection(peerId, mc);
     return mc;
@@ -554,8 +555,10 @@ class Peer extends EventEmitter {
           queuedMessages: this._queuedMessages[connectionId],
           pcConfig: this._pcConfig,
         });
+        connection.startConnection();
 
         logger.log('MediaConnection created in OFFER');
+
         this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.call.key, connection);
       } else if (offerMessage.connectionType === 'data') {

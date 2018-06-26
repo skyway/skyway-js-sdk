@@ -46,23 +46,32 @@ class MediaConnection extends Connection {
     // Messages stored by peer because MC was not ready yet
     this._queuedMessages = this._options.queuedMessages || [];
     this._pcAvailable = false;
+  }
 
-    if (this._options.originator) {
-      this._negotiator.startConnection({
-        type: 'media',
-        stream: this.localStream,
-        originator: this._options.originator,
-        pcConfig: this._options.pcConfig,
-        videoBandwidth: this._options.videoBandwidth,
-        audioBandwidth: this._options.audioBandwidth,
-        videoCodec: this._options.videoCodec,
-        audioCodec: this._options.audioCodec,
-        videoReceiveEnabled: this._options.videoReceiveEnabled,
-        audioReceiveEnabled: this._options.audioReceiveEnabled,
-      });
-      this._pcAvailable = true;
-      this._handleQueuedMessages();
+  /**
+   * Start connection via negotiator and handle queued messages.
+   * @return {Promise<void>} Promise that resolves when starting is done.
+   */
+  async startConnection() {
+    if (!this._options.originator) {
+      return;
     }
+
+    await this._negotiator.startConnection({
+      type: 'media',
+      stream: this.localStream,
+      originator: this._options.originator,
+      pcConfig: this._options.pcConfig,
+      videoBandwidth: this._options.videoBandwidth,
+      audioBandwidth: this._options.audioBandwidth,
+      videoCodec: this._options.videoCodec,
+      audioCodec: this._options.audioCodec,
+      videoReceiveEnabled: this._options.videoReceiveEnabled,
+      audioReceiveEnabled: this._options.audioReceiveEnabled,
+    });
+
+    this._pcAvailable = true;
+    this._handleQueuedMessages();
   }
 
   /**
