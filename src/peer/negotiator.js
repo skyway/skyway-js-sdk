@@ -79,7 +79,7 @@ class Negotiator extends EventEmitter {
       } else if (this._originator) {
         // This means the peer wants to create offer SDP with `recvonly`
         const offer = await this._makeOfferSdp();
-        this._setLocalDescription(offer);
+        await this._setLocalDescription(offer);
       }
     }
 
@@ -91,7 +91,7 @@ class Negotiator extends EventEmitter {
         this.emit(Negotiator.EVENTS.dcCreated.key, dc);
       }
     } else {
-      this.handleOffer(options.offer);
+      await this.handleOffer(options.offer);
     }
   }
 
