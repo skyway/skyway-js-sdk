@@ -164,8 +164,12 @@ class Socket extends EventEmitter {
       http.open('GET', this._dispatcherUrl, true);
 
       /* istanbul ignore next */
-      http.onerror = function() {
+      http.onerror = () => {
         reject(new Error('There was a problem with the dispatcher.'));
+      };
+
+      http.onabort = () => {
+        reject(new Error('The request was aborted.'));
       };
 
       http.ontimeout = () => {
@@ -177,7 +181,24 @@ class Socket extends EventEmitter {
           return;
         }
 
-        const res = JSON.parse(http.responseText);
+        // maybe aborted or something
+        if (http.status === 0) {
+          reject(new Error('There was a problem with the dispatcher.'));
+          return;
+        }
+
+        let res = null;
+        try {
+          res = JSON.parse(http.responseText);
+        } catch (err) {
+          reject(
+            new Error(
+              'The dispatcher server returned an invalid JSON response.'
+            )
+          );
+          return;
+        }
+
         if (http.status === 200) {
           if (res && res.domain) {
             resolve({ host: res.domain, port: 443, secure: true });
