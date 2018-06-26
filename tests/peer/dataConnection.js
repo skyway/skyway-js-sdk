@@ -59,7 +59,7 @@ describe('DataConnection', () => {
       const dc = new DataConnection('remoteId', {});
 
       assert(dc);
-      assert(startSpy.calledOnce === false);
+      assert(startSpy.notCalled);
     });
 
     it('should store any messages passed in when created', () => {
