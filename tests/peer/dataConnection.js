@@ -55,13 +55,6 @@ describe('DataConnection', () => {
   });
 
   describe('Constructor', () => {
-    it("should not call negotiator's startConnection method when created", () => {
-      const dc = new DataConnection('remoteId', {});
-
-      assert(dc);
-      assert(startSpy.notCalled);
-    });
-
     it('should store any messages passed in when created', () => {
       const dc = new DataConnection('remoteId', {
         queuedMessages: ['message'],
@@ -95,6 +88,22 @@ describe('DataConnection', () => {
       assert.equal(dc._peerBrowser, peerBrowser);
       assert.equal(dc._options, options);
     });
+
+    it('should throw an error if serialization is not valid', done => {
+      let dc;
+      try {
+        dc = new DataConnection('remoteId', { serialization: 'foobar' });
+      } catch (e) {
+        assert(dc === undefined);
+        done();
+      }
+    });
+
+    it('default serialization should be binary', () => {
+      const dc = new DataConnection('remoteId', {});
+
+      assert(dc.serialization === 'binary');
+    });
   });
 
   describe('Initialize', () => {
@@ -108,22 +117,6 @@ describe('DataConnection', () => {
       assert(dc._dc.onopen);
       assert(dc._dc.onmessage);
       assert(dc._dc.onclose);
-    });
-
-    it('default serialization should be binary', () => {
-      const dc = new DataConnection('remoteId', {});
-
-      assert(dc.serialization === 'binary');
-    });
-
-    it('should throw an error if serialization is not valid', done => {
-      let dc;
-      try {
-        dc = new DataConnection('remoteId', { serialization: 'foobar' });
-      } catch (e) {
-        assert(dc === undefined);
-        done();
-      }
     });
 
     it('should open the DataConnection and emit upon _dc.onopen()', () => {

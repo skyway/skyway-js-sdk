@@ -57,15 +57,6 @@ describe('MediaConnection', () => {
   });
 
   describe('Constructor', () => {
-    it("should not call negotiator's startConnection method when created and originator", () => {
-      const mc = new MediaConnection('remoteId', {
-        stream: {},
-        originator: true,
-      });
-      assert(mc);
-      assert(startSpy.notCalled);
-    });
-
     it('should store any messages passed in when created', () => {
       const mc = new MediaConnection('remoteId', {
         stream: {},
