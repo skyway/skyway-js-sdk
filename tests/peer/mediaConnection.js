@@ -17,6 +17,7 @@ describe('MediaConnection', () => {
   let answerSpy;
   let candidateSpy;
   let replaceSpy;
+  let hasRemoteDescriptionStub;
 
   beforeEach(() => {
     stub = sinon.stub();
@@ -25,6 +26,7 @@ describe('MediaConnection', () => {
     answerSpy = sinon.spy();
     candidateSpy = sinon.spy();
     replaceSpy = sinon.spy();
+    hasRemoteDescriptionStub = sinon.stub().returns(false);
 
     stub.returns({
       on: function(event, callback) {
@@ -39,6 +41,7 @@ describe('MediaConnection', () => {
       handleCandidate: candidateSpy,
       replaceStream: replaceSpy,
       setRemoteBrowser: sinon.spy(),
+      hasRemoteDescription: hasRemoteDescriptionStub,
     });
     // hoist statics
     stub.EVENTS = Negotiator.EVENTS;
@@ -54,6 +57,7 @@ describe('MediaConnection', () => {
     answerSpy.resetHistory();
     candidateSpy.resetHistory();
     replaceSpy.resetHistory();
+    hasRemoteDescriptionStub.resetBehavior();
   });
 
   describe('Constructor', () => {
@@ -255,16 +259,14 @@ describe('MediaConnection', () => {
       assert(answerSpy.calledOnce === true);
     });
 
-    it("should call negotiator's handleCandidate with a candidate", () => {
-      const candidate = 'message';
-
+    it("should not call negotiator's handleCandidate before calling handleAnswer", () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
       mc._pcAvailable = true;
 
       assert(candidateSpy.called === false);
 
-      mc.handleCandidate(candidate);
-      assert(candidateSpy.calledOnce === true);
+      mc.handleCandidate('message');
+      assert(candidateSpy.calledOnce === false);
     });
   });
 
@@ -320,6 +322,8 @@ describe('MediaConnection', () => {
     });
 
     it('should not process any invalid queued messages', () => {
+      hasRemoteDescriptionStub.returns(true);
+
       const messages = [{ type: 'WRONG', payload: 'message' }];
 
       const mc = new MediaConnection('remoteId', {

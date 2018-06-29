@@ -94,7 +94,7 @@ class Connection extends EventEmitter {
    * @param {object} candidateMessage - Message object containing a candidate.
    */
   handleCandidate(candidateMessage) {
-    if (this._pcAvailable) {
+    if (this._negotiator.hasRemoteDescription()) {
       this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {
       logger.log(
@@ -124,6 +124,22 @@ class Connection extends EventEmitter {
    * @private
    */
   _handleQueuedMessages() {
+    // Skip if there're no answer SDPs in the queue and setRemoteDescription() hasn't been resolved,
+    // because in that case we're not ready to start to process the remote candidates.
+    if (!this._negotiator.hasRemoteDescription()) {
+      const hasAnswerSdp = this._queuedMessages.some(
+        message => message.type === config.MESSAGE_TYPES.SERVER.ANSWER.key
+      );
+      if (!hasAnswerSdp) {
+        return;
+      }
+    }
+
+    // Sort to handle ANSWER first.
+    this._queuedMessages.sort(
+      message =>
+        message.type === config.MESSAGE_TYPES.SERVER.ANSWER.key ? -1 : 1
+    );
     for (const message of this._queuedMessages) {
       switch (message.type) {
         case config.MESSAGE_TYPES.SERVER.ANSWER.key:
@@ -204,6 +220,10 @@ class Connection extends EventEmitter {
         connectionType: this.type,
       };
       this.emit(Connection.EVENTS.candidate.key, connectionCandidate);
+    });
+
+    this._negotiator.on(Negotiator.EVENTS.handleQueue.key, () => {
+      this._handleQueuedMessages();
     });
 
     this._negotiator.on(Negotiator.EVENTS.iceConnectionFailed.key, () => {
