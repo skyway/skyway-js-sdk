@@ -75,11 +75,12 @@ class Connection extends EventEmitter {
    * Handle an sdp answer message from the remote peer.
    * @param {object} answerMessage - Message object containing sdp answer.
    */
-  handleAnswer(answerMessage) {
+  async handleAnswer(answerMessage) {
     if (this._pcAvailable) {
-      this._negotiator.handleAnswer(answerMessage.answer);
+      await this._negotiator.handleAnswer(answerMessage.answer);
       this._negotiator.setRemoteBrowser(answerMessage.browser);
       this.open = true;
+      this._handleQueuedMessages();
     } else {
       logger.log(`Queuing ANSWER message in ${this.id} from ${this.remoteId}`);
       this._queuedMessages.push({
@@ -94,6 +95,16 @@ class Connection extends EventEmitter {
    * @param {object} candidateMessage - Message object containing a candidate.
    */
   handleCandidate(candidateMessage) {
+    // The orginator(caller) should wait for the remote ANSWER arrival and
+    // setRemoteDescription(ANSWER) before handleCandidate(addIceCandidate).
+    if (this._negotiator.originator && !this._negotiator.hasRemoteDescription) {
+      this._queuedMessages.push({
+        type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
+        payload: candidateMessage,
+      });
+      return;
+    }
+
     if (this._pcAvailable) {
       this._negotiator.handleCandidate(candidateMessage.candidate);
     } else {

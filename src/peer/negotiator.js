@@ -33,6 +33,7 @@ class Negotiator extends EventEmitter {
     this._isExpectingAnswer = false;
     this._replaceStreamCalled = false;
     this._isNegotiationAllowed = true;
+    this.hasRemoteDescription = false;
   }
 
   /**
@@ -58,7 +59,7 @@ class Negotiator extends EventEmitter {
   async startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
     this._setupPCListeners();
-    this._originator = options.originator;
+    this.originator = options.originator;
     this._audioBandwidth = options.audioBandwidth;
     this._videoBandwidth = options.videoBandwidth;
     this._audioCodec = options.audioCodec;
@@ -76,14 +77,14 @@ class Negotiator extends EventEmitter {
         } else {
           this._pc.addStream(options.stream);
         }
-      } else if (this._originator) {
+      } else if (this.originator) {
         // This means the peer wants to create offer SDP with `recvonly`
         const offer = await this._makeOfferSdp();
         await this._setLocalDescription(offer);
       }
     }
 
-    if (this._originator) {
+    if (this.originator) {
       if (this._type === 'data') {
         const label = options.label || '';
         const dcInit = options.dcInit || {};
@@ -158,11 +159,11 @@ class Negotiator extends EventEmitter {
    * Set remote description with Answer SDP.
    * @param {object} answerSdp - An object containing Answer SDP.
    */
-  handleAnswer(answerSdp) {
+  async handleAnswer(answerSdp) {
     this._isNegotiationAllowed = true;
 
     if (this._isExpectingAnswer) {
-      this._setRemoteDescription(answerSdp);
+      await this._setRemoteDescription(answerSdp);
       this._isExpectingAnswer = false;
     } else if (this._pc.onnegotiationneeded) {
       // manually trigger negotiation
@@ -178,8 +179,8 @@ class Negotiator extends EventEmitter {
   async handleCandidate(candidate) {
     await this._pc
       .addIceCandidate(new RTCIceCandidate(candidate))
+      .then(() => logger.log('Successfully added ICE candidate'))
       .catch(err => logger.error('Failed to add ICE candidate', err));
-    logger.log('Added ICE candidate');
   }
 
   /**
@@ -301,7 +302,7 @@ class Negotiator extends EventEmitter {
       if (pc.signalingState === 'stable' && this._isNegotiationAllowed) {
         this._isNegotiationAllowed = false;
         // Emit negotiationNeeded event in case additional handling is needed.
-        if (this._originator) {
+        if (this.originator) {
           const offer = await this._makeOfferSdp();
           this._setLocalDescription(offer);
           this.emit(Negotiator.EVENTS.negotiationNeeded.key);
@@ -478,6 +479,7 @@ class Negotiator extends EventEmitter {
 
     try {
       await this._pc.setRemoteDescription(new RTCSessionDescription(sdp));
+      this.hasRemoteDescription = true;
     } catch (err) {
       err.type = 'webrtc';
       logger.error(err);
@@ -623,7 +625,7 @@ class Negotiator extends EventEmitter {
       setTimeout(async () => {
         // update the localDescription with the new stream information (after getting to the right state)
         try {
-          if (this._originator) {
+          if (this.originator) {
             const offer = await this._makeOfferSdp();
             await this._pc.setLocalDescription(offer);
             await this._pc.setRemoteDescription(this._pc.remoteDescription);

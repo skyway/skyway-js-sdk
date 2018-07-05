@@ -5,6 +5,7 @@ import Connection from './connection';
 import MediaConnection from './mediaConnection';
 import DataConnection from './dataConnection';
 import logger from '../shared/logger';
+import config from '../shared/config';
 
 const MessageEvents = ['broadcastByDC', 'getPeers'];
 
@@ -36,6 +37,9 @@ class MeshRoom extends Room {
     super(name, peerId, options);
 
     this.connections = {};
+
+    // messages(candidates) received before connection is ready
+    this._queuedMessages = {};
   }
 
   /**
@@ -160,6 +164,7 @@ class MeshRoom extends Room {
         connectionId: connectionId,
         payload: offerMessage,
         metadata: offerMessage.metadata,
+        queuedMessages: this._queuedMessages[connectionId],
         pcConfig: this._pcConfig,
       });
       connection.startConnection();
@@ -222,6 +227,15 @@ class MeshRoom extends Room {
 
     if (connection) {
       connection.handleCandidate(candidateMessage);
+    } else {
+      // Looks like PeerConnection hasn't completed setRemoteDescription
+      if (!this._queuedMessages[candidateMessage.connectionId]) {
+        this._queuedMessages[candidateMessage.connectionId] = [];
+      }
+      this._queuedMessages[candidateMessage.connectionId].push({
+        type: config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
+        payload: candidateMessage,
+      });
     }
   }
 
