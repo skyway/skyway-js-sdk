@@ -609,6 +609,8 @@ class Peer extends EventEmitter {
       if (connection) {
         connection.handleAnswer(answerMessage);
       } else {
+        // Should we remove this storing
+        // because answer should be handled immediately after its arrival?
         this._storeMessage(
           config.MESSAGE_TYPES.SERVER.ANSWER.key,
           answerMessage
@@ -639,6 +641,8 @@ class Peer extends EventEmitter {
         if (connection) {
           connection.handleCandidate(candidateMessage);
         } else {
+          // Store candidate in the queue so that the candidate can be added
+          // after setRemoteDescription completed.
           this._storeMessage(
             config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
             candidateMessage

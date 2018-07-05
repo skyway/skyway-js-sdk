@@ -126,6 +126,8 @@ class Connection extends EventEmitter {
   _handleQueuedMessages() {
     for (const message of this._queuedMessages) {
       switch (message.type) {
+        // Should we remove this ANSWER block
+        // because ANSWER should be handled immediately?
         case config.MESSAGE_TYPES.SERVER.ANSWER.key:
           this.handleAnswer(message.payload);
           break;
