@@ -229,7 +229,7 @@ class MeshRoom extends Room {
       connection.handleCandidate(candidateMessage);
     } else {
       // Looks like PeerConnection hasn't completed setRemoteDescription
-      if (!this._queuedMessages[candidateMessage.connectionId]) {
+      if (this._queuedMessages[candidateMessage.connectionId] === undefined) {
         this._queuedMessages[candidateMessage.connectionId] = [];
       }
       this._queuedMessages[candidateMessage.connectionId].push({
