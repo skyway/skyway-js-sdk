@@ -1,25 +1,20 @@
 const webpack = require('webpack');
 
-// base
 const config = {
+  mode: 'development',
   entry: {
     skyway: './src/peer.js',
   },
   output: {
     libraryTarget: 'umd',
+    libraryExport: 'default',
     library: 'Peer',
     path: `${__dirname}/dist`,
     filename: '[name].js',
   },
   module: {
     rules: [
-      {
-        test: /.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-        },
-      },
+      // keep this place for karma
     ],
   },
   plugins: [
@@ -28,15 +23,15 @@ const config = {
   ],
 };
 
-// from `npm run build, exports both `.js`, `.min.js`
+// from `npm run build`, exports both `.js`, `.min.js`
 if (process.env.NODE_ENV === 'production') {
   const minConf = Object.assign({}, config, {
+    mode: 'production',
     entry: { 'skyway.min': './src/peer.js' },
-    plugins: [...config.plugins.slice(), new webpack.optimize.UglifyJsPlugin()],
   });
 
   module.exports = [config, minConf];
-  // from karma, exports only not minified
+  // from `npm run dev` and `npm t`(= karma-webpack), exports dev config
 } else {
   module.exports = config;
 }

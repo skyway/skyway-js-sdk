@@ -806,7 +806,7 @@ describe('Negotiator', () => {
       describe('onnegotiationneeded', () => {
         describe('if originator', () => {
           beforeEach(() => {
-            negotiator._originator = true;
+            negotiator.originator = true;
           });
           it('should call _makeOfferSdp', () => {
             const makeOfferSdpSpy = sinon.spy(negotiator, '_makeOfferSdp');

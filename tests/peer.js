@@ -89,7 +89,7 @@ describe('Peer', () => {
       './shared/config': config,
       './shared/logger': logger,
       './shared/util': util,
-    });
+    }).default;
     initializeServerConnectionSpy = sinon.spy(
       Peer.prototype,
       '_initializeServerConnection'

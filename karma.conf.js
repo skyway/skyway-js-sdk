@@ -1,21 +1,22 @@
-const webpackConfig = require('./webpack.config.js');
+const webpackConfig = require('./webpack.config');
 
-// Test env only attrs
+webpackConfig.mode = 'none';
+// still need Babel to use inject-loader
 webpackConfig.module.rules.push({
   test: /\.js$/,
   exclude: /node_modules/,
   use: {
-    loader: 'istanbul-instrumenter-loader',
+    loader: 'babel-loader',
     options: {
-      debug: true,
-      esModules: true,
+      presets: ['es2015'],
+      plugins: ['babel-plugin-espower', 'istanbul'],
     },
   },
 });
-
+// enable-sourcemap
 webpackConfig.devtool = 'inline-source-map';
 
-module.exports = config => {
+module.exports = config =>
   config.set({
     files: [
       // if specify running tests
@@ -36,6 +37,10 @@ module.exports = config => {
     },
 
     reporters: ['mocha', 'coverage'],
+    coverageReporter: {
+      dir: './coverage',
+      reporters: [{ type: 'html' }, { type: 'text' }],
+    },
 
     browsers: ['ChromeHeadlessNoSandbox'],
     customLaunchers: {
@@ -44,9 +49,4 @@ module.exports = config => {
         flags: ['--no-sandbox'],
       },
     },
-
-    coverageReporter: {
-      reporters: [{ type: 'html', dir: './coverage' }, { type: 'text' }],
-    },
   });
-};
