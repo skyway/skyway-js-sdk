@@ -1,6 +1,6 @@
 {
   "name": "skyway-js",
-  "version": "1.1.13",
+  "version": "1.1.14",
   "description": "The official JavaScript SDK for SkyWay",
   "main": "dist/skyway.js",
   "module": "src/peer.js",
