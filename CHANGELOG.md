@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.15](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.15) - 2018-07-17
+
+### Fixed
+
+- Fix that dist/skyway.js is included after npm install
+
 ## [v1.1.14](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.14) - 2018-07-17
 
 ### Fixed
