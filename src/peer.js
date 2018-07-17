@@ -121,6 +121,7 @@ class Peer extends EventEmitter {
     options.stream = stream;
     options.pcConfig = this._pcConfig;
     const mc = new MediaConnection(peerId, options);
+    mc.startConnection();
     logger.log('MediaConnection created in call method');
     this._addConnection(peerId, mc);
     return mc;
@@ -145,6 +146,7 @@ class Peer extends EventEmitter {
 
     options.pcConfig = this._pcConfig;
     const connection = new DataConnection(peerId, options);
+    connection.startConnection();
     logger.log('DataConnection created in connect method');
     this._addConnection(peerId, connection);
     return connection;
@@ -553,8 +555,10 @@ class Peer extends EventEmitter {
           queuedMessages: this._queuedMessages[connectionId],
           pcConfig: this._pcConfig,
         });
+        connection.startConnection();
 
         logger.log('MediaConnection created in OFFER');
+
         this._addConnection(offerMessage.src, connection);
         this.emit(Peer.EVENTS.call.key, connection);
       } else if (offerMessage.connectionType === 'data') {
@@ -568,6 +572,7 @@ class Peer extends EventEmitter {
           queuedMessages: this._queuedMessages[connectionId],
           pcConfig: this._pcConfig,
         });
+        connection.startConnection();
 
         logger.log('DataConnection created in OFFER');
 
@@ -604,6 +609,8 @@ class Peer extends EventEmitter {
       if (connection) {
         connection.handleAnswer(answerMessage);
       } else {
+        // Should we remove this storing
+        // because answer should be handled immediately after its arrival?
         this._storeMessage(
           config.MESSAGE_TYPES.SERVER.ANSWER.key,
           answerMessage
@@ -634,6 +641,8 @@ class Peer extends EventEmitter {
         if (connection) {
           connection.handleCandidate(candidateMessage);
         } else {
+          // Store candidate in the queue so that the candidate can be added
+          // after setRemoteDescription completed.
           this._storeMessage(
             config.MESSAGE_TYPES.SERVER.CANDIDATE.key,
             candidateMessage
@@ -944,5 +953,3 @@ class Peer extends EventEmitter {
 }
 
 export default Peer;
-// for interop exports
-module.exports = Peer;

@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.1.14](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.14) - 2018-07-17
+
+### Fixed
+
+- Fix connection fails which happen when ICE candidates arrive before setRemoteDescription
+- Refactor the codes into async/await style
+
 ## [v1.1.13](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.13) - 2018-06-26
 
 ### Fixed
