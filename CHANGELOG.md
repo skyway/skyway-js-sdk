@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.16](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.16) - 2018-07-19
+
+### Fixed
+
+- GCP Staging build for S3 and CloudFront
+
 ## [v1.1.15](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.15) - 2018-07-17
 
 ### Fixed
