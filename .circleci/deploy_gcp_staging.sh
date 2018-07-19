@@ -12,7 +12,7 @@ examples_sdk_url="\/\/cdn.stage.gcp.skyway.io\/skyway-latest.js"
 base_domain="\.stage\.gcp\.skyway\.io"
 
 # Set API key for examples
-skyway_apikey="5bea388b-3f95-4e1e-acb5-a34efdd0c480"
+skyway_apikey="32466e1c-c9fc-4986-a0da-ba0fb96fcdc6"
 echo "window.__SKYWAY_KEY__ = '${skyway_apikey}';" > ./examples/key.js;
 
 # Replace variable
