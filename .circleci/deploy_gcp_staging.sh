@@ -6,10 +6,10 @@ set -o pipefail
 # Import functions
 source .circleci/common/upload_to_s3.sh;
 
-s3_dist_bucket="s3://eclrtc-cdn-staging/"
-s3_example_bucket="s3://eclrtc-example-staging/"
-examples_sdk_url="\/\/cdn.stage.ecl.skyway.io\/skyway-latest.js"
-base_domain="\.stage\.ecl\.skyway\.io"
+s3_dist_bucket="s3://eclrtc-cdn-gcp-staging/"
+s3_example_bucket="s3://eclrtc-example-gcp-staging/"
+examples_sdk_url="\/\/cdn.stage.gcp.skyway.io\/skyway-latest.js"
+base_domain="\.stage\.gcp\.skyway\.io"
 
 # Set API key for examples
 skyway_apikey="5bea388b-3f95-4e1e-acb5-a34efdd0c480"
