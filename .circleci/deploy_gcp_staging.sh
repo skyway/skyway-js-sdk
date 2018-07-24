@@ -16,8 +16,9 @@ skyway_apikey="32466e1c-c9fc-4986-a0da-ba0fb96fcdc6"
 echo "window.__SKYWAY_KEY__ = '${skyway_apikey}';" > ./examples/key.js;
 
 # Replace variable
-find examples -name index.html | xargs sed -i -e "s/\"\/\/cdn\.webrtc\.ecl\.ntt\.com\/skyway-latest\.js\"/\"${examples_sdk_url}\"/g"
-find dist -name "*.js" | xargs sed -i -e "s/\.webrtc\.ecl\.ntt\.com/${base_domain}/g"
+# TODO: When remove 'Deploy ECL staging', You must change Domain Name from '.stage\.ecl\.skyway\.io' to '.webrtc\.ecl\.ntt\.com'
+find examples -name index.html | xargs sed -i -e "s/\"\/\/cdn\.stage\.ecl\.skyway\.io\/skyway-latest\.js\"/\"${examples_sdk_url}\"/g"
+find dist -name "*.js" | xargs sed -i -e "s/\.stage\.ecl\.skyway\.io/${base_domain}/g"
 
 # Upload sdk to s3
 sdk_version=`cat package.json | jq -r .version`
