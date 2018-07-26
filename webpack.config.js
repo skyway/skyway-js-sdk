@@ -3,7 +3,7 @@ const webpack = require('webpack');
 const config = {
   mode: 'development',
   entry: {
-    skyway: './src/peer.js',
+    skyway: ['babel-polyfill', './src/peer.js'],
   },
   output: {
     libraryTarget: 'umd',
@@ -14,7 +14,13 @@ const config = {
   },
   module: {
     rules: [
-      // keep this place for karma
+      {
+        test: /.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+        },
+      },
     ],
   },
   plugins: [
