@@ -4,14 +4,8 @@ webpackConfig.mode = 'none';
 // still need Babel to use inject-loader
 webpackConfig.module.rules.push({
   test: /\.js$/,
+  loader: 'babel-loader',
   exclude: /node_modules/,
-  use: {
-    loader: 'babel-loader',
-    options: {
-      presets: ['es2015'],
-      plugins: ['babel-plugin-espower', 'istanbul'],
-    },
-  },
 });
 // enable-sourcemap
 webpackConfig.devtool = 'inline-source-map';
@@ -19,6 +13,7 @@ webpackConfig.devtool = 'inline-source-map';
 module.exports = config =>
   config.set({
     files: [
+      'node_modules/babel-polyfill/dist/polyfill.js',
       // if specify running tests
       // './tests/peer/sfuRoom.js',
       './tests/index.js',
