@@ -23,14 +23,17 @@ const config = {
   ],
 };
 
-// from `npm run build`, exports both `.js`, `.min.js`
+// from `npm run build`, exports both `.js`, `.min.js` and ignore source-map/eval
 if (process.env.NODE_ENV === 'production') {
+  const normalConf = Object.assign({}, config, {
+    devtool: 'none',
+  });
   const minConf = Object.assign({}, config, {
     mode: 'production',
     entry: { 'skyway.min': './src/peer.js' },
   });
 
-  module.exports = [config, minConf];
+  module.exports = [normalConf, minConf];
   // from `npm run dev` and `npm t`(= karma-webpack), exports dev config
 } else {
   module.exports = config;
