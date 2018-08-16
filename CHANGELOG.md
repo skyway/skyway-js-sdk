@@ -1,10 +1,12 @@
 # Changelog
 
-## [v1.1.16](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.16) - 2018-07-19
+## [v1.1.16](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.16) - 2018-08-20
 
 ### Fixed
 
-- GCP Staging build for S3 and CloudFront
+- Change the timeout setting of the request to dispatcher server for stabilization
+- Don't output source-map and use better dev-tool in production mode
+- Fix that skyway.js uploaded to Github release page was broken
 
 ## [v1.1.15](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.15) - 2018-07-17
 
