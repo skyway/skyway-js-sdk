@@ -18,8 +18,11 @@ jobs:
       - run: npm install
       - run: npm run build
       - deploy:
-          name: Deploy
+          name: Deploy ECL Staging
           command: bash .circleci/deploy_staging.sh
+      - deploy:
+          name: Deploy GCP Staging
+          command: bash .circleci/deploy_gcp_staging.sh
 
   build_deploy_master:
     docker:

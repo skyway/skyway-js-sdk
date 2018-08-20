@@ -44,5 +44,5 @@ url="https://uploads.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_R
 for path in dist/*; do
     filename=$(basename $path);
     echo "Uploading $filename to releases";
-    curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/javascript" -d @"./dist/${filename}" "${url}?name=$filename"
+    curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/javascript" --data-binary @"./dist/${filename}" "${url}?name=$filename"
 done
