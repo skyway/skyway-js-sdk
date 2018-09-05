@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.17](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.17) - 2018-09-05
+
+### Fixed
+
+- Fix that the bug receive-only does not work on Chrome 69
+
 ## [v1.1.16](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.16) - 2018-08-20
 
 ### Fixed
