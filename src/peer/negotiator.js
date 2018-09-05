@@ -206,17 +206,23 @@ class Negotiator extends EventEmitter {
    */
   _createPeerConnection(pcConfig) {
     logger.log('Creating RTCPeerConnection');
+
+    const browserInfo = util.detectBrowser();
+
     this._isAddTrackAvailable =
       typeof RTCPeerConnection.prototype.addTrack === 'function';
     this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
     this._isRtpSenderAvailable =
       typeof RTCPeerConnection.prototype.getSenders === 'function';
+
+    // If browser is Chrome and over 69, it has addTransceiver but does not work without unified-plan option.
+    // SkyWay has not supported unified-plan.
     this._isAddTransceiverAvailable =
-      typeof RTCPeerConnection.prototype.addTransceiver === 'function';
+      typeof RTCPeerConnection.prototype.addTransceiver === 'function' &&
+      browserInfo.name !== 'chrome';
 
     // If browser is Chrome 64, we use addStream/replaceStream instead of addTrack/replaceTrack.
     // Because Chrome can't call properly to Firefox using track methods.
-    const browserInfo = util.detectBrowser();
     this._isForceUseStreamMethods =
       browserInfo.name === 'chrome' && browserInfo.major <= 64;
 
