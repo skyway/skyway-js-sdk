@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.1.18](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.18) - 2018-11-15
+## [v1.1.18](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.18) - 2018-11-19
 
 ### Fixed
 
