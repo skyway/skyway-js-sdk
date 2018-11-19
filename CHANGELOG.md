@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.18](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.18) - 2018-11-19
+
+### Fixed
+
+- Add a sdpSemantics option for Chrome M72 that will use unified-plan as default
+
 ## [v1.1.17](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.17) - 2018-09-05
 
 ### Fixed
