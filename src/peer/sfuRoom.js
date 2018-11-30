@@ -204,6 +204,13 @@ class SFURoom extends Room {
       this.members.splice(index, 1);
     }
 
+    // Delete leaving peer's streams
+    for (const msid in this.remoteStreams) {
+      if (this.remoteStreams[msid].peerId === src) {
+        delete this.remoteStreams[msid];
+      }
+    }
+
     this.emit(SFURoom.EVENTS.peerLeave.key, src);
   }
 
