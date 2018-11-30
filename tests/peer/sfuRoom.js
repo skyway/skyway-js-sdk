@@ -398,15 +398,16 @@ describe('SFURoom', () => {
         sfuRoom.handleLeave(leaveMessage);
       });
 
-      it('should remove streams of leaving peer from remoteStreams', done => {
+      it('when a peer has left from a room, should remove all of its streams from remoteStreams', done => {
         const receivingStreams = [
           { id: 'stream_1', peerId: sfuRoom.members[0] },
-          { id: 'stream_2', peerId: sfuRoom.members[1] },
+          { id: 'stream_2-1', peerId: sfuRoom.members[1] },
+          { id: 'stream_2-2', peerId: sfuRoom.members[1] },
           { id: 'stream_3', peerId: sfuRoom.members[2] },
         ];
 
         const leavingMessage = { src: sfuRoom.members[1] };
-        const leavingStream = receivingStreams[1];
+        const leavingStreams = [receivingStreams[1], receivingStreams[2]];
 
         // register remote streams into sfuroom
         for (const stream of receivingStreams) {
@@ -414,7 +415,8 @@ describe('SFURoom', () => {
         }
 
         sfuRoom.on(SFURoom.EVENTS.peerLeave.key, () => {
-          assert.equal(sfuRoom.remoteStreams[leavingStream.id], undefined);
+          assert.equal(sfuRoom.remoteStreams[leavingStreams[0].id], undefined);
+          assert.equal(sfuRoom.remoteStreams[leavingStreams[1].id], undefined);
           done();
         });
 
