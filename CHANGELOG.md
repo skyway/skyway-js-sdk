@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.19](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.19) - 2018-12-05
+
+### Fixed
+
+- Remove streams of a peer when it leaves from a SFU room.
+
 ## [v1.1.18](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.18) - 2018-11-19
 
 ### Fixed
