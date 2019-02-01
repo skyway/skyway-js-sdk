@@ -9,6 +9,7 @@ video {
 
 .heading {
   text-align: center;
+  margin-bottom: 0;
 }
 
 .note {
@@ -53,9 +54,13 @@ video {
 /* room */
 .room {
   display: grid;
-  grid-template-columns: 25% 50% 25%;
+  grid-template-columns: 30% 40% 30%;
   gap: 8px;
   margin: 0 8px;
+}
+
+.room .remote-streams {
+  background-color: #f6fbff;
 }
 
 .room .messages {
