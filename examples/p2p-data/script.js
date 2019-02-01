@@ -55,7 +55,7 @@ const Peer = window.Peer;
 
   peer.once('open', id => (localId.textContent = id));
 
-  // Register connectee handler
+  // Register connected peer handler
   peer.on('connection', dataConnection => {
     dataConnection.once('open', async () => {
       messages.textContent += `=== DataConnection has been opened ===\n`;
