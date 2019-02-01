@@ -15,18 +15,18 @@
       </p>
       <div class="room">
         <div class="local-stream">
-          <video data-local-stream></video>
-          <input type="text" placeholder="Room Name" data-room-id>
-          <button data-join-trigger>Join</button>
-          <button data-leave-trigger>Leave</button>
+          <video id="js-local-stream"></video>
+          <input type="text" placeholder="Room Name" id="js-room-id">
+          <button id="js-join-trigger">Join</button>
+          <button id="js-leave-trigger">Leave</button>
         </div>
 
-        <div class="remote-streams" data-remote-streams></div>
+        <div class="remote-streams" id="js-remote-streams"></div>
 
         <div>
-          <pre class="messages" data-messages></pre>
-          <input type="text" data-local-text>
-          <button data-send-trigger>Send</button>
+          <pre class="messages" id="js-messages"></pre>
+          <input type="text" id="js-local-text">
+          <button id="js-send-trigger">Send</button>
         </div>
       </div>
     </div>

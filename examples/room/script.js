@@ -1,14 +1,14 @@
 const Peer = window.Peer;
 
 (async function main() {
-  const localVideo = document.querySelector('[data-local-stream]');
-  const joinTrigger = document.querySelector('[data-join-trigger]');
-  const leaveTrigger = document.querySelector('[data-leave-trigger]');
-  const remoteVideos = document.querySelector('[data-remote-streams]');
-  const roomId = document.querySelector('[data-room-id]');
-  const localText = document.querySelector('[data-local-text]');
-  const sendTrigger = document.querySelector('[data-send-trigger]');
-  const messages = document.querySelector('[data-messages]');
+  const localVideo = document.getElementById('js-local-stream');
+  const joinTrigger = document.getElementById('js-join-trigger');
+  const leaveTrigger = document.getElementById('js-leave-trigger');
+  const remoteVideos = document.getElementById('js-remote-streams');
+  const roomId = document.getElementById('js-room-id');
+  const localText = document.getElementById('js-local-text');
+  const sendTrigger = document.getElementById('js-send-trigger');
+  const messages = document.getElementById('js-messages');
 
   const localStream = await navigator.mediaDevices
     .getUserMedia({
@@ -64,8 +64,8 @@ const Peer = window.Peer;
 
     // for closing room members
     room.on('peerLeave', peerId => {
-      const remoteVideo = Array.from(remoteVideos.children).find(
-        el => el.getAttribute('data-peer-id') === peerId
+      const remoteVideo = remoteVideos.querySelector(
+        `[data-peer-id=${peerId}]`
       );
       remoteVideo.srcObject.getTracks().forEach(track => track.stop());
       remoteVideo.srcObject = null;

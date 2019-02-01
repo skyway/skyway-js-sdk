@@ -14,15 +14,15 @@
       </p>
       <div class="p2p-data">
         <div>
-          <p>Your ID: <span data-local-id></span></p>
-          <input type="text" placeholder="Remote Peer ID" data-remote-id>
-          <button data-connect-trigger>Connect</button>
-          <button data-close-trigger>Close</button>
+          <p>Your ID: <span id="js-local-id"></span></p>
+          <input type="text" placeholder="Remote Peer ID" id="js-remote-id">
+          <button id="js-connect-trigger">Connect</button>
+          <button id="js-close-trigger">Close</button>
         </div>
         <div>
-          <pre class="messages" data-messages></pre>
-          <input type="text" data-local-text>
-          <button data-send-trigger>Send</button>
+          <pre class="messages" id="js-messages"></pre>
+          <input type="text" id="js-local-text">
+          <button id="js-send-trigger">Send</button>
         </div>
       </div>
     </div>

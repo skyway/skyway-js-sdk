@@ -1,13 +1,13 @@
 const Peer = window.Peer;
 
 (async function main() {
-  const localId = document.querySelector('[data-local-id]');
-  const localText = document.querySelector('[data-local-text]');
-  const connectTrigger = document.querySelector('[data-connect-trigger]');
-  const closeTrigger = document.querySelector('[data-close-trigger]');
-  const sendTrigger = document.querySelector('[data-send-trigger]');
-  const remoteId = document.querySelector('[data-remote-id]');
-  const messages = document.querySelector('[data-messages]');
+  const localId = document.getElementById('js-local-id');
+  const localText = document.getElementById('js-local-text');
+  const connectTrigger = document.getElementById('js-connect-trigger');
+  const closeTrigger = document.getElementById('js-close-trigger');
+  const sendTrigger = document.getElementById('js-send-trigger');
+  const remoteId = document.getElementById('js-remote-id');
+  const messages = document.getElementById('js-messages');
 
   const peer = new Peer({
     key: window.__SKYWAY_KEY__,
