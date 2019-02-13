@@ -226,6 +226,11 @@ class Negotiator extends EventEmitter {
     this._isForceUseStreamMethods =
       browserInfo.name === 'chrome' && browserInfo.major <= 64;
 
+    // If client does NOT configure pcConfig.sdpSemantics, set 'plan-b'.
+    if (!pcConfig.sdpSemantics) {
+      pcConfig.sdpSemantics = 'plan-b';
+    }
+
     // Calling RTCPeerConnection with an empty object causes an error
     // Either give it a proper pcConfig or undefined
     return new RTCPeerConnection(pcConfig);
