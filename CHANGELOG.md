@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.20](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.20) - 2019-**-**
+
+### Fixed
+
+- Fix bug about support for sdpSemantics options
+
 ## [v1.1.19](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.19) - 2018-12-05
 
 ### Fixed
