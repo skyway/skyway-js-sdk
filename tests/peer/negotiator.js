@@ -678,14 +678,34 @@ describe('Negotiator', () => {
   });
 
   describe('_createPeerConnection', () => {
+    let negotiator;
+    let pcConf;
+    beforeEach(() => {
+      negotiator = new Negotiator();
+    });
+
     it('should call RTCPeerConnection with pcConfig', () => {
       const pcStub = sinon.stub(window, 'RTCPeerConnection');
-      const negotiator = new Negotiator();
-      const pcConf = {};
+      pcConf = {};
       negotiator._createPeerConnection(pcConf);
 
       assert(pcStub.calledWith(pcConf));
       pcStub.restore();
+    });
+
+    it('should set "plan-b" with pcConfig', () => {
+      pcConf = { sdpSemantics: 'unified-plan' };
+      negotiator._createPeerConnection(pcConf);
+
+      // TODO: When JS-SDK supports for 'unified-plan', this test should be changed.
+      assert.equal(pcConf.sdpSemantics, 'plan-b');
+    });
+
+    it('should set "plan-b" without pcConfig', () => {
+      negotiator._createPeerConnection();
+
+      // TODO: When JS-SDK supports for 'unified-plan', this test should be changed.
+      assert.equal(pcConf.sdpSemantics, 'plan-b');
     });
   });
 

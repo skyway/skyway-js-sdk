@@ -226,8 +226,9 @@ class Negotiator extends EventEmitter {
     this._isForceUseStreamMethods =
       browserInfo.name === 'chrome' && browserInfo.major <= 64;
 
-    // If client does NOT configure pcConfig.sdpSemantics, set 'plan-b'.
-    if (!pcConfig.sdpSemantics) {
+    // If client customizes pcConfig, set 'plan-b'.
+    // TODO: When JS-SDK supports for 'unified-plan', this process should be changed.
+    if (pcConfig) {
       pcConfig.sdpSemantics = 'plan-b';
     }
 
