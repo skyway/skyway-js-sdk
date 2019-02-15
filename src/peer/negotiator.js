@@ -204,7 +204,7 @@ class Negotiator extends EventEmitter {
    * @return {RTCPeerConnection} An instance of RTCPeerConnection.
    * @private
    */
-  _createPeerConnection(pcConfig) {
+  _createPeerConnection(pcConfig = {}) {
     logger.log('Creating RTCPeerConnection');
 
     const browserInfo = util.detectBrowser();
@@ -226,14 +226,8 @@ class Negotiator extends EventEmitter {
     this._isForceUseStreamMethods =
       browserInfo.name === 'chrome' && browserInfo.major <= 64;
 
-    // If client customizes pcConfig, set 'plan-b'.
-    // TODO: When JS-SDK supports for 'unified-plan', this process should be changed.
-    if (pcConfig) {
-      pcConfig.sdpSemantics = 'plan-b';
-    }
-
-    // Calling RTCPeerConnection with an empty object causes an error
-    // Either give it a proper pcConfig or undefined
+    // Force plan-b for SFU, until we finish unified-plan support.
+    pcConfig.sdpSemantics = 'plan-b';
     return new RTCPeerConnection(pcConfig);
   }
 
