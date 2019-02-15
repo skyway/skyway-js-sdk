@@ -702,8 +702,9 @@ describe('Negotiator', () => {
       assert.equal(pcConf.sdpSemantics, 'plan-b');
     });
 
-    it('should set "plan-b" without pcConfig', () => {
-      negotiator._createPeerConnection();
+    it('should set "plan-b" with empty pcConfig', () => {
+      pcConf = {};
+      negotiator._createPeerConnection(pcConf);
 
       // TODO: When JS-SDK supports for 'unified-plan', this test should be changed.
       assert.equal(pcConf.sdpSemantics, 'plan-b');
