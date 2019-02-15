@@ -204,7 +204,7 @@ class Negotiator extends EventEmitter {
    * @return {RTCPeerConnection} An instance of RTCPeerConnection.
    * @private
    */
-  _createPeerConnection(pcConfig) {
+  _createPeerConnection(pcConfig = {}) {
     logger.log('Creating RTCPeerConnection');
 
     const browserInfo = util.detectBrowser();
