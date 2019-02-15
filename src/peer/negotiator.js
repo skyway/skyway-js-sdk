@@ -226,8 +226,8 @@ class Negotiator extends EventEmitter {
     this._isForceUseStreamMethods =
       browserInfo.name === 'chrome' && browserInfo.major <= 64;
 
-    // Calling RTCPeerConnection with an empty object causes an error
-    // Either give it a proper pcConfig or undefined
+    // Force plan-b for SFU, until we finish unified-plan support.
+    pcConfig.sdpSemantics = 'plan-b';
     return new RTCPeerConnection(pcConfig);
   }
 
