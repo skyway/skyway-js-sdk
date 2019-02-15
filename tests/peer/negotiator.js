@@ -269,7 +269,7 @@ describe('Negotiator', () => {
 
     beforeEach(() => {
       negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection();
+      negotiator._pc = negotiator._createPeerConnection({});
     });
 
     describe('rtpSenders are supported', () => {
@@ -454,7 +454,7 @@ describe('Negotiator', () => {
 
     beforeEach(() => {
       negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection();
+      negotiator._pc = negotiator._createPeerConnection({});
     });
 
     describe('when offerSdp is empty', () => {
@@ -539,7 +539,7 @@ describe('Negotiator', () => {
     let negotiator;
     beforeEach(() => {
       negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection();
+      negotiator._pc = negotiator._createPeerConnection({});
     });
     describe('when _isExpectingAnswer is true', () => {
       beforeEach(() => {
@@ -629,6 +629,7 @@ describe('Negotiator', () => {
         type: 'data',
         originator: true,
         offer: {},
+        pcConfig: {},
       };
       negotiator.startConnection(options);
     });
@@ -669,7 +670,7 @@ describe('Negotiator', () => {
   describe('cleanup', () => {
     it('should close and remove PC upon cleanup()', () => {
       const negotiator = new Negotiator();
-      negotiator._pc = negotiator._createPeerConnection();
+      negotiator._pc = negotiator._createPeerConnection({});
 
       assert(negotiator._pc);
       negotiator.cleanup();
@@ -692,7 +693,7 @@ describe('Negotiator', () => {
   describe('_setupPCListeners', () => {
     it('should set up PeerConnection listeners', () => {
       const negotiator = new Negotiator();
-      const pc = (negotiator._pc = negotiator._createPeerConnection());
+      const pc = (negotiator._pc = negotiator._createPeerConnection({}));
 
       negotiator._setupPCListeners();
       assert.equal(typeof pc.ondatachannel, 'function');
@@ -709,7 +710,7 @@ describe('Negotiator', () => {
 
       beforeEach(() => {
         negotiator = new Negotiator();
-        pc = negotiator._pc = negotiator._createPeerConnection();
+        pc = negotiator._pc = negotiator._createPeerConnection({});
         negotiator._setupPCListeners();
       });
 
@@ -767,7 +768,7 @@ describe('Negotiator', () => {
             iceConnectionState: 'disconnected',
           });
           negotiator = new Negotiator();
-          pc = negotiator._pc = negotiator._createPeerConnection();
+          pc = negotiator._pc = negotiator._createPeerConnection({});
           negotiator._setupPCListeners();
         });
 
@@ -893,7 +894,7 @@ describe('Negotiator', () => {
 
     beforeEach(() => {
       negotiator = new Negotiator();
-      pc = negotiator._pc = negotiator._createPeerConnection();
+      pc = negotiator._pc = negotiator._createPeerConnection({});
       negotiator._setupPCListeners();
 
       createOfferStub = sinon.stub(pc, 'createOffer');
@@ -948,7 +949,7 @@ describe('Negotiator', () => {
 
     beforeEach(() => {
       negotiator = new Negotiator();
-      pc = negotiator._pc = negotiator._createPeerConnection();
+      pc = negotiator._pc = negotiator._createPeerConnection({});
       negotiator._setupPCListeners();
 
       createAnswerStub = sinon.stub(pc, 'createAnswer');
@@ -1024,7 +1025,7 @@ describe('Negotiator', () => {
 
     beforeEach(() => {
       negotiator = new Negotiator();
-      pc = negotiator._pc = negotiator._createPeerConnection();
+      pc = negotiator._pc = negotiator._createPeerConnection({});
       negotiator._setupPCListeners();
 
       setLocalDescriptionStub = sinon.stub(pc, 'setLocalDescription');
@@ -1094,7 +1095,7 @@ describe('Negotiator', () => {
 
     beforeEach(() => {
       negotiator = new Negotiator();
-      pc = negotiator._pc = negotiator._createPeerConnection();
+      pc = negotiator._pc = negotiator._createPeerConnection({});
       negotiator._setupPCListeners();
 
       setRemoteDescriptionStub = sinon.stub(pc, 'setRemoteDescription');
