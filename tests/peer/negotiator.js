@@ -738,13 +738,7 @@ describe('Negotiator', () => {
 
         it("should emit 'iceCandidatesComplete' when out of candidates", done => {
           const ev = {};
-          negotiator.on(
-            Negotiator.EVENTS.iceCandidatesComplete.key,
-            description => {
-              assert(description instanceof RTCSessionDescription);
-              done();
-            }
-          );
+          negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, done);
 
           pc.onicecandidate(ev);
         });
