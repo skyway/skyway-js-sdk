@@ -55,9 +55,7 @@ describe('Peer', () => {
     // We have to add the spy like this in order to get the
     // DataConnection object using DataConnectionConstructorSpy.thisValues
     DataConnectionConstructorSpy = sinon.spy();
-    // eslint-disable-next-line require-jsdoc
     class DCSpier extends DataConnection {
-      // eslint-disable-next-line require-jsdoc
       constructor(...args) {
         super(...args);
         this.spy = DataConnectionConstructorSpy;

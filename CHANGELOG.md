@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.1.20](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.20) - 2019-02-18
+
+### Fixed
+
+- Fix that SkyWay always uses plan-b as SDP format
+- Renew examples
+
 ## [v1.1.19](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.19) - 2018-12-05
 
 ### Fixed

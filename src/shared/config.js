@@ -67,7 +67,6 @@ const defaultConfig = {
     },
   ],
   iceTransportPolicy: 'all',
-  sdpSemantics: 'plan-b',
 };
 
 export default {

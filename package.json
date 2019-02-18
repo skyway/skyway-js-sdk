@@ -1,6 +1,6 @@
 {
   "name": "skyway-js",
-  "version": "1.1.19",
+  "version": "1.1.20",
   "description": "The official JavaScript SDK for SkyWay",
   "main": "dist/skyway.js",
   "module": "src/peer.js",
@@ -9,8 +9,7 @@
     "clean": "del ./dist",
     "lint": "eslint .",
     "build": "NODE_ENV=production webpack",
-    "dev": "webpack -w",
-    "doc": "jsdoc -c ./jsdoc.config.js"
+    "dev": "webpack -w"
   },
   "repository": {
     "type": "git",
@@ -34,7 +33,6 @@
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-prettier": "^2.4.0",
     "inject-loader": "^4.0.1",
-    "jsdoc": "^3.5.3",
     "karma": "^2.0.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
