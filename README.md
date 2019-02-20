@@ -44,7 +44,7 @@ You can use `/examples` directory for checking your development code.
 Follow these steps.
 
 - Modify your key
-  - e.g.) `sed -i -e "s/<YOUR_KEY_HERE>/12341234-abcd-1234-abcd-1234567890ab/g" examples/key.js`
+  - e.g.) `sed -i -e "s/<YOUR_KEY_HERE>/12341234-abcd-1234-abcd-1234567890ab/g" examples/_shared/key.js`
   - The key can be obtained from https://webrtc.ecl.ntt.com/en/ .
 - Start server on project root
   - e.g.) `python -m SimpleHTTPServer 8000`
