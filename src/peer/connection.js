@@ -78,7 +78,6 @@ class Connection extends EventEmitter {
   async handleAnswer(answerMessage) {
     if (this._pcAvailable) {
       await this._negotiator.handleAnswer(answerMessage.answer);
-      this._negotiator.setRemoteBrowser(answerMessage.browser);
       this.open = true;
       this._handleQueuedMessages();
     } else {
