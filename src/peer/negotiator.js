@@ -63,7 +63,6 @@ class Negotiator extends EventEmitter {
     this._videoCodec = options.videoCodec;
     this._type = options.type;
     this._recvonlyState = this._getReceiveOnlyState(options);
-    this._remoteBrowser = {};
 
     if (this._type === 'media') {
       if (options.stream) {
@@ -87,10 +86,6 @@ class Negotiator extends EventEmitter {
     } else {
       await this.handleOffer(options.offer);
     }
-  }
-
-  setRemoteBrowser(browser) {
-    this._remoteBrowser = browser;
   }
 
   /**
