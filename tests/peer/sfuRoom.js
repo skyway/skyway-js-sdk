@@ -195,6 +195,7 @@ describe('SFURoom', () => {
           sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
             assert.equal(answerMessage.roomName, sfuRoomName);
             assert.equal(answerMessage.answer, answer);
+            assert.equal(answerMessage.sdpSemantics, 'unified-plan');
             done();
           });
 
