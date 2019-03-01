@@ -54,7 +54,6 @@
     "js-binarypack": "0.0.9",
     "object-sizeof": "^1.0.10",
     "query-string": "^5.0.0",
-    "sdp-interop": "^0.1.11",
     "sdp-transform": "^2.3.0",
     "socket.io-client": "^2.0.3"
   }
