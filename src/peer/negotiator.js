@@ -69,7 +69,9 @@ class Negotiator extends EventEmitter {
 
     if (this._type === 'media') {
       if (options.stream) {
-        this._pc.addStream(options.stream);
+        options.stream.getTracks().forEach(track => {
+          this._pc.addTrack(track, options.stream);
+        });
       } else if (this.originator) {
         // This means the peer wants to create offer SDP with `recvonly`
         const offer = await this._makeOfferSdp();
