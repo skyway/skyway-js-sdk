@@ -3,8 +3,6 @@ import Enum from 'enum';
 import Room from './room';
 import Negotiator from './negotiator';
 import logger from '../shared/logger';
-import sdpUtil from '../shared/sdpUtil';
-import util from '../shared/util';
 
 const MessageEvents = ['offerRequest', 'candidate'];
 
@@ -67,16 +65,7 @@ class SFURoom extends Room {
    * @param {object} offerMessage - Message object containing Offer SDP.
    * @param {object} offerMessage.offer - Object containing Offer SDP text.
    */
-  handleOffer(offerMessage) {
-    let offer = offerMessage.offer;
-
-    // Chrome and Safari can't handle unified plan messages so convert it to Plan B
-    // We don't need to convert the answer back to Unified Plan because the server can handle Plan B
-    const browserInfo = util.detectBrowser();
-    if (browserInfo.name !== 'firefox') {
-      offer = sdpUtil.unifiedToPlanB(offer);
-    }
-
+  handleOffer({ offer }) {
     // Handle SFU Offer and send Answer to Server
     if (this._connectionStarted) {
       this._negotiator.handleOffer(offer);
@@ -138,6 +127,8 @@ class SFURoom extends Room {
       const answerMessage = {
         roomName: this.name,
         answer: answer,
+        // Notify our server that JS-SDK supports unified-plan.
+        sdpSemantics: 'unified-plan',
       };
       this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
     });
