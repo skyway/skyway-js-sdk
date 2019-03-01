@@ -4,7 +4,7 @@ import Negotiator from './negotiator';
 import Connection from './connection';
 import logger from '../shared/logger';
 
-const MCEvents = new Enum(['stream', 'removeStream']);
+const MCEvents = new Enum(['stream']);
 
 MCEvents.extend(Connection.EVENTS.enums);
 
@@ -144,16 +144,6 @@ class MediaConnection extends Connection {
 
       this.emit(MediaConnection.EVENTS.stream.key, remoteStream);
     });
-
-    this._negotiator.on(Negotiator.EVENTS.removeStream.key, remoteStream => {
-      logger.log('Stream removed', remoteStream);
-
-      // Don't unset if a new stream has already replaced the old one
-      if (this.remoteStream === remoteStream) {
-        this.remoteStream = null;
-      }
-      this.emit(MediaConnection.EVENTS.removeStream.key, remoteStream);
-    });
   }
 
   /**
@@ -168,13 +158,6 @@ class MediaConnection extends Connection {
    * MediaStream received from peer.
    *
    * @event MediaConnection#stream
-   * @type {MediaStream}
-   */
-
-  /**
-   * MediaStream from peer was removed.
-   *
-   * @event MediaConnection#removeStream
    * @type {MediaStream}
    */
 }
