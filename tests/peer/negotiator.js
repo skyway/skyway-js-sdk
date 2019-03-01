@@ -693,20 +693,18 @@ describe('Negotiator', () => {
       pcStub.restore();
     });
 
-    it('should set "plan-b" with pcConfig', () => {
-      const pcConf = { sdpSemantics: 'unified-plan' };
+    it('should set "unified-plan" with pcConfig', () => {
+      const pcConf = { sdpSemantics: 'plan-b' };
       negotiator._createPeerConnection(pcConf);
 
-      // TODO: When JS-SDK supports for 'unified-plan', this test should be changed.
-      assert.equal(pcConf.sdpSemantics, 'plan-b');
+      assert.equal(pcConf.sdpSemantics, 'unified-plan');
     });
 
     it('should set "plan-b" with empty pcConfig', () => {
       const pcConf = {};
       negotiator._createPeerConnection(pcConf);
 
-      // TODO: When JS-SDK supports for 'unified-plan', this test should be changed.
-      assert.equal(pcConf.sdpSemantics, 'plan-b');
+      assert.equal(pcConf.sdpSemantics, 'unified-plan');
     });
   });
 
