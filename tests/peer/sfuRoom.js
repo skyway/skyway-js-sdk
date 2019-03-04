@@ -190,11 +190,23 @@ describe('SFURoom', () => {
       });
 
       describe('answerCreated', () => {
+        const answer = {
+          type: 'answer',
+          sdp: 'v=0\r\na=msid-semantic: WMS xxxxxx\r\n',
+        };
         it('should emit an answer message event', done => {
-          const answer = {};
           sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
             assert.equal(answerMessage.roomName, sfuRoomName);
             assert.equal(answerMessage.answer, answer);
+            done();
+          });
+
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
+        });
+
+        it('should include `a=msid-semantic:WMS *` in sending answer SDP', done => {
+          sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
+            assert(answerMessage.answer.sdp.includes('a=msid-semantic:WMS *'));
             done();
           });
 
