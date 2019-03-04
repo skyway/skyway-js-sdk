@@ -663,7 +663,7 @@ describe('Negotiator', () => {
       assert.equal(pcConf.sdpSemantics, 'unified-plan');
     });
 
-    it('should set "plan-b" with empty pcConfig', () => {
+    it('should set "unified-plan" with empty pcConfig', () => {
       const pcConf = {};
       negotiator._createPeerConnection(pcConf);
 
