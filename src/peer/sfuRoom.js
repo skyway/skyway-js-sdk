@@ -3,6 +3,7 @@ import Enum from 'enum';
 import Room from './room';
 import Negotiator from './negotiator';
 import logger from '../shared/logger';
+import sdpUtil from '../shared/sdpUtil';
 
 const MessageEvents = ['offerRequest', 'candidate'];
 
@@ -124,6 +125,8 @@ class SFURoom extends Room {
     });
 
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
+      // Currenly, our signaling server does not handle our original sdp as unified-plan.
+      answer.sdp = sdpUtil.pretendUnifiedPlan(answer.sdp);
       const answerMessage = {
         roomName: this.name,
         answer: answer,

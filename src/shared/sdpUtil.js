@@ -49,6 +49,34 @@ class SdpUtil {
   }
 
   /**
+   * Our signaling server determines client's SDP semantics
+   * by checking answer SDP includes `a=msid-semantic:WMS *` or NOT.
+   *
+   * Currenly, Firefox prints exact string,
+   * but Chrome does not. even using `unified-plan`.
+   * Therefore Chrome needs to pretend Firefox to join SFU rooms.
+   *
+   * At a glance, using `sdp-transform` is better choice to munge SDP,
+   * but if you do so, it prints `a=msid-semantic: WMS *`.
+   * The problem is the space before the word `WMS`,
+   * our signaling server can not handle this as `unified-plan` SDP...
+   *
+   * @param {string} sdp - A SDP.
+   * @return {string} A SDP which has `a=msid-semantic:WMS *`.
+   */
+  pretendUnifiedPlan(sdp) {
+    const delimiter = '\r\n';
+    return sdp
+      .split(delimiter)
+      .map(line => {
+        return line.startsWith('a=msid-semantic')
+          ? 'a=msid-semantic:WMS *'
+          : line;
+      })
+      .join(delimiter);
+  }
+
+  /**
    * Remove codecs except the codec passed as argument and return the SDP
    *
    * @param {string} sdp - A SDP.
