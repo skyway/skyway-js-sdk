@@ -127,8 +127,6 @@ class SFURoom extends Room {
       const answerMessage = {
         roomName: this.name,
         answer: answer,
-        // Notify our server that JS-SDK supports unified-plan.
-        sdpSemantics: 'unified-plan',
       };
       this.emit(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage);
     });
