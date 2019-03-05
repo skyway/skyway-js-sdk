@@ -105,7 +105,6 @@ describe('SFURoom', () => {
       sfuRoom._setupNegotiatorMessageHandlers();
 
       assert(onSpy.calledWith(Negotiator.EVENTS.addStream.key));
-      assert(onSpy.calledWith(Negotiator.EVENTS.removeStream.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.iceCandidate.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.answerCreated.key));
       assert(onSpy.calledWith(Negotiator.EVENTS.iceConnectionFailed.key));
@@ -176,50 +175,6 @@ describe('SFURoom', () => {
         });
       });
 
-      describe('removeStream', () => {
-        const stream = { id: 'streamId', peerId: peerId };
-        const otherStream = { id: 'otherStream', peerId: remotePeerId };
-
-        it('should delete the stream from remoteStreams', () => {
-          sfuRoom.remoteStreams[stream.id] = stream;
-          sfuRoom.remoteStreams[otherStream.id] = otherStream;
-
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.removeStream.key, stream);
-
-          assert.equal(sfuRoom.remoteStreams[stream.id], undefined);
-          assert.equal(sfuRoom.remoteStreams[otherStream.id], otherStream);
-        });
-
-        it('should delete the stream from _msidMap', () => {
-          sfuRoom._msidMap[stream.id] = stream.peerId;
-          sfuRoom._msidMap[otherStream.id] = otherStream.peerId;
-
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.removeStream.key, stream);
-
-          assert.equal(sfuRoom._msidMap[stream.id], undefined);
-          assert.equal(sfuRoom._msidMap[otherStream.id], otherStream.peerId);
-        });
-
-        it('should delete the stream from _unknownStreams', () => {
-          sfuRoom._unknownStreams[stream.id] = stream;
-          sfuRoom._unknownStreams[otherStream.id] = otherStream;
-
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.removeStream.key, stream);
-
-          assert.equal(sfuRoom._unknownStreams[stream.id], undefined);
-          assert.equal(sfuRoom._unknownStreams[otherStream.id], otherStream);
-        });
-
-        it('should emit a removeStream event', done => {
-          sfuRoom.on(SFURoom.EVENTS.removeStream.key, removedStream => {
-            assert.equal(removedStream, stream);
-            done();
-          });
-
-          sfuRoom._negotiator.emit(Negotiator.EVENTS.removeStream.key, stream);
-        });
-      });
-
       describe('negotiationNeeded', () => {
         it('should emit an offerRequest message event', done => {
           sfuRoom.on(
@@ -235,11 +190,23 @@ describe('SFURoom', () => {
       });
 
       describe('answerCreated', () => {
+        const answer = {
+          type: 'answer',
+          sdp: 'v=0\r\na=msid-semantic: WMS xxxxxx\r\n',
+        };
         it('should emit an answer message event', done => {
-          const answer = {};
           sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
             assert.equal(answerMessage.roomName, sfuRoomName);
             assert.equal(answerMessage.answer, answer);
+            done();
+          });
+
+          sfuRoom._negotiator.emit(Negotiator.EVENTS.answerCreated.key, answer);
+        });
+
+        it('should include `a=msid-semantic:WMS *` in sending answer SDP', done => {
+          sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
+            assert(answerMessage.answer.sdp.includes('a=msid-semantic:WMS *'));
             done();
           });
 
