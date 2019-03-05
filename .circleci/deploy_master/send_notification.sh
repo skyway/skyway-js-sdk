@@ -6,7 +6,7 @@ set -o pipefail
 ./check_is_new_release.sh;
 if [ $? -ne 0 ]
 then
-    echo "Release already exists, skipping.";
+    echo "Release $tag_name already exists, skipping.";
     exit 0;
 fi
 
