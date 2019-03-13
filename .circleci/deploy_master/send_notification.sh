@@ -3,6 +3,13 @@
 set -e
 set -o pipefail
 
+./check_is_new_release.sh;
+if [ $? -ne 0 ]
+then
+    echo "Release $tag_name already exists, skipping.";
+    exit 0;
+fi
+
 # Notify SkyWay team Slack of the new release
 cl_startline=$(cat CHANGELOG.md | grep -nE "^### " | head -n 1 | cut -d ":" -f 1)
 cl_finishline=$(($(cat CHANGELOG.md | grep -nE "^## " | head -n 2 | tail -n 1 | cut -d ":" -f 1) - 1))

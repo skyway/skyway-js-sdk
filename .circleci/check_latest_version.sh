@@ -10,9 +10,8 @@ tag_name="v$version";
 
 echo "package.json version is $version";
 echo "Checking if release $tag_name already exists";
-url="https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/releases/tags/$tag_name";
-status_code=`curl -s -H "Authorization: token $GITHUB_TOKEN" "$url" -o /dev/null -sw '%{http_code}'`;
-if [[ $status_code -ne 404 ]]
+./check_is_new_release.sh;
+if [ $? -ne 0 ]
 then
     echo "Release $tag_name already exists, exiting.";
     exit 1;
