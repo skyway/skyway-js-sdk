@@ -3,6 +3,7 @@ import Enum from 'enum';
 
 const Events = [
   'stream',
+  'removeStream',
   'open',
   'close',
   'peerJoin',

@@ -4,6 +4,7 @@ import Room from './room';
 import Negotiator from './negotiator';
 import logger from '../shared/logger';
 import sdpUtil from '../shared/sdpUtil';
+import util from '../shared/util';
 
 const MessageEvents = ['offerRequest', 'candidate'];
 
@@ -66,7 +67,16 @@ class SFURoom extends Room {
    * @param {object} offerMessage - Message object containing Offer SDP.
    * @param {object} offerMessage.offer - Object containing Offer SDP text.
    */
-  handleOffer({ offer }) {
+  handleOffer(offerMessage) {
+    let offer = offerMessage.offer;
+
+    // Chrome and Safari can't handle unified plan messages so convert it to Plan B
+    // We don't need to convert the answer back to Unified Plan because the server can handle Plan B
+    const browserInfo = util.detectBrowser();
+    if (browserInfo.name !== 'firefox') {
+      offer = sdpUtil.unifiedToPlanB(offer);
+    }
+
     // Handle SFU Offer and send Answer to Server
     if (this._connectionStarted) {
       this._negotiator.handleOffer(offer);
@@ -116,6 +126,14 @@ class SFURoom extends Room {
       }
     });
 
+    this._negotiator.on(Negotiator.EVENTS.removeStream.key, stream => {
+      delete this.remoteStreams[stream.id];
+      delete this._msidMap[stream.id];
+      delete this._unknownStreams[stream.id];
+
+      this.emit(SFURoom.EVENTS.removeStream.key, stream);
+    });
+
     this._negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
       // Renegotiate by requesting an offer then sending an answer when one is created.
       const offerRequestMessage = {
@@ -125,8 +143,6 @@ class SFURoom extends Room {
     });
 
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
-      // Currenly, our signaling server does not handle our original sdp as unified-plan.
-      answer.sdp = sdpUtil.pretendUnifiedPlan(answer.sdp);
       const answerMessage = {
         roomName: this.name,
         answer: answer,
@@ -192,8 +208,6 @@ class SFURoom extends Room {
     for (const msid in this.remoteStreams) {
       if (this.remoteStreams[msid].peerId === src) {
         delete this.remoteStreams[msid];
-        delete this._msidMap[msid];
-        delete this._unknownStreams[msid];
       }
     }
 
