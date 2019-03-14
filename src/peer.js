@@ -366,10 +366,6 @@ class Peer extends EventEmitter {
     });
 
     this.socket.start(id, this.options.token, this.options.credential);
-
-    window.onbeforeunload = () => {
-      this.destroy();
-    };
   }
 
   /**
