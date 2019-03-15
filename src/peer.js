@@ -517,6 +517,21 @@ class Peer extends EventEmitter {
       this._cleanupPeer(peerId);
     });
 
+    this.socket.on(config.MESSAGE_TYPES.SERVER.BYE.key, byeMessage => {
+      const peerId = byeMessage.src;
+      const connectionId = byeMessage.connectionId;
+
+      for (const connection of this.connections[peerId]) {
+        if (connection.id === connectionId) {
+          const byeMessage = {
+            dst: connection.remoteId,
+            connectionId: connection.id,
+          };
+          connection.emit(Connection.EVENTS.bye.key, byeMessage);
+        }
+      }
+    });
+
     this.socket.on(
       config.MESSAGE_TYPES.SERVER.AUTH_EXPIRES_IN.key,
       remainingSec => {
@@ -737,6 +752,11 @@ class Peer extends EventEmitter {
         config.MESSAGE_TYPES.CLIENT.SEND_OFFER.key,
         offerMessage
       );
+    });
+    connection.on(Connection.EVENTS.bye.key, byeMessage => {
+      if (connection.open) {
+        this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_BYE.key, byeMessage);
+      }
     });
   }
 
