@@ -388,6 +388,10 @@ class MeshRoom extends Room {
         remoteStream.peerId = connection.remoteId;
         this.emit(MeshRoom.EVENTS.stream.key, remoteStream);
       });
+
+      connection.on(MediaConnection.EVENTS.removeStream.key, remoteStream => {
+        this.emit(MeshRoom.EVENTS.removeStream.key, remoteStream);
+      });
     }
   }
 
