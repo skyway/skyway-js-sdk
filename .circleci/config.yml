@@ -5,15 +5,17 @@ jobs:
       - image: skywayci/skyway-js-sdk
     steps:
       - checkout
-      #TODO: install in docker-image
-      - run: npm install @octokit/rest
+      #TODO: should install in docker-image
+      - run:
+          name: Install extra deps for CI
+          command: npm install @octokit/rest
       - run: node ./scripts/ensure-branch.js
   test:
     docker:
       - image: skywayci/skyway-js-sdk
     steps:
       - checkout
-      - run: npm ci
+      - run: npm install
       - run: npm run lint
       # - run: npm run test
 
