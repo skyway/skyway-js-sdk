@@ -10,6 +10,7 @@ const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = process.env;
 
   // eg. https://github.com/skyway/skyway-js-sdk/pull/155
   const [, , , owner, repo, , number] = CIRCLE_PULL_REQUEST.split('/');
+  console.log(owner, repo, number);
 
   const octokit = new Octokit({ auth: GITHUB_TOKEN });
   const result = await octokit.pulls.get({
@@ -18,10 +19,12 @@ const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = process.env;
     number,
   });
 
-  const fromBranch = CIRCLE_BRANCH;
-  const toBranch = result.base.ref;
+  console.log(result);
 
-  console.log(`PR: ${fromBranch} => ${toBranch}`);
+  // const fromBranch = CIRCLE_BRANCH;
+  // const toBranch = result.base.ref;
+  //
+  // console.log(`PR: ${fromBranch} => ${toBranch}`);
 
   process.exit(0);
 })().catch(err => {
