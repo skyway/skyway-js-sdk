@@ -5,11 +5,11 @@ jobs:
       - image: skywayci/skyway-js-sdk
     steps:
       - checkout
-      #TODO: should install in docker-image
       - run:
           name: Install extra deps for CI
           command: npm install @octokit/rest
       - run: node ./scripts/ensure-branch.js
+
   test:
     docker:
       - image: skywayci/skyway-js-sdk
@@ -20,6 +20,16 @@ jobs:
       # - run: npm run lint
       # - run: npm run test
 
+  release_staging:
+    docker:
+      - image: skywayci/skyway-js-sdk
+    steps:
+      - run:
+          name: Install extra deps for CI
+          command: npm install aws-sdk replace-in-file
+      - run: npm run build
+      - run: node ./scripts/release-staging.js
+
 workflows:
   version: 2
   test_and_deploy:
@@ -28,4 +38,9 @@ workflows:
       - test:
           requires:
             - ensure_branch
-
+      - release_staging:
+          requires:
+            - test
+          filters:
+            branches:
+              only: staging
