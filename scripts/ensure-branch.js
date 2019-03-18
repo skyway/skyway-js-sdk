@@ -18,20 +18,20 @@ const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = process.env;
     number,
   });
 
-  const toBranch = ref;
-  const fromBranch = CIRCLE_BRANCH;
+  const baseBranch = ref;
+  const currentBranch = CIRCLE_BRANCH;
 
-  console.log(`PR: ${toBranch} <= ${fromBranch}`);
+  console.log(`This PR will be into ${baseBranch} from ${currentBranch}`);
 
   switch (true) {
-    case toBranch === 'master' && fromBranch === 'master':
-    case toBranch === 'master' && fromBranch === 'staging':
-    case toBranch === 'master' && fromBranch.startsWith('ops/'):
-    case toBranch === 'staging' && fromBranch === 'staging':
-    case toBranch === 'staging' && fromBranch.startsWith('dev/'):
+    case baseBranch === 'master' && currentBranch === 'master':
+    case baseBranch === 'master' && currentBranch === 'staging':
+    case baseBranch === 'master' && currentBranch.startsWith('ops/'):
+    case baseBranch === 'staging' && currentBranch === 'staging':
+    case baseBranch === 'staging' && currentBranch.startsWith('dev/'):
       break;
     default:
-      throw new Error('Invalid branch rules.');
+      throw new Error('The name of current branch is not allowed to merge!');
   }
 
   process.exit(0);
