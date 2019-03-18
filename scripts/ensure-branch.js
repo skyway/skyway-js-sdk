@@ -12,23 +12,23 @@ const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = process.env;
   const [, , , owner, repo, , number] = CIRCLE_PULL_REQUEST.split('/');
 
   const octokit = new Octokit({ auth: GITHUB_TOKEN });
-  const { data: { base: ref } } = await octokit.pulls.get({
+  const { data: { base: { ref } } } = await octokit.pulls.get({
     owner,
     repo,
     number,
   });
 
-  const fromBranch = CIRCLE_BRANCH;
   const toBranch = ref;
+  const fromBranch = CIRCLE_BRANCH;
 
-  console.log(`PR: ${fromBranch} => ${toBranch}`);
+  console.log(`PR: ${toBranch} <= ${fromBranch}`);
 
   switch (true) {
-    case fromBranch === 'master' && toBranch === 'master':
-    case fromBranch === 'staging' && toBranch === 'staging':
-    case fromBranch === 'staging' && toBranch === 'master':
-    case fromBranch.startsWith('dev/') && toBranch === 'staging':
-    case fromBranch.startsWith('ops/') && toBranch === 'master':
+    case toBranch === 'master' && fromBranch === 'master':
+    case toBranch === 'master' && fromBranch === 'staging':
+    case toBranch === 'master' && fromBranch.startsWith('ops/'):
+    case toBranch === 'staging' && fromBranch === 'staging':
+    case toBranch === 'staging' && fromBranch.startsWith('dev/'):
       break;
     default:
       throw new Error('Invalid branch rules.');
