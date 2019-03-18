@@ -1,94 +1,28 @@
 version: 2
 jobs:
+  ensure_branch:
+    docker:
+      - image: skywayci/skyway-js-sdk
+    steps:
+      - checkout
+      #TODO: install in docker-image
+      - run: npm install @octokit/rest
+      - run: node ./scripts/ensure-branch.js
   test:
     docker:
       - image: skywayci/skyway-js-sdk
     steps:
       - checkout
-      - run: npm install
-
+      - run: npm ci
       - run: npm run lint
-      - run: npm run test
-
-  build_deploy_staging:
-    docker:
-      - image: skywayci/skyway-js-sdk
-    steps:
-      - checkout
-      - run: npm install
-      - run: npm run build
-      - deploy:
-          name: Deploy ECL Staging
-          command: bash .circleci/deploy_staging.sh
-      - deploy:
-          name: Deploy GCP Staging
-          command: bash .circleci/deploy_gcp_staging.sh
-
-  build_deploy_master:
-    docker:
-      - image: skywayci/skyway-js-sdk
-    steps:
-      - checkout
-      - run: npm install
-      - run: npm run build
-      - deploy:
-          name: Create release
-          command: bash .circleci/deploy_master/create_release.sh
-      - deploy:
-          name: Deploy to s3
-          command: bash .circleci/deploy_master/deploy_s3.sh
-      - deploy:
-          name: Deploy to npm
-          command: bash .circleci/deploy_master/deploy_npm.sh
-      - deploy:
-          name: Send
-          command: bash .circleci/deploy_master/send_notification.sh
-
-  fail_if_target_is_master:
-    docker:
-      - image: skywayci/skyway-js-sdk
-    pre: apt-get install -y curl jq
-    steps:
-      - checkout
-      - run: bash .circleci/check_pr_branch.sh
-
-  check_latest_version:
-    docker:
-      - image: skywayci/skyway-js-sdk
-    pre: apt-get install -y curl jq
-    steps:
-      - checkout
-      - run: bash .circleci/check_latest_version.sh
+      # - run: npm run test
 
 workflows:
   version: 2
-
   test_and_deploy:
     jobs:
-      - test
-      # PRs to master must come from the staging branch.
-      - fail_if_target_is_master:
-          filters:
-            branches:
-              ignore:
-                - staging
-                - master
-      # Make sure the package.json version and changelog are updaded.
-      - check_latest_version:
-          filters:
-            branches:
-              only: staging
-      # Build and deploy to the staging environment
-      - build_deploy_staging:
+      - ensure_branch
+      - test:
           requires:
-            - test
-          filters:
-            branches:
-              only: staging
-      # Build and deploy to the production environment
-      - build_deploy_master:
-          requires:
-            - test
-          filters:
-            branches:
-              only: master
+            - ensure_branch
+
