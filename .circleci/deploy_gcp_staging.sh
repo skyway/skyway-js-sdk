@@ -13,7 +13,7 @@ base_domain="\.stage\.gcp\.skyway\.io"
 
 # Set API key for examples
 skyway_apikey="32466e1c-c9fc-4986-a0da-ba0fb96fcdc6"
-echo "window.__SKYWAY_KEY__ = '${skyway_apikey}';" > ./examples/key.js;
+echo "window.__SKYWAY_KEY__ = '${skyway_apikey}';" > ./examples/_shared/key.js;
 
 # Replace variable
 # TODO: When remove 'Deploy ECL staging', You must change Domain Name from '.stage\.ecl\.skyway\.io' to '.webrtc\.ecl\.ntt\.com'

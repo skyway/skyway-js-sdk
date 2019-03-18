@@ -13,7 +13,7 @@ base_domain="\.stage\.ecl\.skyway\.io"
 
 # Set API key for examples
 skyway_apikey="5bea388b-3f95-4e1e-acb5-a34efdd0c480"
-echo "window.__SKYWAY_KEY__ = '${skyway_apikey}';" > ./examples/key.js;
+echo "window.__SKYWAY_KEY__ = '${skyway_apikey}';" > ./examples/_shared/key.js;
 
 # Replace variable
 find examples -name index.html | xargs sed -i -e "s/\"\/\/cdn\.webrtc\.ecl\.ntt\.com\/skyway-latest\.js\"/\"${examples_sdk_url}\"/g"

@@ -3,6 +3,13 @@
 set -e
 set -o pipefail
 
+./check_is_new_release.sh;
+if [ $? -ne 0 ]
+then
+    echo "Release $tag_name already exists, skipping.";
+    exit 0;
+fi
+
 # Import functions
 source .circleci/common/upload_to_s3.sh;
 
@@ -13,7 +20,7 @@ base_domain="\.webrtc\.ecl\.ntt\.com"
 
 # Set API key for examples
 skyway_apikey="5bea388b-3f95-4e1e-acb5-a34efdd0c480"
-echo "window.__SKYWAY_KEY__ = '${skyway_apikey}';" > ./examples/key.js;
+echo "window.__SKYWAY_KEY__ = '${skyway_apikey}';" > ./examples/_shared/key.js;
 
 # Replace variable
 find examples -name index.html | xargs sed -i -e "s/\"\/\/cdn\.webrtc\.ecl\.ntt\.com\/skyway-latest\.js\"/\"${examples_sdk_url}\"/g"
