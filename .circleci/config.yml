@@ -17,17 +17,19 @@ jobs:
       - checkout
       - run: npm install
       - run: npm run build
+      # - run: npm run lint
+      # - run: npm run test
       - persist_to_workspace:
           root: .
           paths:
             - ./*
-      # - run: npm run lint
-      # - run: npm run test
 
   release_staging:
     docker:
       - image: skywayci/skyway-js-sdk
     steps:
+      - attach_workspace:
+          at: .
       - run:
           name: Install extra deps for CI
           command: npm install aws-sdk replace-in-file
@@ -38,23 +40,13 @@ jobs:
     docker:
       - image: skywayci/skyway-js-sdk
     steps:
+      - attach_workspace:
+          at: .
       - run:
           name: Install extra deps for CI
           command: npm install aws-sdk @octokit/rest
       - run: npm run build
       - run: node ./scripts/release-master
-
-  opstest:
-    docker:
-      - image: skywayci/skyway-js-sdk
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Install extra deps for CI
-          command: npm install aws-sdk replace-in-file
-      - run: node ./scripts/release-staging
-
 
 workflows:
   version: 2
@@ -76,6 +68,3 @@ workflows:
           filters:
             branches:
               only: master
-      - opstest:
-          requires:
-            - test
