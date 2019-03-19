@@ -27,7 +27,7 @@ module.exports = async function isReleaseReady(version) {
 };
 
 async function isNewGitHubRelease(version) {
-  const octokit = new Octokit({ auth: GITHUB_TOKEN });
+  const octokit = new Octokit({ auth: `token ${GITHUB_TOKEN}` });
 
   let isNewRelease = false;
 
@@ -38,6 +38,7 @@ async function isNewGitHubRelease(version) {
       tag: `v${version}`,
     });
   } catch (err) {
+    // reject means not yet released
     if (err.status === 404) {
       isNewRelease = true;
     }
