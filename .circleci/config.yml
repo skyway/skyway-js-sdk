@@ -79,6 +79,3 @@ workflows:
       - opstest:
           requires:
             - test
-          filters:
-            branches:
-              only: /ops*/
