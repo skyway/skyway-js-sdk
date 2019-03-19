@@ -1,4 +1,4 @@
-const { execFile } = require('child_process');
+const execFile = require('util').promisify(require('child_process').execFile);
 const Octokit = require('@octokit/rest');
 const { GITHUB_TOKEN } = process.env;
 
@@ -47,18 +47,12 @@ async function isNewGitHubRelease(version) {
 }
 
 async function isNewNpmRelease(version) {
-  return new Promise((resolve, reject) => {
-    execFile(
-      'npm',
-      ['view', 'skyway-js', 'versions', '--json'],
-      (err, stdout, stderr) => {
-        if (err || stderr) {
-          return reject(err || stderr);
-        }
-
-        const isNewRelease = JSON.parse(stdout).includes(version) === false;
-        resolve(isNewRelease);
-      }
-    );
-  });
+  const { stdout } = await execFile('npm', [
+    'view',
+    'skyway-js',
+    'versions',
+    '--json',
+  ]);
+  const isNewRelease = JSON.parse(stdout).includes(version) === false;
+  return isNewRelease;
 }

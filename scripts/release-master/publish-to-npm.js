@@ -1,20 +1,17 @@
-const { execFile } = require('child_process');
+const execFile = require('util').promisify(require('child_process').execFile);
+const exec = require('util').promisify(require('child_process').exec);
 const { NPM_TOKEN } = process.env;
 
 module.exports = async function publishToNpm() {
-  // TODO:
-  NPM_TOKEN;
-  return new Promise((resolve, reject) => {
-    execFile(
-      'npm',
-      ['publish', '--access public', '--tag latest'],
-      (err, stdout, stderr) => {
-        if (err || stderr) {
-          return reject(err || stderr);
-        }
+  console.log('Add npm token > .npmrc');
+  await exec(`echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc`);
+  console.log('');
 
-        resolve(stdout);
-      }
-    );
-  });
+  const { stderr, stdout } = await execFile('npm', [
+    'publish',
+    '--access public',
+    '--tag latest',
+  ]);
+  console.log(stderr);
+  console.log(stdout);
 };
