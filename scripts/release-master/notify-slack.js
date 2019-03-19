@@ -1,3 +1,3 @@
-module.exports = async function notifySlack() {
-
+module.exports = async function notifySlack(text) {
+  console.log(text);
 };
