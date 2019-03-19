@@ -15,24 +15,26 @@ const uploadExamplesToS3 = require('../shared/uploadExamplesToS3');
     },
   } = require('../config');
 
-  console.log('# Replace API key for examples');
+  console.log('# Release examples');
+  console.log('## Replace API key');
   await replaceExamplesApiKey(API_KEY);
   console.log('');
 
-  console.log('# Replace CDN domain for examples');
+  console.log('## Replace CDN domain');
   await replaceExamplesCdnDomain(CDN_DOMAIN);
   console.log('');
 
-  console.log('# Replace server domain for sdk');
+  console.log('## Upload to S3:staging');
+  await uploadExamplesToS3(S3_EXAMPLES_BUCKET);
+  console.log('');
+
+  console.log('# Release SDK');
+  console.log('## Replace server domain');
   await replaceSdkServerDomain(SERVER_DOMAIN);
   console.log('');
 
-  console.log('# Upload SDK to S3:staging');
+  console.log('## Upload to S3:staging');
   await uploadSdkToS3(S3_SDK_BUCKET);
-  console.log('');
-
-  console.log('# Upload examples to S3:staging');
-  await uploadExamplesToS3(S3_EXAMPLES_BUCKET);
   console.log('');
 
   process.exit(0);
