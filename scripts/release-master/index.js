@@ -1,20 +1,13 @@
-// const { version } = require('../../package.json');
+const { version } = require('../../package.json');
 const replaceExamplesApiKey = require('../shared/replace-examples-api-key');
-// const uploadSdkToS3 = require('../shared/upload-sdk-to-s3');
-// const uploadExamplesToS3 = require('../shared/upload-examples-to-s3');
+const uploadSdkToS3 = require('../shared/upload-sdk-to-s3');
+const uploadExamplesToS3 = require('../shared/upload-examples-to-s3');
 const isNewRelease = require('./is-new-release');
 const isReleaseReady = require('./is-release-ready');
-// const publishToNpm = require('./publish-to-npm');
+const publishToNpm = require('./publish-to-npm');
 const publishToGitHub = require('./publish-to-github');
-// const notifySlack = require('./notify-slack');
+const notifySlack = require('./notify-slack');
 const { CIRCLE_BUILD_URL } = process.env;
-
-// TODO: guard
-const uploadSdkToS3 = async function() {};
-const uploadExamplesToS3 = async function() {};
-const notifySlack = async function() {};
-const publishToNpm = async function() {};
-const version = '1.2.0';
 
 (async function() {
   const {
@@ -58,19 +51,17 @@ const version = '1.2.0';
   console.log('');
 
   console.log('## Publish to GitHub');
-  await publishToGitHub();
+  await publishToGitHub(version);
   console.log('');
-
-  // DEBUG: guard
-  console.log('guard!!!');
-  process.exit(0);
 
   console.log('## Upload to S3:master');
   await uploadSdkToS3(S3_SDK_BUCKET);
   console.log('');
 
   console.log('## Notify to Slack');
-  await notifySlack('TOOD: master updated');
+  await notifySlack(
+    `The branch \`master\` updated!\nExamples and SDK are released to S3, SDK published to GitHub and npm.\nSee <${CIRCLE_BUILD_URL}|detail>`
+  );
   console.log('');
 
   process.exit(0);

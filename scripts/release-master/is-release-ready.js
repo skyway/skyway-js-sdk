@@ -23,7 +23,7 @@ async function hasChangeLog(version) {
     });
 
     rl.on('line', line => {
-      const isVersionLine = line.startsWith('##');
+      const isVersionLine = line.startsWith('## ');
       const isVersionFound = line.includes(`v${version}`);
 
       if (isVersionLine && isVersionFound) {
