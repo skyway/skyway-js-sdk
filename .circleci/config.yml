@@ -57,9 +57,9 @@ workflows:
       - release_staging:
           requires:
             - test
-          # filters:
-          #   branches:
-          #     only: staging
+          filters:
+            branches:
+              only: staging
       - release_master:
           requires:
             - test
