@@ -1,10 +1,9 @@
 const execFile = require('util').promisify(require('child_process').execFile);
 const Octokit = require('@octokit/rest');
-const { GITHUB_TOKEN } = process.env;
 
-module.exports = async function isReleaseReady(version) {
+module.exports = async function isReleaseReady(version, { GITHUB_TOKEN }) {
   console.log(`Release for v${version} not exists on GitHub?`);
-  const cond1 = await isNewGitHubRelease(version);
+  const cond1 = await isNewGitHubRelease(version, { GITHUB_TOKEN });
   if (!cond1) {
     console.log('=> No. abort release steps');
     console.log('');
@@ -26,7 +25,7 @@ module.exports = async function isReleaseReady(version) {
   return true;
 };
 
-async function isNewGitHubRelease(version) {
+async function isNewGitHubRelease(version, { GITHUB_TOKEN }) {
   const octokit = new Octokit({ auth: `token ${GITHUB_TOKEN}` });
 
   let isNewRelease = false;

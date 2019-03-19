@@ -1,9 +1,8 @@
 const readline = require('readline');
 const fs = require('fs');
 const Octokit = require('@octokit/rest');
-const { GITHUB_TOKEN } = process.env;
 
-module.exports = async function publishToGitHub(version) {
+module.exports = async function publishToGitHub(version, { GITHUB_TOKEN }) {
   const octokit = new Octokit({ auth: `token ${GITHUB_TOKEN}` });
 
   console.log('Extract section from CHANGELOG.md');

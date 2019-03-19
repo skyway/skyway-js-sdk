@@ -1,7 +1,6 @@
 const { IncomingWebhook } = require('@slack/client');
-const { NOTIFICATION_ENDOPOINT } = process.env;
 
-module.exports = async function notifySlack(text) {
+module.exports = async function notifySlack(text, { NOTIFICATION_ENDOPOINT }) {
   const webhook = new IncomingWebhook(NOTIFICATION_ENDOPOINT);
 
   console.log(text);
