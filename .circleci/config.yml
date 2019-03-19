@@ -44,7 +44,7 @@ jobs:
           at: .
       - run:
           name: Install extra deps for CI
-          command: npm install aws-sdk @octokit/rest
+          command: npm install aws-sdk @octokit/rest @slack/client
       - run: npm run build
       - run: node ./scripts/release-master
 

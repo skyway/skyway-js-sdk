@@ -1,13 +1,19 @@
 // const { version } = require('../../package.json');
-const version = '1.2.0';
 const replaceExamplesApiKey = require('../shared/replace-examples-api-key');
-const uploadSdkToS3 = require('../shared/upload-sdk-to-s3');
-const uploadExamplesToS3 = require('../shared/upload-examples-to-s3');
+// const uploadSdkToS3 = require('../shared/upload-sdk-to-s3');
+// const uploadExamplesToS3 = require('../shared/upload-examples-to-s3');
 const isNewRelease = require('./is-new-release');
 const isReleaseReady = require('./is-release-ready');
 const publishToNpm = require('./publish-to-npm');
 const publishToGitHub = require('./publish-to-github');
-const notifySlack = require('./notify-slack');
+// const notifySlack = require('./notify-slack');
+const { CIRCLE_BUILD_URL } = process.env;
+
+// TODO: guard
+const uploadSdkToS3 = async function() {};
+const uploadExamplesToS3 = async function() {};
+const notifySlack = async function() {};
+const version = '1.2.0';
 
 (async function() {
   const {
@@ -16,11 +22,11 @@ const notifySlack = require('./notify-slack');
 
   console.log('# Release examples');
   console.log('## Replace API key');
-  // await replaceExamplesApiKey(API_KEY);
+  await replaceExamplesApiKey(API_KEY);
   console.log('');
 
   console.log('## Upload to S3:master');
-  // await uploadExamplesToS3(S3_EXAMPLES_BUCKET);
+  await uploadExamplesToS3(S3_EXAMPLES_BUCKET);
   console.log('');
 
   console.log('# Release SDK');
@@ -29,9 +35,8 @@ const notifySlack = require('./notify-slack');
   if (!isNew) {
     console.log('## Notify to Slack');
     await notifySlack(
-      'TOOD: master updated, but SDK not released because already exists'
+      `The branch \`master\` updated!\nExamples are released to S3, but SDK is not.\nSee <${CIRCLE_BUILD_URL}|detail>`
     );
-    console.log('');
 
     return process.exit(0);
   }
@@ -41,14 +46,14 @@ const notifySlack = require('./notify-slack');
   if (!isReady) {
     console.log('## Notify to Slack');
     await notifySlack(
-      'TOOD: master updated, but SDK not released because not ready to release'
+      `The branch \`master\` updated!\nExamples are released to S3, but SDK is not.\nSee <${CIRCLE_BUILD_URL}|detail>`
     );
-    console.log('');
 
     return process.exit(0);
   }
 
   // DEBUG: guard
+  console.log('guard!!!');
   process.exit(0);
 
   console.log('## Publish to npm');
