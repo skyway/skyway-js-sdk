@@ -1,5 +1,5 @@
-const Octokit = require('@octokit/rest');
-const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = process.env;
+const fetchBaseBranch = require('./fetch-base-branch');
+const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST } = process.env;
 
 (async function() {
   if (!CIRCLE_BRANCH) {
@@ -11,14 +11,7 @@ const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = process.env;
   // eg. https://github.com/skyway/skyway-js-sdk/pull/155
   const number = CIRCLE_PULL_REQUEST.split('/').pop();
 
-  const octokit = new Octokit({ auth: GITHUB_TOKEN });
-  const { data: { base: { ref } } } = await octokit.pulls.get({
-    owner: 'skyway',
-    repo: 'skyway-js-sdk',
-    number,
-  });
-
-  const baseBranch = ref;
+  const baseBranch = await fetchBaseBranch(number);
   const currentBranch = CIRCLE_BRANCH;
 
   console.log(`This PR will be into ${baseBranch} from ${currentBranch}`);
