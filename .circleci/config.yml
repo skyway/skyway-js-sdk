@@ -8,7 +8,7 @@ jobs:
       - run:
           name: Install extra deps for CI
           command: npm install @octokit/rest
-      - run: node ./scripts/ensure-branch.js
+      - run: node ./scripts/ensure-branch
 
   test:
     docker:
@@ -28,7 +28,7 @@ jobs:
           name: Install extra deps for CI
           command: npm install aws-sdk replace-in-file
       - run: npm run build
-      - run: node ./scripts/release-staging.js
+      - run: node ./scripts/release-staging
 
 workflows:
   version: 2
