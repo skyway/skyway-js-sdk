@@ -1,11 +1,11 @@
-const replaceExamplesApiKey = require('./shared/replace-examples-api-key');
-const uploadSdkToS3 = require('./shared/uploadSdkToS3');
-const uploadExamplesToS3 = require('./shared/uploadExamplesToS3');
+const replaceExamplesApiKey = require('../shared/replace-examples-api-key');
+const uploadSdkToS3 = require('../shared/uploadSdkToS3');
+const uploadExamplesToS3 = require('../shared/uploadExamplesToS3');
 
 (async function() {
   const {
     master: { API_KEY, S3_SDK_BUCKET, S3_EXAMPLES_BUCKET },
-  } = require('./config');
+  } = require('../config');
 
   console.log('# Replace API key for examples');
   await replaceExamplesApiKey(API_KEY);

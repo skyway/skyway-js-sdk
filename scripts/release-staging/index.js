@@ -1,8 +1,8 @@
-const replaceExamplesApiKey = require('./shared/replace-examples-api-key');
-const replaceExamplesCdnDomain = require('./shared/replace-examples-cdn-domain');
-const replaceSdkServerDomain = require('./shared/replace-sdk-server-domain');
-const uploadSdkToS3 = require('./shared/uploadSdkToS3');
-const uploadExamplesToS3 = require('./shared/uploadExamplesToS3');
+const replaceExamplesApiKey = require('../shared/replace-examples-api-key');
+const replaceExamplesCdnDomain = require('../shared/replace-examples-cdn-domain');
+const replaceSdkServerDomain = require('../shared/replace-sdk-server-domain');
+const uploadSdkToS3 = require('../shared/uploadSdkToS3');
+const uploadExamplesToS3 = require('../shared/uploadExamplesToS3');
 
 (async function() {
   const {
@@ -13,7 +13,7 @@ const uploadExamplesToS3 = require('./shared/uploadExamplesToS3');
       S3_SDK_BUCKET,
       S3_EXAMPLES_BUCKET,
     },
-  } = require('./config');
+  } = require('../config');
 
   console.log('# Replace API key for examples');
   await replaceExamplesApiKey(API_KEY);
