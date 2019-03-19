@@ -18,8 +18,8 @@ module.exports = async function publishToGitHub(version) {
 
   console.log('Create new release');
   const { data: { upload_url } } = await octokit.repos.createRelease({
-    owner: 'leader22',
-    repo: 'release-create-test',
+    owner: 'skyway',
+    repo: 'skyway-js-sdk',
     tag_name: `v${version}`,
     target_commitish: 'master',
     name: `v${version}`,
