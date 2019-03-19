@@ -81,4 +81,4 @@ workflows:
             - test
           filters:
             branches:
-              only: ops/*
+              only: /ops*/
