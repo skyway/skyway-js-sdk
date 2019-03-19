@@ -3,6 +3,7 @@ const replaceExamplesApiKey = require('../shared/replace-examples-api-key');
 const uploadSdkToS3 = require('../shared/uploadSdkToS3');
 const uploadExamplesToS3 = require('../shared/uploadExamplesToS3');
 const isReleaseReady = require('./is-release-ready');
+const publishToNpm = require('./publish-to-npm');
 const notifySlack = require('./notify-slack');
 
 (async function() {
@@ -32,6 +33,7 @@ const notifySlack = require('./notify-slack');
   }
 
   // TODO: npm publish
+  await publishToNpm();
   // TODO: create release on GitHub
 
   console.log('## Upload to S3:master');
