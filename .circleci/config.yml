@@ -7,7 +7,7 @@ jobs:
       - checkout
       - run:
           name: Install extra deps for CI
-          command: npm install @octokit/rest
+          command: npm install --no-save @octokit/rest
       - run: node ./scripts/ensure-branch
 
   test:
@@ -32,7 +32,7 @@ jobs:
           at: .
       - run:
           name: Install extra deps for CI
-          command: npm install aws-sdk replace-in-file
+          command: npm install --no-save aws-sdk replace-in-file
       - run: npm run build
       - run: node ./scripts/release-staging
 
@@ -44,7 +44,7 @@ jobs:
           at: .
       - run:
           name: Install extra deps for CI
-          command: npm install aws-sdk @octokit/rest @slack/client
+          command: npm install --no-save aws-sdk @octokit/rest @slack/client
       - run: npm run build
       - run: node ./scripts/release-master
 
