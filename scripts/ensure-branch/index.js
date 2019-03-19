@@ -1,7 +1,9 @@
+const config = require('../config');
 const fetchBaseBranch = require('./fetch-base-branch');
-const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST } = process.env;
 
 (async function() {
+  const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = config();
+
   if (!CIRCLE_BRANCH) {
     throw new Error(
       'The build not associated with a pull request is not allowed!'
@@ -9,9 +11,9 @@ const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST } = process.env;
   }
 
   // eg. https://github.com/skyway/skyway-js-sdk/pull/155
-  const number = CIRCLE_PULL_REQUEST.split('/').pop();
+  const prNo = CIRCLE_PULL_REQUEST.split('/').pop();
 
-  const baseBranch = await fetchBaseBranch(number);
+  const baseBranch = await fetchBaseBranch(prNo, { GITHUB_TOKEN });
   const currentBranch = CIRCLE_BRANCH;
 
   console.log(`This PR will be into ${baseBranch} from ${currentBranch}`);
