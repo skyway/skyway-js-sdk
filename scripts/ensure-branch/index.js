@@ -9,12 +9,12 @@ const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = process.env;
   }
 
   // eg. https://github.com/skyway/skyway-js-sdk/pull/155
-  const [, , , owner, repo, , number] = CIRCLE_PULL_REQUEST.split('/');
+  const number = CIRCLE_PULL_REQUEST.split('/').pop();
 
   const octokit = new Octokit({ auth: GITHUB_TOKEN });
   const { data: { base: { ref } } } = await octokit.pulls.get({
-    owner,
-    repo,
+    owner: 'skyway',
+    repo: 'skyway-js-sdk',
     number,
   });
 
@@ -29,6 +29,7 @@ const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = process.env;
     case baseBranch === 'master' && currentBranch.startsWith('ops/'):
     case baseBranch === 'staging' && currentBranch === 'staging':
     case baseBranch === 'staging' && currentBranch.startsWith('dev/'):
+      console.log('Branch names are valid ;D');
       break;
     default:
       throw new Error('The name of current branch is not allowed to merge!');
