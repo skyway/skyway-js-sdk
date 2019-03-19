@@ -1,8 +1,9 @@
 const { version } = require('../../package.json');
-const isReleaseReady = require('./is-release-ready');
 const replaceExamplesApiKey = require('../shared/replace-examples-api-key');
 const uploadSdkToS3 = require('../shared/uploadSdkToS3');
 const uploadExamplesToS3 = require('../shared/uploadExamplesToS3');
+const isReleaseReady = require('./is-release-ready');
+const notifySlack = require('./notify-slack');
 
 (async function() {
   const {
@@ -23,21 +24,22 @@ const uploadExamplesToS3 = require('../shared/uploadExamplesToS3');
   console.log(`Is release ready for v${version} ? ${isReady}`);
 
   if (!isReady) {
-    // TODO: notify
     console.log('## Notify to Slack');
+    await notifySlack('TOOD: master updated');
     console.log('');
 
-    return;
+    return process.exit(0);
   }
 
-  // TODO: release stuff
+  // TODO: npm publish
+  // TODO: create release on GitHub
 
   console.log('## Upload to S3:master');
   await uploadSdkToS3(S3_SDK_BUCKET);
   console.log('');
 
-  // TODO: notify
   console.log('## Notify to Slack');
+  await notifySlack('TOOD: master updated');
   console.log('');
 
   process.exit(0);
