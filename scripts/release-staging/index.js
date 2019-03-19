@@ -1,8 +1,8 @@
 const replaceExamplesApiKey = require('../shared/replace-examples-api-key');
 const replaceExamplesCdnDomain = require('../shared/replace-examples-cdn-domain');
 const replaceSdkServerDomain = require('../shared/replace-sdk-server-domain');
-const uploadSdkToS3 = require('../shared/uploadSdkToS3');
-const uploadExamplesToS3 = require('../shared/uploadExamplesToS3');
+const uploadSdkToS3 = require('../shared/upload-sdk-to-s3');
+const uploadExamplesToS3 = require('../shared/upload-examples-to-s3');
 
 (async function() {
   const {
