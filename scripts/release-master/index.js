@@ -4,6 +4,7 @@ const uploadSdkToS3 = require('../shared/uploadSdkToS3');
 const uploadExamplesToS3 = require('../shared/uploadExamplesToS3');
 const isReleaseReady = require('./is-release-ready');
 const publishToNpm = require('./publish-to-npm');
+const publishToGitHub = require('./publish-to-github');
 const notifySlack = require('./notify-slack');
 
 (async function() {
@@ -32,9 +33,13 @@ const notifySlack = require('./notify-slack');
     return process.exit(0);
   }
 
-  // TODO: npm publish
+  console.log('## Publish to npm');
   await publishToNpm();
-  // TODO: create release on GitHub
+  console.log('');
+
+  console.log('## Publish to GitHub');
+  await publishToGitHub();
+  console.log('');
 
   console.log('## Upload to S3:master');
   await uploadSdkToS3(S3_SDK_BUCKET);
