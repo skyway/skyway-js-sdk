@@ -170,6 +170,7 @@ describe('Peer', () => {
           key: apiKey,
         });
       } catch (e) {
+        assert(e.message.includes('is invalid'));
         assert.equal(peer, undefined);
         done();
       }
@@ -182,6 +183,7 @@ describe('Peer', () => {
           key: 'wrong',
         });
       } catch (e) {
+        assert(e.message.includes('is invalid'));
         assert.equal(peer, undefined);
         done();
       }
