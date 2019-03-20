@@ -16,9 +16,9 @@ jobs:
     steps:
       - checkout
       - run: npm install
-      - run: npm run build
       - run: npm run lint
       - run: npm run test
+      - run: npm run build
       - persist_to_workspace:
           root: .
           paths:
@@ -50,7 +50,7 @@ workflows:
   version: 2
   test_and_deploy:
     jobs:
-      - ensure_branch
+      - ensure_branch:
           filters:
             branches:
               ignore:
