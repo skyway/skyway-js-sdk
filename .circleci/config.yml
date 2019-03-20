@@ -51,6 +51,11 @@ workflows:
   test_and_deploy:
     jobs:
       - ensure_branch
+          filters:
+            branches:
+              ignore:
+                - staging
+                - master
       - test:
           requires:
             - ensure_branch

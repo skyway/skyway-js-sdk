@@ -4,12 +4,6 @@ const fetchBaseBranch = require('./fetch-base-branch');
 (async function() {
   const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = config();
 
-  if (!CIRCLE_BRANCH) {
-    throw new Error(
-      'The build not associated with a pull request is not allowed!'
-    );
-  }
-
   // eg. https://github.com/skyway/skyway-js-sdk/pull/155
   const prNo = CIRCLE_PULL_REQUEST.split('/').pop();
 
@@ -18,11 +12,11 @@ const fetchBaseBranch = require('./fetch-base-branch');
 
   console.log(`This PR will be into ${baseBranch} from ${currentBranch}`);
 
+  // The PR matches branch names combination below are only allowed to commit.
+  // To commit directly(include merge commit of valid PR) is restricted by GitHub's branch protection.
   switch (true) {
-    case baseBranch === 'master' && currentBranch === 'master':
     case baseBranch === 'master' && currentBranch === 'staging':
     case baseBranch === 'master' && currentBranch.startsWith('ops/'):
-    case baseBranch === 'staging' && currentBranch === 'staging':
     case baseBranch === 'staging' && currentBranch.startsWith('dev/'):
       console.log('Branch names are valid ;D');
       break;
