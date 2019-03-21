@@ -1,9 +1,34 @@
 const config = require('../config');
 const fetchBaseBranch = require('./fetch-base-branch');
 
+/**
+ * We have to take care of these patterns of commit.
+ * - 1. commit on some PR
+ * - 2. others
+ *   - 2.1. merge commit of that PR
+ *   - 2.2. commit directly on some branch
+ *     - restricted by GitHub's branch protection
+ */
 (async function() {
   const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = config();
 
+  // if pattern 2.
+  if (!CIRCLE_PULL_REQUEST) {
+    if (CIRCLE_BRANCH === 'master' || CIRCLE_BRANCH === 'staging') {
+      // 2.1. is OK
+      console.log(
+        `This commit may be a merge commit for branch ${CIRCLE_BRANCH}.`
+      );
+      return process.exit(0);
+    } else {
+      // 2.2. is NG
+      throw new Error(
+        'This commit is not associated with PR! We should enable branch protection on GitHub.'
+      );
+    }
+  }
+
+  // else pattern 1.
   // eg. https://github.com/skyway/skyway-js-sdk/pull/155
   const prNo = CIRCLE_PULL_REQUEST.split('/').pop();
 
@@ -13,7 +38,7 @@ const fetchBaseBranch = require('./fetch-base-branch');
   console.log(`This PR will be into ${baseBranch} from ${currentBranch}`);
 
   // The PR matches branch names combination below are only allowed to commit.
-  // To commit directly(include merge commit of valid PR) is restricted by GitHub's branch protection.
+  // To commit directly is restricted by GitHub's branch protection.
   switch (true) {
     case baseBranch === 'master' && currentBranch === 'staging':
     case baseBranch === 'master' && currentBranch.startsWith('ops/'):
