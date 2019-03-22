@@ -63,6 +63,8 @@ function getChangeLogSection(version) {
     let isTargetStart = false;
     let isTargetEnd = false;
     rl.on('line', line => {
+      // This logic depends on writing format of CHANGELOG.md
+      // version line must be started with `## ` and described as `v1.0.0`
       const isVersionLine = line.startsWith('## ');
       const isVersionFound = line.includes(`v${version}`);
 
