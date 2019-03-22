@@ -270,12 +270,6 @@ describe('Peer', () => {
           peer.socket.emit('disconnect');
         });
 
-        it('should call destroy onbeforeunload', () => {
-          const destroySpy = sinon.spy(peer, 'destroy');
-          window.onbeforeunload();
-          assert.equal(destroySpy.callCount, 1);
-        });
-
         it('should call socket.start', () => {
           assert.equal(peer.socket.start.callCount, 1);
           assert(peer.socket.start.calledWith(peerId, peer.options.token));
