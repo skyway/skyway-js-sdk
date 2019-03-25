@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.1.21](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.21) - 2019-03-26
+
+### Fixed
+
+- Fix SkyWay not to override global `onbeforeunload` handler
+- Throw proper error when invalid id was passed into `Peer` constructor
+- Update dependencies
+
 ## [v1.1.20](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.20) - 2019-02-18
 
 ### Fixed
