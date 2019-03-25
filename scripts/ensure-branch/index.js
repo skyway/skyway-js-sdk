@@ -12,6 +12,9 @@ const fetchBaseBranch = require('./fetch-base-branch');
 (async function() {
   const { CIRCLE_BRANCH, CIRCLE_PULL_REQUEST, GITHUB_TOKEN } = config();
 
+  console.log(`CIRCLE_BRANCH: ${CIRCLE_BRANCH}`);
+  console.log(`CIRCLE_PULL_REQUEST: ${CIRCLE_PULL_REQUEST}`);
+
   // if pattern 2.
   if (!CIRCLE_PULL_REQUEST) {
     if (CIRCLE_BRANCH === 'master' || CIRCLE_BRANCH === 'staging') {
