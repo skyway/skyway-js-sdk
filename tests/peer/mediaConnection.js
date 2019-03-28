@@ -363,7 +363,7 @@ describe('MediaConnection', () => {
       assert(spy.withArgs(Connection.EVENTS.close.key).calledOnce);
     });
 
-    it('should NOT emit a close event upon the connection is opening', () => {
+    it('should NOT emit a close event upon the connection is closed', () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
       const spy = sinon.spy(mc, 'emit');
       // Force to be close
