@@ -170,6 +170,7 @@ describe('Peer', () => {
           key: apiKey,
         });
       } catch (e) {
+        assert(e.message.includes('is invalid'));
         assert.equal(peer, undefined);
         done();
       }
@@ -182,6 +183,7 @@ describe('Peer', () => {
           key: 'wrong',
         });
       } catch (e) {
+        assert(e.message.includes('is invalid'));
         assert.equal(peer, undefined);
         done();
       }
@@ -266,12 +268,6 @@ describe('Peer', () => {
           });
 
           peer.socket.emit('disconnect');
-        });
-
-        it('should call destroy onbeforeunload', () => {
-          const destroySpy = sinon.spy(peer, 'destroy');
-          window.onbeforeunload();
-          assert.equal(destroySpy.callCount, 1);
         });
 
         it('should call socket.start', () => {
