@@ -70,10 +70,21 @@ class SFURoom extends Room {
   handleOffer(offerMessage) {
     let offer = offerMessage.offer;
 
-    // Chrome and Safari can't handle unified plan messages so convert it to Plan B
-    // We don't need to convert the answer back to Unified Plan because the server can handle Plan B
+    /**
+     * Our SFU returns unified-plan SDP.
+     * Our support browsers and sdp semantics relations are
+     *
+     * Chrome: plan-b(controlled by us)
+     * Firefox: unified-plan
+     * Safari ~12.0: plan-b
+     * Safari 12.1~: plan-b
+     * Safari 12.1~: unified-plan(if user enables)
+     *
+     * So we need to convert server offer SDP if it in case.
+     * We don't need to convert the answer back to Unified Plan because the server can handle Plan B.
+     */
     const browserInfo = util.detectBrowser();
-    if (browserInfo.name !== 'firefox') {
+    if (!(browserInfo.name === 'firefox' || util.isUnifiedPlanSafari())) {
       offer = sdpUtil.unifiedToPlanB(offer);
     }
 
@@ -143,6 +154,10 @@ class SFURoom extends Room {
     });
 
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
+      if (util.isUnifiedPlanSafari()) {
+        answer.sdp = sdpUtil.pretendUnifiedPlan(answer.sdp);
+      }
+
       const answerMessage = {
         roomName: this.name,
         answer: answer,
