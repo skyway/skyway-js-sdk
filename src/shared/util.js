@@ -100,6 +100,7 @@ function detectBrowser() {
 /**
  * Safari 12.1 may use plan-b sdp and also unified-plan sdp.
  * It depends on user settings.
+ * See https://webkit.org/blog/8672/on-the-road-to-webrtc-1-0-including-vp8/
  *
  * @return {boolean} Browser is Safari 12.1 or later and enables unified-plan OR NOT
  */
