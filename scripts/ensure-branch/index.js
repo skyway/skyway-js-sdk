@@ -45,7 +45,7 @@ const fetchBaseBranch = require('./fetch-base-branch');
   // To commit directly is restricted by GitHub's branch protection.
   switch (true) {
     case baseBranch === 'master' && currentBranch === 'staging':
-    case baseBranch === 'master' && currentBranch.startsWith('ops/'):
+    case baseBranch === 'staging' && currentBranch.startsWith('ops/'):
     case baseBranch === 'staging' && currentBranch.startsWith('dev/'):
       console.log('Branch names are valid ;D');
       break;
