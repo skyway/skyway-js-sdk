@@ -521,11 +521,10 @@ class Peer extends EventEmitter {
       config.MESSAGE_TYPES.SERVER.FORCE_CLOSE.key,
       ({ src: remoteId, connectionId }) => {
         // select a force closing connection and Close it.
-        for (const connection of this.connections[remoteId]) {
-          if (connection.id === connectionId) {
-            // close the connection without sending FORCE_CLOSE
-            connection.close(false);
-          }
+        const connection = this.getConnection(remoteId, connectionId);
+        if (connection) {
+          // close the connection without sending FORCE_CLOSE
+          connection.close(false);
         }
       }
     );
