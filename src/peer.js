@@ -517,20 +517,18 @@ class Peer extends EventEmitter {
       this._cleanupPeer(peerId);
     });
 
-    this.socket.on(config.MESSAGE_TYPES.SERVER.BYE.key, byeMessage => {
-      const peerId = byeMessage.src;
-      const connectionId = byeMessage.connectionId;
-
-      for (const connection of this.connections[peerId]) {
-        if (connection.id === connectionId) {
-          const byeMessage = {
-            dst: connection.remoteId,
-            connectionId: connection.id,
-          };
-          connection.emit(Connection.EVENTS.bye.key, byeMessage);
+    this.socket.on(
+      config.MESSAGE_TYPES.SERVER.FORCE_CLOSE.key,
+      ({ src: remoteId, connectionId }) => {
+        // select a force closing connection and Close it.
+        for (const connection of this.connections[remoteId]) {
+          if (connection.id === connectionId) {
+            // close the connection without sending FORCE_CLOSE
+            connection.close(false);
+          }
         }
       }
-    });
+    );
 
     this.socket.on(
       config.MESSAGE_TYPES.SERVER.AUTH_EXPIRES_IN.key,
@@ -753,10 +751,20 @@ class Peer extends EventEmitter {
         offerMessage
       );
     });
-    connection.on(Connection.EVENTS.bye.key, byeMessage => {
-      if (connection.open) {
-        this.socket.send(config.MESSAGE_TYPES.CLIENT.SEND_BYE.key, byeMessage);
+    connection.on(Connection.EVENTS.close.key, forceClose => {
+      if (!forceClose) {
+        return;
       }
+
+      const forceCloseMessage = {
+        dst: connection.remoteId,
+        connectionId: connection.id,
+      };
+
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SEND_FORCE_CLOSE.key,
+        forceCloseMessage
+      );
     });
   }
 

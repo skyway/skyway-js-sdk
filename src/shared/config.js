@@ -24,7 +24,7 @@ const MESSAGE_TYPES = {
     'SFU_CANDIDATE',
     'PING',
     'UPDATE_CREDENTIAL',
-    'SEND_BYE',
+    'SEND_FORCE_CLOSE',
   ]),
   SERVER: new Enum([
     'OPEN',
@@ -40,7 +40,7 @@ const MESSAGE_TYPES = {
     'ROOM_USER_JOIN',
     'ROOM_USER_LEAVE',
     'SFU_OFFER',
-    'BYE',
+    'FORCE_CLOSE',
   ]),
 };
 

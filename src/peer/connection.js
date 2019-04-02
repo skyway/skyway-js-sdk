@@ -6,13 +6,7 @@ import util from '../shared/util';
 import logger from '../shared/logger';
 import config from '../shared/config';
 
-const ConnectionEvents = new Enum([
-  'candidate',
-  'offer',
-  'answer',
-  'close',
-  'bye',
-]);
+const ConnectionEvents = new Enum(['candidate', 'offer', 'answer', 'close']);
 
 /**
  * Class that manages connections to other peers.
@@ -167,21 +161,14 @@ class Connection extends EventEmitter {
    * Disconnect from remote peer.
    * @fires Connection#close
    */
-  close() {
+  close(forceClose = false) {
     if (!this.open) {
       return;
     }
-    // Send BYE message to connecting peer before close this connection.
-    const byeMessage = {
-      dst: this.remoteId,
-      connectionId: this.id,
-    };
-
-    this.emit(Connection.EVENTS.bye.key, byeMessage);
 
     this.open = false;
     this._negotiator.cleanup();
-    this.emit(Connection.EVENTS.close.key);
+    this.emit(Connection.EVENTS.close.key, forceClose);
   }
 
   /**
@@ -295,12 +282,6 @@ class Connection extends EventEmitter {
    * Connection closed event.
    *
    * @event Connection#close
-   */
-
-  /**
-   * Connection Bye event.
-   *
-   * @event Connection#bye
    */
 }
 
