@@ -373,5 +373,38 @@ describe('MediaConnection', () => {
 
       assert(spy.withArgs(Connection.EVENTS.close.key).notCalled);
     });
+
+    it('should emit a close event with `true` when call close(true)', () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      const spy = sinon.spy(mc, 'emit');
+      // Force to be open
+      mc.open = true;
+
+      mc.close(true);
+
+      assert(spy.withArgs(Connection.EVENTS.close.key, true).calledOnce);
+    });
+
+    it('should emit a close event with `false` when call close(false)', () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      const spy = sinon.spy(mc, 'emit');
+      // Force to be open
+      mc.open = true;
+
+      mc.close(false);
+
+      assert(spy.withArgs(Connection.EVENTS.close.key, false).calledOnce);
+    });
+
+    it('should emit a close event with `false` when call close() by default', () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      const spy = sinon.spy(mc, 'emit');
+      // Force to be open
+      mc.open = true;
+
+      mc.close();
+
+      assert(spy.withArgs(Connection.EVENTS.close.key, false).calledOnce);
+    });
   });
 });
