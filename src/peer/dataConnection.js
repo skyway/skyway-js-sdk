@@ -137,7 +137,7 @@ class DataConnection extends Connection {
 
     this._dc.onclose = () => {
       logger.log('DataChannel closed for:', this.id);
-      this.close();
+      this.close(true);
     };
 
     this._dc.onerror = err => {
@@ -283,8 +283,8 @@ class DataConnection extends Connection {
    * Disconnect from remote peer.
    * @fires DataConnection#close
    */
-  close() {
-    super.close();
+  close(forceClose) {
+    super.close(forceClose);
 
     this._isOnOpenCalled = false;
   }
