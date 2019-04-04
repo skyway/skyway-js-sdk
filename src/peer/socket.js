@@ -301,6 +301,7 @@ class Socket extends EventEmitter {
    * @fires Socket#ROOM_USER_JOIN
    * @fires Socket#ROOM_USER_LEAVE
    * @fires Socket#ROOM_DATA
+   * @fires Socket#FORCE_CLOSE
    */
   _setupMessageHandlers() {
     config.MESSAGE_TYPES.SERVER.enums.forEach(type => {
@@ -475,6 +476,16 @@ class Socket extends EventEmitter {
    * @property {string} src - The peerId of the user who sent the message.
    * @property {string} roomName - The name of the room left.
    * @property {*} data - The data that was sent.
+   */
+
+  /**
+   * Remote Peer requested to close a connection.
+   *
+   * @event Socket#FORCE_CLOSE
+   * @type {object}
+   * @property {string} src - Sender peerId.
+   * @property {string} dst - Recipient peerId.
+   * @property {string} connectionId - The connection id.
    */
 }
 
