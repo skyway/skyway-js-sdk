@@ -374,7 +374,7 @@ describe('MediaConnection', () => {
       assert(spy.withArgs(Connection.EVENTS.close.key).notCalled);
     });
 
-    it('should emit a close event with `true` when call close(true)', () => {
+    it('should emit a forceClose event when call close(true)', () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
       const spy = sinon.spy(mc, 'emit');
       // Force to be open
@@ -385,7 +385,7 @@ describe('MediaConnection', () => {
       assert(spy.withArgs(Connection.EVENTS.forceClose.key).calledOnce);
     });
 
-    it('should emit a close event with `false` when call close(false)', () => {
+    it('should not emit a forceClose event when call close(false)', () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
       const spy = sinon.spy(mc, 'emit');
       // Force to be open
@@ -396,7 +396,7 @@ describe('MediaConnection', () => {
       assert(spy.withArgs(Connection.EVENTS.forceClose.key).notCalled);
     });
 
-    it('should emit a close event with `false` when call close() by default', () => {
+    it('should not emit a forceClose event when call close() by default', () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
       const spy = sinon.spy(mc, 'emit');
       // Force to be open
