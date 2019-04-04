@@ -1507,6 +1507,33 @@ describe('Peer', () => {
           });
         });
       });
+
+      describe('FORCE_CLOSE', () => {
+        it('should close the specified connection when received the message', () => {
+          const connectionId = 'connId1';
+          const srcId = 'srcId';
+          const remoteId = 'remoteId';
+          const mediaConnection = new MediaConnection(remoteId, {
+            connectionId,
+          });
+
+          const forceCloseMessage = {
+            src: remoteId,
+            dst: srcId,
+            connectionId,
+          };
+          const closeSpy = sinon.spy(mediaConnection, 'close');
+
+          peer._addConnection(remoteId, mediaConnection);
+          peer.socket.emit(
+            config.MESSAGE_TYPES.SERVER.FORCE_CLOSE.key,
+            forceCloseMessage
+          );
+
+          assert(closeSpy.calledOnce);
+          assert(closeSpy.calledWith(false));
+        });
+      });
     });
 
     describe('Room specific messages', () => {
@@ -1787,6 +1814,21 @@ describe('Peer', () => {
             message
           )
         );
+      });
+    });
+
+    describe('close', () => {
+      it('should send SEND_FORCE_CLOSE when called close(true)', () => {
+        connectionStub.emit(MediaConnection.EVENTS.close.key, true);
+        assert(
+          peer.socket.send.calledWith(
+            config.MESSAGE_TYPES.CLIENT.SEND_FORCE_CLOSE.key
+          )
+        );
+      });
+      it('should not send when called close(false)', () => {
+        connectionStub.emit(MediaConnection.EVENTS.close.key, false);
+        assert(peer.socket.send.notCalled);
       });
     });
   });
