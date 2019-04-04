@@ -137,7 +137,7 @@ class DataConnection extends Connection {
 
     this._dc.onclose = () => {
       logger.log('DataChannel closed for:', this.id);
-      this.close(true);
+      this.close();
     };
 
     this._dc.onerror = err => {
