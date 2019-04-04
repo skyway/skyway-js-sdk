@@ -76,7 +76,6 @@ class SFURoom extends Room {
      *
      * Chrome: plan-b(controlled by us)
      * Firefox: unified-plan
-     * Safari ~12.0: plan-b
      * Safari 12.1~: plan-b
      * Safari 12.1~: unified-plan(if user enables)
      *
@@ -84,6 +83,7 @@ class SFURoom extends Room {
      * We don't need to convert the answer back to Unified Plan because the server can handle Plan B.
      */
     const browserInfo = util.detectBrowser();
+    // Means Chrome or Safari(plan-b)
     if (!(browserInfo.name === 'firefox' || util.isUnifiedPlanSafari())) {
       offer = sdpUtil.unifiedToPlanB(offer);
     }
