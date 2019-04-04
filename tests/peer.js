@@ -1817,18 +1817,14 @@ describe('Peer', () => {
       });
     });
 
-    describe('close', () => {
-      it('should send SEND_FORCE_CLOSE when called close(true)', () => {
-        connectionStub.emit(MediaConnection.EVENTS.close.key, true);
+    describe('forceClose', () => {
+      it('should send SEND_FORCE_CLOSE message', () => {
+        connectionStub.emit(MediaConnection.EVENTS.forceClose.key);
         assert(
           peer.socket.send.calledWith(
             config.MESSAGE_TYPES.CLIENT.SEND_FORCE_CLOSE.key
           )
         );
-      });
-      it('should not send when called close(false)', () => {
-        connectionStub.emit(MediaConnection.EVENTS.close.key, false);
-        assert(peer.socket.send.notCalled);
       });
     });
   });

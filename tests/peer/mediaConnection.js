@@ -382,7 +382,7 @@ describe('MediaConnection', () => {
 
       mc.close(true);
 
-      assert(spy.withArgs(Connection.EVENTS.close.key, true).calledOnce);
+      assert(spy.withArgs(Connection.EVENTS.forceClose.key).calledOnce);
     });
 
     it('should emit a close event with `false` when call close(false)', () => {
@@ -393,7 +393,7 @@ describe('MediaConnection', () => {
 
       mc.close(false);
 
-      assert(spy.withArgs(Connection.EVENTS.close.key, false).calledOnce);
+      assert(spy.withArgs(Connection.EVENTS.forceClose.key).notCalled);
     });
 
     it('should emit a close event with `false` when call close() by default', () => {
@@ -404,7 +404,7 @@ describe('MediaConnection', () => {
 
       mc.close();
 
-      assert(spy.withArgs(Connection.EVENTS.close.key, false).calledOnce);
+      assert(spy.withArgs(Connection.EVENTS.forceClose.key).notCalled);
     });
   });
 });

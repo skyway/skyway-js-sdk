@@ -750,11 +750,7 @@ class Peer extends EventEmitter {
         offerMessage
       );
     });
-    connection.on(Connection.EVENTS.close.key, forceClose => {
-      if (!forceClose) {
-        return;
-      }
-
+    connection.on(Connection.EVENTS.forceClose.key, () => {
       const forceCloseMessage = {
         dst: connection.remoteId,
         connectionId: connection.id,
