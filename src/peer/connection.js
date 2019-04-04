@@ -292,7 +292,12 @@ class Connection extends EventEmitter {
    * Connection closed event.
    *
    * @event Connection#close
-   * @type {bool}
+   */
+
+  /**
+   * Requested to close the connection.
+   *
+   * @event Connection#forceClose
    */
 }
 
