@@ -17,7 +17,7 @@ describe('Negotiator', () => {
   describe('startConnection', () => {
     let newPcStub;
     let pcStub;
-    let addStreamSpy;
+    let addTrackSpy;
     let createDCSpy;
     let negotiator;
     let handleOfferSpy;
@@ -26,10 +26,10 @@ describe('Negotiator', () => {
 
     beforeEach(() => {
       newPcStub = sinon.stub();
-      addStreamSpy = sinon.spy();
+      addTrackSpy = sinon.spy();
       createDCSpy = sinon.spy();
       pcStub = {
-        addStream: addStreamSpy,
+        addTrack: addTrackSpy,
         createDataChannel: createDCSpy,
       };
       newPcStub.returns(pcStub);
@@ -44,7 +44,7 @@ describe('Negotiator', () => {
 
     afterEach(() => {
       newPcStub.reset();
-      addStreamSpy.resetHistory();
+      addTrackSpy.resetHistory();
       createDCSpy.resetHistory();
       handleOfferSpy.resetHistory();
       setRemoteDescStub.restore();
@@ -65,20 +65,24 @@ describe('Negotiator', () => {
 
     describe("when type is 'media'", () => {
       describe('when originator is true', () => {
-        it('should call pc.addStream when stream exists', () => {
+        it('should call pc.addTrack when stream exists', () => {
           const options = {
             type: 'media',
-            stream: {},
+            stream: {
+              getTracks() {
+                return [{}];
+              },
+            },
             originator: true,
             pcConfig: {},
           };
 
-          assert.equal(addStreamSpy.callCount, 0);
+          assert.equal(addTrackSpy.callCount, 0);
           assert.equal(handleOfferSpy.callCount, 0);
 
           negotiator.startConnection(options);
 
-          assert.equal(addStreamSpy.callCount, 1);
+          assert.equal(addTrackSpy.callCount, 1);
           assert.equal(handleOfferSpy.callCount, 0);
         });
 
@@ -100,41 +104,49 @@ describe('Negotiator', () => {
       });
 
       describe('when originator is false', () => {
-        it('should call pc.addStream and handleOffer', () => {
+        it('should call pc.addTrack and handleOffer', () => {
           const options = {
             type: 'media',
-            stream: {},
+            stream: {
+              getTracks() {
+                return [{}];
+              },
+            },
             originator: false,
             pcConfig: {},
             offer: {},
           };
 
-          assert.equal(addStreamSpy.callCount, 0);
+          assert.equal(addTrackSpy.callCount, 0);
           assert.equal(handleOfferSpy.callCount, 0);
 
           negotiator.startConnection(options);
 
-          assert.equal(addStreamSpy.callCount, 1);
+          assert.equal(addTrackSpy.callCount, 1);
           assert.equal(handleOfferSpy.callCount, 1);
           assert(handleOfferSpy.calledWith(options.offer));
         });
       });
 
       describe('when originator is undefined', () => {
-        it('should call pc.addStream and handleOffer', () => {
+        it('should call pc.addTrack and handleOffer', () => {
           const options = {
             type: 'media',
-            stream: {},
+            stream: {
+              getTracks() {
+                return [{}];
+              },
+            },
             pcConfig: {},
             offer: {},
           };
 
-          assert.equal(addStreamSpy.callCount, 0);
+          assert.equal(addTrackSpy.callCount, 0);
           assert.equal(handleOfferSpy.callCount, 0);
 
           negotiator.startConnection(options);
 
-          assert.equal(addStreamSpy.callCount, 1);
+          assert.equal(addTrackSpy.callCount, 1);
           assert.equal(handleOfferSpy.callCount, 1);
           assert(handleOfferSpy.calledWith(options.offer));
         });
@@ -207,20 +219,20 @@ describe('Negotiator', () => {
 
     describe('when type is undefined', () => {
       describe('when originator is true', () => {
-        it("shouldn't call createDataConnection or addStream", () => {
+        it("shouldn't call createDataConnection or addTrack", () => {
           const options = {
             originator: true,
             pcConfig: {},
           };
 
           assert.equal(createDCSpy.callCount, 0);
-          assert.equal(addStreamSpy.callCount, 0);
+          assert.equal(addTrackSpy.callCount, 0);
           assert.equal(handleOfferSpy.callCount, 0);
 
           negotiator.startConnection(options);
 
           assert.equal(createDCSpy.callCount, 0);
-          assert.equal(addStreamSpy.callCount, 0);
+          assert.equal(addTrackSpy.callCount, 0);
           assert.equal(handleOfferSpy.callCount, 0);
         });
       });
@@ -403,47 +415,6 @@ describe('Negotiator', () => {
           negotiator.replaceStream(newStream);
 
           assert(addTrackStub.calledWith(videoTrack));
-        });
-      });
-    });
-
-    describe("rtpSenders aren't supported", () => {
-      const remoteStream = {};
-      const newStream = {};
-
-      let removeStreamSpy;
-      let addStreamSpy;
-
-      beforeEach(() => {
-        // Stub directly so tests run after remove/addStream are removed.
-        removeStreamSpy = sinon.stub();
-        addStreamSpy = sinon.stub();
-        negotiator._pc.removeStream = removeStreamSpy;
-        negotiator._pc.addStream = addStreamSpy;
-        negotiator._isRtpSenderAvailable = false;
-
-        const getLocalStreamsStub = sinon.stub(
-          negotiator._pc,
-          'getLocalStreams'
-        );
-        getLocalStreamsStub.returns([remoteStream]);
-
-        // disable getSenders if available
-        negotiator._pc.getSenders = null;
-      });
-
-      it('should call removeStream then addStream', done => {
-        negotiator.replaceStream(newStream);
-
-        // Use timeout as it runs asynchronously
-        setTimeout(() => {
-          assert.equal(removeStreamSpy.callCount, 1);
-          assert(removeStreamSpy.calledWith(remoteStream));
-
-          assert.equal(addStreamSpy.callCount, 1);
-          assert(addStreamSpy.calledWith(newStream));
-
-          done();
         });
       });
     });
