@@ -71,11 +71,6 @@ class DataConnection extends Connection {
     // Messages stored by peer because DC was not ready yet
     this._queuedMessages = this._options.queuedMessages || [];
 
-    // Maybe don't need this anymore
-    if (this._options.payload) {
-      this._peerBrowser = this._options.payload.browser;
-    }
-
     // This replaces the PeerJS 'initialize' method
     this._negotiator.on(Negotiator.EVENTS.dcCreated.key, dc => {
       this._dc = dc;
