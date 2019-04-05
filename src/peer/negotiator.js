@@ -70,13 +70,9 @@ class Negotiator extends EventEmitter {
 
     if (this._type === 'media') {
       if (options.stream) {
-        if (this._isAddTrackAvailable && !this._isForceUseStreamMethods) {
-          options.stream.getTracks().forEach(track => {
-            this._pc.addTrack(track, options.stream);
-          });
-        } else {
-          this._pc.addStream(options.stream);
-        }
+        options.stream.getTracks().forEach(track => {
+          this._pc.addTrack(track, options.stream);
+        });
       } else if (this.originator) {
         // This means the peer wants to create offer SDP with `recvonly`
         const offer = await this._makeOfferSdp();
@@ -112,16 +108,7 @@ class Negotiator extends EventEmitter {
     }
 
     this._isNegotiationAllowed = true;
-
-    // Replace the tracks in the rtpSenders if possible.
-    // This doesn't require renegotiation.
-    if (this._isRtpSenderAvailable && !this._isForceUseStreamMethods) {
-      this._replacePerTrack(newStream);
-    } else if (!this._replaceStreamCalled) {
-      // _replacePerStream is used for Chrome 64 and below. All other browsers should have track methods implemented.
-      // We can delete _replacePerStream after Chrome 64 is no longer supported.
-      this._replacePerStream(newStream);
-    }
+    this._replacePerTrack(newStream);
   }
 
   /**
@@ -209,22 +196,11 @@ class Negotiator extends EventEmitter {
 
     const browserInfo = util.detectBrowser();
 
-    this._isAddTrackAvailable =
-      typeof RTCPeerConnection.prototype.addTrack === 'function';
-    this._isOnTrackAvailable = 'ontrack' in RTCPeerConnection.prototype;
-    this._isRtpSenderAvailable =
-      typeof RTCPeerConnection.prototype.getSenders === 'function';
-
     // If browser is Chrome and over 69, it has addTransceiver but does not work without unified-plan option.
     // SkyWay has not supported unified-plan.
     this._isAddTransceiverAvailable =
       typeof RTCPeerConnection.prototype.addTransceiver === 'function' &&
       browserInfo.name !== 'chrome';
-
-    // If browser is Chrome 64, we use addStream/replaceStream instead of addTrack/replaceTrack.
-    // Because Chrome can't call properly to Firefox using track methods.
-    this._isForceUseStreamMethods =
-      browserInfo.name === 'chrome' && browserInfo.major <= 64;
 
     // Force plan-b for SFU, until we finish unified-plan support.
     pcConfig.sdpSemantics = 'plan-b';
@@ -237,20 +213,13 @@ class Negotiator extends EventEmitter {
    */
   _setupPCListeners() {
     const pc = this._pc;
-    if (this._isOnTrackAvailable && !this._isForceUseStreamMethods) {
-      pc.ontrack = evt => {
-        logger.log('Received remote media stream');
-        evt.streams.forEach(stream => {
-          this.emit(Negotiator.EVENTS.addStream.key, stream);
-        });
-      };
-    } else {
-      pc.onaddstream = evt => {
-        logger.log('Received remote media stream');
-        const stream = evt.stream;
+
+    pc.ontrack = evt => {
+      logger.log('Received remote media stream');
+      evt.streams.forEach(stream => {
         this.emit(Negotiator.EVENTS.addStream.key, stream);
-      };
-    }
+      });
+    };
 
     pc.ondatachannel = evt => {
       logger.log('Received data channel');
@@ -304,7 +273,7 @@ class Negotiator extends EventEmitter {
       logger.log('`negotiationneeded` triggered');
 
       // Don't make a new offer if it's not stable or if onnegotiationneeded is called consecutively.
-      // Chrome 65 called onnegotiationneeded once per addTrack so force it to run only once.
+      // Chrome 65+ called onnegotiationneeded once per addTrack so force it to run only once.
       if (pc.signalingState === 'stable' && this._isNegotiationAllowed) {
         this._isNegotiationAllowed = false;
         // Emit negotiationNeeded event in case additional handling is needed.
@@ -596,65 +565,6 @@ class Negotiator extends EventEmitter {
         return;
       }
       sender.replaceTrack(track);
-    }
-  }
-
-  /**
-   * Replace the stream being sent with a new one.
-   * Video and audio are replaced per stream by using `xxxStream` methods.
-   * This method is used in some browsers which don't implement `xxxTrack` methods.
-   * @param {MediaStream} newStream - The stream to replace the old stream with.
-   * @private
-   */
-  _replacePerStream(newStream) {
-    const localStreams = this._pc.getLocalStreams();
-
-    const origOnNegotiationNeeded = this._pc.onnegotiationneeded;
-    this._pc.onnegotiationneeded = () => {};
-
-    // We assume that there is at most 1 stream in localStreams
-    if (localStreams.length > 0) {
-      this._pc.removeStream(localStreams[0]);
-    }
-
-    // HACK: For some reason FF59 doesn't work when Chrome 64 renegotiates after updating the stream.
-    // However, simply updating the localDescription updates the remote stream if the other browser is firefox 59+.
-    // Chrome 64 probably uses replaceTrack-like functions internally.
-    const isRemoteBrowserNeedRenegotiation =
-      this._remoteBrowser &&
-      this._remoteBrowser.name === 'firefox' &&
-      this._remoteBrowser.major >= 59;
-    if (isRemoteBrowserNeedRenegotiation) {
-      this._pc.addStream(newStream);
-
-      // use setTimeout to trigger (and do nothing) on add/removeStream.
-      setTimeout(async () => {
-        // update the localDescription with the new stream information (after getting to the right state)
-        try {
-          if (this.originator) {
-            const offer = await this._makeOfferSdp();
-            await this._pc.setLocalDescription(offer);
-            await this._pc.setRemoteDescription(this._pc.remoteDescription);
-          } else {
-            await this._pc.setRemoteDescription(this._pc.remoteDescription);
-            const answer = await this._pc.createAnswer();
-            await this._pc.setLocalDescription(answer);
-          }
-        } catch (err) {
-          logger.error(err);
-        }
-        this._pc.onnegotiationneeded = origOnNegotiationNeeded;
-      });
-    } else {
-      // this is the normal flow where we renegotiate.
-      this._replaceStreamCalled = true;
-
-      // use setTimeout to trigger (and do nothing) on removeStream.
-      setTimeout(() => {
-        // onnegotiationneeded will be triggered by addStream.
-        this._pc.addStream(newStream);
-        this._pc.onnegotiationneeded = origOnNegotiationNeeded;
-      });
     }
   }
 
