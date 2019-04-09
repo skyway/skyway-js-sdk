@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.2.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.2.0) - 2019-04-09
+
+### Added
+
+- Support Safari(v12.1~)
+
 ## [v1.1.21](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.1.21) - 2019-03-26
 
 ### Fixed

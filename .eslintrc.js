@@ -28,6 +28,6 @@ module.exports = {
     mocha: true,
   },
   globals: {
-    RTCRtpSender: true,
+    RTCRtpTransceiver: true,
   },
 };
