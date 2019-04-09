@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.2.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.2.0) - 2019-04-XX
+## [v1.2.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.2.0) - 2019-04-09
 
 ### Added
 
