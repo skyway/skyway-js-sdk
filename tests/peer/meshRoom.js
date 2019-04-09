@@ -557,11 +557,17 @@ describe('MeshRoom', () => {
       );
     });
 
-    it('should handle stream event if connection is a MediaConnection', () => {
+    it('should handle stream and removeStream events if connection is a MediaConnection', () => {
       meshRoom._setupMessageHandlers({ on: onSpy, type: 'media' });
 
       assert(
         onSpy.calledWith(MediaConnection.EVENTS.stream.key, sinon.match.func)
+      );
+      assert(
+        onSpy.calledWith(
+          MediaConnection.EVENTS.removeStream.key,
+          sinon.match.func
+        )
       );
     });
 
@@ -649,6 +655,20 @@ describe('MeshRoom', () => {
           });
 
           mc.emit(MediaConnection.EVENTS.stream.key, stream);
+        });
+      });
+
+      describe('removeStream', () => {
+        it('should emit stream', done => {
+          const stream = {};
+
+          meshRoom.on(MeshRoom.EVENTS.removeStream.key, emittedStream => {
+            assert.equal(emittedStream, stream);
+
+            done();
+          });
+
+          mc.emit(MediaConnection.EVENTS.removeStream.key, stream);
         });
       });
     });

@@ -216,7 +216,7 @@ class Peer extends EventEmitter {
    * @type {boolean} The open status.
    */
   get open() {
-    return this.socket.isOpen;
+    return this.socket && this.socket.isOpen;
   }
 
   /**
@@ -366,10 +366,6 @@ class Peer extends EventEmitter {
     });
 
     this.socket.start(id, this.options.token, this.options.credential);
-
-    window.onbeforeunload = () => {
-      this.destroy();
-    };
   }
 
   /**
