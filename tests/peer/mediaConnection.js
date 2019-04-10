@@ -390,4 +390,61 @@ describe('MediaConnection', () => {
       assert(cleanupSpy.called);
     });
   });
+
+  describe('Close', () => {
+    it('should emit a close event upon the connection is opening', () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      const spy = sinon.spy(mc, 'emit');
+      // Force to be open
+      mc.open = true;
+
+      mc.close();
+
+      assert(spy.withArgs(Connection.EVENTS.close.key).calledOnce);
+    });
+
+    it('should NOT emit a close event upon the connection is closed', () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      const spy = sinon.spy(mc, 'emit');
+      // Force to be close
+      mc.open = false;
+
+      mc.close();
+
+      assert(spy.withArgs(Connection.EVENTS.close.key).notCalled);
+    });
+
+    it('should emit a forceClose event when call close(true)', () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      const spy = sinon.spy(mc, 'emit');
+      // Force to be open
+      mc.open = true;
+
+      mc.close(true);
+
+      assert(spy.withArgs(Connection.EVENTS.forceClose.key).calledOnce);
+    });
+
+    it('should not emit a forceClose event when call close(false)', () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      const spy = sinon.spy(mc, 'emit');
+      // Force to be open
+      mc.open = true;
+
+      mc.close(false);
+
+      assert(spy.withArgs(Connection.EVENTS.forceClose.key).notCalled);
+    });
+
+    it('should not emit a forceClose event when call close() by default', () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      const spy = sinon.spy(mc, 'emit');
+      // Force to be open
+      mc.open = true;
+
+      mc.close();
+
+      assert(spy.withArgs(Connection.EVENTS.forceClose.key).notCalled);
+    });
+  });
 });

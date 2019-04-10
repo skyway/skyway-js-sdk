@@ -514,6 +514,18 @@ class Peer extends EventEmitter {
     });
 
     this.socket.on(
+      config.MESSAGE_TYPES.SERVER.FORCE_CLOSE.key,
+      ({ src: remoteId, connectionId }) => {
+        // select a force closing connection and Close it.
+        const connection = this.getConnection(remoteId, connectionId);
+        if (connection) {
+          // close the connection without sending FORCE_CLOSE
+          connection.close(false);
+        }
+      }
+    );
+
+    this.socket.on(
       config.MESSAGE_TYPES.SERVER.AUTH_EXPIRES_IN.key,
       remainingSec => {
         logger.log(`Credential expires in ${remainingSec}`);
@@ -732,6 +744,17 @@ class Peer extends EventEmitter {
       this.socket.send(
         config.MESSAGE_TYPES.CLIENT.SEND_OFFER.key,
         offerMessage
+      );
+    });
+    connection.on(Connection.EVENTS.forceClose.key, () => {
+      const forceCloseMessage = {
+        dst: connection.remoteId,
+        connectionId: connection.id,
+      };
+
+      this.socket.send(
+        config.MESSAGE_TYPES.CLIENT.SEND_FORCE_CLOSE.key,
+        forceCloseMessage
       );
     });
   }

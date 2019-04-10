@@ -278,8 +278,8 @@ class DataConnection extends Connection {
    * Disconnect from remote peer.
    * @fires DataConnection#close
    */
-  close() {
-    super.close();
+  close(forceClose) {
+    super.close(forceClose);
 
     this._isOnOpenCalled = false;
   }
