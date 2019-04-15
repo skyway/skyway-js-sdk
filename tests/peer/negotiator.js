@@ -15,7 +15,6 @@ describe('Negotiator', () => {
   });
 
   describe('startConnection', () => {
-    let newPcStub;
     let pcStub;
     let addTrackSpy;
     let createDCSpy;
@@ -25,14 +24,12 @@ describe('Negotiator', () => {
     let setRemoteDescStub;
 
     beforeEach(() => {
-      newPcStub = sinon.stub();
       addTrackSpy = sinon.spy();
       createDCSpy = sinon.spy();
       pcStub = {
         addTrack: addTrackSpy,
         createDataChannel: createDCSpy,
       };
-      newPcStub.returns(pcStub);
 
       negotiator = new Negotiator();
       handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
@@ -43,7 +40,6 @@ describe('Negotiator', () => {
     });
 
     afterEach(() => {
-      newPcStub.reset();
       addTrackSpy.resetHistory();
       createDCSpy.resetHistory();
       handleOfferSpy.resetHistory();
