@@ -380,12 +380,30 @@ describe('MediaConnection', () => {
   });
 
   describe('getStats', () => {
-    it('should call RTCPeerConneciton.getStats', () => {
+    it('should call RTCPeerConneciton.getStats upon called with false', async () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
 
-      mc.getStats();
+      await mc.getStats(false);
 
       assert(getStatsSpy.calledOnce);
+    });
+
+    it('should call track-specific getStats upon called with true', async () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      const transceiverStub = sinon.stub();
+      const getStatsStub = sinon.stub();
+      getStatsStub.returns(new Map()); // getStats returns a maplike object
+
+      transceiverStub.returns([{ getStats: getStatsStub }]);
+      mc._negotiator._pc = {
+        getReceivers: transceiverStub,
+        getSenders: transceiverStub,
+      };
+
+      await mc.getStats(true);
+
+      // call getStats about a receiver and a sender in this case.
+      assert(getStatsStub.calledTwice);
     });
   });
 
