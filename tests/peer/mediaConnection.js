@@ -17,6 +17,7 @@ describe('MediaConnection', () => {
   let answerSpy;
   let candidateSpy;
   let replaceSpy;
+  let getStatsSpy;
 
   beforeEach(() => {
     stub = sinon.stub();
@@ -25,6 +26,7 @@ describe('MediaConnection', () => {
     answerSpy = sinon.spy();
     candidateSpy = sinon.spy();
     replaceSpy = sinon.spy();
+    getStatsSpy = sinon.spy();
 
     stub.returns({
       on: function(event, callback) {
@@ -39,6 +41,9 @@ describe('MediaConnection', () => {
       handleCandidate: candidateSpy,
       replaceStream: replaceSpy,
       setRemoteBrowser: sinon.spy(),
+      _pc: {
+        getStats: getStatsSpy,
+      },
     });
     // hoist statics
     stub.EVENTS = Negotiator.EVENTS;
@@ -54,6 +59,7 @@ describe('MediaConnection', () => {
     answerSpy.resetHistory();
     candidateSpy.resetHistory();
     replaceSpy.resetHistory();
+    getStatsSpy.resetHistory();
   });
 
   describe('Constructor', () => {
@@ -370,6 +376,16 @@ describe('MediaConnection', () => {
       assert.deepEqual(mc._queuedMessages, [message1, message2]);
       assert(answerSpy.called === false);
       assert(candidateSpy.called === false);
+    });
+  });
+
+  describe('getStats', () => {
+    it('should call RTCPeerConneciton.getStats', () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+
+      mc.getStats();
+
+      assert(getStatsSpy.calledOnce);
     });
   });
 

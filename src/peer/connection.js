@@ -136,6 +136,14 @@ class Connection extends EventEmitter {
   }
 
   /**
+   * Gives a promise which resolves with data providing statistics about either
+   * the overall of RTCPeerConnection.
+   */
+  async getStats() {
+    return this._negotiator._pc.getStats();
+  }
+
+  /**
    * Process messages received before the RTCPeerConnection is ready.
    * @private
    */
