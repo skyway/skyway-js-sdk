@@ -141,6 +141,10 @@ class Connection extends EventEmitter {
    * @param {boolean} [inUse=true] - Set to true and it gives statistics only in use by the connection.
    */
   async getStats(inUse = true) {
+    if (!this.open) {
+      return null;
+    }
+
     if (!inUse) {
       return this._negotiator._pc.getStats();
     }
