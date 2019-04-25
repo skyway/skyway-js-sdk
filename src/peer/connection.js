@@ -136,40 +136,13 @@ class Connection extends EventEmitter {
   }
 
   /**
-   * Gives a promise which resolves with data providing statistics about either
-   * the overall of RTCPeerConnection or only using in the connection.
-   * @param {boolean} [inUse=true] - Set to true and it gives statistics only in use by the connection.
+   * Gives a RTCPeerConnection.
    */
-  async getStats(inUse = true) {
+  getPeerConnection() {
     if (!this.open) {
       return null;
     }
-
-    if (!inUse) {
-      return this._negotiator._pc.getStats();
-    }
-
-    const inUseStats = new Map();
-
-    const receivers = this._negotiator._pc.getReceivers();
-    for (const receiver of receivers) {
-      const stats = await receiver.getStats();
-
-      for (const [key, value] of stats.entries()) {
-        inUseStats.set(key, value);
-      }
-    }
-
-    const senders = this._negotiator._pc.getSenders();
-    for (const sender of senders) {
-      const stats = await sender.getStats();
-
-      for (const [key, value] of stats.entries()) {
-        inUseStats.set(key, value);
-      }
-    }
-
-    return inUseStats;
+    return this._negotiator._pc;
   }
 
   /**
