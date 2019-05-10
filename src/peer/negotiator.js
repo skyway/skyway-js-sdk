@@ -112,8 +112,12 @@ class Negotiator extends EventEmitter {
     const aTracks = newStream.getAudioTracks();
 
     const senders = this._pc.getSenders();
-    const vSender = senders.find(sender => sender.track.kind === 'video');
-    const aSender = senders.find(sender => sender.track.kind === 'audio');
+    const vSender = senders.find(
+      sender => sender.track && sender.track.kind === 'video'
+    );
+    const aSender = senders.find(
+      sender => sender.track && sender.track.kind === 'audio'
+    );
 
     _updateSenderWithTrack(vSender, vTracks[0], newStream);
     _updateSenderWithTrack(aSender, aTracks[0], newStream);
