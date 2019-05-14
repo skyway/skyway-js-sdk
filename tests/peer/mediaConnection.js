@@ -17,7 +17,6 @@ describe('MediaConnection', () => {
   let answerSpy;
   let candidateSpy;
   let replaceSpy;
-  let getStatsSpy;
 
   beforeEach(() => {
     stub = sinon.stub();
@@ -26,7 +25,6 @@ describe('MediaConnection', () => {
     answerSpy = sinon.spy();
     candidateSpy = sinon.spy();
     replaceSpy = sinon.spy();
-    getStatsSpy = sinon.spy();
 
     stub.returns({
       on: function(event, callback) {
@@ -41,9 +39,6 @@ describe('MediaConnection', () => {
       handleCandidate: candidateSpy,
       replaceStream: replaceSpy,
       setRemoteBrowser: sinon.spy(),
-      _pc: {
-        getStats: getStatsSpy,
-      },
     });
     // hoist statics
     stub.EVENTS = Negotiator.EVENTS;
@@ -59,7 +54,6 @@ describe('MediaConnection', () => {
     answerSpy.resetHistory();
     candidateSpy.resetHistory();
     replaceSpy.resetHistory();
-    getStatsSpy.resetHistory();
   });
 
   describe('Constructor', () => {
@@ -379,31 +373,25 @@ describe('MediaConnection', () => {
     });
   });
 
-  describe('getStats', () => {
-    it('should call RTCPeerConneciton.getStats upon called with false', async () => {
+  describe('getPeerConnection', () => {
+    it('should return null when Connection status is not open', async () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
+      mc._negotiator._pc = {};
+      mc.open = false;
 
-      await mc.getStats(false);
+      const pc = mc.getPeerConnection();
 
-      assert(getStatsSpy.calledOnce);
+      assert.equal(pc, null);
     });
 
-    it('should call track-specific getStats upon called with true', async () => {
+    it('should return RTCPeerConnection object when Connection status is open', async () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
-      const transceiverStub = sinon.stub();
-      const getStatsStub = sinon.stub();
-      getStatsStub.returns(new Map()); // getStats returns a maplike object
+      mc._negotiator._pc = {};
+      mc.open = true;
 
-      transceiverStub.returns([{ getStats: getStatsStub }]);
-      mc._negotiator._pc = {
-        getReceivers: transceiverStub,
-        getSenders: transceiverStub,
-      };
+      const pc = await mc.getPeerConnection();
 
-      await mc.getStats(true);
-
-      // call getStats about a receiver and a sender in this case.
-      assert(getStatsStub.calledTwice);
+      assert.deepEqual(pc, {});
     });
   });
 
