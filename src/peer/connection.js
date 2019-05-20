@@ -6,7 +6,13 @@ import util from '../shared/util';
 import logger from '../shared/logger';
 import config from '../shared/config';
 
-const ConnectionEvents = new Enum(['candidate', 'offer', 'answer', 'close']);
+const ConnectionEvents = new Enum([
+  'candidate',
+  'offer',
+  'answer',
+  'close',
+  'forceClose',
+]);
 
 /**
  * Class that manages connections to other peers.
@@ -78,7 +84,6 @@ class Connection extends EventEmitter {
   async handleAnswer(answerMessage) {
     if (this._pcAvailable) {
       await this._negotiator.handleAnswer(answerMessage.answer);
-      this._negotiator.setRemoteBrowser(answerMessage.browser);
       this.open = true;
       this._handleQueuedMessages();
     } else {
@@ -162,13 +167,18 @@ class Connection extends EventEmitter {
    * Disconnect from remote peer.
    * @fires Connection#close
    */
-  close() {
+  close(forceClose = false) {
     if (!this.open) {
       return;
     }
+
     this.open = false;
     this._negotiator.cleanup();
     this.emit(Connection.EVENTS.close.key);
+
+    if (forceClose) {
+      this.emit(Connection.EVENTS.forceClose.key);
+    }
   }
 
   /**
@@ -176,14 +186,12 @@ class Connection extends EventEmitter {
    * @private
    */
   _setupNegotiatorMessageHandlers() {
-    const browserInfo = util.detectBrowser();
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
       const connectionAnswer = {
         answer: answer,
         dst: this.remoteId,
         connectionId: this.id,
         connectionType: this.type,
-        browser: browserInfo,
       };
       this.emit(Connection.EVENTS.answer.key, connectionAnswer);
     });
@@ -195,7 +203,6 @@ class Connection extends EventEmitter {
         connectionId: this.id,
         connectionType: this.type,
         metadata: this.metadata,
-        browser: browserInfo,
       };
       if (this.serialization) {
         connectionOffer.serialization = this.serialization;
@@ -285,6 +292,12 @@ class Connection extends EventEmitter {
    * Connection closed event.
    *
    * @event Connection#close
+   */
+
+  /**
+   * Requested to close the connection.
+   *
+   * @event Connection#forceClose
    */
 }
 

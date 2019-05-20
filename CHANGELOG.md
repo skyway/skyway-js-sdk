@@ -1,5 +1,19 @@
 # Changelog
 
+## [v1.3.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.3.0) - 2019-05-21
+
+### Added
+
+- Add an option when calling Connection.close to signal intention to disconnection to the remote peer instantly.
+
+### Fixed
+
+- Fix a bug of `replaceStream` with the audio OR video only stream (mentioned in #172)
+
+#### Internally changed
+
+- Changed to not to use the part of legacy stream-based API internally.
+
 ## [v1.2.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.2.0) - 2019-04-09
 
 ### Added

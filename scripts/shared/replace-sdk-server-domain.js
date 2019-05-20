@@ -3,7 +3,7 @@ const replace = require('replace-in-file');
 module.exports = async function replaceSdkServerDomain(domain) {
   const changes = await replace({
     files: './dist/*.js',
-    from: 'webrtc.ecl.ntt.com',
+    from: /webrtc\.ecl\.ntt\.com/g,
     to: domain,
   });
 
