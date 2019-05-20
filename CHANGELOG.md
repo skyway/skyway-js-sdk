@@ -4,7 +4,7 @@
 
 ### Added
 
-- Add an option when call `Connection.close` to signal to the remote peer to be disconnected instantly.
+- Add an option when calling Connection.close to signal intention to disconnection to the remote peer instantly.
 
 ### Fixed
 
