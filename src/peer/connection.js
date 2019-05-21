@@ -136,6 +136,16 @@ class Connection extends EventEmitter {
   }
 
   /**
+   * Gives a RTCPeerConnection.
+   */
+  getPeerConnection() {
+    if (!this.open) {
+      return null;
+    }
+    return this._negotiator._pc;
+  }
+
+  /**
    * Process messages received before the RTCPeerConnection is ready.
    * @private
    */
