@@ -1,5 +1,15 @@
 # Changelog
 
+## [v1.4.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.4.0) - 2019-05-28
+
+### Added
+
+- Add APIs to get an RTCPeerConnection that used in `MediaConnection` and `DataConnection`.
+
+### Fixed
+
+- Fix the error on parsing SDP in unified-plan iOS.
+
 ## [v1.3.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.3.0) - 2019-05-21
 
 ### Added
