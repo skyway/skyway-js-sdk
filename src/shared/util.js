@@ -108,7 +108,7 @@ function isUnifiedPlanSafari() {
   const { name, major, minor } = detectBrowser();
 
   if (
-    name === 'safari' &&
+    (name === 'safari' || name === 'ios') &&
     (major >= 12 && minor >= 1) &&
     RTCRtpTransceiver.prototype.hasOwnProperty('currentDirection')
   ) {

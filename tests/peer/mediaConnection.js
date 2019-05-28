@@ -373,6 +373,28 @@ describe('MediaConnection', () => {
     });
   });
 
+  describe('getPeerConnection', () => {
+    it('should return null when Connection status is not open', async () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      mc._negotiator._pc = {};
+      mc.open = false;
+
+      const pc = mc.getPeerConnection();
+
+      assert.equal(pc, null);
+    });
+
+    it('should return RTCPeerConnection object when Connection status is open', async () => {
+      const mc = new MediaConnection('remoteId', { stream: {} });
+      mc._negotiator._pc = {};
+      mc.open = true;
+
+      const pc = await mc.getPeerConnection();
+
+      assert.deepEqual(pc, {});
+    });
+  });
+
   describe('Cleanup', () => {
     it('should close the socket and call the negotiator to cleanup on close()', () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
