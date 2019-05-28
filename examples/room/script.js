@@ -20,6 +20,7 @@ const Peer = window.Peer;
   // Render local stream
   localVideo.muted = true;
   localVideo.srcObject = localStream;
+  localVideo.playsInline = true;
   await localVideo.play().catch(console.error);
 
   const peer = new Peer({
