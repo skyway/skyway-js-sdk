@@ -141,6 +141,16 @@ describe('Peer', () => {
       assert.equal(peer.options.turn, true);
     });
 
+    it('should not override options.token', () => {
+      const peer = new Peer({
+        key: apiKey,
+        token: 'hoge',
+      });
+
+      // token is random value
+      assert.notEqual(peer.options.token, 'hoge');
+    });
+
     describe('Signaling server options', () => {
       describe('when host option is provided', () => {
         it('should create Peer object with provided host', () => {
