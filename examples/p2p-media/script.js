@@ -18,6 +18,7 @@ const Peer = window.Peer;
   // Render local stream
   localVideo.muted = true;
   localVideo.srcObject = localStream;
+  localVideo.playsInline = true;
   await localVideo.play().catch(console.error);
 
   const peer = new Peer({
@@ -38,6 +39,7 @@ const Peer = window.Peer;
     mediaConnection.on('stream', async stream => {
       // Render remote stream for caller
       remoteVideo.srcObject = stream;
+      remoteVideo.playsInline = true;
       await remoteVideo.play().catch(console.error);
     });
 
@@ -58,6 +60,7 @@ const Peer = window.Peer;
     mediaConnection.on('stream', async stream => {
       // Render remote stream for callee
       remoteVideo.srcObject = stream;
+      remoteVideo.playsInline = true;
       await remoteVideo.play().catch(console.error);
     });
 
