@@ -347,10 +347,7 @@ class Negotiator extends EventEmitter {
     let offer;
 
     try {
-      // DataConnection
-      if (this._type !== 'media') {
-        offer = await this._pc.createOffer();
-      }
+      offer = await this._pc.createOffer();
     } catch (err) {
       err.type = 'webrtc';
       logger.error(err);
