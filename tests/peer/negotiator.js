@@ -685,7 +685,6 @@ describe('Negotiator', () => {
       assert.equal(typeof pc.onicecandidate, 'function');
       assert.equal(typeof pc.oniceconnectionstatechange, 'function');
       assert.equal(typeof pc.onnegotiationneeded, 'function');
-      assert.equal(typeof pc.onremovestream, 'function');
       assert.equal(typeof pc.onsignalingstatechange, 'function');
     });
 
@@ -842,33 +841,6 @@ describe('Negotiator', () => {
               setTimeout(done);
             });
           });
-        });
-      });
-
-      describe('onremovestream', () => {
-        const evt = { stream: 'stream' };
-        let logSpy;
-
-        beforeEach(() => {
-          logSpy = sinon.spy(logger, 'log');
-        });
-
-        afterEach(() => {
-          logSpy.restore();
-        });
-
-        it('should log the event', () => {
-          pc.onremovestream(evt);
-          logSpy.calledWith('`removestream` triggered');
-        });
-
-        it("should emit 'removeStream'", done => {
-          negotiator.on(Negotiator.EVENTS.removeStream.key, stream => {
-            assert.equal(stream, evt.stream);
-            done();
-          });
-
-          pc.onremovestream(evt);
         });
       });
     });
