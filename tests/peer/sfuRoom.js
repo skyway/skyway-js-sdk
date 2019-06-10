@@ -191,7 +191,7 @@ describe('SFURoom', () => {
 
       describe('answerCreated', () => {
         it('should emit an answer message event', done => {
-          const answer = {};
+          const answer = { type: 'answer', sdp: 'v=0' };
           sfuRoom.on(SFURoom.MESSAGE_EVENTS.answer.key, answerMessage => {
             assert.equal(answerMessage.roomName, sfuRoomName);
             assert.equal(answerMessage.answer, answer);
