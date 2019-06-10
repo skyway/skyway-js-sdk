@@ -97,7 +97,7 @@ class SdpUtil {
    * @param {string} sdp - A SDP.
    * @return {string} A SDP which has `a=msid-semantic:WMS *`.
    */
-  pretendUnifiedPlan(sdp) {
+  ensureUnifiedPlan(sdp) {
     const delimiter = '\r\n';
     return sdp
       .split(delimiter)

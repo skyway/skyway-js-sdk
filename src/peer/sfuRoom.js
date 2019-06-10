@@ -145,10 +145,11 @@ class SFURoom extends Room {
     });
 
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
-      // If we specify sdpSemantics: unified-plan in Chrome, need to add Chrome here
-      // or fix some lines to ensure SDP to be recognized by SFU.
-      if (util.isUnifiedPlanSafari()) {
-        answer.sdp = sdpUtil.pretendUnifiedPlan(answer.sdp);
+      // If we use unified-plan SDP and send it to our SFU,
+      // of course it must be treated as unified-plan SDP too.
+      // We need to ensure it for some reason.(see its implementation)
+      if (!util.isPlanBSafari()) {
+        answer.sdp = sdpUtil.ensureUnifiedPlan(answer.sdp);
       }
 
       const answerMessage = {
