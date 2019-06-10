@@ -3,7 +3,6 @@ import Enum from 'enum';
 
 import sdpUtil from '../shared/sdpUtil';
 import logger from '../shared/logger';
-import util from '../shared/util';
 
 const NegotiatorEvents = new Enum([
   'addStream',
@@ -57,7 +56,7 @@ class Negotiator extends EventEmitter {
    * @return {Promise<void>} Promise that resolves when starting is done.
    */
   async startConnection(options = {}) {
-    this._pc = this._createPeerConnection(options.pcConfig);
+    this._pc = new RTCPeerConnection(options.pcConfig);
     this._setupPCListeners();
     this.originator = options.originator;
     this._audioBandwidth = options.audioBandwidth;
@@ -65,7 +64,6 @@ class Negotiator extends EventEmitter {
     this._audioCodec = options.audioCodec;
     this._videoCodec = options.videoCodec;
     this._type = options.type;
-    this._recvonlyState = this._getReceiveOnlyState(options);
 
     if (this._type === 'media') {
       if (options.stream) {
@@ -74,8 +72,11 @@ class Negotiator extends EventEmitter {
         });
       } else if (this.originator) {
         // This means the peer wants to create offer SDP with `recvonly`
-        const offer = await this._makeOfferSdp();
-        await this._setLocalDescription(offer);
+        const recvonlyState = this._getReceiveOnlyState(options);
+        recvonlyState.audio &&
+          this._pc.addTransceiver('audio', { direction: 'recvonly' });
+        recvonlyState.video &&
+          this._pc.addTransceiver('video', { direction: 'recvonly' });
       }
     }
 
@@ -226,28 +227,6 @@ class Negotiator extends EventEmitter {
   }
 
   /**
-   * Create new RTCPeerConnection.
-   * @param {object} pcConfig - A RTCConfiguration dictionary for the RTCPeerConnection.
-   * @return {RTCPeerConnection} An instance of RTCPeerConnection.
-   * @private
-   */
-  _createPeerConnection(pcConfig = {}) {
-    logger.log('Creating RTCPeerConnection');
-
-    const browserInfo = util.detectBrowser();
-
-    // If browser is Chrome and over 69, it has addTransceiver but does not work without unified-plan option.
-    // SkyWay has not supported unified-plan.
-    this._isAddTransceiverAvailable =
-      typeof RTCPeerConnection.prototype.addTransceiver === 'function' &&
-      browserInfo.name !== 'chrome';
-
-    // Force plan-b for SFU, until we finish unified-plan support.
-    pcConfig.sdpSemantics = 'plan-b';
-    return new RTCPeerConnection(pcConfig);
-  }
-
-  /**
    * Set up event handlers of RTCPeerConnection events.
    * @private
    */
@@ -363,23 +342,6 @@ class Negotiator extends EventEmitter {
       // DataConnection
       if (this._type !== 'media') {
         offer = await this._pc.createOffer();
-        // MediaConnection
-      } else {
-        if (this._isAddTransceiverAvailable) {
-          this._recvonlyState.audio &&
-            this._pc.addTransceiver('audio', { direction: 'recvonly' });
-          this._recvonlyState.video &&
-            this._pc.addTransceiver('video', { direction: 'recvonly' });
-          offer = await this._pc.createOffer();
-        } else {
-          const offerOptions = {};
-          // the offerToReceiveXXX options are defined in the specs as boolean but `undefined` acts differently from false
-          this._recvonlyState.audio &&
-            (offerOptions.offerToReceiveAudio = true);
-          this._recvonlyState.video &&
-            (offerOptions.offerToReceiveVideo = true);
-          offer = await this._pc.createOffer(offerOptions);
-        }
       }
     } catch (err) {
       err.type = 'webrtc';
