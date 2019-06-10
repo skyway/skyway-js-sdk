@@ -18,6 +18,7 @@ describe('Negotiator', () => {
     let newPcStub;
     let pcStub;
     let addTrackSpy;
+    let addTransceiverSpy;
     let createDCSpy;
     let negotiator;
     let handleOfferSpy;
@@ -27,9 +28,11 @@ describe('Negotiator', () => {
     beforeEach(() => {
       newPcStub = sinon.stub();
       addTrackSpy = sinon.spy();
+      addTransceiverSpy = sinon.spy();
       createDCSpy = sinon.spy();
       pcStub = {
         addTrack: addTrackSpy,
+        addTransceiver: addTransceiverSpy,
         createDataChannel: createDCSpy,
       };
       newPcStub.returns(pcStub);
@@ -45,6 +48,7 @@ describe('Negotiator', () => {
     afterEach(() => {
       newPcStub.reset();
       addTrackSpy.resetHistory();
+      addTransceiverSpy.resetHistory();
       createDCSpy.resetHistory();
       handleOfferSpy.resetHistory();
       setRemoteDescStub.restore();
@@ -86,20 +90,19 @@ describe('Negotiator', () => {
           assert.equal(handleOfferSpy.callCount, 0);
         });
 
-        it('should call _makeOfferSdp when stream does not exist', () => {
-          const makeOfferStub = sinon.stub(negotiator, '_makeOfferSdp');
-          makeOfferStub.returns(Promise.resolve('offer'));
-
+        it('should call pc.addTransceiver when stream does not exist', () => {
           const options = {
             type: 'media',
             originator: true,
             pcConfig: {},
           };
 
+          assert.equal(addTransceiverSpy.callCount, 0);
+
           negotiator.startConnection(options);
 
-          assert.equal(makeOfferStub.callCount, 1);
-          makeOfferStub.restore();
+          // video + audio = 2
+          assert.equal(addTransceiverSpy.callCount, 2);
         });
       });
 
