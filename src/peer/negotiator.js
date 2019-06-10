@@ -234,6 +234,8 @@ class Negotiator extends EventEmitter {
    */
   _createPeerConnection(pcConfig = {}) {
     logger.log('Creating RTCPeerConnection');
+    // prevent from user passing plan-b
+    pcConfig.sdpSemantics = 'unified-plan';
     return new RTCPeerConnection(pcConfig);
   }
 
