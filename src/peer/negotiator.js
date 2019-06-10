@@ -55,7 +55,7 @@ class Negotiator extends EventEmitter {
    * @return {Promise<void>} Promise that resolves when starting is done.
    */
   async startConnection(options = {}) {
-    this._pc = new RTCPeerConnection(options.pcConfig);
+    this._pc = this._createPeerConnection(options.pcConfig);
     this._setupPCListeners();
     this.originator = options.originator;
     this._audioBandwidth = options.audioBandwidth;
@@ -224,6 +224,17 @@ class Negotiator extends EventEmitter {
       this._pc.close();
     }
     this._pc = null;
+  }
+
+  /**
+   * Create new RTCPeerConnection.
+   * @param {object} pcConfig - A RTCConfiguration dictionary for the RTCPeerConnection.
+   * @return {RTCPeerConnection} An instance of RTCPeerConnection.
+   * @private
+   */
+  _createPeerConnection(pcConfig = {}) {
+    logger.log('Creating RTCPeerConnection');
+    return new RTCPeerConnection(pcConfig);
   }
 
   /**
