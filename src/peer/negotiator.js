@@ -64,6 +64,7 @@ class Negotiator extends EventEmitter {
     this._videoCodec = options.videoCodec;
     this._type = options.type;
 
+    // Trigger negotiationneeded event
     if (this._type === 'media') {
       if (options.stream) {
         options.stream.getTracks().forEach(track => {
