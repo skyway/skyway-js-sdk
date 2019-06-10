@@ -74,17 +74,16 @@ class SFURoom extends Room {
      * Our SFU returns unified-plan SDP.
      * Our support browsers and sdp semantics relations are
      *
-     * Chrome: plan-b(controlled by us)
+     * Chrome: unified-plan
      * Firefox: unified-plan
      * Safari 12.1~: plan-b
      * Safari 12.1~: unified-plan(if user enables)
+     * Safari 12.1.1~: unified-plan
      *
-     * So we need to convert server offer SDP if it in case.
+     * So we need to convert server offer SDP for plan-b Safari
      * We don't need to convert the answer back to Unified Plan because the server can handle Plan B.
      */
-    const browserInfo = util.detectBrowser();
-    // Means Chrome or Safari(plan-b)
-    if (!(browserInfo.name === 'firefox' || util.isUnifiedPlanSafari())) {
+    if (util.isPlanBSafari()) {
       offer = sdpUtil.unifiedToPlanB(offer);
     }
 
