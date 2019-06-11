@@ -102,20 +102,21 @@ function detectBrowser() {
  * It depends on user settings.
  * See https://webkit.org/blog/8672/on-the-road-to-webrtc-1-0-including-vp8/
  *
- * @return {boolean} Browser is Safari 12.1 or later and enables unified-plan OR NOT
+ * @return {boolean} Browser is plan-b Safari or NOT
  */
-function isUnifiedPlanSafari() {
-  const { name, major, minor } = detectBrowser();
+function isPlanBSafari() {
+  const { name } = detect();
 
-  if (
-    (name === 'safari' || name === 'ios') &&
-    (major >= 12 && minor >= 1) &&
-    RTCRtpTransceiver.prototype.hasOwnProperty('currentDirection')
-  ) {
-    return true;
+  // safari for macOS, ios for iOS
+  if (!(name === 'safari' || name === 'ios')) {
+    return false;
+  }
+  // supports unified-plan
+  if (RTCRtpTransceiver.prototype.hasOwnProperty('currentDirection')) {
+    return false;
   }
 
-  return false;
+  return true;
 }
 
 export default {
@@ -127,5 +128,5 @@ export default {
   blobToArrayBuffer,
   isSecure,
   detectBrowser,
-  isUnifiedPlanSafari,
+  isPlanBSafari,
 };

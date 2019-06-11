@@ -74,17 +74,16 @@ class SFURoom extends Room {
      * Our SFU returns unified-plan SDP.
      * Our support browsers and sdp semantics relations are
      *
-     * Chrome: plan-b(controlled by us)
+     * Chrome: unified-plan
      * Firefox: unified-plan
      * Safari 12.1~: plan-b
      * Safari 12.1~: unified-plan(if user enables)
+     * Safari 12.1.1~: unified-plan
      *
-     * So we need to convert server offer SDP if it in case.
+     * So we need to convert server offer SDP for plan-b Safari
      * We don't need to convert the answer back to Unified Plan because the server can handle Plan B.
      */
-    const browserInfo = util.detectBrowser();
-    // Means Chrome or Safari(plan-b)
-    if (!(browserInfo.name === 'firefox' || util.isUnifiedPlanSafari())) {
+    if (util.isPlanBSafari()) {
       offer = sdpUtil.unifiedToPlanB(offer);
     }
 
@@ -137,14 +136,6 @@ class SFURoom extends Room {
       }
     });
 
-    this._negotiator.on(Negotiator.EVENTS.removeStream.key, stream => {
-      delete this.remoteStreams[stream.id];
-      delete this._msidMap[stream.id];
-      delete this._unknownStreams[stream.id];
-
-      this.emit(SFURoom.EVENTS.removeStream.key, stream);
-    });
-
     this._negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
       // Renegotiate by requesting an offer then sending an answer when one is created.
       const offerRequestMessage = {
@@ -154,10 +145,11 @@ class SFURoom extends Room {
     });
 
     this._negotiator.on(Negotiator.EVENTS.answerCreated.key, answer => {
-      // If we specify sdpSemantics: unified-plan in Chrome, need to add Chrome here
-      // or fix some lines to ensure SDP to be recognized by SFU.
-      if (util.isUnifiedPlanSafari()) {
-        answer.sdp = sdpUtil.pretendUnifiedPlan(answer.sdp);
+      // If we use unified-plan SDP and send it to our SFU,
+      // of course it must be treated as unified-plan SDP too.
+      // We need to ensure it for some reason.(see its implementation)
+      if (!util.isPlanBSafari()) {
+        answer.sdp = sdpUtil.ensureUnifiedPlan(answer.sdp);
       }
 
       const answerMessage = {
@@ -225,6 +217,8 @@ class SFURoom extends Room {
     for (const msid in this.remoteStreams) {
       if (this.remoteStreams[msid].peerId === src) {
         delete this.remoteStreams[msid];
+        delete this._msidMap[msid];
+        delete this._unknownStreams[msid];
       }
     }
 
