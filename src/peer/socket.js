@@ -185,7 +185,7 @@ class Socket extends EventEmitter {
       http.ontimeout = () => {
         reject(
           new Error(
-            'The request for the dispatcher timed out. Check your firewall, network speed, Skyway failure information'
+            'The request for the dispatcher timed out. Check your firewall, network speed, SkyWay failure information'
           )
         );
       };
@@ -195,6 +195,7 @@ class Socket extends EventEmitter {
           reject(
             new Error('Connection failed. Invalid response: ' + http.status)
           );
+          return;
           //http.status = 200
         } else {
           //fetch valid JSON
