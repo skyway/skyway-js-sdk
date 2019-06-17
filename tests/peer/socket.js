@@ -514,7 +514,7 @@ describe('Socket', () => {
           error: {
             code: 500,
             message:
-              'There was a problem with the server. Please wait a while and try again.',
+              'Connection failed. Invalid response: 500',
           },
         };
 
@@ -528,7 +528,7 @@ describe('Socket', () => {
             assert(err);
             assert.equal(
               err.message,
-              'There was a problem with the server. Please wait a while and try again.'
+              'Connection failed. Invalid response: 500'
             );
             done();
           });
@@ -539,7 +539,7 @@ describe('Socket', () => {
 
     describe('when status code from dispatcher is 404', () => {
       it('should reject', done => {
-        const result = { error: { code: 404, message: 'Not Found.' } };
+        const result = { error: { code: 404, message: 'Connection failed. Invalid response: 404' } };
 
         socket
           ._getSignalingServer()
@@ -549,7 +549,7 @@ describe('Socket', () => {
           })
           .catch(err => {
             assert(err);
-            assert.equal(err.message, 'Not Found.');
+            assert.equal(err.message, 'Connection failed. Invalid response: 404');
             done();
           });
 
@@ -559,7 +559,7 @@ describe('Socket', () => {
 
     describe('when status code from dispatcher is 405', () => {
       it('should reject', done => {
-        const result = { error: { code: 405, message: 'Method Not Allowed.' } };
+        const result = { error: { code: 405, message: 'Connection failed. Invalid response: 405' } };
 
         socket
           ._getSignalingServer()
@@ -569,7 +569,7 @@ describe('Socket', () => {
           })
           .catch(err => {
             assert(err);
-            assert.equal(err.message, 'Method Not Allowed.');
+            assert.equal(err.message, 'Connection failed. Invalid response: 405');
             done();
           });
 
