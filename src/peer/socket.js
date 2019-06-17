@@ -219,6 +219,7 @@ class Socket extends EventEmitter {
                 'The dispatcher server returned an invalid JSON response.'
               )
             );
+            return;
           }
         }
       };
