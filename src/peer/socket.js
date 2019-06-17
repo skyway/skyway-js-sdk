@@ -169,58 +169,52 @@ class Socket extends EventEmitter {
 
       http.timeout = config.DISPATCHER_TIMEOUT;
       http.open('GET', this._dispatcherUrl, true);
-
       /* istanbul ignore next */
-      http.onerror = () => {
-        reject(new Error('There was a problem with the dispatcher.'));
+      http.onerror = (evt) => {
+        reject(new Error('There was a problem with the request for the dispatcher. Check your request and network connections.'));
       };
 
       http.onabort = () => {
-        reject(new Error('The request was aborted.'));
+        reject(new Error('The request for the dispatcher was aborted.'));
       };
 
       http.ontimeout = () => {
-        reject(new Error('The request for the dispather timed out.'));
+        reject(new Error('The request for the dispatcher timed out. Check your firewall, network speed, Skyway failure information'));
       };
-
-      http.onreadystatechange = () => {
-        if (http.readyState !== 4) {
-          return;
-        }
-
-        // maybe aborted or something
-        if (http.status === 0) {
-          reject(new Error('There was a problem with the dispatcher.'));
-          return;
-        }
-
+      http.onload = () => {
         let res = null;
-        try {
-          res = JSON.parse(http.responseText);
-        } catch (err) {
+        if (http.status !== 200){
           reject(
             new Error(
-              'The dispatcher server returned an invalid JSON response.'
+              'Connection failed. Invalid response: ' + http.status
             )
           );
-          return;
-        }
-
-        if (http.status === 200) {
-          if (res && res.domain) {
-            resolve({ host: res.domain, port: 443, secure: true });
-            return;
+        //http.status = 200
+        }else{
+          //fetch valid JSON
+          try{
+            res = JSON.parse(http.responseText);
+            if (res && res.domain) {
+              resolve({ host: res.domain, port: 443, secure: true });
+                return;
+            }else{
+              reject(
+                new Error(
+                  'The dispatcher server returned an invalid JSON response. have no signaling server domain in JSON.'
+                )
+              )
+              return;
+            }
+          //fetch invalid JSON
+          }catch(err){
+            reject(
+              new Error(
+                'The dispatcher server returned an invalid JSON response.'
+              )
+            );
           }
         }
-
-        if (res.error && res.error.message) {
-          const message = res.error.message;
-          reject(new Error(message));
-        } else {
-          reject(new Error('There was a problem with the dispatcher.'));
-        }
-      };
-
+      }
       http.send(null);
     });
   }
