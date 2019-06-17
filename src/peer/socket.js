@@ -171,7 +171,11 @@ class Socket extends EventEmitter {
       http.open('GET', this._dispatcherUrl, true);
       /* istanbul ignore next */
       http.onerror = () => {
-        reject(new Error('There was a problem with the request for the dispatcher. Check your request and network connections.'));
+        reject(
+          new Error(
+            'There was a problem with the request for the dispatcher. Check your request and network connections.'
+          )
+        );
       };
 
       http.onabort = () => {
@@ -179,34 +183,36 @@ class Socket extends EventEmitter {
       };
 
       http.ontimeout = () => {
-        reject(new Error('The request for the dispatcher timed out. Check your firewall, network speed, Skyway failure information'));
+        reject(
+          new Error(
+            'The request for the dispatcher timed out. Check your firewall, network speed, Skyway failure information'
+          )
+        );
       };
       http.onload = () => {
         let res = null;
-        if (http.status !== 200){
+        if (http.status !== 200) {
           reject(
-            new Error(
-              'Connection failed. Invalid response: ' + http.status
-            )
+            new Error('Connection failed. Invalid response: ' + http.status)
           );
-        //http.status = 200
-        }else{
+          //http.status = 200
+        } else {
           //fetch valid JSON
-          try{
+          try {
             res = JSON.parse(http.responseText);
             if (res && res.domain) {
               resolve({ host: res.domain, port: 443, secure: true });
-                return;
-            }else{
+              return;
+            } else {
               reject(
                 new Error(
                   'The dispatcher server returned an invalid JSON response. have no signaling server domain in JSON.'
                 )
-              )
+              );
               return;
             }
-          //fetch invalid JSON
-          }catch(err){
+            //fetch invalid JSON
+          } catch (err) {
             reject(
               new Error(
                 'The dispatcher server returned an invalid JSON response.'
@@ -214,7 +220,7 @@ class Socket extends EventEmitter {
             );
           }
         }
-      }
+      };
       http.send(null);
     });
   }
