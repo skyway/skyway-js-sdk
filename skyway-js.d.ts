@@ -5,7 +5,7 @@
 /// <reference types="node" />
 import { EventEmitter } from "events";
 
-// none | error | warn | full
+// 0: none | 1: error | 2: warn | 3: full
 type LogLevel = 0 | 1 | 2 | 3;
 type DataConnectionSerialization = "binary" | "json" | "none";
 
@@ -79,7 +79,6 @@ declare class Connection extends EventEmitter {
   type: string;
   metadata: any;
   remoteId: string;
-
   id: string;
 
   getPeerConnection(): RTCPeerConnection | null;
@@ -186,16 +185,14 @@ export declare class SfuRoom extends Room {
 }
 
 declare class Peer extends EventEmitter {
-  // props
+  id: string;
   connections: {
     [peerId: string]: MediaConnection[] | DataConnection[];
   };
-  id: string;
   rooms: {
     [roomName: string]: MeshRoom | SfuRoom;
   };
   options: PeerOptions;
-
   open: boolean;
 
   constructor(peerId: string, options: PeerInit);
