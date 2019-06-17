@@ -170,7 +170,7 @@ class Socket extends EventEmitter {
       http.timeout = config.DISPATCHER_TIMEOUT;
       http.open('GET', this._dispatcherUrl, true);
       /* istanbul ignore next */
-      http.onerror = (evt) => {
+      http.onerror = () => {
         reject(new Error('There was a problem with the request for the dispatcher. Check your request and network connections.'));
       };
 
