@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 
 // 0: none | 1: error | 2: warn | 3: full
 type LogLevel = 0 | 1 | 2 | 3;
-type DataConnectionSerialization = "binary" | "json" | "none";
+type DataConnectionSerialization = "binary" | "binary-utf8" | "json" | "none";
 
 export interface PeerCredential {
   timestamp: number;
@@ -219,7 +219,7 @@ declare class Peer extends EventEmitter {
   ): T | null;
   updateCredential(credential: PeerCredential): void;
 
-  on(event: "open", listener: () => void): this;
+  on(event: "open", listener: (peerId: string) => void): this;
   on(event: "call", listener: (conn: MediaConnection) => void): this;
   on(event: "close", listener: () => void): this;
   on(event: "connection", listener: (conn: DataConnection) => void): this;
@@ -228,7 +228,7 @@ declare class Peer extends EventEmitter {
   on(event: "error", listener: (err: Error) => void): this;
   on(event: string, listener: Function): this;
 
-  once(event: "open", listener: () => void): this;
+  once(event: "open", listener: (peerId: string) => void): this;
   once(event: "call", listener: (conn: MediaConnection) => void): this;
   once(event: "close", listener: () => void): this;
   once(event: "connection", listener: (conn: DataConnection) => void): this;
