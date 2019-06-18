@@ -196,8 +196,6 @@ class Socket extends EventEmitter {
           );
           return;
         }
-        //when http.status === 200
-        //when fetch valid JSON
         try {
           const res = JSON.parse(http.responseText);
           if (res && res.domain) {
@@ -209,7 +207,6 @@ class Socket extends EventEmitter {
               'The dispatcher server returned an invalid JSON response. have no signaling server domain in JSON.'
             )
           );
-          //when fetch invalid JSON
         } catch (err) {
           reject(
             new Error(
