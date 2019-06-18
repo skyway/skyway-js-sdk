@@ -196,31 +196,29 @@ class Socket extends EventEmitter {
             new Error('Connection failed. Invalid response: ' + http.status)
           );
           return;
-          //http.status = 200
-        } else {
-          //fetch valid JSON
-          try {
-            res = JSON.parse(http.responseText);
-            if (res && res.domain) {
-              resolve({ host: res.domain, port: 443, secure: true });
-              return;
-            } else {
-              reject(
-                new Error(
-                  'The dispatcher server returned an invalid JSON response. have no signaling server domain in JSON.'
-                )
-              );
-              return;
-            }
-            //fetch invalid JSON
-          } catch (err) {
-            reject(
-              new Error(
-                'The dispatcher server returned an invalid JSON response.'
-              )
-            );
+        }
+        //http.status = 200
+        //fetch valid JSON
+        try {
+          res = JSON.parse(http.responseText);
+          if (res && res.domain) {
+            resolve({ host: res.domain, port: 443, secure: true });
             return;
           }
+          reject(
+            new Error(
+              'The dispatcher server returned an invalid JSON response. have no signaling server domain in JSON.'
+            )
+          );
+          return;
+          //fetch invalid JSON
+        } catch (err) {
+          reject(
+            new Error(
+              'The dispatcher server returned an invalid JSON response.'
+            )
+          );
+          return;
         }
       };
       http.send(null);
