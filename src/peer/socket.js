@@ -190,7 +190,6 @@ class Socket extends EventEmitter {
         );
       };
       http.onload = () => {
-        const res = null;
         if (http.status !== 200) {
           reject(
             new Error('Connection failed. Invalid response: ' + http.status)
@@ -198,9 +197,9 @@ class Socket extends EventEmitter {
           return;
         }
         //when http.status === 200
-        //fetch valid JSON
+        //when fetch valid JSON
         try {
-          res = JSON.parse(http.responseText);
+          const res = JSON.parse(http.responseText);
           if (res && res.domain) {
             resolve({ host: res.domain, port: 443, secure: true });
             return;
@@ -210,7 +209,7 @@ class Socket extends EventEmitter {
               'The dispatcher server returned an invalid JSON response. have no signaling server domain in JSON.'
             )
           );
-          //fetch invalid JSON
+          //when fetch invalid JSON
         } catch (err) {
           reject(
             new Error(
