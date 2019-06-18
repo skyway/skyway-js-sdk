@@ -15,7 +15,7 @@ export interface PeerCredential {
   authToken: string;
 }
 
-export interface PeerInit {
+export interface PeerConstructorOption {
   key: string;
   debug?: LogLevel;
   turn?: boolean;
@@ -26,17 +26,17 @@ export interface PeerInit {
   port?: number;
 }
 
-interface PeerOptions {
+interface PeerOption {
   // specified as default(and also overrode)
   debug: LogLevel;
   secure: boolean | undefined;
-  confGig: RTCConfiguration;
+  config: RTCConfiguration;
   turn: boolean;
   dispatcherSecure: boolean;
   dispatcherHost: string;
   dispatcherPort: number;
 
-  // overrode by PeerInit(passed by user)
+  // overrode by PeerConstructorOption(passed by user)
   key: string;
   credential?: PeerCredential;
   host?: string;
@@ -46,12 +46,12 @@ interface PeerOptions {
   token: string;
 }
 
-interface ConnectionInit {
+interface ConnectionOption {
   metadata?: any;
   connectionId?: string;
 }
 
-export interface MediaConnectionInit extends ConnectionInit {
+export interface CallOption extends ConnectionOption {
   videoBandwidth?: number;
   audioBandwidth?: number;
   videoCodec?: string;
@@ -60,12 +60,12 @@ export interface MediaConnectionInit extends ConnectionInit {
   audioReceiveEnabled?: boolean;
 }
 
-export interface DataConnectionInit extends ConnectionInit {
+export interface ConnectOption extends ConnectionOption {
   serialization?: DataConnectionSerialization;
   dcInit?: RTCDataChannelInit;
 }
 
-export interface MediaConnectionAnswerInit {
+export interface AnswerOption {
   videoBandwidth?: number;
   audioBandwidth?: number;
   videoCodec?: string;
@@ -89,7 +89,7 @@ export declare class MediaConnection extends Connection {
   type: "media";
   localStream: MediaStream;
 
-  answer(stream?: MediaStream, options?: MediaConnectionAnswerInit): void;
+  answer(stream?: MediaStream, options?: AnswerOption): void;
   replaceStream(stream: MediaStream): void;
 
   on(event: "stream", listener: (stream: MediaStream) => void): this;
@@ -124,7 +124,7 @@ export declare class DataConnection extends Connection {
   once(event: string, listener: Function): this;
 }
 
-interface RoomInit {
+interface RoomOption {
   mode?: "mesh" | "sfu";
   stream?: MediaStream;
   videoBandwidth?: number;
@@ -159,6 +159,7 @@ declare class Room extends EventEmitter {
   on(event: "stream", listener: (stream: RoomStream) => void): this;
   on(event: "data", listener: (data: RoomData) => void): this;
   on(event: "close", listener: () => void): this;
+  on(event: "error", listener: (err: Error) => void): this;
   on(event: string, listener: Function): this;
 
   once(event: "open", listener: () => void): this;
@@ -168,6 +169,7 @@ declare class Room extends EventEmitter {
   once(event: "stream", listener: (stream: RoomStream) => void): this;
   once(event: "data", listener: (data: RoomData) => void): this;
   once(event: "close", listener: () => void): this;
+  once(event: "error", listener: (err: Error) => void): this;
   once(event: string, listener: Function): this;
 }
 
@@ -192,19 +194,19 @@ declare class Peer extends EventEmitter {
   rooms: {
     [roomName: string]: MeshRoom | SfuRoom;
   };
-  options: PeerOptions;
+  options: PeerOption;
   open: boolean;
 
-  constructor(peerId: string, options: PeerInit);
-  constructor(options: PeerInit);
+  constructor(peerId: string, options: PeerConstructorOption);
+  constructor(options: PeerConstructorOption);
 
   call(
     peerId: string,
     stream?: MediaStream,
-    options?: MediaConnectionInit
+    options?: CallOption
   ): MediaConnection;
-  connect(peerId: string, options?: DataConnectionInit): DataConnection;
-  joinRoom<T extends Room>(roomName: string, options?: RoomInit): T;
+  connect(peerId: string, options?: ConnectOption): DataConnection;
+  joinRoom<T extends Room>(roomName: string, options?: RoomOption): T;
 
   destroy(): void;
   disconnect(): void;
