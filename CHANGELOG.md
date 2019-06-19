@@ -6,6 +6,7 @@
 
 - Use `unified-plan` and track-based APIs on every browser.([#183](https://github.com/skyway/skyway-js-sdk/pull/183))
   - `removeStream` event is not emitted anymore on `MediaConnection`, `MeshRoom` and `SFURoom`.
+  - You may be able to use `peerLeave` event instead.
 
 ### Added
 - Add `skyway-js.d.ts` to support TypeScript.([#186](https://github.com/skyway/skyway-js-sdk/pull/186))
@@ -14,7 +15,7 @@
 
 - Fix bug when calling `peer.call()` w/o `stream` ends up with SDP error in `unified-plan` environment.([#183](https://github.com/skyway/skyway-js-sdk/pull/183))
 - Update `/examples` to use `playsinline` attribute for mobile.([#181](https://github.com/skyway/skyway-js-sdk/pull/181))
-- Fix `Peer` for `token` not to be overridden by user options.([#182](https://github.com/skyway/skyway-js-sdk/pull/182))
+- Fix `token` for `Peer` not to be overridden by user options.([#182](https://github.com/skyway/skyway-js-sdk/pull/182))
 - Update error messages for SDK internally gets signaling server URL.([#185](https://github.com/skyway/skyway-js-sdk/pull/185))
 
 ## [v1.4.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v1.4.0) - 2019-05-28
