@@ -20,6 +20,7 @@ const Peer = window.Peer;
   // Render local stream
   localVideo.muted = true;
   localVideo.srcObject = localStream;
+  localVideo.playsInline = true;
   await localVideo.play().catch(console.error);
 
   const peer = new Peer({
@@ -51,6 +52,7 @@ const Peer = window.Peer;
     room.on('stream', async stream => {
       const newVideo = document.createElement('video');
       newVideo.srcObject = stream;
+      newVideo.playsInline = true;
       // mark peerId to find it later at peerLeave event
       newVideo.setAttribute('data-peer-id', stream.peerId);
       remoteVideos.append(newVideo);

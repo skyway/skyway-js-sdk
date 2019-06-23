@@ -18,6 +18,7 @@ describe('Negotiator', () => {
     let newPcStub;
     let pcStub;
     let addTrackSpy;
+    let addTransceiverSpy;
     let createDCSpy;
     let negotiator;
     let handleOfferSpy;
@@ -27,9 +28,11 @@ describe('Negotiator', () => {
     beforeEach(() => {
       newPcStub = sinon.stub();
       addTrackSpy = sinon.spy();
+      addTransceiverSpy = sinon.spy();
       createDCSpy = sinon.spy();
       pcStub = {
         addTrack: addTrackSpy,
+        addTransceiver: addTransceiverSpy,
         createDataChannel: createDCSpy,
       };
       newPcStub.returns(pcStub);
@@ -45,6 +48,7 @@ describe('Negotiator', () => {
     afterEach(() => {
       newPcStub.reset();
       addTrackSpy.resetHistory();
+      addTransceiverSpy.resetHistory();
       createDCSpy.resetHistory();
       handleOfferSpy.resetHistory();
       setRemoteDescStub.restore();
@@ -86,20 +90,19 @@ describe('Negotiator', () => {
           assert.equal(handleOfferSpy.callCount, 0);
         });
 
-        it('should call _makeOfferSdp when stream does not exist', () => {
-          const makeOfferStub = sinon.stub(negotiator, '_makeOfferSdp');
-          makeOfferStub.returns(Promise.resolve('offer'));
-
+        it('should call pc.addTransceiver when stream does not exist', () => {
           const options = {
             type: 'media',
             originator: true,
             pcConfig: {},
           };
 
+          assert.equal(addTransceiverSpy.callCount, 0);
+
           negotiator.startConnection(options);
 
-          assert.equal(makeOfferStub.callCount, 1);
-          makeOfferStub.restore();
+          // video + audio = 2
+          assert.equal(addTransceiverSpy.callCount, 2);
         });
       });
 
@@ -664,20 +667,14 @@ describe('Negotiator', () => {
       pcStub.restore();
     });
 
-    it('should set "plan-b" with pcConfig', () => {
-      const pcConf = { sdpSemantics: 'unified-plan' };
+    it('should use "unified-plan" with pcConfig', () => {
+      const pcConf = { sdpSemantics: 'plan-b' };
       negotiator._createPeerConnection(pcConf);
 
-      // TODO: When JS-SDK supports for 'unified-plan', this test should be changed.
-      assert.equal(pcConf.sdpSemantics, 'plan-b');
-    });
+      assert.equal(pcConf.sdpSemantics, 'unified-plan');
 
-    it('should set "plan-b" with empty pcConfig', () => {
-      const pcConf = {};
-      negotiator._createPeerConnection(pcConf);
-
-      // TODO: When JS-SDK supports for 'unified-plan', this test should be changed.
-      assert.equal(pcConf.sdpSemantics, 'plan-b');
+      negotiator._createPeerConnection({});
+      assert.equal(pcConf.sdpSemantics, 'unified-plan');
     });
   });
 
@@ -691,7 +688,6 @@ describe('Negotiator', () => {
       assert.equal(typeof pc.onicecandidate, 'function');
       assert.equal(typeof pc.oniceconnectionstatechange, 'function');
       assert.equal(typeof pc.onnegotiationneeded, 'function');
-      assert.equal(typeof pc.onremovestream, 'function');
       assert.equal(typeof pc.onsignalingstatechange, 'function');
     });
 
@@ -848,33 +844,6 @@ describe('Negotiator', () => {
               setTimeout(done);
             });
           });
-        });
-      });
-
-      describe('onremovestream', () => {
-        const evt = { stream: 'stream' };
-        let logSpy;
-
-        beforeEach(() => {
-          logSpy = sinon.spy(logger, 'log');
-        });
-
-        afterEach(() => {
-          logSpy.restore();
-        });
-
-        it('should log the event', () => {
-          pc.onremovestream(evt);
-          logSpy.calledWith('`removestream` triggered');
-        });
-
-        it("should emit 'removeStream'", done => {
-          negotiator.on(Negotiator.EVENTS.removeStream.key, stream => {
-            assert.equal(stream, evt.stream);
-            done();
-          });
-
-          pc.onremovestream(evt);
         });
       });
     });

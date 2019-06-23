@@ -1,9 +1,10 @@
 {
   "name": "skyway-js",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "The official JavaScript SDK for SkyWay",
   "main": "dist/skyway.js",
   "module": "src/peer.js",
+  "types": "skyway-js.d.ts",
   "scripts": {
     "test": "karma start ./karma.conf.js",
     "clean": "del ./dist",
@@ -17,6 +18,7 @@
   },
   "files": [
     "dist/skyway.js",
+    "skyway-js.d.ts",
     "LICENSE",
     "CHANGELOG.md",
     "README.md"
@@ -48,6 +50,7 @@
     "webpack-cli": "^3.0.8"
   },
   "dependencies": {
+    "@types/node": "^12.0.8",
     "detect-browser": "^4.2.0",
     "enum": "git+https://github.com/eastandwest/enum.git#react-native",
     "events": "^3.0.0",

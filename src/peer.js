@@ -64,7 +64,6 @@ class Peer extends EventEmitter {
     const defaultOptions = {
       debug: logger.LOG_LEVELS.NONE,
       secure: true,
-      token: util.randomToken(),
       config: config.defaultConfig,
       turn: true,
 
@@ -74,6 +73,8 @@ class Peer extends EventEmitter {
     };
 
     this.options = Object.assign({}, defaultOptions, options);
+    // do not override by options
+    this.options.token = util.randomToken();
 
     logger.setLogLevel(this.options.debug);
 
