@@ -513,7 +513,7 @@ describe('Socket', () => {
         const result = {
           error: {
             code: 500,
-            message: 'Connection failed. Invalid response: 500',
+            message: 'Connection failed. Unexpected response: 500',
           },
         };
 
@@ -527,7 +527,7 @@ describe('Socket', () => {
             assert(err);
             assert.equal(
               err.message,
-              'Connection failed. Invalid response: 500'
+              'Connection failed. Unexpected response: 500'
             );
             done();
           });
@@ -541,7 +541,7 @@ describe('Socket', () => {
         const result = {
           error: {
             code: 404,
-            message: 'Connection failed. Invalid response: 404',
+            message: 'Connection failed. Unexpected response: 404',
           },
         };
         socket
@@ -554,7 +554,7 @@ describe('Socket', () => {
             assert(err);
             assert.equal(
               err.message,
-              'Connection failed. Invalid response: 404'
+              'Connection failed. Unexpected response: 404'
             );
             done();
           });
@@ -568,7 +568,7 @@ describe('Socket', () => {
         const result = {
           error: {
             code: 405,
-            message: 'Connection failed. Invalid response: 405',
+            message: 'Connection failed. Unexpected response: 405',
           },
         };
 
@@ -582,7 +582,7 @@ describe('Socket', () => {
             assert(err);
             assert.equal(
               err.message,
-              'Connection failed. Invalid response: 405'
+              'Connection failed. Unexpected response: 405'
             );
             done();
           });
