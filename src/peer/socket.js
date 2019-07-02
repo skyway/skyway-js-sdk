@@ -173,7 +173,7 @@ class Socket extends EventEmitter {
       http.onerror = () => {
         reject(
           new Error(
-            'There was a problem with the request for the dispatcher. Check your request and network connections.'
+            'There was a problem with the request for the dispatcher. Check your peer options and network connections.'
           )
         );
       };
@@ -192,7 +192,7 @@ class Socket extends EventEmitter {
       http.onload = () => {
         if (http.status !== 200) {
           reject(
-            new Error('Connection failed. Invalid response: ' + http.status)
+            new Error('Connection failed. Unexpected response: ' + http.status)
           );
           return;
         }
