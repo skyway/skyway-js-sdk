@@ -733,6 +733,15 @@ describe('Negotiator', () => {
           pc.onicecandidate(ev);
         });
 
+        it("should emit 'iceCandidatesComplete' when out of candidates(empty string)", done => {
+          const ev = { candidate: '' };
+          negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, () =>
+            done()
+          );
+
+          pc.onicecandidate(ev);
+        });
+
         it("should not emit 'iceCandidate' when out of candidates", done => {
           const ev = {};
           negotiator.on(Negotiator.EVENTS.iceCandidate.key, () => {
