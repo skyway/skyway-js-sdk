@@ -715,34 +715,23 @@ describe('Negotiator', () => {
 
       describe('onicecandidate', () => {
         it("should emit 'iceCandidate' with ice candidate", done => {
-          const ev = { candidate: 'candidate' };
+          const ev = { candidate: { candidate: 'candidate' } };
+
           negotiator.on(Negotiator.EVENTS.iceCandidate.key, candidate => {
             assert(candidate, ev.candidate);
             done();
           });
-
           pc.onicecandidate(ev);
         });
 
-        it("should emit 'iceCandidatesComplete' when out of candidates", done => {
-          const ev = { candidate: null };
-          negotiator.on(Negotiator.EVENTS.iceCandidatesComplete.key, () =>
-            done()
-          );
-
-          pc.onicecandidate(ev);
-        });
-
-        it("should not emit 'iceCandidate' when out of candidates", done => {
-          const ev = {};
+        it("should not emit 'iceCandidate' when out of candidates", () => {
           negotiator.on(Negotiator.EVENTS.iceCandidate.key, () => {
             assert.fail('Should not emit iceCandidate event');
           });
 
-          pc.onicecandidate(ev);
-
-          // let other async events run before finishing
-          setTimeout(done);
+          [{}, { candidate: null }, { candidate: { candidate: '' } }].forEach(
+            ev => pc.onicecandidate(ev)
+          );
         });
       });
 
