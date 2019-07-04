@@ -10,7 +10,6 @@ const NegotiatorEvents = new Enum([
   'offerCreated',
   'answerCreated',
   'iceCandidate',
-  'iceCandidatesComplete',
   'iceConnectionFailed',
   'negotiationNeeded',
   'error',
@@ -272,10 +271,6 @@ class Negotiator extends EventEmitter {
        */
       if (!evt.candidate || evt.candidate.candidate === '') {
         logger.log('ICE candidates gathering complete');
-        this.emit(
-          Negotiator.EVENTS.iceCandidatesComplete.key,
-          pc.localDescription
-        );
         return;
       }
 
@@ -577,13 +572,6 @@ class Negotiator extends EventEmitter {
    *
    * @event Negotiator#iceCandidate
    * @type {RTCIceCandidate}
-   */
-
-  /**
-   * Ice Candidate collection finished. Emits localDescription.
-   *
-   * @event Negotiator#iceCandidatesComplete
-   * @type {RTCSessionDescription}
    */
 
   /**
