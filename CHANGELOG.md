@@ -1,5 +1,12 @@
 # Changelog
 
+## [v2.0.1](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.1) - 2019-07-05
+
+### Fixed
+
+- Improve error messages for internal XHR.([#188](https://github.com/skyway/skyway-js-sdk/pull/188))
+- Ignore candidate which means `end-of-candidates` by empty string.([#189](https://github.com/skyway/skyway-js-sdk/pull/189))
+
 ## [v2.0.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.0) - 2019-06-24
 
 ### Breaking Changes

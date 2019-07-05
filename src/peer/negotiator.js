@@ -10,7 +10,6 @@ const NegotiatorEvents = new Enum([
   'offerCreated',
   'answerCreated',
   'iceCandidate',
-  'iceCandidatesComplete',
   'iceConnectionFailed',
   'negotiationNeeded',
   'error',
@@ -260,18 +259,23 @@ class Negotiator extends EventEmitter {
     };
 
     pc.onicecandidate = evt => {
-      const candidate = evt.candidate;
-      if (candidate) {
-        logger.log('Generated ICE candidate for:', candidate);
-        this.emit(Negotiator.EVENTS.iceCandidate.key, candidate);
-      } else {
+      /**
+       * Signals end-of-candidates by
+       *
+       * Firefox 68~
+       * evt = { candidate: RTCIceCandidate({ candidate: "" }) and
+       * evt = { candidate: null }
+       *
+       * Firefox ~67, Chrome, Safari
+       * evt = { candidate: null }
+       */
+      if (!evt.candidate || evt.candidate.candidate === '') {
         logger.log('ICE candidates gathering complete');
-
-        this.emit(
-          Negotiator.EVENTS.iceCandidatesComplete.key,
-          pc.localDescription
-        );
+        return;
       }
+
+      logger.log('Generated ICE candidate for:', evt.candidate);
+      this.emit(Negotiator.EVENTS.iceCandidate.key, evt.candidate);
     };
 
     pc.oniceconnectionstatechange = () => {
@@ -568,13 +572,6 @@ class Negotiator extends EventEmitter {
    *
    * @event Negotiator#iceCandidate
    * @type {RTCIceCandidate}
-   */
-
-  /**
-   * Ice Candidate collection finished. Emits localDescription.
-   *
-   * @event Negotiator#iceCandidatesComplete
-   * @type {RTCSessionDescription}
    */
 
   /**
