@@ -16,10 +16,10 @@ const Peer = window.Peer;
     SDK: ${sdkSrc ? sdkSrc.src : 'unknown'}
   `.trim();
 
-  const peer = new Peer({
+  const peer = (window.peer = new Peer({
     key: window.__SKYWAY_KEY__,
     debug: 3,
-  });
+  }));
 
   // Register connecter handler
   connectTrigger.addEventListener('click', () => {

@@ -21,9 +21,10 @@ const Peer = window.Peer;
   const getRoomModeByHash = () => (location.hash === '#sfu' ? 'sfu' : 'mesh');
 
   roomMode.textContent = getRoomModeByHash();
-  window.addEventListener('hashchange', () => {
-    roomMode.textContent = getRoomModeByHash();
-  });
+  window.addEventListener(
+    'hashchange',
+    () => (roomMode.textContent = getRoomModeByHash())
+  );
 
   const localStream = await navigator.mediaDevices
     .getUserMedia({
@@ -38,10 +39,10 @@ const Peer = window.Peer;
   localVideo.playsInline = true;
   await localVideo.play().catch(console.error);
 
-  const peer = new Peer({
+  const peer = (window.peer = new Peer({
     key: window.__SKYWAY_KEY__,
     debug: 3,
-  });
+  }));
 
   // Register join handler
   joinTrigger.addEventListener('click', () => {
