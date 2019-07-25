@@ -47,6 +47,7 @@ const fetchBaseBranch = require('./fetch-base-branch');
     case baseBranch === 'master' && currentBranch === 'staging':
     case baseBranch === 'staging' && currentBranch.startsWith('ops/'):
     case baseBranch === 'staging' && currentBranch.startsWith('dev/'):
+    case baseBranch === 'staging' && currentBranch.startsWith('dependabot/'):
       console.log('Branch names are valid ;D');
       break;
     default:
