@@ -45,7 +45,7 @@
     "mocha": "^5.2.0",
     "power-assert": "^1.4.4",
     "prettier": "^1.9.2",
-    "sinon": "^6.0.1",
+    "sinon": "^7.3.2",
     "webpack": "^4.12.1",
     "webpack-cli": "^3.0.8"
   },
