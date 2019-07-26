@@ -304,6 +304,20 @@ class Negotiator extends EventEmitter {
           break;
       }
     };
+    // from M76, iceConnectionState does not go to `failed` when connection dropps.
+    // See https://bugs.chromium.org/p/chromium/issues/detail?id=982793
+    // we polyfill it until it is resolved w/ API only Chrome implements to keep SDK behavior.
+    pc.onconnectionstatechange = () => {
+      logger.log(`connectionState is ${pc.connectionState}`);
+      if (
+        pc.connectionState === 'failed' &&
+        // this must be `disconnected`, but ensure it
+        pc.iceConnectionState === 'disconnected'
+      ) {
+        logger.log('connectionState is failed, closing connection');
+        this.emit(Negotiator.EVENTS.iceConnectionFailed.key);
+      }
+    };
 
     pc.onnegotiationneeded = async () => {
       logger.log('`negotiationneeded` triggered');
