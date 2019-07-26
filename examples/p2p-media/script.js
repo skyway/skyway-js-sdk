@@ -7,6 +7,13 @@ const Peer = window.Peer;
   const closeTrigger = document.getElementById('js-close-trigger');
   const remoteVideo = document.getElementById('js-remote-stream');
   const remoteId = document.getElementById('js-remote-id');
+  const meta = document.getElementById('js-meta');
+  const sdkSrc = document.querySelector('script[src*=skyway]');
+
+  meta.innerText = `
+    UA: ${navigator.userAgent}
+    SDK: ${sdkSrc ? sdkSrc.src : 'unknown'}
+  `.trim();
 
   const localStream = await navigator.mediaDevices
     .getUserMedia({
@@ -21,10 +28,10 @@ const Peer = window.Peer;
   localVideo.playsInline = true;
   await localVideo.play().catch(console.error);
 
-  const peer = new Peer({
+  const peer = (window.peer = new Peer({
     key: window.__SKYWAY_KEY__,
     debug: 3,
-  });
+  }));
 
   // Register caller handler
   callTrigger.addEventListener('click', () => {
