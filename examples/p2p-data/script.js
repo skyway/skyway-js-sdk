@@ -8,11 +8,18 @@ const Peer = window.Peer;
   const sendTrigger = document.getElementById('js-send-trigger');
   const remoteId = document.getElementById('js-remote-id');
   const messages = document.getElementById('js-messages');
+  const meta = document.getElementById('js-meta');
+  const sdkSrc = document.querySelector('script[src*=skyway]');
 
-  const peer = new Peer({
+  meta.innerText = `
+    UA: ${navigator.userAgent}
+    SDK: ${sdkSrc ? sdkSrc.src : 'unknown'}
+  `.trim();
+
+  const peer = (window.peer = new Peer({
     key: window.__SKYWAY_KEY__,
     debug: 3,
-  });
+  }));
 
   // Register connecter handler
   connectTrigger.addEventListener('click', () => {

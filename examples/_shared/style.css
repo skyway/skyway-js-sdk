@@ -16,6 +16,12 @@ video {
   text-align: center;
 }
 
+.meta {
+  text-align: center;
+  font-size: .8rem;
+  color: gray;
+}
+
 .container {
   margin-left: auto;
   margin-right: auto;
@@ -68,15 +74,4 @@ video {
   min-height: 100px;
   padding: 8px;
   margin-top: 0;
-}
-
-/* broadcast */
-.broadcast {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-}
-
-.broadcast .broadcast-stream {
-  width: 50%;
 }
