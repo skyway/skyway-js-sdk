@@ -248,9 +248,7 @@ class Connection extends EventEmitter {
    */
   get peer() {
     logger.warn(
-      `${
-        this.constructor.name
-      }.peer is deprecated and may be removed from a future version.` +
+      `${this.constructor.name}.peer is deprecated and may be removed from a future version.` +
         ` Please use ${this.constructor.name}.remoteId instead.`
     );
     return this.remoteId;
