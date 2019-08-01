@@ -18,6 +18,7 @@ module.exports = {
     'no-console': 'off',
     'no-unused-vars': 'error',
     'no-multiple-empty-lines': ['error', { max: 1 }],
+    'no-prototype-builtins': 'off',
     'no-var': 'error',
     'prefer-const': 'error',
   },
