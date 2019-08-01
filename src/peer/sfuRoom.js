@@ -127,9 +127,7 @@ class SFURoom extends Room {
         this.emit(SFURoom.EVENTS.stream.key, remoteStream);
 
         logger.log(
-          `Received remote media stream for ${remoteStream.peerId} in ${
-            this.name
-          }`
+          `Received remote media stream for ${remoteStream.peerId} in ${this.name}`
         );
       } else {
         this._unknownStreams[remoteStream.id] = remoteStream;

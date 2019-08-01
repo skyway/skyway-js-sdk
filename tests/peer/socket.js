@@ -431,9 +431,7 @@ describe('Socket', () => {
 
       socket.start(undefined, apiKey).then(() => done());
 
-      socket._dispatcherUrl = `https://${config.DISPATCHER_HOST}:${
-        config.DISPATCHER_PORT
-      }`;
+      socket._dispatcherUrl = `https://${config.DISPATCHER_HOST}:${config.DISPATCHER_PORT}`;
     });
 
     afterEach(() => {

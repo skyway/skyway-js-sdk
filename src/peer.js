@@ -271,9 +271,7 @@ class Peer extends EventEmitter {
     const self = this;
     const http = new XMLHttpRequest();
 
-    const url = `${this.socket.signalingServerUrl}/api/apikeys/${
-      this.options.key
-    }/clients/`;
+    const url = `${this.socket.signalingServerUrl}/api/apikeys/${this.options.key}/clients/`;
 
     // If there's no ID we need to wait for one before trying to init socket.
     http.open('get', url, true);
@@ -480,12 +478,8 @@ class Peer extends EventEmitter {
           const transport = turnType.transport;
 
           const iceServer = {
-            urls: `${protocol}:${config.TURN_HOST}:${
-              config.TURN_PORT
-            }?transport=${transport}`,
-            url: `${protocol}:${config.TURN_HOST}:${
-              config.TURN_PORT
-            }?transport=${transport}`,
+            urls: `${protocol}:${config.TURN_HOST}:${config.TURN_PORT}?transport=${transport}`,
+            url: `${protocol}:${config.TURN_HOST}:${config.TURN_PORT}?transport=${transport}`,
 
             username: turnUserName,
             credential: turnPassword,
