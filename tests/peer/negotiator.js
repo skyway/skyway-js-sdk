@@ -24,6 +24,12 @@ describe('Negotiator', () => {
     let handleOfferSpy;
     let createPCStub;
     let setRemoteDescStub;
+    const audioVideoStream = new MediaStream();
+
+    before(() => {
+      sinon.stub(audioVideoStream, 'getVideoTracks').returns([{}]);
+      sinon.stub(audioVideoStream, 'getAudioTracks').returns([{}]);
+    });
 
     beforeEach(() => {
       newPcStub = sinon.stub();
@@ -72,11 +78,7 @@ describe('Negotiator', () => {
         it('should call pc.addTrack when stream exists', () => {
           const options = {
             type: 'media',
-            stream: {
-              getTracks() {
-                return [{}];
-              },
-            },
+            stream: audioVideoStream,
             originator: true,
             pcConfig: {},
           };
@@ -86,7 +88,7 @@ describe('Negotiator', () => {
 
           negotiator.startConnection(options);
 
-          assert.equal(addTrackSpy.callCount, 1);
+          assert.equal(addTrackSpy.callCount, 2);
           assert.equal(handleOfferSpy.callCount, 0);
         });
 
@@ -110,11 +112,7 @@ describe('Negotiator', () => {
         it('should call pc.addTrack and handleOffer', () => {
           const options = {
             type: 'media',
-            stream: {
-              getTracks() {
-                return [{}];
-              },
-            },
+            stream: audioVideoStream,
             originator: false,
             pcConfig: {},
             offer: {},
@@ -125,7 +123,7 @@ describe('Negotiator', () => {
 
           negotiator.startConnection(options);
 
-          assert.equal(addTrackSpy.callCount, 1);
+          assert.equal(addTrackSpy.callCount, 2);
           assert.equal(handleOfferSpy.callCount, 1);
           assert(handleOfferSpy.calledWith(options.offer));
         });
@@ -135,11 +133,7 @@ describe('Negotiator', () => {
         it('should call pc.addTrack and handleOffer', () => {
           const options = {
             type: 'media',
-            stream: {
-              getTracks() {
-                return [{}];
-              },
-            },
+            stream: audioVideoStream,
             pcConfig: {},
             offer: {},
           };
@@ -149,7 +143,7 @@ describe('Negotiator', () => {
 
           negotiator.startConnection(options);
 
-          assert.equal(addTrackSpy.callCount, 1);
+          assert.equal(addTrackSpy.callCount, 2);
           assert.equal(handleOfferSpy.callCount, 1);
           assert(handleOfferSpy.calledWith(options.offer));
         });
