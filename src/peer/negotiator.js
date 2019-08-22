@@ -67,13 +67,13 @@ class Negotiator extends EventEmitter {
     if (this._type === 'media') {
       // video+audio or video only or audio only stream passed
       if (options.stream) {
-        const [vTrack] = options.stream.getVideoTracks();
-        const [aTrack] = options.stream.getAudioTracks();
+        const vTracks = options.stream.getVideoTracks();
+        const aTracks = options.stream.getAudioTracks();
         const recvonlyState = this._getReceiveOnlyState(options);
 
         // create m= section w/ direction sendrecv
-        if (vTrack) {
-          this._pc.addTrack(vTrack, options.stream);
+        if (vTracks.length > 0) {
+          vTracks.forEach(track => this._pc.addTrack(track, options.stream));
         }
         // create m= section w/ direction recvonly or omit whole m= section
         else {
@@ -81,8 +81,8 @@ class Negotiator extends EventEmitter {
             this._pc.addTransceiver('video', { direction: 'recvonly' });
         }
 
-        if (aTrack) {
-          this._pc.addTrack(aTrack, options.stream);
+        if (aTracks.length > 0) {
+          aTracks.forEach(track => this._pc.addTrack(track, options.stream));
         } else {
           recvonlyState.audio &&
             this._pc.addTransceiver('audio', { direction: 'recvonly' });
