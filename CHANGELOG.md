@@ -5,7 +5,10 @@
 
 ### Fixed
 
-- Fix a bug of handle video|audio only stream([#214](https://github.com/skyway/skyway-js-sdk/pull/214))
+- Fix a bug of handle video|audio only stream.([#214](https://github.com/skyway/skyway-js-sdk/pull/214))
+
+### Updated
+- Update dev+prod deps.([#211](https://github.com/skyway/skyway-js-sdk/pull/211))
 
 
 ## [v2.0.2](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.2) - 2019-07-29
