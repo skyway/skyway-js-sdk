@@ -65,17 +65,33 @@ class Negotiator extends EventEmitter {
 
     // Trigger negotiationneeded event
     if (this._type === 'media') {
+      // video+audio or video only or audio only stream passed
       if (options.stream) {
-        options.stream.getTracks().forEach(track => {
-          this._pc.addTrack(track, options.stream);
-        });
-      } else if (this.originator) {
-        // This means the peer wants to create offer SDP with `recvonly`
+        const vTracks = options.stream.getVideoTracks();
+        const aTracks = options.stream.getAudioTracks();
         const recvonlyState = this._getReceiveOnlyState(options);
-        recvonlyState.audio &&
-          this._pc.addTransceiver('audio', { direction: 'recvonly' });
-        recvonlyState.video &&
-          this._pc.addTransceiver('video', { direction: 'recvonly' });
+
+        // create m= section w/ direction sendrecv
+        if (vTracks.length > 0) {
+          vTracks.forEach(track => this._pc.addTrack(track, options.stream));
+        }
+        // create m= section w/ direction recvonly or omit whole m= section
+        else {
+          recvonlyState.video &&
+            this._pc.addTransceiver('video', { direction: 'recvonly' });
+        }
+
+        if (aTracks.length > 0) {
+          aTracks.forEach(track => this._pc.addTrack(track, options.stream));
+        } else {
+          recvonlyState.audio &&
+            this._pc.addTransceiver('audio', { direction: 'recvonly' });
+        }
+      }
+      // if offer side and stream not passed, make it recvonly(= backward compat)
+      else if (this.originator) {
+        this._pc.addTransceiver('audio', { direction: 'recvonly' });
+        this._pc.addTransceiver('video', { direction: 'recvonly' });
       }
     }
 

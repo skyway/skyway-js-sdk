@@ -36,9 +36,7 @@ class Socket extends EventEmitter {
 
     if (options.host && options.port) {
       const httpProtocol = options.secure ? 'https://' : 'http://';
-      this.signalingServerUrl = `${httpProtocol}${options.host}:${
-        options.port
-      }`;
+      this.signalingServerUrl = `${httpProtocol}${options.host}:${options.port}`;
     } else {
       const dispatcherHost = options.dispatcherHost || config.DISPATCHER_HOST;
       const dispatcherPort = options.dispatcherPort || config.DISPATCHER_PORT;
@@ -95,9 +93,7 @@ class Socket extends EventEmitter {
         return;
       }
       const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
-      this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
-        serverInfo.port
-      }`;
+      this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${serverInfo.port}`;
     }
 
     this._io = io(this.signalingServerUrl, {
@@ -146,9 +142,7 @@ class Socket extends EventEmitter {
 
     if (this.signalingServerUrl.indexOf(serverInfo.host) === -1) {
       const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
-      this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${
-        serverInfo.port
-      }`;
+      this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${serverInfo.port}`;
 
       this._io.io.uri = this.signalingServerUrl;
       this._io.connect();
