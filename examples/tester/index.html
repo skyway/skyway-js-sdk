@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SkyWay - Tester</title>
+    <style>
+      label { display: block; }
+      video { background-color: #111; width: 200px; }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>SkyWay Tester</h1>
+
+      <section data-settings-section>
+        <h2>Settings</h2>
+        <div>
+          <label>
+            API key:
+            <input type="text" data-api-key placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+          </label>
+          <label>
+            Sign:
+            <input type="text" data-sign-url placeholder="https://xxxxx-example.com:443" />
+          </label>
+          <label>
+            ForceTURN:
+            <input type="checkbox" data-force-turn>
+          </label>
+        </div>
+      </section>
+
+      <section data-signaling-section>
+        <h2>Signaling</h2>
+        <div>
+          <button data-connect>connect</button>
+          <button data-disconnect>disconnect</button>
+          <button data-reconnect>reconnect</button>
+          <button data-destroy>destory</button>
+        </div>
+      </section>
+
+      <section data-media-connection-section>
+        <h2>MediaConnection</h2>
+        <div>
+          <div>
+            Local:
+            <video data-local-video playsinline muted></video>
+            Remote:
+            <video data-remote-video playsinline></video>
+          </div>
+          <div>
+            <button data-setup>setUp</button>
+            <input type="text" data-local-id placeholder="xxxxxxxxxxxxxxxx" readonly />
+            ⇔
+            <input type="text" data-remote-id placeholder="xxxxxxxxxxxxxxxx" />
+            <select data-gum-select>
+              <option value="VA">video+audio</option>
+              <option value="V-">video</option>
+              <option value="-A">audio</option>
+              <option value="--">null</option>
+            </select>
+            <button data-call>call</button>
+            <button data-replace>replaceStream</button>
+            <button data-close>close</button>
+            <button data-fclose>forceClose</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>DataConnection</h2>
+      </section>
+
+      <section>
+        <h2>MeshRoom</h2>
+      </section>
+
+      <section>
+        <h2>SfuRoom</h2>
+      </section>
+
+    </div>
+    <!-- <script src="//cdn.webrtc.ecl.ntt.com/skyway&#45;latest.js"></script> -->
+    <script src="../../dist/skyway.js"></script>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
