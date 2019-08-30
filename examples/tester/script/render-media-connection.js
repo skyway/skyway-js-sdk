@@ -2,7 +2,7 @@
 import { getPeerOptions } from './utils.js';
 const { navigator, Peer } = window;
 
-export default function renderMediaConnection($c, state, logger) {
+export default function renderMediaConnection($c, state) {
   const $setUp = $c.querySelector('[data-setup]');
   const $localId = $c.querySelector('[data-local-id]');
   const $remoteId = $c.querySelector('[data-remote-id]');
@@ -21,26 +21,26 @@ export default function renderMediaConnection($c, state, logger) {
     if (peer) return;
 
     const peerOptions = getPeerOptions(state);
-    logger.log('connect to signaling server w/ options');
-    logger.log(JSON.stringify(peerOptions, null, 2));
+    console.log('connect to signaling server w/ options');
+    console.log(JSON.stringify(peerOptions, null, 2));
 
     peer = new Peer(peerOptions);
 
     await new Promise(r => peer.once('open', r));
-    logger.log('ev: Peer@open');
+    console.log('ev: Peer@open');
     $localId.value = peer.id;
 
     peer.on('error', err => {
-      logger.error(`ev: Peer#error w/ id: ${peer.id}`);
-      logger.error(err);
+      console.error(`ev: Peer#error w/ id: ${peer.id}`);
+      console.error(err);
     });
 
     peer.on('call', async mc => {
-      logger.log('ev: Peer@call');
+      console.log('ev: Peer@call');
 
       $remoteId.value = mc.remoteId;
 
-      const stream = await gum($gumSelect.value, logger);
+      const stream = await gum($gumSelect.value, console);
       $localVideo.srcObject = stream;
       $localVideo.play();
 
@@ -48,8 +48,8 @@ export default function renderMediaConnection($c, state, logger) {
       mc.on('close', onClose);
 
       const answerOptions = {};
-      logger.log('answer() w/ options');
-      logger.log(JSON.stringify(answerOptions, null, 2));
+      console.log('answer() w/ options');
+      console.log(JSON.stringify(answerOptions, null, 2));
       mc.answer(stream, answerOptions);
 
       conn = mc;
@@ -61,13 +61,13 @@ export default function renderMediaConnection($c, state, logger) {
     if (!$remoteId.value) return;
     if (conn) return;
 
-    const stream = await gum($gumSelect.value, logger);
+    const stream = await gum($gumSelect.value, console);
     $localVideo.srcObject = stream;
     $localVideo.play();
 
     const callOptions = {};
-    logger.log('call() w/ options');
-    logger.log(JSON.stringify(callOptions, null, 2));
+    console.log('call() w/ options');
+    console.log(JSON.stringify(callOptions, null, 2));
 
     const mc = peer.call($remoteId.value, stream, callOptions);
     mc.on('stream', onRemoteStream);
@@ -79,7 +79,7 @@ export default function renderMediaConnection($c, state, logger) {
   $replace.onclick = async () => {
     if (!conn) return;
 
-    logger.log('replace w/ display video(no audio)');
+    console.log('replace w/ display video(no audio)');
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: true,
     });
@@ -92,41 +92,41 @@ export default function renderMediaConnection($c, state, logger) {
   $close.onclick = () => {
     if (!conn) return;
 
-    logger.log('close()');
+    console.log('close()');
     conn.close();
   };
   $fclose.onclick = () => {
     if (!conn) return;
 
-    logger.log('close(true)');
+    console.log('close(true)');
     conn.close(true);
   };
 
   function onRemoteStream(stream) {
-    logger.log('ev: MediaConnection@stream');
+    console.log('ev: MediaConnection@stream');
 
     $remoteVideo.srcObject = stream;
     $remoteVideo.play();
 
-    logger.log('stream w/ tracks');
-    logger.log(stream.getTracks());
+    console.log('stream w/ tracks');
+    console.log(stream.getTracks());
   }
 
   function onClose() {
-    logger.log('ev: MediaConnection@close');
+    console.log('ev: MediaConnection@close');
     $remoteVideo.srcObject = null;
   }
 }
 
-async function gum(gumValue, logger) {
+async function gum(gumValue) {
   let stream;
   const gumOptions = {};
   if (gumValue !== '--') {
     gumOptions.audio = gumValue.includes('A');
     gumOptions.video = gumValue.includes('V');
 
-    logger.log('getUserMedia() w/ options');
-    logger.log(JSON.stringify(gumOptions, null, 2));
+    console.log('getUserMedia() w/ options');
+    console.log(JSON.stringify(gumOptions, null, 2));
     stream = await navigator.mediaDevices.getUserMedia(gumOptions);
   }
 

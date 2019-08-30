@@ -1,6 +1,7 @@
 import renderSettings from './script/render-settings.js';
 import renderSignaling from './script/render-signaling.js';
 import renderMediaConnection from './script/render-media-connection.js';
+import renderDataConnection from './script/render-data-connection.js';
 
 (async function main() {
   const $settingsSection = document.querySelector('[data-settings-section]');
@@ -8,21 +9,14 @@ import renderMediaConnection from './script/render-media-connection.js';
   const $mediaConnectionSection = document.querySelector(
     '[data-media-connection-section]'
   );
+  const $dataConnectionSection = document.querySelector(
+    '[data-data-connection-section]'
+  );
 
   const state = new Map();
-  const logger = {
-    log(...args) {
-      console.log(...args);
-    },
-    warn(...args) {
-      console.warn(...args);
-    },
-    error(...args) {
-      console.error(...args);
-    },
-  };
 
-  renderSettings($settingsSection, state, logger);
-  renderSignaling($signalingSection, state, logger);
-  renderMediaConnection($mediaConnectionSection, state, logger);
+  renderSettings($settingsSection, state);
+  renderSignaling($signalingSection, state);
+  renderMediaConnection($mediaConnectionSection, state);
+  renderDataConnection($dataConnectionSection, state);
 })();
