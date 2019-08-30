@@ -13,10 +13,8 @@ import renderDataConnection from './script/render-data-connection.js';
     '[data-data-connection-section]'
   );
 
-  const state = new Map();
-
-  renderSettings($settingsSection, state);
-  renderSignaling($signalingSection, state);
-  renderMediaConnection($mediaConnectionSection, state);
-  renderDataConnection($dataConnectionSection, state);
+  renderSettings($settingsSection);
+  renderSignaling($signalingSection);
+  renderMediaConnection($mediaConnectionSection);
+  renderDataConnection($dataConnectionSection);
 })();

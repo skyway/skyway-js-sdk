@@ -1,7 +1,7 @@
 import { getPeerOptions } from './utils.js';
-const { Peer } = window;
+const { Peer, localStorage } = window;
 
-export default function renderSignaling($c, state) {
+export default function renderSignaling($c) {
   const $connect = $c.querySelector('[data-connect]');
   const $disconnect = $c.querySelector('[data-disconnect]');
   const $reconnect = $c.querySelector('[data-reconnect]');
@@ -12,7 +12,7 @@ export default function renderSignaling($c, state) {
   $connect.onclick = () => {
     if (peer) return;
 
-    const peerOptions = getPeerOptions(state);
+    const peerOptions = getPeerOptions(localStorage);
     console.log('connect to signaling server w/ options');
     console.log(JSON.stringify(peerOptions, null, 2));
 

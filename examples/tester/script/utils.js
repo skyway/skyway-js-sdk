@@ -1,14 +1,14 @@
-export function getPeerOptions(state) {
-  const apiKey = state.get('apiKey');
-  const signUrl = state.get('signUrl');
-  const forceTurn = state.get('forceTurn');
+export function getPeerOptions(localStorage) {
+  const apiKey = localStorage.getItem('__SKYWAY_TESTER_KEY__');
+  const signUrl = localStorage.getItem('__SKYWAY_TESTER_SIGN__');
+  const forceTurn = localStorage.getItem('__SKYWAY_TESTER_TURN__') === 'true';
 
   const peerOptions = {
     key: apiKey,
   };
 
   // custom signaling server url for dev
-  if (signUrl !== '') {
+  if (signUrl) {
     const { host, protocol } = new URL(signUrl);
     Object.assign(peerOptions, {
       host,
