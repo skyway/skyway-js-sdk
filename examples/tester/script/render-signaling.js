@@ -26,6 +26,10 @@ export default function renderSignaling($c, state, logger) {
       logger.log(`w/ id: ${peerId} and it takes ${time}ms`);
       logger.log(`server url is ${peer.socket.signalingServerUrl}`);
     });
+    peer.socket.once('OPEN', ({ turnCredential }) => {
+      logger.log('turn is enable w/ credential');
+      logger.log(JSON.stringify(turnCredential, null, 2));
+    });
 
     peer.on('disconnected', peerId => {
       logger.log(`ev: Peer#disconnected w/ id: ${peerId}`);
