@@ -50,6 +50,7 @@ export default function renderDataConnection($c) {
     if (!$remoteId.value) return;
     if (conn) return;
 
+    // TODO
     const connectOptions = {};
     console.log('connect() w/ options');
     console.log(JSON.stringify(connectOptions, null, 2));

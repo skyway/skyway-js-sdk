@@ -47,6 +47,7 @@ export default function renderMediaConnection($c) {
       mc.on('stream', onRemoteStream);
       mc.on('close', onClose);
 
+      // TODO
       const answerOptions = {};
       console.log('answer() w/ options');
       console.log(JSON.stringify(answerOptions, null, 2));
@@ -65,6 +66,7 @@ export default function renderMediaConnection($c) {
     $localVideo.srcObject = stream;
     $localVideo.play();
 
+    // TODO
     const callOptions = {};
     console.log('call() w/ options');
     console.log(JSON.stringify(callOptions, null, 2));
