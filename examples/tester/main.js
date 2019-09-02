@@ -2,6 +2,7 @@ import renderSettingsApp from './script/settings/app.js';
 import renderSignalingApp from './script/signaling/app.js';
 import renderMediaConnectionApp from './script/media-connection/app.js';
 import renderDataConnectionApp from './script/data-connection/app.js';
+import renderMeshRoomApp from './script/mesh-room/app.js';
 
 (async function main() {
   renderSettingsApp(document.querySelector('[data-settings-section]'));
@@ -12,4 +13,5 @@ import renderDataConnectionApp from './script/data-connection/app.js';
   renderDataConnectionApp(
     document.querySelector('[data-data-connection-section]')
   );
+  renderMeshRoomApp(document.querySelector('[data-mesh-room-section]'));
 })();
