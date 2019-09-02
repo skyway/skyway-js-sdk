@@ -9,6 +9,25 @@ export function getGumOptions(gumValue) {
   };
 }
 
+export async function getUserVideoTrack(navigator) {
+  const [vTrack] = await navigator.mediaDevices
+    .getUserMedia({ video: true })
+    .then(stream => stream.getTracks());
+  return vTrack;
+}
+export async function getUserAudioTrack(navigator) {
+  const [aTrack] = await navigator.mediaDevices
+    .getUserMedia({ audio: true })
+    .then(stream => stream.getTracks());
+  return aTrack;
+}
+export async function getDisplayVideoTrack(navigator) {
+  const [vTrack] = await navigator.mediaDevices
+    .getDisplayMedia({ video: true })
+    .then(stream => stream.getTracks());
+  return vTrack;
+}
+
 export function logPeerEvent(peer) {
   [
     'open',

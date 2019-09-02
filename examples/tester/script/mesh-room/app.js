@@ -1,6 +1,13 @@
 /* eslint-disable require-atomic-updates */
 import { getPeerOptions } from '../state.js';
-import { logPeerEvent, logMeshRoomEvent, getGumOptions } from '../utils.js';
+import {
+  logPeerEvent,
+  logMeshRoomEvent,
+  getGumOptions,
+  getUserVideoTrack,
+  getUserAudioTrack,
+  getDisplayVideoTrack,
+} from '../utils.js';
 const { Peer } = window;
 
 export default function($c) {
@@ -30,7 +37,6 @@ export default function($c) {
     logPeerEvent(peer);
 
     await new Promise(r => peer.once('open', r));
-
     $localId.value = peer.id;
   };
 
@@ -41,9 +47,17 @@ export default function($c) {
     let stream = null;
     const gumOptions = getGumOptions($gumSelect.value);
     if (gumOptions) {
-      console.log('getUserMedia() w/ options');
-      console.log(JSON.stringify(gumOptions, null, 2));
-      stream = await navigator.mediaDevices.getUserMedia(gumOptions);
+      stream = new MediaStream();
+
+      if (gumOptions.video) {
+        const vTrack = await getUserVideoTrack(navigator);
+        stream.addTrack(vTrack);
+      }
+      if (gumOptions.audio) {
+        const aTrack = await getUserAudioTrack(navigator);
+        stream.addTrack(aTrack);
+      }
+
       $localVideo.srcObject = stream;
       $localVideo.play();
     }
@@ -52,6 +66,9 @@ export default function($c) {
     const roomOptions = { mode: 'mesh', stream };
     console.log(`Peer#joinRoom() ${$roomId.value} w/ options`);
     console.log(JSON.stringify(roomOptions, null, 2));
+    console.log('and stream w/ tracks');
+    console.log(stream ? stream.getTracks() : null);
+
     room = peer.joinRoom($roomId.value, roomOptions);
 
     logMeshRoomEvent(room);
@@ -85,18 +102,11 @@ export default function($c) {
       stream = new MediaStream();
 
       if (gumOptions.video) {
-        const [vTrack] = await navigator.mediaDevices
-          .getDisplayMedia({
-            video: true,
-          })
-          .then(stream => stream.getVideoTracks());
+        const vTrack = await getDisplayVideoTrack(navigator);
         stream.addTrack(vTrack);
       }
-
       if (gumOptions.audio) {
-        const [aTrack] = await navigator.mediaDevices
-          .getUserMedia({ audio: true })
-          .then(stream => stream.getAudioTracks());
+        const aTrack = await getUserAudioTrack(navigator);
         stream.addTrack(aTrack);
       }
 
@@ -106,10 +116,9 @@ export default function($c) {
       $localVideo.srcObject = null;
     }
 
+    console.log('MeshRoom#replaceStream()');
     console.log('stream w/ tracks');
     console.log(stream ? stream.getTracks() : null);
-
-    console.log('MeshRoom#replaceStream()');
     room.replaceStream(stream);
   };
 

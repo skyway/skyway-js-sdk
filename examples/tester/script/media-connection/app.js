@@ -4,8 +4,11 @@ import {
   logPeerEvent,
   logMediaConnectionEvent,
   getGumOptions,
+  getUserVideoTrack,
+  getUserAudioTrack,
+  getDisplayVideoTrack,
 } from '../utils.js';
-const { navigator, Peer } = window;
+const { Peer } = window;
 
 export default function($c) {
   const $setUp = $c.querySelector('[data-setup]');
@@ -41,9 +44,17 @@ export default function($c) {
       let stream = null;
       const gumOptions = getGumOptions($gumSelect.value);
       if (gumOptions) {
-        console.log('getUserMedia() w/ options');
-        console.log(JSON.stringify(gumOptions, null, 2));
-        stream = await navigator.mediaDevices.getUserMedia(gumOptions);
+        stream = new MediaStream();
+
+        if (gumOptions.video) {
+          const vTrack = await getUserVideoTrack(navigator);
+          stream.addTrack(vTrack);
+        }
+        if (gumOptions.audio) {
+          const aTrack = await getUserAudioTrack(navigator);
+          stream.addTrack(aTrack);
+        }
+
         $localVideo.srcObject = stream;
         $localVideo.play();
       }
@@ -56,6 +67,8 @@ export default function($c) {
       const answerOptions = {};
       console.log('MediaConnection#answer() w/ options');
       console.log(JSON.stringify(answerOptions, null, 2));
+      console.log('and stream w/ tracks');
+      console.log(stream ? stream.getTracks() : null);
       mc.answer(stream, answerOptions);
 
       conn = mc;
@@ -70,9 +83,17 @@ export default function($c) {
     let stream = null;
     const gumOptions = getGumOptions($gumSelect.value);
     if (gumOptions) {
-      console.log('getUserMedia() w/ options');
-      console.log(JSON.stringify(gumOptions, null, 2));
-      stream = await navigator.mediaDevices.getUserMedia(gumOptions);
+      stream = new MediaStream();
+
+      if (gumOptions.video) {
+        const vTrack = await getUserVideoTrack(navigator);
+        stream.addTrack(vTrack);
+      }
+      if (gumOptions.audio) {
+        const aTrack = await getUserAudioTrack(navigator);
+        stream.addTrack(aTrack);
+      }
+
       $localVideo.srcObject = stream;
       $localVideo.play();
     }
@@ -81,6 +102,8 @@ export default function($c) {
     const callOptions = {};
     console.log('MediaConnection#call() w/ options');
     console.log(JSON.stringify(callOptions, null, 2));
+    console.log('and stream w/ tracks');
+    console.log(stream ? stream.getTracks() : null);
 
     const mc = peer.call($remoteId.value, stream, callOptions);
     logMediaConnectionEvent(mc);
@@ -99,18 +122,11 @@ export default function($c) {
       stream = new MediaStream();
 
       if (gumOptions.video) {
-        const [vTrack] = await navigator.mediaDevices
-          .getDisplayMedia({
-            video: true,
-          })
-          .then(stream => stream.getVideoTracks());
+        const vTrack = await getDisplayVideoTrack(navigator);
         stream.addTrack(vTrack);
       }
-
       if (gumOptions.audio) {
-        const [aTrack] = await navigator.mediaDevices
-          .getUserMedia({ audio: true })
-          .then(stream => stream.getAudioTracks());
+        const aTrack = await getUserAudioTrack(navigator);
         stream.addTrack(aTrack);
       }
 
@@ -120,10 +136,9 @@ export default function($c) {
       $localVideo.srcObject = null;
     }
 
+    console.log('MediaConnection#replaceStream()');
     console.log('stream w/ tracks');
     console.log(stream ? stream.getTracks() : null);
-
-    console.log('MediaConnection#replaceStream()');
     conn.replaceStream(stream);
   };
 

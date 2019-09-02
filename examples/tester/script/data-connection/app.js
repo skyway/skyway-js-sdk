@@ -61,9 +61,9 @@ export default function($c) {
 
   $send.onclick = () => {
     const text = `Hello at ${Date.now()}`;
+
     console.log('DataConnection#send() w/ text');
     console.log(text);
-
     conn.send(text);
   };
 
