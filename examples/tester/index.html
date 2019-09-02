@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SkyWay - Tester</title>
     <style>
-      label { display: block; }
-      video { background-color: #111; width: 200px; }
+      body { margin: 0; }
+      h1 { text-align: center; }
+      h1, h2 { margin: 0; margin-bottom: 8px; }
+      video { background-color: #111; width: 100px; }
+      section { padding: 8px; margin-bottom: 8px; }
+      section:nth-child(even) { background-color: #eee; }
     </style>
   </head>
   <body>
@@ -16,18 +20,24 @@
       <section data-settings-section>
         <h2>Settings</h2>
         <div>
-          <label>
-            API key:
-            <input type="text" data-api-key placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
-          </label>
-          <label>
-            Sign:
-            <input type="text" data-sign-url placeholder="https://xxxxx-example.com:443" />
-          </label>
-          <label>
-            ForceTURN:
-            <input type="checkbox" data-force-turn>
-          </label>
+          <div>
+            <label>
+              API key:
+              <input type="text" data-api-key placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+            </label>
+          </div>
+          <div>
+            <label>
+              Sign:
+              <input type="text" data-sign-url placeholder="https://xxxxx-example.com:443" />
+            </label>
+          </div>
+          <div>
+            <label>
+              ForceTURN:
+              <input type="checkbox" data-force-turn>
+            </label>
+          </div>
         </div>
       </section>
 
@@ -47,6 +57,8 @@
           <div>
             Local:
             <video data-local-video playsinline muted></video>
+          </div>
+          <div>
             Remote:
             <video data-remote-video playsinline></video>
           </div>
@@ -55,6 +67,8 @@
             <input type="text" data-local-id placeholder="xxxxxxxxxxxxxxxx" readonly />
             ⇔
             <input type="text" data-remote-id placeholder="xxxxxxxxxxxxxxxx" />
+          </div>
+          <div>
             <select data-gum-select>
               <option value="VA">video+audio</option>
               <option value="V-">video</option>
@@ -63,6 +77,8 @@
             </select>
             <button data-call>call</button>
             <button data-replace>replaceStream</button>
+          </div>
+          <div>
             <button data-close>close</button>
             <button data-fclose>forceClose</button>
           </div>
@@ -73,15 +89,19 @@
         <h2>DataConnection</h2>
         <div>
           <div>
-            <pre data-data-sink></pre>
+            <pre data-data-sink>...</pre>
           </div>
           <div>
             <button data-setup>setUp</button>
             <input type="text" data-local-id placeholder="xxxxxxxxxxxxxxxx" readonly />
             ⇔
             <input type="text" data-remote-id placeholder="xxxxxxxxxxxxxxxx" />
+          </div>
+          <div>
             <button data-connect>connect</button>
             <button data-send>send</button>
+          </div>
+          <div>
             <button data-close>close</button>
             <button data-fclose>forceClose</button>
           </div>
@@ -94,16 +114,20 @@
           <div>
             Local:
             <video data-local-video playsinline muted></video>
+          </div>
+          <div>
             Remote(s):
             <div data-remote-videos></div>
           </div>
           <div>
-            <pre data-data-sink></pre>
+            <pre data-data-sink>...</pre>
           </div>
           <div>
             <button data-setup>setUp</button>
             <input type="text" data-local-id placeholder="xxxxxxxxxxxxxxxx" readonly />
             <input type="text" data-room-id placeholder="xxxx" />
+          </div>
+          <div>
             <select data-gum-select>
               <option value="VA">video+audio</option>
               <option value="V-">video</option>
@@ -113,6 +137,8 @@
             <button data-join>join</button>
             <button data-replace>replaceStream</button>
             <button data-send>send</button>
+          </div>
+          <div>
             <button data-close>close</button>
           </div>
         </div>
@@ -124,16 +150,20 @@
           <div>
             Local:
             <video data-local-video playsinline muted></video>
+          </div>
+          <div>
             Remote(s):
             <div data-remote-videos></div>
           </div>
           <div>
-            <pre data-data-sink></pre>
+            <pre data-data-sink>...</pre>
           </div>
           <div>
             <button data-setup>setUp</button>
             <input type="text" data-local-id placeholder="xxxxxxxxxxxxxxxx" readonly />
             <input type="text" data-room-id placeholder="xxxx" />
+          </div>
+          <div>
             <select data-gum-select>
               <option value="VA">video+audio</option>
               <option value="V-">video</option>
@@ -143,6 +173,8 @@
             <button data-join>join</button>
             <button data-replace>replaceStream</button>
             <button data-send>send</button>
+          </div>
+          <div>
             <button data-close>close</button>
           </div>
         </div>
