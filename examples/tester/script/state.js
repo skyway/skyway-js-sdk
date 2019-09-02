@@ -1,4 +1,14 @@
-export function getPeerOptions(localStorage) {
+const { localStorage } = window;
+
+export function setState(key, value) {
+  localStorage.setItem(key, value);
+}
+
+export function getState(key) {
+  return localStorage.getItem(key);
+}
+
+export function getPeerOptions() {
   const apiKey = localStorage.getItem('__SKYWAY_TESTER_KEY__');
   const signUrl = localStorage.getItem('__SKYWAY_TESTER_SIGN__');
   const forceTurn = localStorage.getItem('__SKYWAY_TESTER_TURN__') === 'true';

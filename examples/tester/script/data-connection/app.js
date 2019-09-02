@@ -1,8 +1,8 @@
 /* eslint-disable require-atomic-updates */
-import { getPeerOptions } from './utils.js';
-const { Peer, localStorage } = window;
+import { getPeerOptions } from '../state.js';
+const { Peer } = window;
 
-export default function renderDataConnection($c) {
+export default function($c) {
   const $setUp = $c.querySelector('[data-setup]');
   const $localId = $c.querySelector('[data-local-id]');
   const $remoteId = $c.querySelector('[data-remote-id]');
@@ -18,7 +18,7 @@ export default function renderDataConnection($c) {
   $setUp.onclick = async () => {
     if (peer) return;
 
-    const peerOptions = getPeerOptions(localStorage);
+    const peerOptions = getPeerOptions();
     console.log('connect to signaling server w/ options');
     console.log(JSON.stringify(peerOptions, null, 2));
 

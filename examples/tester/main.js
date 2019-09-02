@@ -1,20 +1,15 @@
-import renderSettings from './script/render-settings.js';
-import renderSignaling from './script/render-signaling.js';
-import renderMediaConnection from './script/render-media-connection.js';
-import renderDataConnection from './script/render-data-connection.js';
+import renderSettingsApp from './script/settings/app.js';
+import renderSignalingApp from './script/signaling/app.js';
+import renderMediaConnectionApp from './script/media-connection/app.js';
+import renderDataConnectionApp from './script/data-connection/app.js';
 
 (async function main() {
-  const $settingsSection = document.querySelector('[data-settings-section]');
-  const $signalingSection = document.querySelector('[data-signaling-section]');
-  const $mediaConnectionSection = document.querySelector(
-    '[data-media-connection-section]'
+  renderSettingsApp(document.querySelector('[data-settings-section]'));
+  renderSignalingApp(document.querySelector('[data-signaling-section]'));
+  renderMediaConnectionApp(
+    document.querySelector('[data-media-connection-section]')
   );
-  const $dataConnectionSection = document.querySelector(
-    '[data-data-connection-section]'
+  renderDataConnectionApp(
+    document.querySelector('[data-data-connection-section]')
   );
-
-  renderSettings($settingsSection);
-  renderSignaling($signalingSection);
-  renderMediaConnection($mediaConnectionSection);
-  renderDataConnection($dataConnectionSection);
 })();
