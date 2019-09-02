@@ -76,16 +76,23 @@ export default function($c) {
       console.log('receive stream w/ tracks');
       console.log(stream.getTracks());
 
-      const $remoteVideo = document.createElement('video');
-      $remoteVideo.srcObject = stream;
-      $remoteVideo.play();
-      $remoteVideo.dataset.peerId = stream.peerId;
-
-      $remoteVideos.append($remoteVideo);
+      stream.getTracks().forEach(track => {
+        const $media = document.createElement(track.kind);
+        $media.srcObject = stream;
+        $media.controls = true;
+        if (track.kind === 'video') {
+          $media.muted = $media.playsInline = true;
+        }
+        $media.dataset.peerId = stream.peerId;
+        $remoteVideos.append($media);
+        $media.play();
+      });
     });
 
     room.on('peerLeave', peerId => {
-      $c.querySelector(`[data-peer-id="${peerId}"]`).remove();
+      $c.querySelectorAll(`[data-peer-id="${peerId}"]`).forEach(el =>
+        el.remove()
+      );
     });
 
     room.on('data', ({ src, data }) => {

@@ -8,7 +8,8 @@
       body { margin: 0; }
       h1 { text-align: center; }
       h1, h2 { margin: 0; margin-bottom: 8px; }
-      video { background-color: #111; width: 100px; }
+      video { background-color: #111; width: 200px; }
+      audio { width: 200px; }
       section { padding: 8px; margin-bottom: 8px; }
       section:nth-child(even) { background-color: #eee; }
     </style>
@@ -39,6 +40,8 @@
             </label>
           </div>
         </div>
+        <hr />
+        <div data-meta></div>
       </section>
 
       <section data-signaling-section>
@@ -60,7 +63,7 @@
           </div>
           <div>
             Remote:
-            <video data-remote-video playsinline></video>
+            <video data-remote-video playsinline muted controls></video>
           </div>
           <div>
             <button data-setup>setUp</button>
