@@ -42,9 +42,15 @@ export default function($c) {
     if (!$roomId.value) return;
     if (room) return;
 
-    const stream = await gum($gumSelect.value, console);
-    $localVideo.srcObject = stream;
-    $localVideo.play();
+    let stream = null;
+    const gumOptions = getGumOptions($gumSelect.value);
+    if (gumOptions) {
+      console.log('getUserMedia() w/ options');
+      console.log(JSON.stringify(gumOptions, null, 2));
+      stream = await navigator.mediaDevices.getUserMedia(gumOptions);
+      $localVideo.srcObject = stream;
+      $localVideo.play();
+    }
 
     // TODO
     const roomOptions = { mode: 'sfu', stream };
@@ -87,12 +93,35 @@ export default function($c) {
   $replace.onclick = async () => {
     if (!room) return;
 
-    console.log('replace w/ display video(no audio)');
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-    });
-    $localVideo.srcObject = stream;
-    $localVideo.play();
+    let stream = null;
+    const gumOptions = getGumOptions($gumSelect.value);
+    if (gumOptions) {
+      stream = new MediaStream();
+
+      if (gumOptions.video) {
+        const [vTrack] = await navigator.mediaDevices
+          .getDisplayMedia({
+            video: true,
+          })
+          .then(stream => stream.getVideoTracks());
+        stream.addTrack(vTrack);
+      }
+
+      if (gumOptions.audio) {
+        const [aTrack] = await navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then(stream => stream.getAudioTracks());
+        stream.addTrack(aTrack);
+      }
+
+      console.log('replace stream w/ tracks');
+      console.log(stream.getTracks());
+
+      $localVideo.srcObject = stream;
+      $localVideo.play();
+    } else {
+      $localVideo.srcObject = null;
+    }
 
     room.replaceStream(stream);
   };
@@ -114,17 +143,13 @@ export default function($c) {
   };
 }
 
-async function gum(gumValue) {
-  let stream;
-  const gumOptions = {};
-  if (gumValue !== '--') {
-    gumOptions.audio = gumValue.includes('A');
-    gumOptions.video = gumValue.includes('V');
-
-    console.log('getUserMedia() w/ options');
-    console.log(JSON.stringify(gumOptions, null, 2));
-    stream = await navigator.mediaDevices.getUserMedia(gumOptions);
+function getGumOptions(gumValue) {
+  if (gumValue === '--') {
+    return null;
   }
 
-  return stream;
+  return {
+    audio: gumValue.includes('A'),
+    video: gumValue.includes('V'),
+  };
 }
