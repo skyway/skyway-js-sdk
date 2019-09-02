@@ -1,5 +1,6 @@
 /* eslint-disable require-atomic-updates */
 import { getPeerOptions } from '../state.js';
+import { logPeerEvent, logMeshRoomEvent, getGumOptions } from '../utils.js';
 const { Peer } = window;
 
 export default function($c) {
@@ -22,20 +23,15 @@ export default function($c) {
     if (peer) return;
 
     const peerOptions = getPeerOptions();
-    console.log('connect to signaling server w/ options');
+    console.log('new Peer() w/ options');
     console.log(JSON.stringify(peerOptions, null, 2));
 
     peer = new Peer(peerOptions);
+    logPeerEvent(peer);
 
     await new Promise(r => peer.once('open', r));
-    console.log('ev: Peer@open');
 
     $localId.value = peer.id;
-
-    peer.on('error', err => {
-      console.error(`ev: Peer#error w/ id: ${peer.id}`);
-      console.error(err);
-    });
   };
 
   $join.onclick = async () => {
@@ -54,15 +50,13 @@ export default function($c) {
 
     // TODO
     const roomOptions = { mode: 'mesh', stream };
-    console.log(`join to room: ${$roomId.value} w/ options`);
+    console.log(`Peer#joinRoom() ${$roomId.value} w/ options`);
     console.log(JSON.stringify(roomOptions, null, 2));
-
     room = peer.joinRoom($roomId.value, roomOptions);
 
+    logMeshRoomEvent(room);
     room.on('stream', stream => {
-      console.log('ev: MeshRoom@stream');
-
-      console.log('stream w/ tracks');
+      console.log('receive stream w/ tracks');
       console.log(stream.getTracks());
 
       const $remoteVideo = document.createElement('video');
@@ -74,19 +68,11 @@ export default function($c) {
     });
 
     room.on('peerLeave', peerId => {
-      console.log('ev: MeshRoom@peerLeave');
-      console.log(peerId);
-
-      $c.querySelector(`[data-peer-id=${peerId}]`).remove();
+      $c.querySelector(`[data-peer-id="${peerId}"]`).remove();
     });
 
     room.on('data', ({ src, data }) => {
-      console.log('ev: MeshRoom@data');
       $dataSink.textContent = `${data} from ${src}`;
-    });
-
-    room.on('close', () => {
-      console.log('ev: MeshRoom@close');
     });
   };
 
@@ -114,15 +100,16 @@ export default function($c) {
         stream.addTrack(aTrack);
       }
 
-      console.log('replace stream w/ tracks');
-      console.log(stream.getTracks());
-
       $localVideo.srcObject = stream;
       $localVideo.play();
     } else {
       $localVideo.srcObject = null;
     }
 
+    console.log('stream w/ tracks');
+    console.log(stream ? stream.getTracks() : null);
+
+    console.log('MeshRoom#replaceStream()');
     room.replaceStream(stream);
   };
 
@@ -130,26 +117,15 @@ export default function($c) {
     if (!room) return;
 
     const text = `Hello at ${Date.now()}`;
-    console.log(`send() ${text}`);
-
+    console.log('MeshRoom#send() w/ text');
+    console.log(text);
     room.send(text);
   };
 
   $close.onclick = () => {
     if (!room) return;
 
-    console.log('close()');
+    console.log('MeshRoom#close()');
     room.close();
-  };
-}
-
-function getGumOptions(gumValue) {
-  if (gumValue === '--') {
-    return null;
-  }
-
-  return {
-    audio: gumValue.includes('A'),
-    video: gumValue.includes('V'),
   };
 }

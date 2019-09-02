@@ -1,5 +1,10 @@
 /* eslint-disable require-atomic-updates */
 import { getPeerOptions } from '../state.js';
+import {
+  logPeerEvent,
+  logMediaConnectionEvent,
+  getGumOptions,
+} from '../utils.js';
 const { navigator, Peer } = window;
 
 export default function($c) {
@@ -21,23 +26,16 @@ export default function($c) {
     if (peer) return;
 
     const peerOptions = getPeerOptions();
-    console.log('connect to signaling server w/ options');
+    console.log('new Peer() w/ options');
     console.log(JSON.stringify(peerOptions, null, 2));
 
     peer = new Peer(peerOptions);
+    logPeerEvent(peer);
 
     await new Promise(r => peer.once('open', r));
-    console.log('ev: Peer@open');
     $localId.value = peer.id;
 
-    peer.on('error', err => {
-      console.error(`ev: Peer#error w/ id: ${peer.id}`);
-      console.error(err);
-    });
-
     peer.on('call', async mc => {
-      console.log('ev: Peer@call');
-
       $remoteId.value = mc.remoteId;
 
       let stream = null;
@@ -50,12 +48,13 @@ export default function($c) {
         $localVideo.play();
       }
 
+      logMediaConnectionEvent(mc);
       mc.on('stream', onRemoteStream);
       mc.on('close', onClose);
 
       // TODO
       const answerOptions = {};
-      console.log('answer() w/ options');
+      console.log('MediaConnection#answer() w/ options');
       console.log(JSON.stringify(answerOptions, null, 2));
       mc.answer(stream, answerOptions);
 
@@ -80,10 +79,11 @@ export default function($c) {
 
     // TODO
     const callOptions = {};
-    console.log('call() w/ options');
+    console.log('MediaConnection#call() w/ options');
     console.log(JSON.stringify(callOptions, null, 2));
 
     const mc = peer.call($remoteId.value, stream, callOptions);
+    logMediaConnectionEvent(mc);
     mc.on('stream', onRemoteStream);
     mc.on('close', onClose);
 
@@ -114,54 +114,43 @@ export default function($c) {
         stream.addTrack(aTrack);
       }
 
-      console.log('replace stream w/ tracks');
-      console.log(stream.getTracks());
-
       $localVideo.srcObject = stream;
       $localVideo.play();
     } else {
       $localVideo.srcObject = null;
     }
 
+    console.log('stream w/ tracks');
+    console.log(stream ? stream.getTracks() : null);
+
+    console.log('MediaConnection#replaceStream()');
     conn.replaceStream(stream);
   };
 
   $close.onclick = () => {
     if (!conn) return;
 
-    console.log('close()');
+    console.log('MediaConnection#close()');
     conn.close();
   };
   $fclose.onclick = () => {
     if (!conn) return;
 
-    console.log('close(true)');
+    console.log('MediaConnection#close(true)');
     conn.close(true);
   };
 
   function onRemoteStream(stream) {
-    console.log('ev: MediaConnection@stream');
-
     $remoteVideo.srcObject = stream;
     $remoteVideo.play();
 
-    console.log('stream w/ tracks');
+    console.log('receive stream w/ tracks');
     console.log(stream.getTracks());
   }
 
   function onClose() {
-    console.log('ev: MediaConnection@close');
     $remoteVideo.srcObject = null;
-  }
-}
 
-function getGumOptions(gumValue) {
-  if (gumValue === '--') {
-    return null;
+    console.log('close conn');
   }
-
-  return {
-    audio: gumValue.includes('A'),
-    video: gumValue.includes('V'),
-  };
 }

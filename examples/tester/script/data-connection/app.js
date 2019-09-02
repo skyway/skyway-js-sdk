@@ -1,5 +1,6 @@
 /* eslint-disable require-atomic-updates */
 import { getPeerOptions } from '../state.js';
+import { logPeerEvent, logDataConnectionEvent } from '../utils.js';
 const { Peer } = window;
 
 export default function($c) {
@@ -19,25 +20,19 @@ export default function($c) {
     if (peer) return;
 
     const peerOptions = getPeerOptions();
-    console.log('connect to signaling server w/ options');
+    console.log('new Peer() w/ options');
     console.log(JSON.stringify(peerOptions, null, 2));
 
     peer = new Peer(peerOptions);
+    logPeerEvent(peer);
 
     await new Promise(r => peer.once('open', r));
-    console.log('ev: Peer@open');
     $localId.value = peer.id;
 
-    peer.on('error', err => {
-      console.error(`ev: Peer#error w/ id: ${peer.id}`);
-      console.error(err);
-    });
-
     peer.on('connection', async dc => {
-      console.log('ev: Peer@connection');
-
       $remoteId.value = dc.remoteId;
 
+      logDataConnectionEvent(dc);
       dc.on('data', onRemoteData);
       dc.on('close', onClose);
 
@@ -52,10 +47,12 @@ export default function($c) {
 
     // TODO
     const connectOptions = {};
-    console.log('connect() w/ options');
+    console.log('DataConnection#connect() w/ options');
     console.log(JSON.stringify(connectOptions, null, 2));
 
     const dc = peer.connect($remoteId.value, connectOptions);
+
+    logDataConnectionEvent(dc);
     dc.on('data', onRemoteData);
     dc.on('close', onClose);
 
@@ -64,7 +61,8 @@ export default function($c) {
 
   $send.onclick = () => {
     const text = `Hello at ${Date.now()}`;
-    console.log(`send() ${text}`);
+    console.log('DataConnection#send() w/ text');
+    console.log(text);
 
     conn.send(text);
   };
@@ -72,23 +70,21 @@ export default function($c) {
   $close.onclick = () => {
     if (!conn) return;
 
-    console.log('close()');
+    console.log('DataConnection#close()');
     conn.close();
   };
   $fclose.onclick = () => {
     if (!conn) return;
 
-    console.log('close(true)');
+    console.log('DataConnection#close(true)');
     conn.close(true);
   };
 
   function onRemoteData(data) {
-    console.log('ev: MediaConnection@data');
     $dataSink.textContent = data;
   }
 
   function onClose() {
-    console.log('ev: MediaConnection@close');
     $dataSink.textContent = 'CLOSED';
   }
 }
