@@ -118,8 +118,34 @@
         </div>
       </section>
 
-      <section>
+      <section data-sfu-room-section>
         <h2>SfuRoom</h2>
+        <div>
+          <div>
+            Local:
+            <video data-local-video playsinline muted></video>
+            Remote(s):
+            <div data-remote-videos></div>
+          </div>
+          <div>
+            <pre data-data-sink></pre>
+          </div>
+          <div>
+            <button data-setup>setUp</button>
+            <input type="text" data-local-id placeholder="xxxxxxxxxxxxxxxx" readonly />
+            <input type="text" data-room-id placeholder="xxxx" />
+            <select data-gum-select>
+              <option value="VA">video+audio</option>
+              <option value="V-">video</option>
+              <option value="-A">audio</option>
+              <option value="--">null</option>
+            </select>
+            <button data-join>join</button>
+            <button data-replace>replaceStream</button>
+            <button data-send>send</button>
+            <button data-close>close</button>
+          </div>
+        </div>
       </section>
 
     </div>
