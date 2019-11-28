@@ -234,6 +234,7 @@ describe('SFURoom', () => {
     describe('when message src is your peerId', () => {
       const joinMessage = {
         src: peerId,
+        roomMembers: [peerId],
       };
 
       it('should emit an open event', done => {
@@ -284,6 +285,7 @@ describe('SFURoom', () => {
     describe('when message src is not your peerId', () => {
       const joinMessage = {
         src: remotePeerId,
+        roomMembers: [peerId, remotePeerId],
       };
 
       it('should add user to members', () => {
