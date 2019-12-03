@@ -1,6 +1,13 @@
 # Changelog
 
 ## release note
+
+## [v2.0.4](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.3) - 2019-12-03
+
+### Fixed
+
+- Fixed bug where SFURoom.members does not include members who joined before. ([#221](https://github.com/skyway/skyway-js-sdk/pull/221))
+
 ## [v2.0.3](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.3) - 2019-08-27
 
 ### Fixed
