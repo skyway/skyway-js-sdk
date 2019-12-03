@@ -176,12 +176,16 @@ class SFURoom extends Room {
    * @param {Object} joinMessage - Message object.
    * @param {string} joinMessage.src - The peerId of the peer that joined.
    * @param {string} joinMessage.roomName - The name of the joined room.
+   * @param {Array} joinMessage.roomMembers - Array of peerId string.
    */
   handleJoin(joinMessage) {
-    const src = joinMessage.src;
+    const { src, roomMembers } = joinMessage;
 
     if (src === this._peerId) {
       this._open = true;
+
+      // init w/ members already in room(ignore myself)
+      this.members = roomMembers.filter(peerId => peerId !== src);
 
       this.call(this._localStream);
       this.emit(SFURoom.EVENTS.open.key);

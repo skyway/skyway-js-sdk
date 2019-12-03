@@ -1,6 +1,13 @@
 # Changelog
 
 ## release note
+
+## [v2.0.4](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.4) - 2019-12-03
+
+### Fixed
+
+- Fixed the bug that peers already in the room were not included in `SFURoom.members`. ([#221](https://github.com/skyway/skyway-js-sdk/pull/221))
+
 ## [v2.0.3](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.3) - 2019-08-27
 
 ### Fixed
