@@ -2,7 +2,7 @@
 
 ## release note
 
-## [v2.0.4](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.3) - 2019-12-03
+## [v2.0.4](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.4) - 2019-12-03
 
 ### Fixed
 
