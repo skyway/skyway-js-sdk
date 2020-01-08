@@ -2,6 +2,12 @@
 
 ## release note
 
+## [v2.0.5](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.5) - 2020-01-08
+
+### Fixed
+
+- Fixed the license for npm to Apache-2.0 ([#226](https://github.com/skyway/skyway-js-sdk/pull/226))
+
 ## [v2.0.4](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.4) - 2019-12-03
 
 ### Fixed
