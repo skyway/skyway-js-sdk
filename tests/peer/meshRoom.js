@@ -274,6 +274,18 @@ describe('MeshRoom', () => {
         assert.equal(answerSpy.callCount, 1);
         assert(answerSpy.calledWith(meshRoom._localStream));
       });
+
+      it('should not create MediaConnection when has a connection with peer and peerId is larger', () => {
+        const smallPeerId = 'aaaa';
+        meshRoom._addConnection(smallPeerId, { id: 'connId1' });
+        meshRoom.handleOffer({
+          connectionId: 'connId2',
+          connectionType: 'media',
+          src: smallPeerId,
+        });
+
+        assert(mcStub.neverCalledWith(smallPeerId));
+      });
     });
 
     // TODO: when dataConnection messages is implemented?
@@ -503,6 +515,13 @@ describe('MeshRoom', () => {
         meshRoom._makeConnections(peerIds, 'media', options);
 
         assert(mcStub.neverCalledWith(peerId));
+      });
+
+      it('should not create MediaConnection when has a connection with peer', () => {
+        meshRoom._addConnection(remotePeerId1, { id: 'connId1' });
+        meshRoom._makeConnections([remotePeerId1], 'media', options);
+
+        assert(mcStub.neverCalledWith(remotePeerId1));
       });
     });
   });
