@@ -245,6 +245,9 @@ class MeshRoom extends Room {
    * @param {*} data - The data to send.
    */
   send(data) {
+    if (this.isOverLimits(data)) {
+      throw new Error('The size of data to send must be less than 20 MB');
+    }
     const message = {
       roomName: this.name,
       data: data,

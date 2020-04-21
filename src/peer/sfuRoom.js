@@ -236,11 +236,13 @@ class SFURoom extends Room {
     if (!this._open) {
       return;
     }
-
     const message = {
       roomName: this.name,
       data: data,
     };
+    if (this.isOverLimits(data)) {
+      throw new Error('The size of data to send must be less than 20 MB');
+    }
     this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
   }
 
