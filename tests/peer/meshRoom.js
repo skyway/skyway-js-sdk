@@ -275,16 +275,30 @@ describe('MeshRoom', () => {
         assert(answerSpy.calledWith(meshRoom._localStream));
       });
 
-      it('should not create MediaConnection when has a connection with peer and peerId is larger', () => {
-        const smallPeerId = 'aaaa';
-        meshRoom._addConnection(smallPeerId, { id: 'connId1' });
-        meshRoom.handleOffer({
-          connectionId: 'connId2',
-          connectionType: 'media',
-          src: smallPeerId,
-        });
+      it('should not create MediaConnection when has a connection with the peer and self peerId is larger', () => {
+        const testItems = [
+          { src: 'bbbbbbb', self: 'bbbbbbbb' },
+          { src: 'baaaaaa', self: 'bbbbbbb' },
+          { src: 'aaaaaaa', self: 'baaaaaa' },
+          { src: '_______', self: 'aaaaaaa' },
+          { src: 'AAAAAAA', self: '_______' },
+          { src: '1234567', self: 'AAAAAAA' },
+          { src: '-------', self: '1234567' },
+          { src: '-      ', self: '-------' },
+        ];
 
-        assert(mcStub.neverCalledWith(smallPeerId));
+        for (const testItem of testItems) {
+          meshRoom._peerId = testItem.self;
+          meshRoom._addConnection(testItem.src, {
+            id: `connId1_${testItem.src}`,
+          });
+          meshRoom.handleOffer({
+            connectionId: `connId2_${testItem.src}`,
+            connectionType: 'media',
+            src: testItem.src,
+          });
+          assert(mcStub.neverCalledWith(testItem.src));
+        }
       });
     });
 
