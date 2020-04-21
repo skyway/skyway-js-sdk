@@ -335,6 +335,18 @@ describe('MeshRoom', () => {
   });
 
   describe('send', () => {
+    const randomString = size => {
+      let str = '';
+      const s =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      for (let i = 0; i < size; i++) {
+        str += s[Math.floor(Math.random() * s.length)];
+      }
+      return str;
+    };
+    const size = 21 * 10 ** 6;
+    const dummyLargeData = randomString(size);
+
     it('should emit a broadcast event', done => {
       const data = 'foobar';
 
@@ -344,6 +356,32 @@ describe('MeshRoom', () => {
       });
 
       meshRoom.send(data);
+    });
+
+    it('should throw an error when the size of data to send is greater than 20 MB', done => {
+      const message = 'The size of data to send must be less than 20 MB';
+
+      try {
+        meshRoom.send(dummyLargeData);
+      } catch (err) {
+        assert.strictEqual(err.message, message);
+        done();
+      }
+    });
+
+    it('should not emit a broadcast event when the size of data to send is greater than 20 MB', done => {
+      meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, () => {
+        assert.fail('Should not have emitted a broadcast event');
+      });
+
+      try {
+        meshRoom.send(dummyLargeData);
+      } catch (err) {
+        // empty
+      }
+
+      // let other async events run
+      setTimeout(done);
     });
   });
 
