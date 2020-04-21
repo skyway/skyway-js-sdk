@@ -723,11 +723,9 @@ describe('Negotiator', () => {
             assert.fail('Should not emit iceCandidate event');
           });
 
-          [
-            {},
-            { candidate: null },
-            { candidate: { candidate: '' } },
-          ].forEach(ev => pc.onicecandidate(ev));
+          [{}, { candidate: null }, { candidate: { candidate: '' } }].forEach(
+            ev => pc.onicecandidate(ev)
+          );
         });
       });
 
