@@ -277,27 +277,27 @@ describe('MeshRoom', () => {
 
       it('should not create MediaConnection when has a connection with the peer and self peerId is larger', () => {
         const testItems = [
-          { src: 'bbbbbbb', self: 'bbbbbbbb' },
-          { src: 'baaaaaa', self: 'bbbbbbb' },
-          { src: 'aaaaaaa', self: 'baaaaaa' },
-          { src: '_______', self: 'aaaaaaa' },
-          { src: 'AAAAAAA', self: '_______' },
-          { src: '1234567', self: 'AAAAAAA' },
-          { src: '-------', self: '1234567' },
-          { src: '-      ', self: '-------' },
+          { remotePeerId: 'bbbbbbb', localPeerId: 'bbbbbbbb' },
+          { remotePeerId: 'baaaaaa', localPeerId: 'bbbbbbb' },
+          { remotePeerId: 'aaaaaaa', localPeerId: 'baaaaaa' },
+          { remotePeerId: '_______', localPeerId: 'aaaaaaa' },
+          { remotePeerId: 'AAAAAAA', localPeerId: '_______' },
+          { remotePeerId: '1234567', localPeerId: 'AAAAAAA' },
+          { remotePeerId: '-------', localPeerId: '1234567' },
+          { remotePeerId: '-      ', localPeerId: '-------' },
         ];
 
         for (const testItem of testItems) {
-          meshRoom._peerId = testItem.self;
-          meshRoom._addConnection(testItem.src, {
-            id: `connId1_${testItem.src}`,
+          meshRoom._peerId = testItem.localPeerId;
+          meshRoom._addConnection(testItem.remotePeerId, {
+            id: `connId1_${testItem.remotePeerId}`,
           });
           meshRoom.handleOffer({
-            connectionId: `connId2_${testItem.src}`,
+            connectionId: `connId2_${testItem.remotePeerId}`,
             connectionType: 'media',
-            src: testItem.src,
+            src: testItem.remotePeerId,
           });
-          assert(mcStub.neverCalledWith(testItem.src));
+          assert(mcStub.neverCalledWith(testItem.remotePeerId));
         }
       });
     });
