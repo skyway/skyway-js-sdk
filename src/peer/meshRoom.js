@@ -160,6 +160,11 @@ class MeshRoom extends Room {
     }
 
     if (offerMessage.connectionType === 'media') {
+      if (this._hasConnection(offerMessage.src)) {
+        // When two or more users join at the same time, they send each other an offer.
+        // In order to prevent two connections between peerA and peerB, only the one with a small ID will be processed.
+        if (this._peerId > offerMessage.src) return;
+      }
       connection = new MediaConnection(offerMessage.src, {
         connectionId: connectionId,
         payload: offerMessage,
@@ -315,6 +320,9 @@ class MeshRoom extends Room {
       .filter(peerId => {
         return peerId !== this._peerId;
       })
+      .filter(peerId => {
+        return !this._hasConnection(peerId);
+      })
       .forEach(peerId => {
         let connection;
 
@@ -363,6 +371,16 @@ class MeshRoom extends Room {
       return conn[0];
     }
     return null;
+  }
+
+  /**
+   * Return whether peer has already made a connection to 'peerId' or not
+   * @param {string} peerId - User's PeerId.
+   * @return {boolean} - Whether peer has already made a connection to 'peerId' or not
+   * @private
+   */
+  _hasConnection(peerId) {
+    return this.connections[peerId] && this.connections[peerId].length > 0;
   }
 
   /**

@@ -274,6 +274,32 @@ describe('MeshRoom', () => {
         assert.equal(answerSpy.callCount, 1);
         assert(answerSpy.calledWith(meshRoom._localStream));
       });
+
+      it('should not create MediaConnection when has a connection with the peer and self peerId is larger', () => {
+        const testItems = [
+          { remotePeerId: 'bbbbbbb', localPeerId: 'bbbbbbbb' },
+          { remotePeerId: 'baaaaaa', localPeerId: 'bbbbbbb' },
+          { remotePeerId: 'aaaaaaa', localPeerId: 'baaaaaa' },
+          { remotePeerId: '_______', localPeerId: 'aaaaaaa' },
+          { remotePeerId: 'AAAAAAA', localPeerId: '_______' },
+          { remotePeerId: '1234567', localPeerId: 'AAAAAAA' },
+          { remotePeerId: '-------', localPeerId: '1234567' },
+          { remotePeerId: '-      ', localPeerId: '-------' },
+        ];
+
+        for (const testItem of testItems) {
+          meshRoom._peerId = testItem.localPeerId;
+          meshRoom._addConnection(testItem.remotePeerId, {
+            id: `connId1_${testItem.remotePeerId}`,
+          });
+          meshRoom.handleOffer({
+            connectionId: `connId2_${testItem.remotePeerId}`,
+            connectionType: 'media',
+            src: testItem.remotePeerId,
+          });
+          assert(mcStub.neverCalledWith(testItem.remotePeerId));
+        }
+      });
     });
 
     // TODO: when dataConnection messages is implemented?
@@ -541,6 +567,13 @@ describe('MeshRoom', () => {
         meshRoom._makeConnections(peerIds, 'media', options);
 
         assert(mcStub.neverCalledWith(peerId));
+      });
+
+      it('should not create MediaConnection when has a connection with peer', () => {
+        meshRoom._addConnection(remotePeerId1, { id: 'connId1' });
+        meshRoom._makeConnections([remotePeerId1], 'media', options);
+
+        assert(mcStub.neverCalledWith(remotePeerId1));
       });
     });
   });
