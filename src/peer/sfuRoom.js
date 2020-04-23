@@ -240,10 +240,9 @@ class SFURoom extends Room {
       roomName: this.name,
       data: data,
     };
-    if (this.isOverLimits(data)) {
-      throw new Error('The size of data to send must be less than 20 MB');
+    if (this.validateDataSize(data)) {
+      this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
     }
-    this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
   }
 
   /**

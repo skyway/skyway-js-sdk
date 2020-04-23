@@ -2,6 +2,7 @@ import EventEmitter from 'events';
 import Enum from 'enum';
 import parser from 'socket.io-parser';
 import hasBin from 'has-binary2';
+import config from '../shared/config';
 
 const Events = [
   'stream',
@@ -63,27 +64,27 @@ class Room extends EventEmitter {
   }
 
   /**
-   * Check whether the size of data to send is over the limits or not.
-   * @param {object} data - The data to check.
+   * Validate whether the size of data to send is over the limits or not.
+   * @param {object} data - The data to Validate.
    */
-  isOverLimits(data) {
+  validateDataSize(data) {
     const isBin = hasBin([data]);
     const packet = {
       type: isBin ? parser.BINARY_EVENT : parser.EVENT,
       data: [data],
     };
     const encoder = new parser.Encoder();
-    let dataLength;
+    let dataSize;
     encoder.encode(packet, encodedPackets => {
-      dataLength = isBin
+      dataSize = isBin
         ? encodedPackets[1].byteLength
         : encodedPackets[0].length;
     });
-    const limits = 20 * 10 ** 6; // 20 MB
-    if (dataLength > limits) {
-      return true;
+    const maxDataSize = config.maxDataSize;
+    if (dataSize > maxDataSize) {
+      throw new Error('The size of data to send must be less than 20 MB');
     }
-    return false;
+    return true;
   }
 
   /**
