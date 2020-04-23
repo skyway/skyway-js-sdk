@@ -444,7 +444,7 @@ describe('SFURoom', () => {
     const randomString = size => {
       let str = '';
       const s =
-            'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       for (let i = 0; i < size; i++) {
         str += s[Math.floor(Math.random() * s.length)];
       }
@@ -558,7 +558,7 @@ describe('SFURoom', () => {
     });
 
     describe('when the data type is object', () => {
-      const dummyObject = {'string': randomString(dummyDataSize)};
+      const dummyObject = { string: randomString(dummyDataSize) };
 
       it('should throw an error when the size of data to send is greater than 20 MB', done => {
         const sfuRoom = new SFURoom(sfuRoomName, peerId);
