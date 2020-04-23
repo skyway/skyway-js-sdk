@@ -444,14 +444,13 @@ describe('SFURoom', () => {
     const randomString = size => {
       let str = '';
       const s =
-        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       for (let i = 0; i < size; i++) {
         str += s[Math.floor(Math.random() * s.length)];
       }
       return str;
     };
-    const size = 21 * 10 ** 6;
-    const dummyLargeData = randomString(size);
+    const dummyDataSize = 21 * 1024 * 1024;
 
     it('should emit a broadcast event', done => {
       const data = 'foobar';
@@ -488,35 +487,109 @@ describe('SFURoom', () => {
       setTimeout(done);
     });
 
-    it('should throw an error when the size of data to send is greater than 20 MB', done => {
-      const sfuRoom = new SFURoom(sfuRoomName, peerId);
-      sfuRoom._open = true;
-      const message = 'The size of data to send must be less than 20 MB';
+    describe('when the data type is string', () => {
+      const dummyString = randomString(dummyDataSize);
 
-      try {
-        sfuRoom.send(dummyLargeData);
-      } catch (err) {
-        assert.strictEqual(err.message, message);
-        done();
-      }
-    });
+      it('should throw an error when the size of data to send is greater than 20 MB', done => {
+        const sfuRoom = new SFURoom(sfuRoomName, peerId);
+        sfuRoom._open = true;
+        const message = 'The size of data to send must be less than 20 MB';
 
-    it('should not emit a broadcast event when the size of data to send is greater than 20 MB', done => {
-      const sfuRoom = new SFURoom(sfuRoomName, peerId);
-      sfuRoom._open = true;
-
-      sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, () => {
-        assert.fail('Should not have emitted a broadcast event');
+        try {
+          sfuRoom.send(dummyString);
+        } catch (err) {
+          assert.strictEqual(err.message, message);
+          done();
+        }
       });
 
-      try {
-        sfuRoom.send(dummyLargeData);
-      } catch (err) {
-        // empty
-      }
+      it('should not emit a broadcast event when the size of data to send is greater than 20 MB', done => {
+        const sfuRoom = new SFURoom(sfuRoomName, peerId);
+        sfuRoom._open = true;
 
-      // let other async events run
-      setTimeout(done);
+        sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, () => {
+          assert.fail('Should not have emitted a broadcast event');
+        });
+
+        try {
+          sfuRoom.send(dummyString);
+        } catch (err) {
+          // empty
+        }
+
+        // let other async events run
+        setTimeout(done);
+      });
+    });
+
+    describe('when the data type is binary (ArrayBuffer)', () => {
+      const dummyArrayBuffer = new ArrayBuffer(dummyDataSize);
+
+      it('should throw an error when the size of data to send is greater than 20 MB', done => {
+        const sfuRoom = new SFURoom(sfuRoomName, peerId);
+        sfuRoom._open = true;
+        const message = 'The size of data to send must be less than 20 MB';
+
+        try {
+          sfuRoom.send(dummyArrayBuffer);
+        } catch (err) {
+          assert.strictEqual(err.message, message);
+          done();
+        }
+      });
+
+      it('should not emit a broadcast event when the size of data to send is greater than 20 MB', done => {
+        const sfuRoom = new SFURoom(sfuRoomName, peerId);
+        sfuRoom._open = true;
+
+        sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, () => {
+          assert.fail('Should not have emitted a broadcast event');
+        });
+
+        try {
+          sfuRoom.send(dummyArrayBuffer);
+        } catch (err) {
+          // empty
+        }
+
+        // let other async events run
+        setTimeout(done);
+      });
+    });
+
+    describe('when the data type is object', () => {
+      const dummyObject = {'string': randomString(dummyDataSize)};
+
+      it('should throw an error when the size of data to send is greater than 20 MB', done => {
+        const sfuRoom = new SFURoom(sfuRoomName, peerId);
+        sfuRoom._open = true;
+        const message = 'The size of data to send must be less than 20 MB';
+
+        try {
+          sfuRoom.send(dummyObject);
+        } catch (err) {
+          assert.strictEqual(err.message, message);
+          done();
+        }
+      });
+
+      it('should not emit a broadcast event when the size of data to send is greater than 20 MB', done => {
+        const sfuRoom = new SFURoom(sfuRoomName, peerId);
+        sfuRoom._open = true;
+
+        sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, () => {
+          assert.fail('Should not have emitted a broadcast event');
+        });
+
+        try {
+          sfuRoom.send(dummyObject);
+        } catch (err) {
+          // empty
+        }
+
+        // let other async events run
+        setTimeout(done);
+      });
     });
   });
 
