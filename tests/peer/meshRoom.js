@@ -371,6 +371,7 @@ describe('MeshRoom', () => {
       return str;
     };
     const dummyDataSize = 21 * 1024 * 1024;
+    const dummyString = randomString(dummyDataSize);
 
     it('should emit a broadcast event', done => {
       const data = 'foobar';
@@ -384,8 +385,6 @@ describe('MeshRoom', () => {
     });
 
     describe('when the data type is string', () => {
-      const dummyString = randomString(dummyDataSize);
-
       it('should throw an error when the size of data to send is greater than 20 MB', done => {
         const message = 'The size of data to send must be less than 20 MB';
 
@@ -444,7 +443,7 @@ describe('MeshRoom', () => {
     });
 
     describe('when the data type is object', () => {
-      const dummyObject = { string: randomString(dummyDataSize) };
+      const dummyObject = { string: dummyString };
 
       it('should throw an error when the size of data to send is greater than 20 MB', done => {
         const message = 'The size of data to send must be less than 20 MB';

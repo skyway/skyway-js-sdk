@@ -451,6 +451,7 @@ describe('SFURoom', () => {
       return str;
     };
     const dummyDataSize = 21 * 1024 * 1024;
+    const dummyString = randomString(dummyDataSize);
 
     it('should emit a broadcast event', done => {
       const data = 'foobar';
@@ -488,8 +489,6 @@ describe('SFURoom', () => {
     });
 
     describe('when the data type is string', () => {
-      const dummyString = randomString(dummyDataSize);
-
       it('should throw an error when the size of data to send is greater than 20 MB', done => {
         const sfuRoom = new SFURoom(sfuRoomName, peerId);
         sfuRoom._open = true;
@@ -558,7 +557,7 @@ describe('SFURoom', () => {
     });
 
     describe('when the data type is object', () => {
-      const dummyObject = { string: randomString(dummyDataSize) };
+      const dummyObject = { string: dummyString };
 
       it('should throw an error when the size of data to send is greater than 20 MB', done => {
         const sfuRoom = new SFURoom(sfuRoomName, peerId);
