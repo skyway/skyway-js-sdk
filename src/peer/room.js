@@ -67,7 +67,7 @@ class Room extends EventEmitter {
    * Validate whether the size of data to send is over the limits or not.
    * @param {object} data - The data to Validate.
    */
-  validateDataSize(data) {
+  validateSendDataSize(data) {
     const isBin = hasBin([data]);
     const packet = {
       type: isBin ? parser.BINARY_EVENT : parser.EVENT,

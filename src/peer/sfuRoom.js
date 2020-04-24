@@ -240,7 +240,7 @@ class SFURoom extends Room {
       roomName: this.name,
       data: data,
     };
-    if (this.validateDataSize(data)) {
+    if (this.validateSendDataSize(data)) {
       this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
     }
   }
