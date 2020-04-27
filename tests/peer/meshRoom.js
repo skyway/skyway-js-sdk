@@ -370,8 +370,10 @@ describe('MeshRoom', () => {
       }
       return str;
     };
-    const dummyDataSize = 21 * 1024 * 1024;
-    const dummyString = randomString(dummyDataSize);
+    const sizeOver = 21 * 1024 * 1024;
+    const sizeUnder = 19 * 1024 * 1024;
+    const stringSizeOver = randomString(sizeOver);
+    const stringSizeUnder = randomString(sizeUnder);
 
     it('should emit a broadcast event', done => {
       const data = 'foobar';
@@ -389,7 +391,7 @@ describe('MeshRoom', () => {
         const message = 'The size of data to send must be less than 20 MB';
 
         try {
-          meshRoom.send(dummyString);
+          meshRoom.send(stringSizeOver);
         } catch (err) {
           assert.strictEqual(err.message, message);
           done();
@@ -402,24 +404,39 @@ describe('MeshRoom', () => {
         });
 
         try {
-          meshRoom.send(dummyString);
+          meshRoom.send(stringSizeOver);
         } catch (err) {
           // empty
         }
 
         // let other async events run
         setTimeout(done);
+      });
+
+      it('should emit a broadcast event when the size of data to send is 19 MB', done => {
+        meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, message => {
+          assert.equal(message.roomName, meshRoomName);
+          assert.equal(message.data, stringSizeUnder);
+          done();
+        });
+
+        try {
+          meshRoom.send(stringSizeUnder);
+        } catch (err) {
+          // empty
+        }
       });
     });
 
     describe('when the data type is binary (ArrayBuffer)', () => {
-      const dummyArrayBuffer = new ArrayBuffer(dummyDataSize);
+      const bufferSizeOver = new ArrayBuffer(sizeOver);
+      const bufferSizeUnder = new ArrayBuffer(sizeUnder);
 
       it('should throw an error when the size of data to send is greater than 20 MB', done => {
         const message = 'The size of data to send must be less than 20 MB';
 
         try {
-          meshRoom.send(dummyArrayBuffer);
+          meshRoom.send(bufferSizeOver);
         } catch (err) {
           assert.strictEqual(err.message, message);
           done();
@@ -432,24 +449,39 @@ describe('MeshRoom', () => {
         });
 
         try {
-          meshRoom.send(dummyArrayBuffer);
+          meshRoom.send(bufferSizeOver);
         } catch (err) {
           // empty
         }
 
         // let other async events run
         setTimeout(done);
+      });
+
+      it('should emit a broadcast event when the size of data to send is 19 MB', done => {
+        meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, message => {
+          assert.equal(message.roomName, meshRoomName);
+          assert.equal(message.data, bufferSizeUnder);
+          done();
+        });
+
+        try {
+          meshRoom.send(bufferSizeUnder);
+        } catch (err) {
+          // empty
+        }
       });
     });
 
     describe('when the data type is object', () => {
-      const dummyObject = { string: dummyString };
+      const objectSizeOver = { string: stringSizeOver };
+      const objectSizeUnder = { string: stringSizeUnder };
 
       it('should throw an error when the size of data to send is greater than 20 MB', done => {
         const message = 'The size of data to send must be less than 20 MB';
 
         try {
-          meshRoom.send(dummyObject);
+          meshRoom.send(objectSizeOver);
         } catch (err) {
           assert.strictEqual(err.message, message);
           done();
@@ -462,13 +494,27 @@ describe('MeshRoom', () => {
         });
 
         try {
-          meshRoom.send(dummyObject);
+          meshRoom.send(objectSizeOver);
         } catch (err) {
           // empty
         }
 
         // let other async events run
         setTimeout(done);
+      });
+
+      it('should emit a broadcast event when the size of data to send is 19 MB', done => {
+        meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, message => {
+          assert.equal(message.roomName, meshRoomName);
+          assert.equal(message.data, objectSizeUnder);
+          done();
+        });
+
+        try {
+          meshRoom.send(objectSizeUnder);
+        } catch (err) {
+          // empty
+        }
       });
     });
   });
