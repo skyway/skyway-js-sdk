@@ -49,6 +49,9 @@ const MESSAGE_TYPES = {
 // The actual chunk size is adjusted in dataChannel to accomodate metaData
 const maxChunkSize = 16300;
 
+// The maximum size of data that can be sent at one time by using Room.send() is 20 MB
+const maxDataSize = 20 * 1024 * 1024;
+
 // Number of reconnection attempts to the same server before giving up
 const reconnectionAttempts = 2;
 
@@ -80,6 +83,7 @@ export default {
   TURN_PORT,
   MESSAGE_TYPES,
   maxChunkSize,
+  maxDataSize,
   reconnectionAttempts,
   numberServersToTry,
   sendInterval,

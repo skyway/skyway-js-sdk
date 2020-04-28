@@ -236,12 +236,13 @@ class SFURoom extends Room {
     if (!this._open) {
       return;
     }
-
     const message = {
       roomName: this.name,
       data: data,
     };
-    this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
+    if (this.validateSendDataSize(data)) {
+      this.emit(SFURoom.MESSAGE_EVENTS.broadcast.key, message);
+    }
   }
 
   /**
