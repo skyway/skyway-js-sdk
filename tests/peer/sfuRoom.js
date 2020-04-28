@@ -446,7 +446,9 @@ describe('SFURoom', () => {
       const s =
         'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       for (let i = 0; i < size; i++) {
-        str += s[Math.floor(Math.random() * s.length)];
+        const index = i % s.length;
+        str += s[index];
+        // str += s[Math.floor(Math.random() * s.length)];
       }
       return str;
     };
