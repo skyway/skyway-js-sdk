@@ -362,14 +362,12 @@ describe('MeshRoom', () => {
 
   describe('send', () => {
     const randomString = size => {
-      let str = '';
       const s =
         'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      const iMax = Math.floor(size / 64);
-      for (let i = 0; i < iMax; i++) {
-        str += s;
-      }
-      return str;
+      return (
+        s.repeat(Math.floor(size / s.length)) +
+        s.substring(s.length - (size % s.length))
+      );
     };
     const sizeOver = 21 * 1024 * 1024;
     const sizeUnder = 19 * 1024 * 1024;
