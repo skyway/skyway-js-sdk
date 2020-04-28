@@ -451,9 +451,9 @@ describe('SFURoom', () => {
       return str;
     };
     const sizeOver = 21 * 1024 * 1024;
-    const sizeUnder = 19 * 1024 * 1024;
+    // const sizeUnder = 19 * 1024 * 1024;
     const stringSizeOver = randomString(sizeOver);
-    const stringSizeUnder = randomString(sizeUnder);
+    // const stringSizeUnder = randomString(sizeUnder);
 
     it('should emit a broadcast event', done => {
       const data = 'foobar';
@@ -522,27 +522,27 @@ describe('SFURoom', () => {
         setTimeout(done);
       });
 
-      it('should emit a broadcast event when the size of data to send is 19 MB', done => {
-        const sfuRoom = new SFURoom(sfuRoomName, peerId);
-        sfuRoom._open = true;
+      // it('should emit a broadcast event when the size of data to send is 19 MB', done => {
+      //   const sfuRoom = new SFURoom(sfuRoomName, peerId);
+      //   sfuRoom._open = true;
 
-        sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, message => {
-          assert.equal(message.roomName, sfuRoomName);
-          assert.equal(message.data, stringSizeUnder);
-          done();
-        });
+      //   sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, message => {
+      //     assert.equal(message.roomName, sfuRoomName);
+      //     assert.equal(message.data, stringSizeUnder);
+      //     done();
+      //   });
 
-        try {
-          sfuRoom.send(stringSizeUnder);
-        } catch (err) {
-          // empty
-        }
-      });
+      //   try {
+      //     sfuRoom.send(stringSizeUnder);
+      //   } catch (err) {
+      //     // empty
+      //   }
+      // });
     });
 
     describe('when the data type is binary (ArrayBuffer)', () => {
       const bufferSizeOver = new ArrayBuffer(sizeOver);
-      const bufferSizeUnder = new ArrayBuffer(sizeUnder);
+      // const bufferSizeUnder = new ArrayBuffer(sizeUnder);
 
       it('should throw an error when the size of data to send is greater than 20 MB', done => {
         const sfuRoom = new SFURoom(sfuRoomName, peerId);
@@ -575,27 +575,27 @@ describe('SFURoom', () => {
         setTimeout(done);
       });
 
-      it('should emit a broadcast event when the size of data to send is 19 MB', done => {
-        const sfuRoom = new SFURoom(sfuRoomName, peerId);
-        sfuRoom._open = true;
+      // it('should emit a broadcast event when the size of data to send is 19 MB', done => {
+      //   const sfuRoom = new SFURoom(sfuRoomName, peerId);
+      //   sfuRoom._open = true;
 
-        sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, message => {
-          assert.equal(message.roomName, sfuRoomName);
-          assert.equal(message.data, bufferSizeUnder);
-          done();
-        });
+      //   sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, message => {
+      //     assert.equal(message.roomName, sfuRoomName);
+      //     assert.equal(message.data, bufferSizeUnder);
+      //     done();
+      //   });
 
-        try {
-          sfuRoom.send(bufferSizeUnder);
-        } catch (err) {
-          // empty
-        }
-      });
+      //   try {
+      //     sfuRoom.send(bufferSizeUnder);
+      //   } catch (err) {
+      //     // empty
+      //   }
+      // });
     });
 
     describe('when the data type is object', () => {
       const objectSizeOver = { string: stringSizeOver };
-      const objectSizeUnder = { string: stringSizeUnder };
+      // const objectSizeUnder = { string: stringSizeUnder };
 
       it('should throw an error when the size of data to send is greater than 20 MB', done => {
         const sfuRoom = new SFURoom(sfuRoomName, peerId);
@@ -628,22 +628,22 @@ describe('SFURoom', () => {
         setTimeout(done);
       });
 
-      it('should emit a broadcast event when the size of data to send is 19 MB', done => {
-        const sfuRoom = new SFURoom(sfuRoomName, peerId);
-        sfuRoom._open = true;
+      // it('should emit a broadcast event when the size of data to send is 19 MB', done => {
+      //   const sfuRoom = new SFURoom(sfuRoomName, peerId);
+      //   sfuRoom._open = true;
 
-        sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, message => {
-          assert.equal(message.roomName, sfuRoomName);
-          assert.equal(message.data, objectSizeUnder);
-          done();
-        });
+      //   sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, message => {
+      //     assert.equal(message.roomName, sfuRoomName);
+      //     assert.equal(message.data, objectSizeUnder);
+      //     done();
+      //   });
 
-        try {
-          sfuRoom.send(objectSizeUnder);
-        } catch (err) {
-          // empty
-        }
-      });
+      //   try {
+      //     sfuRoom.send(objectSizeUnder);
+      //   } catch (err) {
+      //     // empty
+      //   }
+      // });
     });
   });
 
