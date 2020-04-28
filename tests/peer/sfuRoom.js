@@ -442,12 +442,12 @@ describe('SFURoom', () => {
 
   describe('send', () => {
     const randomString = size => {
-      let str = '';
-      const s =
-        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      const str = '';
+      // const s =
+      //   'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       for (let i = 0; i < size; i++) {
-        const index = i % s.length;
-        str += s[index];
+        // const index = i % s.length;
+        // str += s[index];
         // str += s[Math.floor(Math.random() * s.length)];
       }
       return str;
