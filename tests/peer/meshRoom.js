@@ -365,8 +365,9 @@ describe('MeshRoom', () => {
       let str = '';
       const s =
         'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      for (let i = 0; i < size; i++) {
-        str += s[Math.floor(Math.random() * s.length)];
+      const iMax = Math.floor(size / 64);
+      for (let i = 0; i < iMax; i++) {
+        str += s;
       }
       return str;
     };
