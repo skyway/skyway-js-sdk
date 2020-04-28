@@ -365,15 +365,18 @@ describe('MeshRoom', () => {
       let str = '';
       const s =
         'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      for (let i = 0; i < size; i++) {
-        // const index = i % s.length;
-        // str += s[index];
-        str += s[Math.floor(Math.random() * s.length)];
+      const iMax = Math.floor(size / 64);
+      const remainder = size % 64;
+      for (let i = 0; i < iMax; i++) {
+        str += s;
+      }
+      for (let i = 0; i < remainder; i++) {
+        str += s[0];
       }
       return str;
     };
-    const sizeOver = 21 * 1024;
-    const sizeUnder = 19 * 1024;
+    const sizeOver = 21 * 1024 * 1024;
+    const sizeUnder = 19 * 1024 * 1024;
     const stringSizeOver = randomString(sizeOver);
     const stringSizeUnder = randomString(sizeUnder);
     void stringSizeUnder;
@@ -416,19 +419,19 @@ describe('MeshRoom', () => {
         setTimeout(done);
       });
 
-      // it('should emit a broadcast event when the size of data to send is 19 MB', done => {
-      //   meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, message => {
-      //     assert.equal(message.roomName, meshRoomName);
-      //     assert.equal(message.data, stringSizeUnder);
-      //     done();
-      //   });
+      it('should emit a broadcast event when the size of data to send is 19 MB', done => {
+        meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, message => {
+          assert.equal(message.roomName, meshRoomName);
+          assert.equal(message.data, stringSizeUnder);
+          done();
+        });
 
-      //   try {
-      //     meshRoom.send(stringSizeUnder);
-      //   } catch (err) {
-      //     // empty
-      //   }
-      // });
+        try {
+          meshRoom.send(stringSizeUnder);
+        } catch (err) {
+          // empty
+        }
+      });
     });
 
     describe('when the data type is binary (ArrayBuffer)', () => {
