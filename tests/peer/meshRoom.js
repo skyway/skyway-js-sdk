@@ -371,9 +371,10 @@ describe('MeshRoom', () => {
       return str;
     };
     const sizeOver = 21 * 1024 * 1024;
-    // const sizeUnder = 19 * 1024 * 1024;
+    const sizeUnder = 19 * 1024 * 1024;
     const stringSizeOver = randomString(sizeOver);
-    // const stringSizeUnder = randomString(sizeUnder);
+    const stringSizeUnder = randomString(sizeUnder);
+    void stringSizeUnder;
 
     it('should emit a broadcast event', done => {
       const data = 'foobar';
