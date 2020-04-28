@@ -362,18 +362,18 @@ describe('MeshRoom', () => {
 
   describe('send', () => {
     const randomString = size => {
-      const str = '';
-      // const s =
-      //   'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let str = '';
+      const s =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       for (let i = 0; i < size; i++) {
         // const index = i % s.length;
         // str += s[index];
-        // str += s[Math.floor(Math.random() * s.length)];
+        str += s[Math.floor(Math.random() * s.length)];
       }
       return str;
     };
-    const sizeOver = 21 * 1024 * 1024;
-    const sizeUnder = 19 * 1024 * 1024;
+    const sizeOver = 21 * 1024;
+    const sizeUnder = 19 * 1024;
     const stringSizeOver = randomString(sizeOver);
     const stringSizeUnder = randomString(sizeUnder);
     void stringSizeUnder;
