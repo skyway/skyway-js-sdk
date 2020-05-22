@@ -257,7 +257,7 @@ class MeshRoom extends Room {
       roomName: this.name,
       data: data,
     };
-    this._sendMessage(message, MeshRoom.MESSAGE_EVENTS.broadcast.key);
+    this._sendData(message, MeshRoom.MESSAGE_EVENTS.broadcast.key);
   }
 
   /**

@@ -96,7 +96,7 @@ class Room extends EventEmitter {
    * @param {object} msg - The data to send to this room.
    * @param {string} key - The key of broadcast event.
    */
-  _sendMessage(msg, key) {
+  _sendData(msg, key) {
     const sendInterval = config.minBroadcastIntervalMs;
 
     const now = Date.now();

@@ -243,7 +243,7 @@ class SFURoom extends Room {
       roomName: this.name,
       data: data,
     };
-    this._sendMessage(message, SFURoom.MESSAGE_EVENTS.broadcast.key);
+    this._sendData(message, SFURoom.MESSAGE_EVENTS.broadcast.key);
   }
 
   /**
