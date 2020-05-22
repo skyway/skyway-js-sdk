@@ -517,7 +517,7 @@ describe('MeshRoom', () => {
       });
     });
 
-    it('should emit a brodcast evnet at intervals greater than limit even if send intervals are smaller than limit', async () => {
+    it('should emit a broadcast event at intervals greater than limit even if send intervals are smaller than limit', async () => {
       const data = 'foobar';
 
       const sendIntervalMs = 10;

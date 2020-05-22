@@ -104,7 +104,7 @@ class Room extends EventEmitter {
 
     // When no queued message and last message is enough old
     if (this.messageQueue.length == 0 && diff >= sendInterval) {
-      // Update last send time send message without queueing.
+      // Update last send time and send message without queueing.
       this.lastsend = now;
       this.emit(key, msg);
       return;
