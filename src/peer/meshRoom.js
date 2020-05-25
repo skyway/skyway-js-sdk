@@ -250,13 +250,14 @@ class MeshRoom extends Room {
    * @param {*} data - The data to send.
    */
   send(data) {
+    if (!this.validateSendDataSize(data)) {
+      return;
+    }
     const message = {
       roomName: this.name,
       data: data,
     };
-    if (this.validateSendDataSize(data)) {
-      this.emit(MeshRoom.MESSAGE_EVENTS.broadcast.key, message);
-    }
+    this._sendData(message, MeshRoom.MESSAGE_EVENTS.broadcast.key);
   }
 
   /**

@@ -537,6 +537,88 @@ describe('SFURoom', () => {
           // empty
         }
       });
+
+      it('should emit a broadcast event at intervals greater than limit even if send intervals are smaller than limit', async () => {
+        const data = 'foobar';
+
+        const sfuRoom = new SFURoom(sfuRoomName, peerId);
+        sfuRoom._open = true;
+
+        const sendIntervalMs = 10;
+        const broadcastInterval = 100;
+        const toleranceRange = 5;
+
+        let lastEventTime = 0;
+        sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, () => {
+          const now = Date.now();
+          const diff = now - lastEventTime;
+          if (diff < broadcastInterval - toleranceRange) {
+            assert.fail(`broadcast event is emitted too early: ${diff} ms`);
+          }
+          lastEventTime = now;
+        });
+
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+        for (let i = 0; i < 10; ++i) {
+          sfuRoom.send(data);
+          await sleep(sendIntervalMs);
+        }
+      });
+
+      it('should queue if message queue is not empty', async () => {
+        const data = 'foobar';
+
+        const sfuRoom = new SFURoom(sfuRoomName, peerId);
+        sfuRoom._open = true;
+
+        const sendIntervalMs = 110;
+        const broadcastInterval = 100;
+        const toleranceRange = 5;
+
+        let lastEventTime = 0;
+        sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, () => {
+          const now = Date.now();
+          const diff = now - lastEventTime;
+          if (diff < broadcastInterval - toleranceRange) {
+            assert.fail(`broadcast event is emitted too early: ${diff} ms`);
+          }
+          lastEventTime = now;
+        });
+
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+        for (let i = 0; i < 5; ++i) {
+          sfuRoom.send(data);
+        }
+        for (let i = 0; i < 5; ++i) {
+          sfuRoom.send(data);
+          await sleep(sendIntervalMs);
+        }
+      });
+
+      it('should emit a broadcaset event without delay if send intervals are greter than limit', async () => {
+        const data = 'foobar';
+
+        const sfuRoom = new SFURoom(sfuRoomName, peerId);
+        sfuRoom._open = true;
+
+        const sendIntervalMs = 150;
+        const broadcastMaxDelayMs = sendIntervalMs * 10 + 100;
+
+        const lastEventTime = Date.now();
+        sfuRoom.on(SFURoom.MESSAGE_EVENTS.broadcast.key, () => {
+          const now = Date.now();
+          const diff = now - lastEventTime;
+          if (diff > broadcastMaxDelayMs) {
+            assert.fail(`broadcast event is emitted too later: ${diff} ms`);
+          }
+        });
+
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+        for (let i = 0; i < 10; ++i) {
+          sfuRoom.send(data);
+          await sleep(sendIntervalMs);
+        }
+      });
     });
 
     describe('when the data type is binary (ArrayBuffer)', () => {
