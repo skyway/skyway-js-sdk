@@ -2,6 +2,20 @@
 
 ## release note
 
+## [v3.0.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v3.0.0) - 2020-05-26
+
+### Breaking Changes
+
+- Limit interval to send by using SFU/MeshRoom.send() ([#237](https://github.com/skyway/skyway-js-sdk/pull/237))
+  - The frequent of consecutive send is limited to once every 100 msec.
+  - Outgoing data that exceeds the sending frequency limit is queued and sent sequentially every 100 msec.
+- Limit the size of data to send by using SFU/MeshRoom.send()（[#233](https://github.com/skyway/skyway-js-sdk/pull/233))
+  - The maximum size of the data to be sent is 20MB.
+
+### Fixed
+
+- Fix the timing issue about mesh room ([#232](https://github.com/skyway/skyway-js-sdk/pull/232))
+
 ## [v2.0.5](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.5) - 2020-01-08
 
 ### Fixed
