@@ -14,7 +14,7 @@
 
 ### Fixed
 
-- Fixed the timing issue about mesh room ([#232](https://github.com/skyway/skyway-js-sdk/pull/232))
+- Fix the timing issue about mesh room ([#232](https://github.com/skyway/skyway-js-sdk/pull/232))
 
 ## [v2.0.5](https://github.com/skyway/skyway-js-sdk/releases/tag/v2.0.5) - 2020-01-08
 
