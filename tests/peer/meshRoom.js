@@ -274,6 +274,32 @@ describe('MeshRoom', () => {
         assert.equal(answerSpy.callCount, 1);
         assert(answerSpy.calledWith(meshRoom._localStream));
       });
+
+      it('should not create MediaConnection when has a connection with the peer and self peerId is larger', () => {
+        const testItems = [
+          { remotePeerId: 'bbbbbbb', localPeerId: 'bbbbbbbb' },
+          { remotePeerId: 'baaaaaa', localPeerId: 'bbbbbbb' },
+          { remotePeerId: 'aaaaaaa', localPeerId: 'baaaaaa' },
+          { remotePeerId: '_______', localPeerId: 'aaaaaaa' },
+          { remotePeerId: 'AAAAAAA', localPeerId: '_______' },
+          { remotePeerId: '1234567', localPeerId: 'AAAAAAA' },
+          { remotePeerId: '-------', localPeerId: '1234567' },
+          { remotePeerId: '-      ', localPeerId: '-------' },
+        ];
+
+        for (const testItem of testItems) {
+          meshRoom._peerId = testItem.localPeerId;
+          meshRoom._addConnection(testItem.remotePeerId, {
+            id: `connId1_${testItem.remotePeerId}`,
+          });
+          meshRoom.handleOffer({
+            connectionId: `connId2_${testItem.remotePeerId}`,
+            connectionType: 'media',
+            src: testItem.remotePeerId,
+          });
+          assert(mcStub.neverCalledWith(testItem.remotePeerId));
+        }
+      });
     });
 
     // TODO: when dataConnection messages is implemented?
@@ -335,6 +361,19 @@ describe('MeshRoom', () => {
   });
 
   describe('send', () => {
+    const randomString = size => {
+      const s =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      return (
+        s.repeat(Math.floor(size / s.length)) +
+        s.substring(s.length - (size % s.length))
+      );
+    };
+    const sizeOver = 21 * 1024 * 1024;
+    const sizeUnder = 19 * 1024 * 1024;
+    const stringSizeOver = randomString(sizeOver);
+    const stringSizeUnder = randomString(sizeUnder);
+
     it('should emit a broadcast event', done => {
       const data = 'foobar';
 
@@ -344,6 +383,211 @@ describe('MeshRoom', () => {
       });
 
       meshRoom.send(data);
+    });
+
+    describe('when the data type is string', () => {
+      it('should throw an error when the size of data to send is greater than 20 MB', done => {
+        const message = 'The size of data to send must be less than 20 MB';
+
+        try {
+          meshRoom.send(stringSizeOver);
+        } catch (err) {
+          assert.strictEqual(err.message, message);
+          done();
+        }
+      });
+
+      it('should not emit a broadcast event when the size of data to send is greater than 20 MB', done => {
+        meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, () => {
+          assert.fail('Should not have emitted a broadcast event');
+        });
+
+        try {
+          meshRoom.send(stringSizeOver);
+        } catch (err) {
+          // empty
+        }
+
+        // let other async events run
+        setTimeout(done);
+      });
+
+      it('should emit a broadcast event when the size of data to send is 19 MB', done => {
+        meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, message => {
+          assert.equal(message.roomName, meshRoomName);
+          assert.equal(message.data, stringSizeUnder);
+          done();
+        });
+
+        try {
+          meshRoom.send(stringSizeUnder);
+        } catch (err) {
+          // empty
+        }
+      });
+    });
+
+    describe('when the data type is binary (ArrayBuffer)', () => {
+      const bufferSizeOver = new ArrayBuffer(sizeOver);
+      const bufferSizeUnder = new ArrayBuffer(sizeUnder);
+
+      it('should throw an error when the size of data to send is greater than 20 MB', done => {
+        const message = 'The size of data to send must be less than 20 MB';
+
+        try {
+          meshRoom.send(bufferSizeOver);
+        } catch (err) {
+          assert.strictEqual(err.message, message);
+          done();
+        }
+      });
+
+      it('should not emit a broadcast event when the size of data to send is greater than 20 MB', done => {
+        meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, () => {
+          assert.fail('Should not have emitted a broadcast event');
+        });
+
+        try {
+          meshRoom.send(bufferSizeOver);
+        } catch (err) {
+          // empty
+        }
+
+        // let other async events run
+        setTimeout(done);
+      });
+
+      it('should emit a broadcast event when the size of data to send is 19 MB', done => {
+        meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, message => {
+          assert.equal(message.roomName, meshRoomName);
+          assert.equal(message.data, bufferSizeUnder);
+          done();
+        });
+
+        try {
+          meshRoom.send(bufferSizeUnder);
+        } catch (err) {
+          // empty
+        }
+      });
+    });
+
+    describe('when the data type is object', () => {
+      const objectSizeOver = { string: stringSizeOver };
+      const objectSizeUnder = { string: stringSizeUnder };
+
+      it('should throw an error when the size of data to send is greater than 20 MB', done => {
+        const message = 'The size of data to send must be less than 20 MB';
+
+        try {
+          meshRoom.send(objectSizeOver);
+        } catch (err) {
+          assert.strictEqual(err.message, message);
+          done();
+        }
+      });
+
+      it('should not emit a broadcast event when the size of data to send is greater than 20 MB', done => {
+        meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, () => {
+          assert.fail('Should not have emitted a broadcast event');
+        });
+
+        try {
+          meshRoom.send(objectSizeOver);
+        } catch (err) {
+          // empty
+        }
+
+        // let other async events run
+        setTimeout(done);
+      });
+
+      it('should emit a broadcast event when the size of data to send is 19 MB', done => {
+        meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, message => {
+          assert.equal(message.roomName, meshRoomName);
+          assert.equal(message.data, objectSizeUnder);
+          done();
+        });
+
+        try {
+          meshRoom.send(objectSizeUnder);
+        } catch (err) {
+          // empty
+        }
+      });
+    });
+
+    it('should emit a broadcast event at intervals greater than limit even if send intervals are smaller than limit', async () => {
+      const data = 'foobar';
+
+      const sendIntervalMs = 10;
+      const broadcastInterval = 100;
+      const toleranceRange = 5;
+
+      let lastEventTime = 0;
+      meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, () => {
+        const now = Date.now();
+        const diff = now - lastEventTime;
+        if (diff < broadcastInterval - toleranceRange) {
+          assert.fail(`broadcast event is emitted too early: ${diff} ms`);
+        }
+        lastEventTime = now;
+      });
+
+      const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+      for (let i = 0; i < 10; ++i) {
+        meshRoom.send(data);
+        await sleep(sendIntervalMs);
+      }
+    });
+
+    it('should queue if message queue is not empty', async () => {
+      const data = 'foobar';
+
+      const sendIntervalMs = 110;
+      const broadcastInterval = 100;
+      const toleranceRange = 5;
+
+      let lastEventTime = 0;
+      meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, () => {
+        const now = Date.now();
+        const diff = now - lastEventTime;
+        if (diff < broadcastInterval - toleranceRange) {
+          assert.fail(`broadcast event is emitted too early: ${diff} ms`);
+        }
+        lastEventTime = now;
+      });
+
+      const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+      for (let i = 0; i < 5; ++i) {
+        meshRoom.send(data);
+      }
+      for (let i = 0; i < 5; ++i) {
+        meshRoom.send(data);
+        await sleep(sendIntervalMs);
+      }
+    });
+
+    it('should emit a broadcaset event without delay if send intervals are greter than limit', async () => {
+      const data = 'foobar';
+
+      const sendIntervalMs = 150;
+      const broadcastMaxDelayMs = sendIntervalMs * 10 + 100;
+
+      const lastEventTime = Date.now();
+      meshRoom.on(MeshRoom.MESSAGE_EVENTS.broadcast.key, () => {
+        const now = Date.now();
+        const diff = now - lastEventTime;
+        if (diff > broadcastMaxDelayMs) {
+          assert.fail(`broadcast event is emitted too later: ${diff} ms`);
+        }
+      });
+
+      const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+      for (let i = 0; i < 10; ++i) {
+        meshRoom.send(data);
+        await sleep(sendIntervalMs);
+      }
     });
   });
 
@@ -503,6 +747,13 @@ describe('MeshRoom', () => {
         meshRoom._makeConnections(peerIds, 'media', options);
 
         assert(mcStub.neverCalledWith(peerId));
+      });
+
+      it('should not create MediaConnection when has a connection with peer', () => {
+        meshRoom._addConnection(remotePeerId1, { id: 'connId1' });
+        meshRoom._makeConnections([remotePeerId1], 'media', options);
+
+        assert(mcStub.neverCalledWith(remotePeerId1));
       });
     });
   });

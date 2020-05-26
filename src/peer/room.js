@@ -1,5 +1,8 @@
 import EventEmitter from 'events';
 import Enum from 'enum';
+import parser from 'socket.io-parser';
+import hasBin from 'has-binary2';
+import config from '../shared/config';
 
 const Events = [
   'stream',
@@ -58,6 +61,75 @@ class Room extends EventEmitter {
     this._localStream = this._options.stream;
 
     this._pcConfig = this._options.pcConfig;
+
+    this.lastSent = 0;
+    this.messageQueue = [];
+    this.sendIntervalID = null;
+  }
+
+  /**
+   * Validate whether the size of data to send is over the limits or not.
+   * @param {object} data - The data to Validate.
+   */
+  validateSendDataSize(data) {
+    const isBin = hasBin([data]);
+    const packet = {
+      type: isBin ? parser.BINARY_EVENT : parser.EVENT,
+      data: [data],
+    };
+    const encoder = new parser.Encoder();
+    let dataSize;
+    encoder.encode(packet, encodedPackets => {
+      dataSize = isBin
+        ? encodedPackets[1].byteLength
+        : encodedPackets[0].length;
+    });
+    const maxDataSize = config.maxDataSize;
+    if (dataSize > maxDataSize) {
+      throw new Error('The size of data to send must be less than 20 MB');
+    }
+    return true;
+  }
+
+  /**
+   * Send a message to the room with a delay so that the transmission interval does not exceed the limit.
+   * @param {object} msg - The data to send to this room.
+   * @param {string} key - The key of broadcast event.
+   */
+  _sendData(msg, key) {
+    const sendInterval = config.minBroadcastIntervalMs;
+
+    const now = Date.now();
+    const diff = now - this.lastsend;
+
+    // When no queued message and last message is enough old
+    if (this.messageQueue.length == 0 && diff >= sendInterval) {
+      // Update last send time and send message without queueing.
+      this.lastsend = now;
+      this.emit(key, msg);
+      return;
+    }
+
+    // Send a message to the room with a delay because the transmission interval exceeds the limit.
+
+    // Push this message into a queue.
+    this.messageQueue.push({ msg, key });
+
+    // Return if setInterval is already set.
+    if (this.sendIntervalID !== null) {
+      return;
+    }
+    this.sendIntervalID = setInterval(() => {
+      // If all message are sent, remove this interval ID.
+      if (this.messageQueue.length === 0) {
+        clearInterval(this.sendIntervalID);
+        return;
+      }
+      // Update last send time send message.
+      const message = this.messageQueue.shift();
+      this.lastsend = Date.now();
+      this.emit(message.key, message.msg);
+    }, sendInterval);
   }
 
   /**
