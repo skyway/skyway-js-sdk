@@ -123,6 +123,7 @@ class Room extends EventEmitter {
       // If all message are sent, remove this interval ID.
       if (this.messageQueue.length === 0) {
         clearInterval(this.sendIntervalID);
+        this.sendIntervalID = null;
         return;
       }
       // Update last send time send message.
