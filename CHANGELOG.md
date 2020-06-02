@@ -2,6 +2,12 @@
 
 ## release note
 
+## [v3.0.1](https://github.com/skyway/skyway-js-sdk/releases/tag/v3.0.1) - 2020-06-02
+
+### Fixed
+
+- Fixed the bug that `room.send` does not work after the second time. ([#241](https://github.com/skyway/skyway-js-sdk/pull/241))
+
 ## [v3.0.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v3.0.0) - 2020-05-26
 
 ### Breaking Changes
