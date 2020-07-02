@@ -84,7 +84,7 @@ const Peer = window.Peer;
     // for closing room members
     room.on('peerLeave', peerId => {
       const remoteVideo = remoteVideos.querySelector(
-        `[data-peer-id=${peerId}]`
+        `[data-peer-id="${peerId}"]`
       );
       remoteVideo.srcObject.getTracks().forEach(track => track.stop());
       remoteVideo.srcObject = null;
