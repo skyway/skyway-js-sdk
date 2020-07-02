@@ -2,6 +2,12 @@
 
 ## release note
 
+## [v3.0.2](https://github.com/skyway/skyway-js-sdk/releases/tag/v3.0.2) - 2020-07-02
+
+### Fixed
+
+- Fixed type definitions of meshroom connections type. ([#250](https://github.com/skyway/skyway-js-sdk/pull/250))
+
 ## [v3.0.1](https://github.com/skyway/skyway-js-sdk/releases/tag/v3.0.1) - 2020-06-02
 
 ### Fixed
