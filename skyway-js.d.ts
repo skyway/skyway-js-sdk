@@ -175,7 +175,7 @@ declare class Room extends EventEmitter {
 
 export declare class MeshRoom extends Room {
   connections: {
-    [peerId: string]: MediaConnection | DataConnection;
+    [peerId: string]: MediaConnection[] | DataConnection[];
   };
 }
 
