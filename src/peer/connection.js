@@ -177,7 +177,7 @@ class Connection extends EventEmitter {
    * Disconnect from remote peer.
    * @fires Connection#close
    */
-  close(forceClose = true) {
+  close(forceClose = false) {
     if (!this.open) {
       return;
     }
