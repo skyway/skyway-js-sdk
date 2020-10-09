@@ -6,7 +6,7 @@
 
 ### Fixed
 
-- Deprecated `false` value of forceClose parameter for `MediaConnection.close()` and `DataConnection.close()`. ([#261](https://github.com/skyway/skyway-js-sdk/pull/261))
+- Deprecated `false` value of `forceClose` parameter for `MediaConnection.close()` and `DataConnection.close()`. ([#261](https://github.com/skyway/skyway-js-sdk/pull/261))
 
 ## [v3.0.2](https://github.com/skyway/skyway-js-sdk/releases/tag/v3.0.2) - 2020-07-02
 
