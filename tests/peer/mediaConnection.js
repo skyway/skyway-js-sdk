@@ -419,7 +419,7 @@ describe('MediaConnection', () => {
       assert(spy.withArgs(Connection.EVENTS.forceClose.key).notCalled);
     });
 
-    it('should not emit a forceClose event when call close() by default', () => {
+    it('should emit a forceClose event when call close() by default', () => {
       const mc = new MediaConnection('remoteId', { stream: {} });
       const spy = sinon.spy(mc, 'emit');
       // Force to be open
@@ -427,7 +427,7 @@ describe('MediaConnection', () => {
 
       mc.close();
 
-      assert(spy.withArgs(Connection.EVENTS.forceClose.key).notCalled);
+      assert(spy.withArgs(Connection.EVENTS.forceClose.key).calledOnce);
     });
   });
 });
