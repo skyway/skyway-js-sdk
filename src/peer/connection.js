@@ -187,12 +187,13 @@ class Connection extends EventEmitter {
     this._negotiator.cleanup();
     this.emit(Connection.EVENTS.close.key);
 
-    logger.warn(
-      `Parameter forceClose = false is deprecated and may be changed to forceClose = true from a future version.` +
-        ` Please use ${this.constructor.name}.close(true).`
-    );
     if (forceClose) {
       this.emit(Connection.EVENTS.forceClose.key);
+    } else {
+      logger.warn(
+        `Parameter forceClose = false is deprecated and may be changed to forceClose = true from a future version.` +
+          ` Please use ${this.constructor.name}.close(true).`
+      );
     }
   }
 
