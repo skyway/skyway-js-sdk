@@ -176,6 +176,7 @@ class Connection extends EventEmitter {
   /**
    * Disconnect from remote peer.
    * @fires Connection#close
+   * @deprecated Default value of forceClose may be changed to true from a future version.
    */
   close(forceClose = true) {
     if (!this.open) {
@@ -186,6 +187,10 @@ class Connection extends EventEmitter {
     this._negotiator.cleanup();
     this.emit(Connection.EVENTS.close.key);
 
+    logger.warn(
+      `Parameter forceClose = false is deprecated and may be changed to forceClose = true from a future version.` +
+        ` Please use ${this.constructor.name}.close(true).`
+    );
     if (forceClose) {
       this.emit(Connection.EVENTS.forceClose.key);
     }
