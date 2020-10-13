@@ -239,7 +239,7 @@ class Peer extends EventEmitter {
   }
 
   /**
-   * Reconnect to SkyWay server. Does not work after a peer.destroy().
+   * Reconnect to SkyWay server.
    */
   reconnect() {
     if (!this.open) {
