@@ -1,5 +1,5 @@
 import sdpTransform from 'sdp-transform';
-import { Interop } from 'sdp-interop';
+import { Interop } from '@jitsi/sdp-interop';
 
 /**
  * Class that contains utility functions for SDP munging.
