@@ -57,7 +57,7 @@
     "js-binarypack": "0.0.9",
     "object-sizeof": "^1.4.0",
     "query-string": "^6.8.2",
-    "sdp-interop": "^0.1.13",
+    "@jitsi/sdp-interop": "^1.0.3",
     "sdp-transform": "^2.11.0",
     "socket.io-client": "^2.2.0",
     "socket.io-parser": "~3.3.0"
