@@ -911,7 +911,7 @@ class Peer extends EventEmitter {
   _cleanupPeer(peer) {
     if (this.connections[peer]) {
       for (const connection of this.connections[peer]) {
-        connection.close();
+        connection.close(false);
       }
     }
   }

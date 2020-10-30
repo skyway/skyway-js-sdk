@@ -47,7 +47,7 @@ const Peer = window.Peer;
     });
 
     // Register closing handler
-    closeTrigger.addEventListener('click', () => dataConnection.close(), {
+    closeTrigger.addEventListener('click', () => dataConnection.close(true), {
       once: true,
     });
 
@@ -80,7 +80,7 @@ const Peer = window.Peer;
     });
 
     // Register closing handler
-    closeTrigger.addEventListener('click', () => dataConnection.close(), {
+    closeTrigger.addEventListener('click', () => dataConnection.close(true), {
       once: true,
     });
 

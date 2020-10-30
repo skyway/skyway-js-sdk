@@ -267,7 +267,7 @@ class MeshRoom extends Room {
     for (const peerId in this.connections) {
       if (this.connections.hasOwnProperty(peerId)) {
         this.connections[peerId].forEach(connection => {
-          connection.close();
+          connection.close(false);
         });
       }
     }
