@@ -178,7 +178,6 @@ class Negotiator extends EventEmitter {
     }
 
     this._isNegotiationAllowed = true;
-    this._lastOffer = offerSdp;
 
     // Enqueue and skip while signalingState is wrong state.
     // (when room is SFU and there are multiple conns in a same time, it happens)
@@ -187,6 +186,7 @@ class Negotiator extends EventEmitter {
       return;
     }
 
+    this._lastOffer = offerSdp;
     await this._setRemoteDescription(offerSdp);
     const answer = await this._makeAnswerSdp().catch(err => logger.error(err));
     this.emit(Negotiator.EVENTS.answerCreated.key, answer);
