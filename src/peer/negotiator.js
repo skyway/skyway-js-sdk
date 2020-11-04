@@ -178,11 +178,6 @@ class Negotiator extends EventEmitter {
     }
 
     this._isNegotiationAllowed = true;
-
-    if (!offerSdp) {
-      offerSdp = this._lastOffer;
-    }
-
     this._lastOffer = offerSdp;
 
     // Enqueue and skip while signalingState is wrong state.

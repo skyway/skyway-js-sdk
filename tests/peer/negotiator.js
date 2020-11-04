@@ -425,59 +425,28 @@ describe('Negotiator', () => {
       negotiator._pc = negotiator._createPeerConnection({});
     });
 
-    describe('when offerSdp is empty', () => {
-      it('should setRemoteDescription with lastOffer', done => {
-        const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+    it('should setRemoteDescription', done => {
+      const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+      negotiator._pc
+        .createOffer()
+        .then(offer => {
+          const offerObject = {
+            sdp: offer.sdp,
+            type: offer.type,
+          };
 
-        negotiator._pc
-          .createOffer()
-          .then(offer => {
-            const offerObject = {
-              sdp: offer.sdp,
-              type: offer.type,
-            };
+          negotiator.handleOffer(offerObject);
 
-            negotiator._lastOffer = offerObject;
-
-            negotiator.handleOffer();
-
-            // let other async events run
-            setTimeout(() => {
-              assert.equal(setRemoteSpy.callCount, 1);
-              assert(setRemoteSpy.calledWith(offer));
-              done();
-            });
-          })
-          .catch(err => {
-            assert.fail(err);
+          // let other async events run
+          setTimeout(() => {
+            assert.equal(setRemoteSpy.callCount, 1);
+            assert(setRemoteSpy.calledWith(offer));
+            done();
           });
-      });
-    });
-
-    describe('when offerSdp is not empty', () => {
-      it('should setRemoteDescription', done => {
-        const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
-        negotiator._pc
-          .createOffer()
-          .then(offer => {
-            const offerObject = {
-              sdp: offer.sdp,
-              type: offer.type,
-            };
-
-            negotiator.handleOffer(offerObject);
-
-            // let other async events run
-            setTimeout(() => {
-              assert.equal(setRemoteSpy.callCount, 1);
-              assert(setRemoteSpy.calledWith(offer));
-              done();
-            });
-          })
-          .catch(err => {
-            assert.fail(err);
-          });
-      });
+        })
+        .catch(err => {
+          assert.fail(err);
+        });
     });
 
     it('should emit answerCreated', done => {
