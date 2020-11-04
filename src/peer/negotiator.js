@@ -28,7 +28,6 @@ class Negotiator extends EventEmitter {
     super();
     this._offerQueue = [];
     this._isExpectingAnswer = false;
-    this._replaceStreamCalled = false;
     this._isNegotiationAllowed = true;
     this.hasRemoteDescription = false;
   }
@@ -347,11 +346,7 @@ class Negotiator extends EventEmitter {
           const offer = await this._makeOfferSdp();
           this._setLocalDescription(offer);
           this.emit(Negotiator.EVENTS.negotiationNeeded.key);
-        } else if (this._replaceStreamCalled) {
-          this.handleOffer();
         }
-
-        this._replaceStreamCalled = false;
       }
     };
 

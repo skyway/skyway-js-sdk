@@ -805,29 +805,13 @@ describe('Negotiator', () => {
         });
 
         describe('if not originator', () => {
-          describe('if replaceStream has been called', () => {
-            beforeEach(() => {
-              negotiator._replaceStreamCalled = true;
+          it("should not emit 'negotiationNeeded'", done => {
+            negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
+              assert.fail('Should not emit negotiationNeeded event');
             });
-            it('should call handleOffer', () => {
-              const handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
-              assert.equal(handleOfferSpy.callCount, 0);
-              pc.onnegotiationneeded();
-              assert.equal(handleOfferSpy.callCount, 1);
-            });
-          });
-          describe("if replaceStream hasn't been called", () => {
-            beforeEach(() => {
-              negotiator._replaceStreamCalled = false;
-            });
-            it("should not emit 'negotiationNeeded'", done => {
-              negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
-                assert.fail('Should not emit negotiationNeeded event');
-              });
-              pc.onnegotiationneeded();
+            pc.onnegotiationneeded();
 
-              setTimeout(done);
-            });
+            setTimeout(done);
           });
         });
       });
