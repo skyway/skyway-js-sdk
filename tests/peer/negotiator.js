@@ -470,6 +470,67 @@ describe('Negotiator', () => {
           assert.fail(err);
         });
     });
+
+    it('should add to queue and not execute setRemoteDescription when executing handleOffer', async () => {
+      const offer = await negotiator._pc.createOffer();
+      const offerObject = {
+        sdp: offer.sdp,
+        type: offer.type,
+      };
+      negotiator._isExecutingHandleOffer = true;
+      await negotiator.handleOffer(offerObject);
+
+      assert.equal(negotiator._offerQueue[0], offerObject);
+    });
+
+    it('should change _isExecutingHandleOffer to true between setRemoteDescriptiont and setLocalDescription', async () => {
+      const offer = await negotiator._pc.createOffer();
+      const offerObject = {
+        sdp: offer.sdp,
+        type: offer.type,
+      };
+
+      const _setRemoteStub = sinon.stub(negotiator, '_setRemoteDescription');
+      const _makeAnswerStub = sinon.stub(negotiator, '_makeAnswerSdp');
+      _setRemoteStub.callsFake(async () => {
+        assert.equal(negotiator._isExecutingHandleOffer, true);
+      });
+      _makeAnswerStub.callsFake(async () => {
+        assert.equal(negotiator._isExecutingHandleOffer, true);
+      });
+      await negotiator.handleOffer(offerObject);
+      assert.equal(negotiator._isExecutingHandleOffer, false);
+    });
+
+    it('should change _isExecutingHandleOffer to false when error occured in _setRemoteDescription', async () => {
+      const offer = await negotiator._pc.createOffer();
+      const offerObject = {
+        sdp: offer.sdp,
+        type: offer.type,
+      };
+
+      const _setRemoteStub = sinon.stub(negotiator, '_setRemoteDescription');
+      _setRemoteStub.callsFake(async () => {
+        throw new Error();
+      });
+
+      await negotiator.handleOffer(offerObject).catch(() => {});
+      assert.equal(negotiator._isExecutingHandleOffer, false);
+    });
+
+    it('should call handleOffer when _offerQueue has anything', async () => {
+      const offer = await negotiator._pc.createOffer();
+      const offerObject = {
+        sdp: offer.sdp,
+        type: offer.type,
+      };
+      negotiator._offerQueue.push(offerObject);
+      const handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
+
+      await negotiator.handleOffer(offerObject);
+
+      assert.equal(handleOfferSpy.callCount, 2);
+    });
   });
 
   describe('handleAnswer', () => {
@@ -782,6 +843,38 @@ describe('Negotiator', () => {
 
             setTimeout(done);
           });
+        });
+      });
+
+      describe('onsignalingstatechange', () => {
+        it('should execute handleOffer when this._isExecutingHandleOffer is false', async () => {
+          const offer = await negotiator._pc.createOffer();
+          const offerObject = {
+            sdp: offer.sdp,
+            type: offer.type,
+          };
+          negotiator._offerQueue.push(offerObject);
+          const handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
+          negotiator._isExecutingHandleOffer = false;
+
+          pc.onsignalingstatechange();
+
+          assert.equal(handleOfferSpy.callCount, 1);
+        });
+
+        it('should not execute handleOffer when this._isExecutingHandleOffer is true', async () => {
+          const offer = await negotiator._pc.createOffer();
+          const offerObject = {
+            sdp: offer.sdp,
+            type: offer.type,
+          };
+          negotiator._offerQueue.push(offerObject);
+          const handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
+          negotiator._isExecutingHandleOffer = true;
+
+          pc.onsignalingstatechange();
+
+          assert.equal(handleOfferSpy.callCount, 0);
         });
       });
     });
