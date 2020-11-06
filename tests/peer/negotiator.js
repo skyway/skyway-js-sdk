@@ -425,59 +425,28 @@ describe('Negotiator', () => {
       negotiator._pc = negotiator._createPeerConnection({});
     });
 
-    describe('when offerSdp is empty', () => {
-      it('should setRemoteDescription with lastOffer', done => {
-        const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+    it('should setRemoteDescription', done => {
+      const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
+      negotiator._pc
+        .createOffer()
+        .then(offer => {
+          const offerObject = {
+            sdp: offer.sdp,
+            type: offer.type,
+          };
 
-        negotiator._pc
-          .createOffer()
-          .then(offer => {
-            const offerObject = {
-              sdp: offer.sdp,
-              type: offer.type,
-            };
+          negotiator.handleOffer(offerObject);
 
-            negotiator._lastOffer = offerObject;
-
-            negotiator.handleOffer();
-
-            // let other async events run
-            setTimeout(() => {
-              assert.equal(setRemoteSpy.callCount, 1);
-              assert(setRemoteSpy.calledWith(offer));
-              done();
-            });
-          })
-          .catch(err => {
-            assert.fail(err);
+          // let other async events run
+          setTimeout(() => {
+            assert.equal(setRemoteSpy.callCount, 1);
+            assert(setRemoteSpy.calledWith(offer));
+            done();
           });
-      });
-    });
-
-    describe('when offerSdp is not empty', () => {
-      it('should setRemoteDescription', done => {
-        const setRemoteSpy = sinon.spy(negotiator._pc, 'setRemoteDescription');
-        negotiator._pc
-          .createOffer()
-          .then(offer => {
-            const offerObject = {
-              sdp: offer.sdp,
-              type: offer.type,
-            };
-
-            negotiator.handleOffer(offerObject);
-
-            // let other async events run
-            setTimeout(() => {
-              assert.equal(setRemoteSpy.callCount, 1);
-              assert(setRemoteSpy.calledWith(offer));
-              done();
-            });
-          })
-          .catch(err => {
-            assert.fail(err);
-          });
-      });
+        })
+        .catch(err => {
+          assert.fail(err);
+        });
     });
 
     it('should emit answerCreated', done => {
@@ -500,6 +469,67 @@ describe('Negotiator', () => {
         .catch(err => {
           assert.fail(err);
         });
+    });
+
+    it('should add to queue and not execute setRemoteDescription when executing handleOffer', async () => {
+      const offer = await negotiator._pc.createOffer();
+      const offerObject = {
+        sdp: offer.sdp,
+        type: offer.type,
+      };
+      negotiator._isExecutingHandleOffer = true;
+      await negotiator.handleOffer(offerObject);
+
+      assert.equal(negotiator._offerQueue[0], offerObject);
+    });
+
+    it('should change _isExecutingHandleOffer to true between setRemoteDescriptiont and setLocalDescription', async () => {
+      const offer = await negotiator._pc.createOffer();
+      const offerObject = {
+        sdp: offer.sdp,
+        type: offer.type,
+      };
+
+      const _setRemoteStub = sinon.stub(negotiator, '_setRemoteDescription');
+      const _makeAnswerStub = sinon.stub(negotiator, '_makeAnswerSdp');
+      _setRemoteStub.callsFake(async () => {
+        assert.equal(negotiator._isExecutingHandleOffer, true);
+      });
+      _makeAnswerStub.callsFake(async () => {
+        assert.equal(negotiator._isExecutingHandleOffer, true);
+      });
+      await negotiator.handleOffer(offerObject);
+      assert.equal(negotiator._isExecutingHandleOffer, false);
+    });
+
+    it('should change _isExecutingHandleOffer to false when error occured in _setRemoteDescription', async () => {
+      const offer = await negotiator._pc.createOffer();
+      const offerObject = {
+        sdp: offer.sdp,
+        type: offer.type,
+      };
+
+      const _setRemoteStub = sinon.stub(negotiator, '_setRemoteDescription');
+      _setRemoteStub.callsFake(async () => {
+        throw new Error();
+      });
+
+      await negotiator.handleOffer(offerObject).catch(() => {});
+      assert.equal(negotiator._isExecutingHandleOffer, false);
+    });
+
+    it('should call handleOffer when _offerQueue has anything', async () => {
+      const offer = await negotiator._pc.createOffer();
+      const offerObject = {
+        sdp: offer.sdp,
+        type: offer.type,
+      };
+      negotiator._offerQueue.push(offerObject);
+      const handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
+
+      await negotiator.handleOffer(offerObject);
+
+      assert.equal(handleOfferSpy.callCount, 2);
     });
   });
 
@@ -805,30 +835,46 @@ describe('Negotiator', () => {
         });
 
         describe('if not originator', () => {
-          describe('if replaceStream has been called', () => {
-            beforeEach(() => {
-              negotiator._replaceStreamCalled = true;
+          it("should not emit 'negotiationNeeded'", done => {
+            negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
+              assert.fail('Should not emit negotiationNeeded event');
             });
-            it('should call handleOffer', () => {
-              const handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
-              assert.equal(handleOfferSpy.callCount, 0);
-              pc.onnegotiationneeded();
-              assert.equal(handleOfferSpy.callCount, 1);
-            });
-          });
-          describe("if replaceStream hasn't been called", () => {
-            beforeEach(() => {
-              negotiator._replaceStreamCalled = false;
-            });
-            it("should not emit 'negotiationNeeded'", done => {
-              negotiator.on(Negotiator.EVENTS.negotiationNeeded.key, () => {
-                assert.fail('Should not emit negotiationNeeded event');
-              });
-              pc.onnegotiationneeded();
+            pc.onnegotiationneeded();
 
-              setTimeout(done);
-            });
+            setTimeout(done);
           });
+        });
+      });
+
+      describe('onsignalingstatechange', () => {
+        it('should execute handleOffer when this._isExecutingHandleOffer is false', async () => {
+          const offer = await negotiator._pc.createOffer();
+          const offerObject = {
+            sdp: offer.sdp,
+            type: offer.type,
+          };
+          negotiator._offerQueue.push(offerObject);
+          const handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
+          negotiator._isExecutingHandleOffer = false;
+
+          pc.onsignalingstatechange();
+
+          assert.equal(handleOfferSpy.callCount, 1);
+        });
+
+        it('should not execute handleOffer when this._isExecutingHandleOffer is true', async () => {
+          const offer = await negotiator._pc.createOffer();
+          const offerObject = {
+            sdp: offer.sdp,
+            type: offer.type,
+          };
+          negotiator._offerQueue.push(offerObject);
+          const handleOfferSpy = sinon.spy(negotiator, 'handleOffer');
+          negotiator._isExecutingHandleOffer = true;
+
+          pc.onsignalingstatechange();
+
+          assert.equal(handleOfferSpy.callCount, 0);
         });
       });
     });
