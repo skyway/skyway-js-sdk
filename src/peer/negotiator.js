@@ -28,8 +28,8 @@ class Negotiator extends EventEmitter {
     super();
     this._offerQueue = [];
     this._isExpectingAnswer = false;
-    this._replaceStreamCalled = false;
     this._isNegotiationAllowed = true;
+    this._isExecutingHandleOffer = false;
     this.hasRemoteDescription = false;
   }
 
@@ -180,21 +180,34 @@ class Negotiator extends EventEmitter {
 
     this._isNegotiationAllowed = true;
 
-    if (!offerSdp) {
-      offerSdp = this._lastOffer;
-    }
-
-    this._lastOffer = offerSdp;
-
-    // Enqueue and skip while signalingState is wrong state.
+    // Enqueue and skip while signalingState is wrong state or executing handleOffer.
     // (when room is SFU and there are multiple conns in a same time, it happens)
-    if (this._pc.signalingState === 'have-remote-offer') {
+    if (
+      this._pc.signalingState === 'have-remote-offer' ||
+      this._isExecutingHandleOffer
+    ) {
       this._offerQueue.push(offerSdp);
       return;
     }
 
-    await this._setRemoteDescription(offerSdp);
-    const answer = await this._makeAnswerSdp().catch(err => logger.error(err));
+    this._lastOffer = offerSdp;
+    this._isExecutingHandleOffer = true;
+    let answer;
+    try {
+      await this._setRemoteDescription(offerSdp);
+      answer = await this._makeAnswerSdp().catch(err => logger.error(err));
+    } finally {
+      this._isExecutingHandleOffer = false;
+    }
+
+    // Apply pended remote offer which was stored when signalingState is wrong state or executing handleOffer.
+    if (this._pc.signalingState === 'stable') {
+      const offer = this._offerQueue.shift();
+      if (offer) {
+        this.handleOffer(offer);
+      }
+    }
+
     this.emit(Negotiator.EVENTS.answerCreated.key, answer);
   }
 
@@ -347,11 +360,7 @@ class Negotiator extends EventEmitter {
           const offer = await this._makeOfferSdp();
           this._setLocalDescription(offer);
           this.emit(Negotiator.EVENTS.negotiationNeeded.key);
-        } else if (this._replaceStreamCalled) {
-          this.handleOffer();
         }
-
-        this._replaceStreamCalled = false;
       }
     };
 
@@ -359,11 +368,14 @@ class Negotiator extends EventEmitter {
       logger.log(`signalingState is ${pc.signalingState}`);
 
       // After signaling state is getting back to 'stable',
+      // If _isExecutingHandleOffer is false,
       // apply pended remote offer, which was stored when simultaneous multiple conns happened in SFU room,
-      // Note that this code very rarely applies the old remote offer.
-      // E.g. "Offer A -> Offer B" should be the right order but for some reason like NW unstablity,
-      //      offerQueue might keep "Offer B" first and handle "Offer A" later.
-      if (pc.signalingState === 'stable') {
+      //
+      // This event is fired the moment setLD completes.
+      // Therefore, _isExecutingHandleOffer is basically considered to be True.
+      // Normally, handleOffer reexecution using queued offer is performed
+      // after setting _isExecutingHandleOffer to false in handleOffer.
+      if (pc.signalingState === 'stable' && !this._isExecutingHandleOffer) {
         const offer = this._offerQueue.shift();
         if (offer) {
           this.handleOffer(offer);
