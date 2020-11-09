@@ -13,7 +13,7 @@
 - Fixed a bug that caused the Chrome browser to crash when multiple people joined the SFU Room at the same time. ([#272](https://github.com/skyway/skyway-js-sdk/pull/272))
 - Fixed a bug that prevented some Peer communication from being established when multiple people joined the SFU Room at the same time. ([#272](https://github.com/skyway/skyway-js-sdk/pull/272))
 - Fixed a problem in which unnecessary warnings were displayed by events such as iceConnectionFailed. ([#267](https://github.com/skyway/skyway-js-sdk/pull/267))
-- Fixed warning when installing skyway-js on npm. ([#266](https://github.com/skyway/skyway-js-sdk/pull/266))
+- Updated the package to remove the warning when installing skyway-js from npm.([#266](https://github.com/skyway/skyway-js-sdk/pull/266))
 
 ## [v3.1.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v3.1.0) - 2020-10-13
 
