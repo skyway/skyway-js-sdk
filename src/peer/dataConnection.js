@@ -289,6 +289,7 @@ class DataConnection extends Connection {
       closePc(forceClose);
       return;
     }
+
     // Close RTCPeerConnection after RTCDataChannel is closed.
     this._dc.onclose = () => {
       logger.log('DataChannel closed for:', this.id);

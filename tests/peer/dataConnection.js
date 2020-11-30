@@ -695,6 +695,7 @@ describe('DataConnection', () => {
       assert.equal(dc.open, false);
       assert(cleanupSpy.called);
     });
+
     it('should dc.onclose be overridden and do nothing when the readyState of _dc is closing', () => {
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {
@@ -712,6 +713,7 @@ describe('DataConnection', () => {
       assert.equal(dc._isOnOpenCalled, true);
       assert(dc._dc.close.notCalled);
     });
+
     it('should super.close be called and _isOnOpencalled should be false when the readyState of _dc is closed', () => {
       const dc = new DataConnection('remoteId', {});
       dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
@@ -723,25 +725,28 @@ describe('DataConnection', () => {
       assert.equal(dc.open, false);
       assert.equal(dc._isOnOpenCalled, false);
     });
-    it('should _dc.onclose has been overwritten and _dc.close() has been called, then super.close has been called and isonopencalled has been set to false when the readyState of _dc is open(or connectiong)', () => {
-      const dc = new DataConnection('remoteId', {});
-      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {
-        close: sinon.stub(),
-      });
-      dc._dc.onopen();
-      dc._dc.readyState = 'open';
-      const dummyOnClose = { hoge: 'hoo' };
-      dc._dc.onclose = dummyOnClose;
 
-      dc.close();
+    it('should _dc.onclose has been overwritten and _dc.close() has been called, then super.close has been called and isonopencalled has been set to false when the readyState of _dc is open or connecting', () => {
+      for(const readyState of ['open', 'connecting']){
+        const dc = new DataConnection('remoteId', {});
+        dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {
+          close: sinon.stub(),
+        });
+        dc._dc.onopen();
+        dc._dc.readyState = readyState;
+        const dummyOnClose = { hoge: 'hoo' };
+        dc._dc.onclose = dummyOnClose;
 
-      assert.notEqual(dc._dc.onclose, dummyOnClose);
-      assert(dc._dc.close.calledOnce);
+        dc.close();
 
-      dc._dc.onclose();
+        assert.notEqual(dc._dc.onclose, dummyOnClose);
+        assert(dc._dc.close.calledOnce);
 
-      assert.equal(dc.open, false);
-      assert.equal(dc._isOnOpenCalled, false);
+        dc._dc.onclose();
+
+        assert.equal(dc.open, false);
+        assert.equal(dc._isOnOpenCalled, false);
+      }
     });
   });
 });
