@@ -21,6 +21,7 @@ describe('MeshRoom', () => {
   let closeSpy;
   let answerSpy;
   let replaceStreamSpy;
+  let getPeerConnectionStub;
 
   beforeEach(() => {
     mcStub = sinon.stub();
@@ -29,6 +30,7 @@ describe('MeshRoom', () => {
     closeSpy = sinon.spy();
     answerSpy = sinon.spy();
     replaceStreamSpy = sinon.spy();
+    getPeerConnectionStub = sinon.stub();
 
     mcStub.returns({
       type: 'media',
@@ -37,6 +39,7 @@ describe('MeshRoom', () => {
       close: closeSpy,
       answer: answerSpy,
       replaceStream: replaceStreamSpy,
+      getPeerConnection: getPeerConnectionStub,
     });
     // hoist statics
     mcStub.EVENTS = MediaConnection.EVENTS;
@@ -64,6 +67,7 @@ describe('MeshRoom', () => {
     closeSpy.resetHistory();
     answerSpy.resetHistory();
     replaceStreamSpy.resetHistory();
+    getPeerConnectionStub.resetHistory();
   });
 
   describe('Constructor', () => {
@@ -639,6 +643,30 @@ describe('MeshRoom', () => {
       meshRoom.replaceStream(newStream);
 
       assert.equal(replaceStreamSpy.callCount, 0);
+    });
+  });
+
+  describe('getPeerConnections', () => {
+    it('should return all of each RTCPeerConnection', () => {
+      const peers = ['peerId1', 'peerId2'];
+      meshRoom.makeMediaConnections(peers);
+      getPeerConnectionStub.onCall(0).returns('peerId1_pc');
+      getPeerConnectionStub.onCall(1).returns('peerId2_pc');
+
+      const pcs = meshRoom.getPeerConnections();
+
+      assert.deepStrictEqual(pcs, {
+        peerId1: 'peerId1_pc',
+        peerId2: 'peerId2_pc',
+      });
+    });
+
+    it('should return an empty object if meshRoom.connections are empty', () => {
+      meshRoom.connections = {};
+
+      const pcs = meshRoom.getPeerConnections();
+
+      assert.deepStrictEqual(pcs, {});
     });
   });
 

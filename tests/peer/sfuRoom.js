@@ -796,6 +796,25 @@ describe('SFURoom', () => {
     });
   });
 
+  describe('getPeerConnection', () => {
+    it('should return null if _connectionStarted is not true', () => {
+      sfuRoom._connectionStarted = false;
+
+      const pc = sfuRoom.getPeerConnection();
+
+      assert.equal(pc, null);
+    });
+
+    it('should return RTCPeerConnection object if _connectionStarted is true', () => {
+      sfuRoom._negotiator._pc = {};
+      sfuRoom._connectionStarted = true;
+
+      const pc = sfuRoom.getPeerConnection();
+
+      assert.deepEqual(pc, {});
+    });
+  });
+
   /** Inherited from Room */
   describe('handleData', () => {
     it('should emit a data event', done => {
