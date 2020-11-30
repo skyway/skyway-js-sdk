@@ -727,7 +727,7 @@ describe('DataConnection', () => {
     });
 
     it('should _dc.onclose has been overwritten and _dc.close() has been called, then super.close has been called and isonopencalled has been set to false when the readyState of _dc is open or connecting', () => {
-      for(const readyState of ['open', 'connecting']){
+      for (const readyState of ['open', 'connecting']) {
         const dc = new DataConnection('remoteId', {});
         dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {
           close: sinon.stub(),
