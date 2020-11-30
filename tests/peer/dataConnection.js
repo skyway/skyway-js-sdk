@@ -266,7 +266,7 @@ describe('DataConnection', () => {
       dc._negotiator.emit(Negotiator.EVENTS.offerCreated.key, offer);
     });
 
-    it("should cleanup the connection on negotiator 'iceConnectionFailed' event", async () => {
+    it("should cleanup the connection on negotiator 'iceConnectionFailed' event", () => {
       dc.open = true;
       const spy = sinon.spy(dc, 'close');
 
