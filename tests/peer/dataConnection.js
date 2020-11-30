@@ -150,6 +150,7 @@ describe('DataConnection', () => {
       dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
 
       const spy = sinon.spy(dc, 'close');
+      dc._dc.readyState = 'closed';
       dc._dc.onclose();
       assert(spy.calledOnce);
 
@@ -265,10 +266,12 @@ describe('DataConnection', () => {
       dc._negotiator.emit(Negotiator.EVENTS.offerCreated.key, offer);
     });
 
-    it("should cleanup the connection on negotiator 'iceConnectionDisconnected' event", () => {
+    it("should cleanup the connection on negotiator 'iceConnectionFailed' event", async () => {
       dc.open = true;
       const spy = sinon.spy(dc, 'close');
 
+      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
+      dc._dc.readyState = 'closed';
       dc._negotiator.emit(Negotiator.EVENTS.iceConnectionFailed.key);
 
       assert(spy.calledOnce);
@@ -681,21 +684,64 @@ describe('DataConnection', () => {
     });
   });
 
-  describe('Cleanup', () => {
-    it('should close the socket and call the negotiator to cleanup on close()', () => {
+  describe('close', () => {
+    it('should close the socket and call the negotiator to cleanup on close() when _dc is none', () => {
       const dc = new DataConnection('remoteId', {});
 
       // Force to be open
       dc.open = true;
 
-      const spy = sinon.spy(dc, 'close');
+      dc.close();
+      assert.equal(dc.open, false);
+      assert(cleanupSpy.called);
+    });
+    it('should dc.onclose be overridden and do nothing when the readyState of _dc is closing', () => {
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {
+        close: sinon.stub(),
+      });
+      dc._dc.onopen();
+      dc._dc.readyState = 'closing';
+      const dummyOnClose = { hoge: 'hoo' };
+      dc._dc.onclose = dummyOnClose;
 
       dc.close();
-      assert(dc);
-      assert(spy.calledOnce);
-      assert.equal(dc.open, false);
 
-      assert(cleanupSpy.called);
+      assert.notEqual(dc._dc.onclose, dummyOnClose);
+      assert.equal(dc.open, true);
+      assert.equal(dc._isOnOpenCalled, true);
+      assert(dc._dc.close.notCalled);
+    });
+    it('should super.close be called and _isOnOpencalled should be false when the readyState of _dc is closed', () => {
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {});
+      dc._dc.onopen();
+      dc._dc.readyState = 'closed';
+
+      dc.close();
+
+      assert.equal(dc.open, false);
+      assert.equal(dc._isOnOpenCalled, false);
+    });
+    it('should _dc.onclose has been overwritten and _dc.close() has been called, then super.close has been called and isonopencalled has been set to false when the readyState of _dc is open(or connectiong)', () => {
+      const dc = new DataConnection('remoteId', {});
+      dc._negotiator.emit(Negotiator.EVENTS.dcCreated.key, {
+        close: sinon.stub(),
+      });
+      dc._dc.onopen();
+      dc._dc.readyState = 'open';
+      const dummyOnClose = { hoge: 'hoo' };
+      dc._dc.onclose = dummyOnClose;
+
+      dc.close();
+
+      assert.notEqual(dc._dc.onclose, dummyOnClose);
+      assert(dc._dc.close.calledOnce);
+
+      dc._dc.onclose();
+
+      assert.equal(dc.open, false);
+      assert.equal(dc._isOnOpenCalled, false);
     });
   });
 });
