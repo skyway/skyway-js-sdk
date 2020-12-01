@@ -74,7 +74,7 @@ export interface AnswerOption {
   audioReceiveEnabled?: boolean;
 }
 
-declare class Connection extends EventEmitter {
+export declare class Connection extends EventEmitter {
   open: boolean;
   type: string;
   metadata: any;
@@ -144,7 +144,7 @@ export interface RoomStream extends MediaStream {
   peerId: string;
 }
 
-declare class Room extends EventEmitter {
+export declare class Room extends EventEmitter {
   name: string;
 
   getLog(): void;
@@ -186,7 +186,7 @@ export declare class SfuRoom extends Room {
   members: string[];
 }
 
-declare class Peer extends EventEmitter {
+export declare class Peer extends EventEmitter {
   id: string;
   connections: {
     [peerId: string]: MediaConnection[] | DataConnection[];
