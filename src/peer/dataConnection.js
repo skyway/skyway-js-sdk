@@ -280,9 +280,31 @@ class DataConnection extends Connection {
    * @deprecated Default value of forceClose may be changed to true from a future version.
    */
   close(forceClose) {
-    super.close(forceClose);
+    const cleanup = forceClose => {
+      super.close(forceClose);
+      this._isOnOpenCalled = false;
+    };
 
-    this._isOnOpenCalled = false;
+    if (!this._dc) {
+      cleanup(forceClose);
+      return;
+    }
+
+    // Close RTCPeerConnection after RTCDataChannel is closed.
+    this._dc.onclose = () => {
+      logger.log('DataChannel closed for:', this.id);
+      cleanup(forceClose);
+    };
+
+    if (this._dc.readyState === 'closing') {
+      // Do nothing here because the onclose event fires after RTCDataChannel is closed.
+      return;
+    } else if (this._dc.readyState === 'closed') {
+      // Close RTCPeerConnection if the RTCDataChannel was already closed.
+      cleanup(forceClose);
+    } else {
+      this._dc.close();
+    }
   }
 
   /**
