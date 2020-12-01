@@ -50,14 +50,14 @@
     "webpack-cli": "^3.3.6"
   },
   "dependencies": {
+    "@jitsi/sdp-interop": "^0.1.13",
     "@types/node": "^12.6.8",
     "detect-browser": "^4.6.0",
-    "enum": "git+https://github.com/eastandwest/enum.git#react-native",
+    "enum": "^3.0.4",
     "events": "^3.0.0",
     "js-binarypack": "0.0.9",
     "object-sizeof": "^1.4.0",
     "query-string": "^6.8.2",
-    "@jitsi/sdp-interop": "^0.1.13",
     "sdp-transform": "^2.11.0",
     "socket.io-client": "^2.2.0",
     "socket.io-parser": "~3.3.0"
