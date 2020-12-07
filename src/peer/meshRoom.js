@@ -296,6 +296,20 @@ class MeshRoom extends Room {
   }
 
   /**
+   * Get all of each peer's RTCPeerConnection.
+   */
+  getPeerConnections() {
+    const peerConnections = {};
+    for (const [peerId, [connection]] of Object.entries(this.connections)) {
+      const pc = connection.getPeerConnection();
+      if (pc) {
+        peerConnections[peerId] = pc;
+      }
+    }
+    return peerConnections;
+  }
+
+  /**
    * Append a connection to peer's array of connections, stored in room.connections.
    * @param {string} peerId - User's peerID.
    * @param {MediaConnection|DataConnection} connection - An instance of MediaConnection or DataConnection.

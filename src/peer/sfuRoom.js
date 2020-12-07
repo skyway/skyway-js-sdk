@@ -301,6 +301,16 @@ class SFURoom extends Room {
   }
 
   /**
+   * Get a RTCPeerConnection.
+   */
+  getPeerConnection() {
+    if (!this._connectionStarted) {
+      return null;
+    }
+    return this._negotiator._pc;
+  }
+
+  /**
    * Events the SFURoom class can emit.
    * @type {Enum}
    */
