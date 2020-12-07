@@ -2,6 +2,17 @@
 
 ## release note
 
+## [v4.1.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.1.0) - 2020-12-07
+
+### Added
+
+- Added APIs to get RTCPeerConnections used in SFU room and Mesh room. ([#279](https://github.com/skyway/skyway-js-sdk/pull/279))
+
+### Fixed
+
+- Fixed a problem that `npm install` fails on node v15.1.0 or later. ([#278](https://github.com/skyway/skyway-js-sdk/pull/278))
+- Fixed a bug that it occurs RTCError on closing DataConnection. ([#277](https://github.com/skyway/skyway-js-sdk/pull/277))
+
 ## [v4.0.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.0.0) - 2020-11-09
 
 ### Breaking Changes
