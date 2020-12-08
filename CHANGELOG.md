@@ -2,6 +2,12 @@
 
 ## release note
 
+## [v4.1.1](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.1.1) - 2020-12-08
+
+### Fixed
+
+- Add MeshRoom.getPeerConnections() and SfuRoom.getPeerConnection() to type definition file.
+
 ## [v4.1.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.1.0) - 2020-12-07
 
 ### Added
