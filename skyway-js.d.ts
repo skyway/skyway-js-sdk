@@ -179,7 +179,7 @@ export declare class MeshRoom extends Room {
   };
   getPeerConnections(): {
     [peerId: string]: RTCPeerConnection;
-  }
+  };
 }
 
 export declare class SfuRoom extends Room {
