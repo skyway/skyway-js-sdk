@@ -177,6 +177,9 @@ export declare class MeshRoom extends Room {
   connections: {
     [peerId: string]: MediaConnection[] | DataConnection[];
   };
+  getPeerConnections(): {
+    [peerId: string]: RTCPeerConnection;
+  };
 }
 
 export declare class SfuRoom extends Room {
@@ -184,6 +187,7 @@ export declare class SfuRoom extends Room {
     [peerId: string]: RoomStream;
   };
   members: string[];
+  getPeerConnection(): RTCPeerConnection | null;
 }
 
 declare class Peer extends EventEmitter {
