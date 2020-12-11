@@ -304,6 +304,35 @@ class Peer extends EventEmitter {
   }
 
   /**
+   * Fetch whether peer exists from signaling server
+   * @param {string} peerId - The PeerId that want to fetch.
+   * @return {Promise<boolean>} A Promise that resolves if fetch is done.
+   */
+  async fetchPeerExists(peerId) {
+    if (!this.open) {
+      throw new Error('Peer is not yet connected to signaling server');
+    }
+
+    const currentTimestamp = new Date().getTime();
+    if (
+      this._lastFetchPeerExistsTime !== undefined &&
+      currentTimestamp - this._lastFetchPeerExistsTime < 1000
+    ) {
+      throw new Error('fetchPeerExists can only be called once per second');
+    }
+    this._lastFetchPeerExistsTime = currentTimestamp;
+
+    const url = `${this.socket.signalingServerUrl}/api/apikeys/${this.options.key}/peers/${peerId}/exists`;
+    const response = await fetch(url);
+    if (response.status === 200) {
+      const body = await response.json();
+      return body.exists;
+    } else {
+      throw new Error(response.text);
+    }
+  }
+
+  /**
    * Return socket open status and emit error when it's not open.
    * @return {boolean} - The socket status.
    */
