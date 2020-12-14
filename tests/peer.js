@@ -993,6 +993,7 @@ describe('Peer', () => {
         await peer.fetchPeerExists(peerId);
       } catch (e) {
         assert(e instanceof Error);
+        assert.equal(e.message, 'Internal Server Error');
         return;
       }
       assert.fail("Didn't throw an error");

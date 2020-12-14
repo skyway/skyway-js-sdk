@@ -328,7 +328,8 @@ class Peer extends EventEmitter {
       const body = await response.json();
       return body.exists;
     } else {
-      throw new Error(response.text);
+      const body = await response.text();
+      throw new Error(body);
     }
   }
 
