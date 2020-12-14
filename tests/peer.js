@@ -868,6 +868,138 @@ describe('Peer', () => {
     });
   });
 
+  describe('fetchPeerExists', () => {
+    let peer;
+
+    beforeEach(() => {
+      peer = new Peer({
+        key: apiKey,
+        host: signalingHost,
+        port: signalingPort,
+      });
+      const protocol = peer.options.secure ? 'https://' : 'http://';
+      peer.socket.signalingServerUrl = `${protocol}${signalingHost}:${signalingPort}`;
+
+      sinon.stub(window, 'fetch');
+    });
+
+    afterEach(() => {
+      window.fetch.restore();
+      peer.destroy();
+    });
+
+    it('should return false if response is false', async () => {
+      sinon.stub(peer.socket, 'isOpen').get(() => true);
+      window.fetch.callsFake(() =>
+        Promise.resolve(
+          new window.Response(JSON.stringify({ exists: false }), {
+            status: 200,
+            headers: { 'Content-type': 'application/json' },
+          })
+        )
+      );
+
+      const exists = await peer.fetchPeerExists('peerId');
+      assert.equal(exists, false);
+    });
+
+    it('should return true if response is true', async () => {
+      sinon.stub(peer.socket, 'isOpen').get(() => true);
+      window.fetch.callsFake(() =>
+        Promise.resolve(
+          new window.Response(JSON.stringify({ exists: true }), {
+            status: 200,
+            headers: { 'Content-type': 'application/json' },
+          })
+        )
+      );
+
+      const exists = await peer.fetchPeerExists('peerId');
+      assert.equal(exists, true);
+    });
+
+    it('should not throw error if it is called at 1 second intervals', async () => {
+      sinon.stub(peer.socket, 'isOpen').get(() => true);
+      window.fetch.callsFake(() =>
+        Promise.resolve(
+          new window.Response(JSON.stringify({ exists: true }), {
+            status: 200,
+            headers: { 'Content-type': 'application/json' },
+          })
+        )
+      );
+
+      await peer.fetchPeerExists('peerId1');
+      const clock = sinon.useFakeTimers(new Date().getTime() + 1000);
+      const exists = await peer.fetchPeerExists('peerId2');
+      clock.restore();
+
+      assert.equal(exists, true);
+    });
+
+    it('should throw error if it is called twice per second', async () => {
+      sinon.stub(peer.socket, 'isOpen').get(() => true);
+      window.fetch.callsFake(() =>
+        Promise.resolve(
+          new window.Response(JSON.stringify({ exists: false }), {
+            status: 200,
+            headers: { 'Content-type': 'application/json' },
+          })
+        )
+      );
+
+      await peer.fetchPeerExists(peerId);
+      try {
+        await peer.fetchPeerExists(peerId);
+      } catch (e) {
+        assert(e instanceof Error);
+        assert.equal(
+          e.message,
+          'fetchPeerExists can only be called once per second'
+        );
+        return;
+      }
+      assert.fail("Didn't throw an error");
+    });
+
+    it('should throw error if peer is not open', async () => {
+      sinon.stub(peer.socket, 'isOpen').get(() => false);
+
+      try {
+        await peer.fetchPeerExists(peerId);
+      } catch (e) {
+        assert(e instanceof Error);
+        assert.equal(
+          e.message,
+          'Peer is not yet connected to signaling server'
+        );
+        return;
+      }
+      assert.fail("Didn't throw an error");
+    });
+
+    it('should throw error if status code is not 200', async () => {
+      sinon.stub(peer.socket, 'isOpen').get(() => true);
+      window.fetch.callsFake(() =>
+        Promise.resolve(
+          new window.Response('Internal Server Error', {
+            status: 500,
+            headers: { 'Content-type': 'application/json' },
+          })
+        )
+      );
+
+      try {
+        await peer.fetchPeerExists(peerId);
+      } catch (e) {
+        assert(e instanceof Error);
+        assert.equal(e.message, 'Internal Server Error');
+        return;
+      }
+      assert.fail("Didn't throw an error");
+    });
+  });
+
   describe('_checkOpenStatus', () => {
     const peerId = 'testPeerId';
     let peer;
