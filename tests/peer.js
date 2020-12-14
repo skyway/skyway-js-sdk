@@ -918,7 +918,7 @@ describe('Peer', () => {
       assert.equal(exists, true);
     });
 
-    it('should not throw error if called at 1 second intervals', async () => {
+    it('should not throw error if it is called at 1 second intervals', async () => {
       sinon.stub(peer.socket, 'isOpen').get(() => true);
       window.fetch.callsFake(() =>
         Promise.resolve(
@@ -937,7 +937,7 @@ describe('Peer', () => {
       assert.equal(exists, true);
     });
 
-    it('should throw error if called twice per second', async () => {
+    it('should throw error if it is called twice per second', async () => {
       sinon.stub(peer.socket, 'isOpen').get(() => true);
       window.fetch.callsFake(() =>
         Promise.resolve(
