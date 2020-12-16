@@ -18,7 +18,7 @@ By changing the file name, you can use each version and minified version.
 
 Example
 - Using version 4.1.1: `skyway-4.1.1.js`.
-- Using minified version 4.1.1 : `skyway-4.1.1.js`.
+- Using minified version 4.1.1 : `skyway-4.1.1.min.js`.
 - Using the latest minified version: `skyway-latest.min.js`.
 
 #### CAUTION 
