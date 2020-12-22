@@ -2,6 +2,12 @@
 
 ## release note
 
+## [v4.2.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.2.0) - 2020-12-22
+
+### Added
+
+- Added `fetchPeerExists` API to fetch whether a peer exists. You can call this API once per second per peer. ([#288](https://github.com/skyway/skyway-js-sdk/pull/288))
+
 ## [v4.1.1](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.1.1) - 2020-12-08
 
 ### Fixed
