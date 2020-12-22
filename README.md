@@ -17,8 +17,8 @@ For more details, check out the [Tutorial](https://webrtc.ecl.ntt.com/en/js-tuto
 By changing the file name, you can use each version and minified version.
 
 Example
-- Using version 4.1.1: `skyway-4.1.1.js`.
-- Using minified version 4.1.1 : `skyway-4.1.1.min.js`.
+- Using version 4.2.0: `skyway-4.2.0.js`.
+- Using minified version 4.2.0 : `skyway-4.2.0.min.js`.
 - Using the latest minified version: `skyway-latest.min.js`.
 
 #### CAUTION 
