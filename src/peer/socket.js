@@ -136,7 +136,7 @@ class Socket extends EventEmitter {
     try {
       serverInfo = await this._getSignalingServer();
     } catch (err) {
-      this.emit('error', err);
+      this._connectToNewServer(++numAttempts);
       return;
     }
 
