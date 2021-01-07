@@ -136,8 +136,7 @@ class Socket extends EventEmitter {
     try {
       serverInfo = await this._getSignalingServer();
     } catch (err) {
-      this.emit('error', err);
-      return;
+      this._io.emit('error', err);
     }
 
     if (this.signalingServerUrl.indexOf(serverInfo.host) === -1) {
