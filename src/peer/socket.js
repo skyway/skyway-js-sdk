@@ -136,7 +136,8 @@ class Socket extends EventEmitter {
     try {
       serverInfo = await this._getSignalingServer();
     } catch (err) {
-      this._connectToNewServer(++numAttempts);
+      // Call with await to ensure that this method attempts up to the limit before giving up in a test case.
+      await this._connectToNewServer(++numAttempts);
       return;
     }
 

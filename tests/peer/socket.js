@@ -589,4 +589,31 @@ describe('Socket', () => {
       });
     });
   });
+
+  describe('_connectToNewServer', () => {
+    const errorMessage = 'Could not connect to server.';
+    let connectToNewServerSpy;
+    let emitStub;
+    let getSignalingServerStub;
+
+    beforeEach(() => {
+      connectToNewServerSpy = sinon.spy(socket, '_connectToNewServer');
+      emitStub = sinon.stub(socket, 'emit');
+      getSignalingServerStub = sinon.stub(socket, '_getSignalingServer');
+      getSignalingServerStub.returns(Promise.reject(new Error('error')));
+    });
+
+    afterEach(() => {
+      connectToNewServerSpy.restore();
+      emitStub.restore();
+      getSignalingServerStub.restore();
+    });
+
+    it('should attempt up to 11 times before giving up and emitting an error on the socket', async () => {
+      await socket._connectToNewServer();
+
+      assert.equal(connectToNewServerSpy.callCount, 11);
+      assert.deepEqual(emitStub.args[0], ['error', errorMessage]);
+    });
+  });
 });
