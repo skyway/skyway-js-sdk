@@ -8,6 +8,7 @@ const isReleaseReady = require('./is-release-ready');
 const publishToNpm = require('./publish-to-npm');
 const publishToGitHub = require('./publish-to-github');
 const notifySlack = require('./notify-slack');
+const execSync = require('child_process').execSync;
 
 (async function() {
   const {
@@ -58,6 +59,10 @@ const notifySlack = require('./notify-slack');
 
     return process.exit(0);
   }
+
+  console.log('## Change sdk version on website');
+  const stdout = execSync(`bash ./scripts/release-master/update-website.sh ${version}`);
+  console.log(`stdout: ${stdout.toString()}`);
 
   console.log('## Publish to npm');
   await publishToNpm({ NPM_TOKEN });
