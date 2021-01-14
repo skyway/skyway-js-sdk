@@ -56,13 +56,13 @@ async function hasChangeLog(version) {
 }
 
 async function checkExampleSdkVersion(version, file) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const rl = readline.createInterface({
       input: fs.createReadStream(file),
       crlfDelay: Infinity,
     });
 
-    rl.on("line", (line) => {
+    rl.on('line', line => {
       const isVersionFound = line.includes(
         `cdn.webrtc.ecl.ntt.com/skyway-${version}.js`
       );
@@ -71,19 +71,23 @@ async function checkExampleSdkVersion(version, file) {
       }
     });
 
-    rl.once("close", () => {
+    rl.once('close', () => {
       return resolve(false);
     });
   });
 }
 
 async function isCorrectAllExampleSdkVersion(version) {
-  const examplePaths = ["./examples/p2p-data/index.html", "./examples/p2p-media/index.html", "./examples/room/index.html"];
+  const examplePaths = [
+    './examples/p2p-data/index.html',
+    './examples/p2p-media/index.html',
+    './examples/room/index.html',
+  ];
   for (const path of examplePaths) {
     const isCorrectVersion = await checkExampleSdkVersion(version, path);
-    if(!isCorrectVersion) return false
+    if (!isCorrectVersion) return false;
   }
-  return true
+  return true;
 }
 
 async function isCorrectReadmeVersion(version) {
@@ -98,7 +102,7 @@ async function isCorrectReadmeVersion(version) {
       const isVersionFound = line.includes(
         `cdn.webrtc.ecl.ntt.com/skyway-${version}.js`
       );
-      if(isVersionFound) numVersionFound++;
+      if (isVersionFound) numVersionFound++;
       const isMinVersionFound = line.includes(`skyway-${version}.min.js`);
 
       if (numVersionFound > 0 && isMinVersionFound) {

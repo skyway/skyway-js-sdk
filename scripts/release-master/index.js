@@ -61,7 +61,9 @@ const execSync = require('child_process').execSync;
   }
 
   console.log('## Change sdk version on website');
-  const stdout = execSync(`bash ./scripts/release-master/update-website.sh ${version}`);
+  const stdout = execSync(
+    `bash ./scripts/release-master/update-website.sh ${version}`
+  );
   console.log(`stdout: ${stdout.toString()}`);
 
   console.log('## Publish to npm');
