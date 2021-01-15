@@ -17,8 +17,8 @@ if [ "$?" -eq 0 ]; then
   echo "Website is up to date. Skip updating website."
   exit 0
 fi
-sed -i -e "s/[0-9]\.[0-9]\.[0-9]/${version}/g" skyway-official-web-site/docs/documents/javascript-sdk.md
-sed -i -e "s/[0-9]\.[0-9]\.[0-9]/${version}/g" skyway-official-web-site/docs/en/documents/javascript-sdk.md
+sed -i -e "s/skyway-[0-9]\{0,\}\.[0-9]\{0,\}\.[0-9]\{0,\}/${version}/g" skyway-official-web-site/docs/documents/javascript-sdk.md
+sed -i -e "s/skyway-[0-9]\{0,\}\.[0-9]\{0,\}\.[0-9]\{0,\}/${version}/g" skyway-official-web-site/docs/en/documents/javascript-sdk.md
 
 # deploy
 cd skyway-official-web-site
