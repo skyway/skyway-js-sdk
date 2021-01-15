@@ -135,7 +135,7 @@ class Socket extends EventEmitter {
 
   /**
    * Return signaling server url. This attempts trying up to maxNumberOfAttempts times before giving up then throw error.
-   * @return {String} A string of signaling server uri.
+   * @return {String} A string of signaling server url.
    */
   async _getSignalingServerUrlWithRetry() {
     for (let attempts = 0; attempts < config.maxNumberOfAttempts; attempts++) {
@@ -153,7 +153,7 @@ class Socket extends EventEmitter {
         return `${httpProtocol}${serverInfo.host}:${serverInfo.port}`;
       }
     }
-    throw new Error('Could not get signaling server uri.');
+    throw new Error('Could not get signaling server url.');
   }
 
   /**
