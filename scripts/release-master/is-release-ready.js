@@ -56,8 +56,10 @@ async function hasChangeLog(version) {
 }
 
 function isSdkVersionURLCorrect(version, filepath) {
-  const data = fs.readFileSync(filepath, "utf8");
-  const matches =  data.match(/cdn\.webrtc\.ecl\.ntt\.com\/skyway-([0-9]+\.[0-9]+\.[0-9]+)(\.min)?\.js/g);
+  const data = fs.readFileSync(filepath, 'utf8');
+  const matches = data.match(
+    /cdn\.webrtc\.ecl\.ntt\.com\/skyway-([0-9]+\.[0-9]+\.[0-9]+)(\.min)?\.js/g
+  );
   for (const match of matches) {
     if (!match.includes(version)) return false;
   }
@@ -65,14 +67,17 @@ function isSdkVersionURLCorrect(version, filepath) {
 }
 
 function isAllExampleSdkVersionURLCorrect(version) {
-  const examplePaths = ["./examples/p2p-data/index.html", "./examples/p2p-media/index.html", "./examples/room/index.html"];
+  const examplePaths = [
+    './examples/p2p-data/index.html',
+    './examples/p2p-media/index.html',
+    './examples/room/index.html',
+  ];
   for (const path of examplePaths) {
-    if(!isSdkVersionURLCorrect(version, path)) return false
+    if (!isSdkVersionURLCorrect(version, path)) return false;
   }
-  return true
+  return true;
 }
 
 function isReadmeVersionURLCorrect(version) {
-  if(!isSdkVersionURLCorrect(version, './README.md')) return false
-  return true
+  return isSdkVersionURLCorrect(version, './README.md');
 }
