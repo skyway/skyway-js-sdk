@@ -590,6 +590,50 @@ describe('Socket', () => {
     });
   });
 
+  describe('_getSignalingServerUrlWithRetry', () => {
+    const signalingHost = 'signaling.io';
+    const signalingPort = 443;
+    const signalingSecure = true;
+    const httpProtocol = 'https://';
+    const signalingServerUrl = `${httpProtocol}${signalingHost}:${signalingPort}`;
+    let emitStub;
+    let getSignalingServerStub;
+
+    beforeEach(() => {
+      emitStub = sinon.stub(socket, 'emit');
+      getSignalingServerStub = sinon.stub(socket, '_getSignalingServer');
+      getSignalingServerStub.returns(
+        Promise.resolve({
+          host: signalingHost,
+          port: signalingPort,
+          secure: signalingSecure,
+        })
+      );
+    });
+
+    afterEach(() => {
+      emitStub.restore();
+      getSignalingServerStub.restore();
+    });
+
+    it('should return signalingServerUrl', async () => {
+      const url = await socket._getSignalingServerUrlWithRetry();
+
+      assert.equal(url, signalingServerUrl);
+    });
+
+    it('should attempt 10 times before giving up and throw error', async () => {
+      socket.signalingServerUrl = signalingServerUrl;
+
+      await socket._getSignalingServerUrlWithRetry().catch(err => {
+        assert.equal(getSignalingServerStub.callCount, 10);
+        assert.deepEqual(err, new Error('Could not get signaling server url.'));
+      });
+
+      // assert.throws(await socket._getSignalingServerUrlWithRetry(), 'Could not get signaling server url.');
+    });
+  });
+
   describe('_connectToNewServer', () => {
     let connectToNewServerSpy;
     let emitStub;
@@ -611,13 +655,13 @@ describe('Socket', () => {
     });
 
     it('should set _io.io.uri', () => {
-      const signalingServerUri = 'https:signaling.io:443';
-      getSignalingServerUrlWithRetryStub.returns(signalingServerUri);
+      const signalingServerUrl = 'https:signaling.io:443';
+      getSignalingServerUrlWithRetryStub.returns(signalingServerUrl);
 
       socket.start(undefined, token).then(async () => {
         await socket._connectToNewServer();
 
-        assert.equal(socket._io.io.uri, signalingServerUri);
+        assert.equal(socket._io.io.uri, signalingServerUrl);
       });
     });
 
