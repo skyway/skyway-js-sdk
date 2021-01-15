@@ -13,7 +13,7 @@ module.exports = async function isReleaseReady(version) {
   console.log('');
 
   console.log(`Script tag for v${version} exists in each example file?`);
-  const cond2 = await isCorrectAllExampleSdkVersion(version);
+  const cond2 = isAllExampleSdkVersionURLCorrect(version);
   if (!cond2) {
     console.log('=> No. abort release steps');
     console.log('');
@@ -23,7 +23,7 @@ module.exports = async function isReleaseReady(version) {
   console.log('');
 
   console.log(`v${version} exists in README.md?`);
-  const cond3 = await isCorrectReadmeVersion(version);
+  const cond3 = isReadmeVersionURLCorrect(version);
   if (!cond3) {
     console.log('=> No. abort release steps');
     console.log('');
@@ -55,61 +55,24 @@ async function hasChangeLog(version) {
   });
 }
 
-async function checkExampleSdkVersion(version, file) {
-  return new Promise(resolve => {
-    const rl = readline.createInterface({
-      input: fs.createReadStream(file),
-      crlfDelay: Infinity,
-    });
-
-    rl.on('line', line => {
-      const isVersionFound = line.includes(
-        `cdn.webrtc.ecl.ntt.com/skyway-${version}.js`
-      );
-      if (isVersionFound) {
-        return resolve(true);
-      }
-    });
-
-    rl.once('close', () => {
-      return resolve(false);
-    });
-  });
-}
-
-async function isCorrectAllExampleSdkVersion(version) {
-  const examplePaths = [
-    './examples/p2p-data/index.html',
-    './examples/p2p-media/index.html',
-    './examples/room/index.html',
-  ];
-  for (const path of examplePaths) {
-    const isCorrectVersion = await checkExampleSdkVersion(version, path);
-    if (!isCorrectVersion) return false;
+function isSdkVersionURLCorrect(version, filepath) {
+  const data = fs.readFileSync(filepath, "utf8");
+  const matches =  data.match(/cdn\.webrtc\.ecl\.ntt\.com\/skyway-([0-9]+\.[0-9]+\.[0-9]+)(\.min)?\.js/g);
+  for (const match of matches) {
+    if (!match.includes(version)) return false;
   }
   return true;
 }
 
-async function isCorrectReadmeVersion(version) {
-  return new Promise(resolve => {
-    const rl = readline.createInterface({
-      input: fs.createReadStream('./README.md'),
-      crlfDelay: Infinity,
-    });
+function isAllExampleSdkVersionURLCorrect(version) {
+  const examplePaths = ["./examples/p2p-data/index.html", "./examples/p2p-media/index.html", "./examples/room/index.html"];
+  for (const path of examplePaths) {
+    if(!isSdkVersionURLCorrect(version, path)) return false
+  }
+  return true
+}
 
-    let numVersionFound = 0;
-    rl.on('line', line => {
-      const isVersionFound = line.includes(
-        `cdn.webrtc.ecl.ntt.com/skyway-${version}.js`
-      );
-      if (isVersionFound) numVersionFound++;
-      const isMinVersionFound = line.includes(`skyway-${version}.min.js`);
-
-      if (numVersionFound > 0 && isMinVersionFound) {
-        return resolve(true);
-      }
-    });
-
-    rl.once('close', () => resolve(false));
-  });
+function isReadmeVersionURLCorrect(version) {
+  if(!isSdkVersionURLCorrect(version, './README.md')) return false
+  return true
 }
