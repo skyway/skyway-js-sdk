@@ -85,15 +85,12 @@ class Socket extends EventEmitter {
     }
 
     if (this._dispatcherUrl) {
-      let serverInfo;
       try {
-        serverInfo = await this._getSignalingServer();
+        this.signalingServerUrl = await this._getSignalingServerUrlWithRetry();
       } catch (err) {
         this.emit('error', err);
         return;
       }
-      const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
-      this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${serverInfo.port}`;
     }
 
     this._io = io(this.signalingServerUrl, {
@@ -115,42 +112,48 @@ class Socket extends EventEmitter {
   }
 
   /**
-   * Connect to "new" signaling server. Attempts up to 10 times before giving up and emitting an error on the socket.
-   * @param {number} [numAttempts=0] - Current number of attempts.
+   * Connect to "new" signaling server.
    * @return {Promise<void>} A promise that resolves with new connection has done.
    * @private
    */
-  async _connectToNewServer(numAttempts = 0) {
-    // max number of attempts to get a new server from the dispatcher.
-    const maxNumberOfAttempts = 10;
-    if (
-      numAttempts >= maxNumberOfAttempts ||
-      this._reconnectAttempts >= config.numberServersToTry
-    ) {
+  async _connectToNewServer() {
+    if (this._reconnectAttempts >= config.numberServersToTry) {
       this.emit('error', 'Could not connect to server.');
       return;
     }
 
-    // Keep trying until we connect to a new server because consul can take some time to remove from the active list.
-    let serverInfo;
     try {
-      serverInfo = await this._getSignalingServer();
+      this.signalingServerUrl = await this._getSignalingServerUrlWithRetry();
     } catch (err) {
-      // Call with await to ensure that this method attempts up to the limit before giving up in a test case.
-      await this._connectToNewServer(++numAttempts);
+      this.emit('error', err);
       return;
     }
+    this._io.io.uri = this.signalingServerUrl;
+    this._io.connect();
+    this._reconnectAttempts++;
+  }
 
-    if (this.signalingServerUrl.indexOf(serverInfo.host) === -1) {
-      const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
-      this.signalingServerUrl = `${httpProtocol}${serverInfo.host}:${serverInfo.port}`;
-
-      this._io.io.uri = this.signalingServerUrl;
-      this._io.connect();
-      this._reconnectAttempts++;
-    } else {
-      this._connectToNewServer(++numAttempts);
+  /**
+   * Return signaling server url. This attempts trying up to maxNumberOfAttempts times before giving up then throw error.
+   * @return {String} A string of signaling server uri.
+   */
+  async _getSignalingServerUrlWithRetry() {
+    for (let attempts = 0; attempts < config.maxNumberOfAttempts; attempts++) {
+      const serverInfo = await this._getSignalingServer().catch(err => {
+        logger.warn(err);
+      });
+      if (
+        serverInfo &&
+        serverInfo.port &&
+        serverInfo.host &&
+        (!this.signalingServerUrl ||
+          this.signalingServerUrl.indexOf(serverInfo.host) === -1)
+      ) {
+        const httpProtocol = serverInfo.secure ? 'https://' : 'http://';
+        return `${httpProtocol}${serverInfo.host}:${serverInfo.port}`;
+      }
     }
+    throw new Error('Could not get signaling server uri.');
   }
 
   /**
