@@ -62,7 +62,7 @@ const maxNumberOfAttempts = 10;
 const reconnectionAttempts = 2;
 
 // Number of times to try changing servers before giving up
-const numberServersToTry = 3;
+const numberServersToTry = 10;
 
 // Send loop interval in milliseconds
 const sendInterval = 1;
