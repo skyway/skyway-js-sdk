@@ -627,7 +627,7 @@ describe('Socket', () => {
 
       await socket._getSignalingServerUrlWithRetry().catch(err => {
         assert.equal(getSignalingServerStub.callCount, 10);
-        assert.deepEqual(err, new Error('Could not get signaling server url.'));
+        assert.equal(err.message, 'Could not get signaling server url.');
       });
 
       // assert.throws(await socket._getSignalingServerUrlWithRetry(), 'Could not get signaling server url.');
