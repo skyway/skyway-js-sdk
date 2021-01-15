@@ -598,7 +598,10 @@ describe('Socket', () => {
     beforeEach(() => {
       connectToNewServerSpy = sinon.spy(socket, '_connectToNewServer');
       emitStub = sinon.stub(socket, 'emit');
-      getSignalingServerUrlWithRetryStub = sinon.stub(socket, '_getSignalingServerUrlWithRetry');
+      getSignalingServerUrlWithRetryStub = sinon.stub(
+        socket,
+        '_getSignalingServerUrlWithRetry'
+      );
     });
 
     afterEach(() => {
@@ -624,10 +627,7 @@ describe('Socket', () => {
 
         await socket._connectToNewServer();
 
-        assert.deepEqual(emitStub.args[0], [
-          'error',
-          new Error(),
-        ]);
+        assert.deepEqual(emitStub.args[0], ['error', new Error()]);
       });
     });
   });
