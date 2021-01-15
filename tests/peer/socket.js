@@ -591,29 +591,44 @@ describe('Socket', () => {
   });
 
   describe('_connectToNewServer', () => {
-    const errorMessage = 'Could not connect to server.';
     let connectToNewServerSpy;
     let emitStub;
-    let getSignalingServerStub;
+    let getSignalingServerUrlWithRetryStub;
 
     beforeEach(() => {
       connectToNewServerSpy = sinon.spy(socket, '_connectToNewServer');
       emitStub = sinon.stub(socket, 'emit');
-      getSignalingServerStub = sinon.stub(socket, '_getSignalingServer');
-      getSignalingServerStub.returns(Promise.reject(new Error('error')));
+      getSignalingServerUrlWithRetryStub = sinon.stub(socket, '_getSignalingServerUrlWithRetry');
     });
 
     afterEach(() => {
       connectToNewServerSpy.restore();
       emitStub.restore();
-      getSignalingServerStub.restore();
+      getSignalingServerUrlWithRetryStub.restore();
     });
 
-    it('should attempt up to 11 times before giving up and emitting an error on the socket', async () => {
-      await socket._connectToNewServer();
+    it('should set _io.io.uri', () => {
+      const signalingServerUri = 'https:signaling.io:443';
+      getSignalingServerUrlWithRetryStub.returns(signalingServerUri);
 
-      assert.equal(connectToNewServerSpy.callCount, 11);
-      assert.deepEqual(emitStub.args[0], ['error', errorMessage]);
+      socket.start(undefined, token).then(async () => {
+        await socket._connectToNewServer();
+
+        assert.equal(socket._io.io.uri, signalingServerUri);
+      });
+    });
+
+    describe('when response from dispatcher is empty', () => {
+      it('should emit an error on the socket', async () => {
+        getSignalingServerUrlWithRetryStub.throws();
+
+        await socket._connectToNewServer();
+
+        assert.deepEqual(emitStub.args[0], [
+          'error',
+          new Error(),
+        ]);
+      });
     });
   });
 });
