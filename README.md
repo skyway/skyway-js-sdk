@@ -7,23 +7,13 @@
 Add the following script tag to your html file.
 
 ```html
-<script type="text/javascript" src="https://cdn.webrtc.ecl.ntt.com/skyway-latest.js"></script>
+<script type="text/javascript" src="https://cdn.webrtc.ecl.ntt.com/skyway-4.2.0.js"></script>
 ```
 
 You can then use the `Peer` object to start connecting.
 For more details, check out the [Tutorial](https://webrtc.ecl.ntt.com/en/js-tutorial.html). ([日本語](https://webrtc.ecl.ntt.com/js-tutorial.html))
 
-#### How to specify version and minified
-By changing the file name, you can use each version and minified version.
-
-Example
-- Using version 4.2.0: `skyway-4.2.0.js`.
-- Using minified version 4.2.0 : `skyway-4.2.0.min.js`.
-- Using the latest minified version: `skyway-latest.min.js`.
-
-#### CAUTION 
-When using `skyway-latest.js` and `skyway-latest.min.js`, when a new version of the SDK is released, the latest version will automatically be applied to your application. This makes it easy to keep up with browser updates, but depending on the changes in the SDK, your application may be affected.
-
+To use the compressed version, add `.min` to the end of the file name, like `skyway-4.2.0.min.js`.
 
 ### Installing using npm to use with a bundler (e.g. webpack or browserify)
 
