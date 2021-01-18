@@ -2,6 +2,12 @@
 
 ## release note
 
+## [v4.3.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.3.0) - 2021-01-18
+
+### Fixed
+
+- Fixed a connecting process to signaling server so that `Peer` would reconnect when a request to the dispatcher server failed. ([#297](https://github.com/skyway/skyway-js-sdk/pull/297))
+
 ## [v4.2.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.2.0) - 2020-12-22
 
 ### Added
