@@ -105,7 +105,7 @@ describe('Socket', () => {
       const signalingHost = 'signaling.io';
       const signalingPort = 443;
       const signalingSecure = true;
-      let getSignalingServerStub;
+      let fetchSignalingServerStub;
 
       beforeEach(() => {
         socket = new Socket(apiKey, {
@@ -114,8 +114,8 @@ describe('Socket', () => {
           dispatcherSecure: dispatcherSecure,
         });
 
-        getSignalingServerStub = sinon.stub(socket, '_getSignalingServer');
-        getSignalingServerStub.returns(
+        fetchSignalingServerStub = sinon.stub(socket, '_fetchSignalingServer');
+        fetchSignalingServerStub.returns(
           Promise.resolve({
             host: signalingHost,
             port: signalingPort,
@@ -125,7 +125,7 @@ describe('Socket', () => {
       });
 
       afterEach(() => {
-        getSignalingServerStub.restore();
+        fetchSignalingServerStub.restore();
       });
 
       it('should set _dispatcherUrl', () => {
@@ -135,7 +135,7 @@ describe('Socket', () => {
         );
       });
 
-      it('should get set the signalingServerUrl from _getSignalingServer', done => {
+      it('should get set the signalingServerUrl from _fetchSignalingServer', done => {
         socket.start(null, token).then(() => {
           const httpProtocol = signalingSecure ? 'https://' : 'http://';
           const signalingServerUrl = `${httpProtocol}${signalingHost}:${signalingPort}`;
@@ -419,7 +419,7 @@ describe('Socket', () => {
     });
   });
 
-  describe('_getSignalingServer', () => {
+  describe('_fetchSignalingServer', () => {
     let requests = [];
     let xhr;
     const fakeDomain = 'fake.domain';
@@ -443,7 +443,7 @@ describe('Socket', () => {
       const result = { domain: fakeDomain };
 
       socket
-        ._getSignalingServer()
+        ._fetchSignalingServer()
         .then(() => {
           assert.equal(requests.length, 1);
 
@@ -469,7 +469,7 @@ describe('Socket', () => {
         const result = { domain: fakeDomain };
 
         socket
-          ._getSignalingServer()
+          ._fetchSignalingServer()
           .then(res => {
             assert.deepEqual(res, {
               host: fakeDomain,
@@ -492,7 +492,7 @@ describe('Socket', () => {
         const result = {};
 
         socket
-          ._getSignalingServer()
+          ._fetchSignalingServer()
           .then(() => {
             assert.fail('This should be rejected.');
             done();
@@ -516,7 +516,7 @@ describe('Socket', () => {
         };
 
         socket
-          ._getSignalingServer()
+          ._fetchSignalingServer()
           .then(() => {
             assert.fail('This should be rejected.');
             done();
@@ -543,7 +543,7 @@ describe('Socket', () => {
           },
         };
         socket
-          ._getSignalingServer()
+          ._fetchSignalingServer()
           .then(() => {
             assert.fail('This should be rejected.');
             done();
@@ -571,7 +571,7 @@ describe('Socket', () => {
         };
 
         socket
-          ._getSignalingServer()
+          ._fetchSignalingServer()
           .then(() => {
             assert.fail('This should be rejected.');
             done();
@@ -590,19 +590,19 @@ describe('Socket', () => {
     });
   });
 
-  describe('_getSignalingServerUrlWithRetry', () => {
+  describe('_fetchSignalingServerUrlWithRetry', () => {
     const signalingHost = 'signaling.io';
     const signalingPort = 443;
     const signalingSecure = true;
     const httpProtocol = 'https://';
     const signalingServerUrl = `${httpProtocol}${signalingHost}:${signalingPort}`;
     let emitStub;
-    let getSignalingServerStub;
+    let fetchSignalingServerStub;
 
     beforeEach(() => {
       emitStub = sinon.stub(socket, 'emit');
-      getSignalingServerStub = sinon.stub(socket, '_getSignalingServer');
-      getSignalingServerStub.returns(
+      fetchSignalingServerStub = sinon.stub(socket, '_fetchSignalingServer');
+      fetchSignalingServerStub.returns(
         Promise.resolve({
           host: signalingHost,
           port: signalingPort,
@@ -613,11 +613,11 @@ describe('Socket', () => {
 
     afterEach(() => {
       emitStub.restore();
-      getSignalingServerStub.restore();
+      fetchSignalingServerStub.restore();
     });
 
     it('should return signalingServerUrl', async () => {
-      const url = await socket._getSignalingServerUrlWithRetry();
+      const url = await socket._fetchSignalingServerUrlWithRetry();
 
       assert.equal(url, signalingServerUrl);
     });
@@ -625,38 +625,38 @@ describe('Socket', () => {
     it('should attempt 10 times before giving up and throw error', async () => {
       socket.signalingServerUrl = signalingServerUrl;
 
-      await socket._getSignalingServerUrlWithRetry().catch(err => {
-        assert.equal(getSignalingServerStub.callCount, 10);
+      await socket._fetchSignalingServerUrlWithRetry().catch(err => {
+        assert.equal(fetchSignalingServerStub.callCount, 10);
         assert.equal(err.message, 'Could not get signaling server url.');
       });
 
-      // assert.throws(await socket._getSignalingServerUrlWithRetry(), 'Could not get signaling server url.');
+      // assert.throws(await socket._fetchSignalingServerUrlWithRetry(), 'Could not get signaling server url.');
     });
   });
 
   describe('_connectToNewServer', () => {
     let connectToNewServerSpy;
     let emitStub;
-    let getSignalingServerUrlWithRetryStub;
+    let fetchSignalingServerUrlWithRetryStub;
 
     beforeEach(() => {
       connectToNewServerSpy = sinon.spy(socket, '_connectToNewServer');
       emitStub = sinon.stub(socket, 'emit');
-      getSignalingServerUrlWithRetryStub = sinon.stub(
+      fetchSignalingServerUrlWithRetryStub = sinon.stub(
         socket,
-        '_getSignalingServerUrlWithRetry'
+        '_fetchSignalingServerUrlWithRetry'
       );
     });
 
     afterEach(() => {
       connectToNewServerSpy.restore();
       emitStub.restore();
-      getSignalingServerUrlWithRetryStub.restore();
+      fetchSignalingServerUrlWithRetryStub.restore();
     });
 
     it('should set _io.io.uri', () => {
       const signalingServerUrl = 'https:signaling.io:443';
-      getSignalingServerUrlWithRetryStub.returns(signalingServerUrl);
+      fetchSignalingServerUrlWithRetryStub.returns(signalingServerUrl);
 
       socket.start(undefined, token).then(async () => {
         await socket._connectToNewServer();
@@ -667,7 +667,7 @@ describe('Socket', () => {
 
     describe('when response from dispatcher is empty', () => {
       it('should emit an error on the socket', async () => {
-        getSignalingServerUrlWithRetryStub.throws();
+        fetchSignalingServerUrlWithRetryStub.throws();
 
         await socket._connectToNewServer();
 

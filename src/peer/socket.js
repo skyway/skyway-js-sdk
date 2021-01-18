@@ -86,7 +86,7 @@ class Socket extends EventEmitter {
 
     if (this._dispatcherUrl) {
       try {
-        this.signalingServerUrl = await this._getSignalingServerUrlWithRetry();
+        this.signalingServerUrl = await this._fetchSignalingServerUrlWithRetry();
       } catch (err) {
         this.emit('error', err);
         return;
@@ -123,7 +123,7 @@ class Socket extends EventEmitter {
     }
 
     try {
-      this.signalingServerUrl = await this._getSignalingServerUrlWithRetry();
+      this.signalingServerUrl = await this._fetchSignalingServerUrlWithRetry();
     } catch (err) {
       this.emit('error', err);
       return;
@@ -137,9 +137,9 @@ class Socket extends EventEmitter {
    * Return signaling server url. This attempts trying up to maxNumberOfAttempts times before giving up then throw error.
    * @return {String} A string of signaling server url.
    */
-  async _getSignalingServerUrlWithRetry() {
+  async _fetchSignalingServerUrlWithRetry() {
     for (let attempts = 0; attempts < config.maxNumberOfAttempts; attempts++) {
-      const serverInfo = await this._getSignalingServer().catch(err => {
+      const serverInfo = await this._fetchSignalingServer().catch(err => {
         logger.warn(err);
       });
       if (
@@ -161,7 +161,7 @@ class Socket extends EventEmitter {
    * @return {Promise<Object>} A promise that resolves with signaling server info
    and rejects if there's no response or status code isn't 200.
    */
-  _getSignalingServer() {
+  _fetchSignalingServer() {
     return new Promise((resolve, reject) => {
       const http = new XMLHttpRequest();
 
