@@ -655,7 +655,7 @@ describe('Socket', () => {
     });
 
     it('should set _io.io.uri', () => {
-      const signalingServerUrl = 'https:signaling.io:443';
+      const signalingServerUrl = 'https://signaling.io:443';
       fetchSignalingServerUrlWithRetryStub.returns(signalingServerUrl);
 
       socket.start(undefined, token).then(async () => {
