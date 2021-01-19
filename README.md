@@ -7,7 +7,7 @@
 Add the following script tag to your html file.
 
 ```html
-<script type="text/javascript" src="https://cdn.webrtc.ecl.ntt.com/skyway-4.2.0.js"></script>
+<script type="text/javascript" src="https://cdn.webrtc.ecl.ntt.com/skyway-4.3.0.js"></script>
 ```
 
 You can then use the `Peer` object to start connecting.
