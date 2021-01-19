@@ -13,7 +13,7 @@ Add the following script tag to your html file.
 You can then use the `Peer` object to start connecting.
 For more details, check out the [Tutorial](https://webrtc.ecl.ntt.com/en/js-tutorial.html). ([日本語](https://webrtc.ecl.ntt.com/js-tutorial.html))
 
-To use the compressed version, add `.min` to the end of the file name, like `skyway-4.2.0.min.js`.
+To use the compressed version, add `.min` to the end of the file name, like `skyway-4.3.0.min.js`.
 
 ### Installing using npm to use with a bundler (e.g. webpack or browserify)
 
