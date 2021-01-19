@@ -55,6 +55,9 @@ const maxDataSize = 20 * 1024 * 1024;
 // The minimum interval of using Room.send() is 100 ms
 const minBroadcastIntervalMs = 100;
 
+// max number of attempts to get a new server from the dispatcher.
+const maxNumberOfAttempts = 10;
+
 // Number of reconnection attempts to the same server before giving up
 const reconnectionAttempts = 2;
 
@@ -88,6 +91,7 @@ export default {
   maxChunkSize,
   maxDataSize,
   minBroadcastIntervalMs,
+  maxNumberOfAttempts,
   reconnectionAttempts,
   numberServersToTry,
   sendInterval,

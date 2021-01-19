@@ -44,6 +44,9 @@ jobs:
       - run:
           name: Install extra deps for CI
           command: npm install --no-save replace-in-file@3.0.0 aws-sdk@2.597.0 @octokit/rest@16.36.0 @slack/client@5.0.2
+      - add_ssh_keys:
+          fingerprints:
+            - "56:a2:ef:d1:41:dd:99:a2:95:cf:df:a0:15:0e:6b:f1"
       - run: node ./scripts/release-master
 
 workflows:
