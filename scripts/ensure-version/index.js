@@ -5,21 +5,21 @@ const { version } = require('../../package.json');
   console.log(`Script tag for v${version} exists in each example file?`);
   const cond1 = isAllExampleSdkVersionURLCorrect(version);
   if (!cond1) {
-    console.log('=> No. abort release steps');
+    console.log('=> Please check SDK version in each examples');
     console.log('');
     return false;
   }
-  console.log('=> Yes. continue release steps');
+  console.log('=> Yes. Continue checking');
   console.log('');
 
   console.log(`v${version} exists in README.md?`);
   const cond2 = isReadmeVersionURLCorrect(version);
   if (!cond2) {
-    console.log('=> No. abort release steps');
+    console.log('=> Please check SDK version in README.md');
     console.log('');
     return false;
   }
-  console.log('=> Yes. continue release steps');
+  console.log('=> Yes. Finished checking');
   console.log('');
 
   process.exit(0);
