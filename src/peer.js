@@ -225,13 +225,19 @@ class Peer extends EventEmitter {
    */
   destroy() {
     this._cleanup();
-    this.disconnect();
+    this.disconnect(true);
   }
 
   /**
    * Close socket and clean up some properties, then emit disconnect event.
+   * @deprecated Use peer's destroy method instead. This method may be removed in future versions.
    */
-  disconnect() {
+  disconnect(suppressWarning = false) {
+    if (!suppressWarning) {
+      logger.warn(
+        `Use peer's destroy method instead. This method may be removed in future versions.`
+      );
+    }
     if (this.open) {
       this.socket.close();
       this.emit(Peer.EVENTS.disconnected.key, this.id);
@@ -240,8 +246,12 @@ class Peer extends EventEmitter {
 
   /**
    * Reconnect to SkyWay server.
+   * @deprecated Recreate peer instance instead. This method may be removed in future versions.
    */
   reconnect() {
+    logger.warn(
+      `Recreate peer instance instead. This method may be removed in future versions.`
+    );
     if (!this.open) {
       this.socket.reconnect();
     }
@@ -386,7 +396,7 @@ class Peer extends EventEmitter {
 
     this.socket.on('disconnect', () => {
       // If we haven't explicitly disconnected, emit error and disconnect.
-      this.disconnect();
+      this.disconnect(true);
 
       const err = new Error('Lost connection to server.');
       err.type = 'socket-error';
@@ -881,7 +891,7 @@ class Peer extends EventEmitter {
    */
   _abort(type, message) {
     logger.error('Aborting!');
-    this.disconnect();
+    this.disconnect(true);
 
     const err = new Error(message);
     err.type = type;
@@ -993,6 +1003,7 @@ class Peer extends EventEmitter {
    *
    * @event Peer#disconnected
    * @type {string}
+   * @deprecated Use peer's close event instead. This event may be removed in future versions.
    */
 }
 
