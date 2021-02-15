@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  ensure_branch:
+  ensure_branch_and_version:
     docker:
       - image: skywayci/skyway-js-sdk
     steps:
@@ -9,6 +9,7 @@ jobs:
           name: Install extra deps for CI
           command: npm install --no-save @octokit/rest@16.36.0
       - run: node ./scripts/ensure-branch
+      - run: node ./scripts/ensure-version
 
   test:
     docker:
@@ -53,10 +54,10 @@ workflows:
   version: 2
   test_and_deploy:
     jobs:
-      - ensure_branch
+      - ensure_branch_and_version
       - test:
           requires:
-            - ensure_branch
+            - ensure_branch_and_version
       - release_staging:
           requires:
             - test

@@ -2,6 +2,12 @@
 
 ## release note
 
+## [v4.4.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.0) - 2021-02-15
+
+### Deprecated
+
+- Deprecated `Peer.reconnect()`, `Peer.disconnect()` and `disconnected` event on `Peer`. ([#308](https://github.com/skyway/skyway-js-sdk/pull/308))
+
 ## [v4.3.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.3.0) - 2021-01-19
 
 ### Fixed
