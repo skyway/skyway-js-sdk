@@ -217,6 +217,7 @@ declare class Peer extends EventEmitter {
   reconnect(): void;
 
   listAllPeers(callback: (peers: string[]) => void): void;
+  fetchPeerExists(peerId: string): Promise<boolean>;
   getConnection<T extends Connection>(
     peerId: string,
     connectionId: string
