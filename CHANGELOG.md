@@ -2,13 +2,19 @@
 
 ## release note
 
+## [v4.4.1](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.1) - 2021-03-29
+
+### Fixed
+
+- Add Peer.fetchPeerExists() to type definition file. ([#314](https://github.com/skyway/skyway-js-sdk/pull/314))
+
 ## [v4.4.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.0) - 2021-02-15
 
 ### Deprecated
 
 - Deprecated `Peer.reconnect()`. Recreate peer instance instead. ([#308](https://github.com/skyway/skyway-js-sdk/pull/308))
-- Deperecated `Peer.disconnect()`. Use peer's destroy method instead.
-- Deperecated `disconnected` event on `Peer`. Use peer's close event instead.
+- Deprecated `Peer.disconnect()`. Use peer's destroy method instead.
+- Deprecated `disconnected` event on `Peer`. Use peer's close event instead.
 
 ## [v4.3.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.3.0) - 2021-01-19
 
