@@ -13,8 +13,8 @@
 ### Deprecated
 
 - Deprecated `Peer.reconnect()`. Recreate peer instance instead. ([#308](https://github.com/skyway/skyway-js-sdk/pull/308))
-- Deperecated `Peer.disconnect()`. Use peer's destroy method instead.
-- Deperecated `disconnected` event on `Peer`. Use peer's close event instead.
+- Deprecated `Peer.disconnect()`. Use peer's destroy method instead.
+- Deprecated `disconnected` event on `Peer`. Use peer's close event instead.
 
 ## [v4.3.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.3.0) - 2021-01-19
 
