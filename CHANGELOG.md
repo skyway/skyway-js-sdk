@@ -2,6 +2,12 @@
 
 ## release note
 
+## [v4.4.1](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.1) - 2021-03-29
+
+### Fixed
+
+- Add Peer.fetchPeerExists() to type definition file. ([#314](https://github.com/skyway/skyway-js-sdk/pull/314))
+
 ## [v4.4.0](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.0) - 2021-02-15
 
 ### Deprecated
