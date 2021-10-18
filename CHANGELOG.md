@@ -6,7 +6,7 @@
 
 ### Fixed
 
-- Updated to use only XHR if Safari 15 or over, due to a bug in Safari 15. ([#318](https://github.com/skyway/skyway-js-sdk/pull/318))
+- Updated to use only XHR if Safari 15, due to a bug in Safari 15. ([#318](https://github.com/skyway/skyway-js-sdk/pull/318))
 
 ## [v4.4.1](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.1) - 2021-03-29
 
