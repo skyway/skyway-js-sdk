@@ -4,7 +4,6 @@ import queryString from 'query-string';
 
 import config from '../shared/config';
 import logger from '../shared/logger';
-import util from '../shared/util';
 
 import { version } from '../../package.json';
 
@@ -94,17 +93,10 @@ class Socket extends EventEmitter {
       }
     }
 
-    // Due to a bug in Safari 15,
-    // WebSocket cannot send data properly, so we only use XHR temporarily.
-    const brower = util.detectBrowser();
-    const isSafari = brower.name === 'ios' || brower.name === 'safari';
-    const transports = isSafari ? ['polling'] : ['polling', 'websocket'];
-
     this._io = io(this.signalingServerUrl, {
       'force new connection': true,
       query: query,
       reconnectionAttempts: config.reconnectionAttempts,
-      transports,
     });
 
     this._io.on('reconnect_failed', () => {
