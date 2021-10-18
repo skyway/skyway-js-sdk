@@ -97,11 +97,8 @@ class Socket extends EventEmitter {
     // Due to a bug in Safari 15,
     // WebSocket cannot send data properly, so we only use XHR temporarily.
     const brower = util.detectBrowser();
-    const isSafari15OrOver =
-      (brower.name === 'ios' || brower.name === 'safari') && brower.major >= 15;
-    const transports = isSafari15OrOver
-      ? ['polling']
-      : ['polling', 'websocket'];
+    const isSafari = brower.name === 'ios' || brower.name === 'safari';
+    const transports = isSafari ? ['polling'] : ['polling', 'websocket'];
 
     this._io = io(this.signalingServerUrl, {
       'force new connection': true,
