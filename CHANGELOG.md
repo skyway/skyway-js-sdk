@@ -2,7 +2,7 @@
 
 ## release note
 
-## [v4.4.2](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.2) - 2021-10-18
+## [v4.4.2](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.2) - 2021-10-22
 
 ### Fixed
 
