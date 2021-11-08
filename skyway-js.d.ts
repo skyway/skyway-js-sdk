@@ -1,4 +1,4 @@
-// Type definitions for SkyWay@2.0.0
+// Type definitions for SkyWay@4.4.3
 // Project: https://github.com/skyway/skyway-js-sdk
 // Definitions by: Yuji Sugiura <https://github.com/leader22>
 
