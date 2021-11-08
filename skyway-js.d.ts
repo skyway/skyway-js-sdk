@@ -214,6 +214,14 @@ declare class Peer extends EventEmitter {
     options?: CallOption
   ): MediaConnection;
   connect(peerId: string, options?: ConnectOption): DataConnection;
+  joinRoom<T extends Room, Options extends RoomOption>(
+    roomName: string,
+    options?: Options
+  ): Options["mode"] extends "sfu"
+    ? SfuRoom
+    : Options["mode"] extends "mesh"
+    ? MeshRoom
+    : SfuRoom | MeshRoom;
   joinRoom<T extends Room>(roomName: string, options?: RoomOption): T;
 
   destroy(): void;
