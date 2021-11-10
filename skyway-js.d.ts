@@ -1,4 +1,4 @@
-// Type definitions for SkyWay@2.0.0
+// Type definitions for SkyWay@4.4.3
 // Project: https://github.com/skyway/skyway-js-sdk
 // Definitions by: Yuji Sugiura <https://github.com/leader22>
 
@@ -24,6 +24,10 @@ export interface PeerConstructorOption {
   secure?: boolean;
   host?: string;
   port?: number;
+}
+
+export interface PeerError extends Error {
+  type: string;
 }
 
 interface PeerOption {
@@ -94,12 +98,12 @@ export declare class MediaConnection extends Connection {
 
   on(event: "stream", listener: (stream: MediaStream) => void): this;
   on(event: "close", listener: () => void): this;
-  on(event: "error", listener: (err: Error) => void): this;
+  on(event: "error", listener: (err: PeerError) => void): this;
   on(event: string, listener: Function): this;
 
   once(event: "stream", listener: (stream: MediaStream) => void): this;
   once(event: "close", listener: () => void): this;
-  once(event: "error", listener: (err: Error) => void): this;
+  once(event: "error", listener: (err: PeerError) => void): this;
   once(event: string, listener: Function): this;
 }
 
@@ -114,13 +118,13 @@ export declare class DataConnection extends Connection {
   on(event: "open", listener: () => void): this;
   on(event: "data", listener: (data: any) => void): this;
   on(event: "close", listener: () => void): this;
-  on(event: "error", listener: (err: Error) => void): this;
+  on(event: "error", listener: (err: PeerError) => void): this;
   on(event: string, listener: Function): this;
 
   once(event: "open", listener: () => void): this;
   once(event: "data", listener: (data: any) => void): this;
   once(event: "close", listener: () => void): this;
-  once(event: "error", listener: (err: Error) => void): this;
+  once(event: "error", listener: (err: PeerError) => void): this;
   once(event: string, listener: Function): this;
 }
 
@@ -159,7 +163,7 @@ declare class Room extends EventEmitter {
   on(event: "stream", listener: (stream: RoomStream) => void): this;
   on(event: "data", listener: (data: RoomData) => void): this;
   on(event: "close", listener: () => void): this;
-  on(event: "error", listener: (err: Error) => void): this;
+  on(event: "error", listener: (err: PeerError) => void): this;
   on(event: string, listener: Function): this;
 
   once(event: "open", listener: () => void): this;
@@ -169,7 +173,7 @@ declare class Room extends EventEmitter {
   once(event: "stream", listener: (stream: RoomStream) => void): this;
   once(event: "data", listener: (data: RoomData) => void): this;
   once(event: "close", listener: () => void): this;
-  once(event: "error", listener: (err: Error) => void): this;
+  once(event: "error", listener: (err: PeerError) => void): this;
   once(event: string, listener: Function): this;
 }
 
@@ -210,6 +214,14 @@ declare class Peer extends EventEmitter {
     options?: CallOption
   ): MediaConnection;
   connect(peerId: string, options?: ConnectOption): DataConnection;
+  joinRoom<T extends Room, Options extends RoomOption>(
+    roomName: string,
+    options?: Options
+  ): Options["mode"] extends "sfu"
+    ? SfuRoom
+    : Options["mode"] extends "mesh"
+    ? MeshRoom
+    : SfuRoom | MeshRoom;
   joinRoom<T extends Room>(roomName: string, options?: RoomOption): T;
 
   destroy(): void;
@@ -230,7 +242,7 @@ declare class Peer extends EventEmitter {
   on(event: "connection", listener: (conn: DataConnection) => void): this;
   on(event: "disconnected", listener: (peerId: string) => void): this;
   on(event: "expiresin", listener: (sec: number) => void): this;
-  on(event: "error", listener: (err: Error) => void): this;
+  on(event: "error", listener: (err: PeerError) => void): this;
   on(event: string, listener: Function): this;
 
   once(event: "open", listener: (peerId: string) => void): this;
@@ -239,7 +251,7 @@ declare class Peer extends EventEmitter {
   once(event: "connection", listener: (conn: DataConnection) => void): this;
   once(event: "disconnected", listener: (peerId: string) => void): this;
   once(event: "expiresin", listener: (sec: number) => void): this;
-  once(event: "error", listener: (err: Error) => void): this;
+  once(event: "error", listener: (err: PeerError) => void): this;
   once(event: string, listener: Function): this;
 }
 
