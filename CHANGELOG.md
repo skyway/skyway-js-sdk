@@ -1,6 +1,13 @@
 # Changelog
 
 ## release note
+## [v4.4.3](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.3) - 2021-11-10
+
+### Updated
+
+- Updated type definition file. ([#330](https://github.com/skyway/skyway-js-sdk/pull/330))
+  - Added `PeerError` interface.
+  - Updated `Peer.joinRoom()` definition.
 
 ## [v4.4.2](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.2) - 2021-10-22
 
