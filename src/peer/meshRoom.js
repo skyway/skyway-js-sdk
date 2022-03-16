@@ -366,6 +366,9 @@ class MeshRoom extends Room {
    */
   _deleteConnections(peerId) {
     if (this.connections[peerId]) {
+      this.connections[peerId].forEach(connection => {
+        connection.close(false);
+      });
       delete this.connections[peerId];
     }
   }

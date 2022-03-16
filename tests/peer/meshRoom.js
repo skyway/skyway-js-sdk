@@ -788,8 +788,14 @@ describe('MeshRoom', () => {
 
   describe('_deleteConnections', () => {
     it('should delete connections from connections property', () => {
-      const connection1 = 'connection1';
-      const connection2 = 'connection2';
+      const connection1CloseStub = sinon.spy();
+      const connection2CloseStub = sinon.spy();
+      const connection1 = {
+        close: connection1CloseStub,
+      };
+      const connection2 = {
+        close: connection2CloseStub,
+      };
 
       meshRoom._addConnection(remotePeerId, connection1);
       meshRoom._addConnection(remotePeerId, connection2);
@@ -798,6 +804,11 @@ describe('MeshRoom', () => {
 
       meshRoom._deleteConnections(remotePeerId);
       assert.equal(meshRoom.connections[remotePeerId], undefined);
+      assert.equal(connection1CloseStub.withArgs(false).callCount, 1);
+      assert.equal(connection2CloseStub.withArgs(false).callCount, 1);
+
+      connection1CloseStub.resetHistory();
+      connection2CloseStub.resetHistory();
     });
   });
 
