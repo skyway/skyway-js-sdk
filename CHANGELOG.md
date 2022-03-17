@@ -1,6 +1,12 @@
 # Changelog
 
 ## release note
+## [v4.4.4](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.4) - 2022-03-17
+
+### Fixed
+
+- Updated to close connections when peer left from MeshRoom. ([#333](https://github.com/skyway/skyway-js-sdk/pull/333))
+
 ## [v4.4.3](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.3) - 2021-11-10
 
 ### Updated
