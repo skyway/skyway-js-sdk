@@ -1,6 +1,13 @@
 # Changelog
 
 ## release note
+
+## [v4.4.5](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.5) - 2022-07-28
+
+### Fixed
+
+- Fixed a problem that could cause `TypeError: Cannot read properties of null (reading 'addIceCandidate')` error if the `close` method of `MediaConnection` was called before the  connection was established. ([#336](https://github.com/skyway/skyway-js-sdk/pull/336))
+
 ## [v4.4.4](https://github.com/skyway/skyway-js-sdk/releases/tag/v4.4.4) - 2022-03-17
 
 ### Fixed
